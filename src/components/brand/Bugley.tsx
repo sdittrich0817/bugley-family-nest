@@ -181,7 +181,7 @@ function Face({ expression }: { expression: BugleyExpression }) {
   const eye = (cx: number, px: number, py: number, r = 6) => (
     <g key={cx}>
       <ellipse cx={cx} cy="80" rx="13" ry="15" fill={C.white} />
-      <circle cx={cx + px} cy={80 + py} r={r} fill={ink} />
+      <circle cx={cx + px} cy={80 + py} r={r} fill="var(--bugley-pupil)" />
       <circle cx={cx + px + 2} cy={80 + py - 3} r="2" fill={C.white} />
     </g>
   );
@@ -228,8 +228,9 @@ function Face({ expression }: { expression: BugleyExpression }) {
     case "celebrating":
       return (
         <g>
-          <path d="M70 84 Q82 70 94 84" {...s} />
-          <path d="M106 84 Q118 70 130 84" {...s} />
+          {eye(82, 0, -2, 7.5)}
+          {eye(118, 0, -2, 7.5)}
+          <path d="M70 62 Q82 56 94 62 M106 62 Q118 56 130 62" {...s} strokeWidth={3.5} />
           <path d="M86 100 Q100 122 114 100 Z" fill={ink} stroke={ink} strokeWidth="3" strokeLinejoin="round" />
           <path d="M94 108 Q100 114 106 108" fill="oklch(0.7 0.15 20)" />
           {([

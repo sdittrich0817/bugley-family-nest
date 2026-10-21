@@ -22,8 +22,8 @@ export function BugleyIcon({ size = 32, className }: { size?: number; className?
       <circle cx="29" cy="30" r="17" fill="var(--bugley-body)" stroke="var(--dusk)" strokeWidth="3" />
       <ellipse cx="23" cy="30" rx="5" ry="6" fill="white" />
       <ellipse cx="35" cy="30" rx="5" ry="6" fill="white" />
-      <circle cx="23.5" cy="31" r="2.6" fill="var(--dusk)" />
-      <circle cx="35.5" cy="31" r="2.6" fill="var(--dusk)" />
+      <circle cx="23.5" cy="31" r="2.6" fill="var(--bugley-pupil)" />
+      <circle cx="35.5" cy="31" r="2.6" fill="var(--bugley-pupil)" />
       <path d="M25 39 Q29 42 33 39" stroke="white" strokeWidth="2.2" strokeLinecap="round" fill="none" />
     </svg>
   );
