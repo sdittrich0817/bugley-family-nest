@@ -232,11 +232,11 @@ function Face({ expression }: { expression: BugleyExpression }) {
           <path d="M106 84 Q118 70 130 84" {...s} />
           <path d="M86 100 Q100 122 114 100 Z" fill={ink} stroke={ink} strokeWidth="3" strokeLinejoin="round" />
           <path d="M94 108 Q100 114 106 108" fill="oklch(0.7 0.15 20)" />
-          {[
+          {([
             [40, 40],
             [162, 60],
             [150, 22],
-          ].map(([x, y]) => (
+          ] as [number, number][]).map(([x, y]) => (
             <path key={`${x}`} d={`M${x} ${y - 8} L${x + 2} ${y - 2} L${x + 8} ${y} L${x + 2} ${y + 2} L${x} ${y + 8} L${x - 2} ${y + 2} L${x - 8} ${y} L${x - 2} ${y - 2} Z`} fill={C.glow} stroke={ink} strokeWidth="2" />
           ))}
         </g>
