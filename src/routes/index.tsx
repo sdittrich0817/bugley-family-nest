@@ -7,8 +7,8 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
-import kitchenDusk from "@/assets/illustrations/kitchen-dusk.jpg";
-import fieldJournal from "@/assets/illustrations/field-journal.jpg";
+import kitchenDusk from "@/assets/illustrations/hero-horizon.jpg";
+import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
 const DESC = "Your kids are already using AI. Bugley is the fun, safe family platform that grows with your child from 6 to 15.";
@@ -69,10 +69,10 @@ function Home() {
         <div className="relative">
           <img
             src={kitchenDusk}
-            alt="A family laughing together at a kitchen table at dusk"
+            alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
             className="aspect-[4/3] w-full rounded-3xl object-cover shadow-lift"
-            width={1200}
-            height={900}
+            width={1280}
+            height={960}
           />
           <div className="absolute -top-6 right-4 sm:-top-8 sm:right-8">
             <Glow size="lg">
@@ -86,16 +86,16 @@ function Home() {
       <section className="bg-muted py-14 sm:py-20">
         <div className="container-page max-w-2xl text-center">
           <Badge variant="secondary">The honest truth</Badge>
-          <h2 className="mt-4 text-3xl text-foreground sm:text-4xl">AI is moving fast. Most parents feel behind.</h2>
+          <h2 className="mt-4 text-3xl text-foreground sm:text-4xl">AI can feel scary. It isn't going anywhere.</h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Your kids are already using it. That's okay. Bugley helps the whole family figure it out together, one small step at a time.
+            Those worries are real, and we share them. The answer isn't to look away. It's to help our kids grow up curious, careful, and confident with it. Responsibly. Safely. Together.
           </p>
         </div>
       </section>
 
       {/* 3. How it works */}
       <section className="container-page py-14 sm:py-20">
-        <SectionHeader eyebrow="How it works" title="Simple, weekly, made for families" />
+        <SectionHeader eyebrow="How it works" title="Small steps today. Ready for tomorrow." />
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {HOW.map(({ icon: Icon, title, body }) => (
             <BugleyCard key={title} variant="interactive" className="flex flex-col gap-3">
@@ -131,13 +131,13 @@ function Home() {
               ))}
             </ol>
           </div>
-          <img src={fieldJournal} alt="A hand-drawn field journal sketch" loading="lazy" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-soft" width={1200} height={900} />
+          <img src={fieldJournal} alt="A parent and child on a hilltop at dusk, pointing at a path of firefly lights" loading="lazy" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-soft" width={1280} height={960} />
         </div>
       </section>
 
       {/* 5. Bugley grows up */}
       <section className="container-page py-14 sm:py-20">
-        <SectionHeader eyebrow="Bugley grows up" title="Five stages, one bright little friend" />
+        <SectionHeader eyebrow="Bugley grows up" title="A little light that grows with them" />
         <ul className="mt-10 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
           {BUGLEY_STAGES.map((stage) => (
             <li key={stage} className="flex flex-col items-center gap-3 text-center last:col-span-2 sm:last:col-span-1">
@@ -146,13 +146,13 @@ function Home() {
             </li>
           ))}
         </ul>
-        <p className="mt-8 text-center text-lg text-muted-foreground">As your child learns, Bugley's glow grows brighter.</p>
+        <p className="mt-8 text-center text-lg text-muted-foreground">Every step your child takes, Bugley's glow grows brighter.</p>
       </section>
 
       {/* 6. Safety */}
       <section className="bg-muted py-14 sm:py-20">
         <div className="container-page">
-          <SectionHeader eyebrow="Our safety promises" title="Built for families, not for ads" />
+          <SectionHeader eyebrow="Our safety promises" title="Hopeful about the future. Serious about safety." />
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PROMISES.map(({ icon: Icon, line }) => (
               <li key={line} className="flex items-center gap-4 rounded-2xl bg-card p-5 shadow-soft">
@@ -196,7 +196,7 @@ function Home() {
       <section className="bg-dusk py-16 sm:py-24">
         <div className="container-page flex flex-col items-center gap-6 text-center">
           <Glow size="lg"><Bugley stage="navigator" expression="celebrating" glow size={100} title="Bugley celebrating" /></Glow>
-          <h2 className="max-w-xl text-3xl text-background sm:text-4xl">AI isn't going away. Let's figure it out together.</h2>
+          <h2 className="max-w-xl text-3xl text-background sm:text-4xl">The future is coming either way. Let's help them meet it ready.</h2>
           <Button size="lg" onClick={() => open("start_free")}>Start free</Button>
         </div>
       </section>

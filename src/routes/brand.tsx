@@ -9,7 +9,8 @@ import { Glow } from "@/components/brand/Glow";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import kitchen from "@/assets/illustrations/kitchen-dusk.jpg";
+import kitchen from "@/assets/illustrations/hero-horizon.jpg";
+import hilltop from "@/assets/illustrations/hilltop-horizon.jpg";
 import sky from "@/assets/illustrations/night-sky.jpg";
 import leaves from "@/assets/illustrations/leaves-grass.jpg";
 import journal from "@/assets/illustrations/field-journal.jpg";
@@ -40,8 +41,18 @@ const colors = [
   { name: "Muted", hex: "Surfaces", cls: "bg-muted border border-border" },
 ];
 
+const TAGLINES = [
+  "Figure out AI, together.",
+  "AI can feel scary. It isn't going anywhere.",
+  "Small steps today. Ready for tomorrow.",
+  "Hopeful about the future. Serious about safety.",
+  "The future is coming either way. Let's help them meet it ready.",
+  "Curious, careful, and confident.",
+];
+
 const illustrations = [
-  { src: kitchen, label: "Family at the kitchen table, dusk" },
+  { src: kitchen, label: "Kitchen table at dusk, looking toward the horizon" },
+  { src: hilltop, label: "Hilltop at dusk, a path of lights ahead" },
   { src: sky, label: "Night sky with tiny lights" },
   { src: leaves, label: "Leaves and grass" },
   { src: journal, label: "Field-journal sketch" },
@@ -132,6 +143,19 @@ function BrandPage() {
           <BugleyIcon size={32} />
           <img src="/app-icon.png" alt="Bugley app icon" width={96} height={96} className="rounded-2xl shadow-soft" />
         </BugleyCard>
+      </Block>
+
+      <Block eyebrow="Voice" title="How Bugley talks">
+        <p className="max-w-2xl text-muted-foreground">Honest about the worries, hopeful about the future. We never scare and never dismiss. AI isn't going anywhere, so we help families meet it responsibly, safely and together.</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {TAGLINES.map((t) => (
+            <BugleyCard key={t}><p className="font-display text-xl">{t}</p></BugleyCard>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <BugleyCard variant="muted"><p className="mb-2 font-display">We say</p><ul className="list-disc pl-5 text-sm text-muted-foreground"><li>"Those worries are real, and we share them."</li><li>"Curious, careful, and confident."</li><li>"Ready for tomorrow."</li></ul></BugleyCard>
+          <BugleyCard variant="muted"><p className="mb-2 font-display">We avoid</p><ul className="list-disc pl-5 text-sm text-muted-foreground"><li>Fear: "AI is dangerous for your kids."</li><li>Hype: "AI will change everything!"</li><li>Guilt: "You're falling behind."</li></ul></BugleyCard>
+        </div>
       </Block>
 
       <Block eyebrow="Color" title="Palette">
