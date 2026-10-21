@@ -7,8 +7,8 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
-import kitchenDusk from "@/assets/illustrations/hero-family-books-facing-wide.jpg";
-import kitchenPortrait from "@/assets/illustrations/hero-family-books-facing-mobile.jpg";
+import kitchenDusk from "@/assets/illustrations/hero-creativity-wide.jpg";
+import kitchenPortrait from "@/assets/illustrations/hero-creativity-mobile.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
@@ -58,13 +58,13 @@ function Home() {
           <source media="(max-width: 599px)" srcSet={kitchenPortrait} />
           <img
           src={kitchenDusk}
-          alt="A family learning together at dusk, with a comic book and storybook on the table and a sunset lake through the window"
+          alt="A family creating together at a tablet as comic characters, paper birds, a dragon and a lakeside castle come to life around them"
           className="h-full w-full object-cover"
           width={1264}
           height={848}
         />
         </picture>
-        <div className="home-hero-window-bugley"><Bugley stage="scout" expression="happy" glow size="100%" title="Bugley glowing outside by the lake" /></div>
+        <div className="home-hero-window-bugley"><Bugley stage="scout" expression="happy" glow size="100%" title="Bugley flying through a world of imagination" /></div>
         </div>
         <div className="home-hero-copy container-page relative flex h-full flex-col">
           <div className="home-hero-words flex flex-col">
