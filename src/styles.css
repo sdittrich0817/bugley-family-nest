@@ -225,6 +225,15 @@
 }
 
 /* Age-band skins: wrap any subtree in one of these classes */
+.home-hero {
+  height: max(850px, 145vw);
+}
+@media (min-width: 768px) {
+  .home-hero {
+    height: min(740px, max(600px, 70svh));
+  }
+}
+
 .skin-sprouts {
   --radius: 1.5rem;
   --control-h: 3.5rem;
