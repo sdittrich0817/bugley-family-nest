@@ -7,8 +7,8 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
-import kitchenDusk from "@/assets/illustrations/hero-family-wide.jpg";
-import kitchenPortrait from "@/assets/illustrations/hero-family-mobile.jpg";
+import kitchenDusk from "@/assets/illustrations/hero-family-books-wide.jpg";
+import kitchenPortrait from "@/assets/illustrations/hero-family-books-mobile.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
@@ -53,19 +53,21 @@ function Home() {
     <>
       {/* 1. Hero — image-led */}
       <section className="home-hero relative overflow-hidden bg-dusk">
-        <picture className="absolute inset-0">
+        <div className="home-hero-art">
+        <picture>
           <source media="(max-width: 599px)" srcSet={kitchenPortrait} />
           <img
           src={kitchenDusk}
-          alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
+          alt="A family learning together at dusk, with a comic book and storybook on the table and a sunset lake through the window"
           className="h-full w-full object-cover"
           width={1264}
           height={848}
         />
         </picture>
+        <div className="home-hero-window-bugley"><Bugley stage="scout" expression="happy" glow size="100%" title="Bugley glowing in the lake window" /></div>
+        </div>
         <div className="home-hero-copy container-page relative flex h-full flex-col">
           <div className="home-hero-words flex flex-col">
-            <div className="home-hero-mascot"><Bugley stage="scout" expression="happy" glow size={60} title="Bugley the firefly" /></div>
             <h1 className="text-3xl text-background lg:text-5xl">
               Curious, careful, and confident with AI.
             </h1>
