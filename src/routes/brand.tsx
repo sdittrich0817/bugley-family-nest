@@ -51,7 +51,7 @@ const illustrations = [
 
 const logos: { v: LogoVariant; name: string; note: string }[] = [
   { v: "trail", name: "A · Flight path", note: "A glow dot drifts off the y on a dotted trail." },
-  { v: "firefly", name: "B · Bugley leads", note: "Bugley's head and glow sit beside the name." },
+  { v: "firefly", name: "B · Bugley leads (chosen)", note: "Bugley's head and glow sit beside the name. Now used in the header." },
   { v: "lantern", name: "C · Lantern", note: "A glow dot hangs above the l like a lantern." },
 ];
 
@@ -125,21 +125,20 @@ function BrandPage() {
 
       <Block eyebrow="Growing up" title="Bugley grows up with your kid">
         <p className="max-w-2xl text-muted-foreground">Same firefly, same glow, less cute as kids get older. Each step shrinks the eyes, drops the cheeks, thins the lines and adds attitude.</p>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <AgeStep label="Ages 5–7 · Sprouts"><Bugley stage="hatchling" size="100%" /></AgeStep>
           <AgeStep label="Ages 8–10 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
-          <AgeStep label="Ages 11–13 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
-          <AgeStep label="Ages 14+ · Builders" dark><BugleyMature variant="headphones" size="100%" glow={false} /></AgeStep>
+          <AgeStep label="Ages 11–15 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
         </div>
         <h3 className="text-xl">Pre-teen and teen Bugley options</h3>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {matureOptions.map((m) => (
-            <BugleyCard key={m.v} className="flex flex-col gap-3 p-4">
+            <BugleyCard key={m.v} variant={m.v === "headphones" ? "glow" : "default"} className="flex flex-col gap-3 p-4">
               <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
                 <div className="skin-builders rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
               </div>
-              <p className="font-display">{m.name}</p>
+              <p className="flex items-center gap-2 font-display">{m.name}{m.v === "headphones" && <Badge>Chosen</Badge>}</p>
               <p className="text-sm text-muted-foreground">{m.note}</p>
             </BugleyCard>
           ))}

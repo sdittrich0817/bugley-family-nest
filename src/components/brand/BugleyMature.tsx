@@ -82,8 +82,8 @@ export function BugleyMature({
           {/* open, slightly smaller eyes with relaxed brows: confident, not cute */}
           <ellipse cx="73" cy="92" rx="9" ry="10.5" fill="white" />
           <ellipse cx="101" cy="92" rx="9" ry="10.5" fill="white" />
-          <circle cx="75" cy="93.5" r="4.6" fill={ink} />
-          <circle cx="103" cy="93.5" r="4.6" fill={ink} />
+          <circle cx="75" cy="93.5" r="4.6" fill="var(--bugley-pupil)" />
+          <circle cx="103" cy="93.5" r="4.6" fill="var(--bugley-pupil)" />
           <circle cx="76.6" cy="91.4" r="1.6" fill="white" />
           <circle cx="104.6" cy="91.4" r="1.6" fill="white" />
           <path d="M65 77 Q73 74 81 77 M93 77 Q101 73 110 76" stroke={ink} strokeWidth="3" strokeLinecap="round" fill="none" />

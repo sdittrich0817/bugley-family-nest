@@ -78,6 +78,7 @@
   --control-h: 2.75rem;
   --btn-radius: 9999px;
   --dusk: oklch(0.27 0.06 268);
+  --bugley-pupil: oklch(0.2 0.05 268);
   --bugley-body: oklch(0.36 0.07 268);
   --bugley-body-shade: oklch(0.3 0.065 268);
   --bugley-belly: oklch(0.95 0.03 85);
