@@ -7,8 +7,8 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
-import kitchenDusk from "@/assets/illustrations/hero-family-books-wide.jpg";
-import kitchenPortrait from "@/assets/illustrations/hero-family-books-mobile.jpg";
+import kitchenDusk from "@/assets/illustrations/hero-family-books-facing-wide.jpg";
+import kitchenPortrait from "@/assets/illustrations/hero-family-books-facing-mobile.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
@@ -64,7 +64,7 @@ function Home() {
           height={848}
         />
         </picture>
-        <div className="home-hero-window-bugley"><Bugley stage="scout" expression="happy" glow size="100%" title="Bugley glowing in the lake window" /></div>
+        <div className="home-hero-window-bugley"><Bugley stage="scout" expression="happy" glow size="100%" title="Bugley glowing outside by the lake" /></div>
         </div>
         <div className="home-hero-copy container-page relative flex h-full flex-col">
           <div className="home-hero-words flex flex-col">
