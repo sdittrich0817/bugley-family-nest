@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      demo_requests: {
+        Row: {
+          age_range: string
+          city_state: string
+          created_at: string
+          email: string
+          families_count: number
+          group_name: string
+          id: string
+          leader_name: string
+          notes: string | null
+        }
+        Insert: {
+          age_range: string
+          city_state: string
+          created_at?: string
+          email: string
+          families_count: number
+          group_name: string
+          id?: string
+          leader_name: string
+          notes?: string | null
+        }
+        Update: {
+          age_range?: string
+          city_state?: string
+          created_at?: string
+          email?: string
+          families_count?: number
+          group_name?: string
+          id?: string
+          leader_name?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       waitlist_signups: {
         Row: {
           created_at: string
