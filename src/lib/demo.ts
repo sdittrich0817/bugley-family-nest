@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AGE_RANGES = ["6–8", "9–11", "12–15", "Mixed 6–15"] as const;
+export const AGE_RANGES = ["5–6", "7–9", "10–12", "Mixed 5–12"] as const;
 
 export const demoSchema = z.object({
   leaderName: z.string().trim().min(1, "Please share your name").max(100),

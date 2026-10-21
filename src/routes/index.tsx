@@ -12,7 +12,7 @@ import kitchenPortrait from "@/assets/illustrations/hero-creativity-nobooks-mobi
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
-const DESC = "Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.";
+const DESC = "Bugley is the fun, safe way for families to learn AI together, growing with your child from 5 to 12.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,7 +30,7 @@ export const Route = createFileRoute("/")({
 
 const HOW = [
   { icon: Users, title: "Learn together, every week", body: "One family session. Every kid at their own level." },
-  { icon: Sprout, title: "Bugley grows with each child", body: "A personal journey from age 6 to 15." },
+  { icon: Sprout, title: "Bugley grows with each child", body: "A personal journey from age 5 to 12." },
   { icon: Palette, title: "Create in Bugley's Studio", body: "Stories, comics, and pictures your kids make themselves." },
 ];
 
@@ -72,7 +72,7 @@ function Home() {
               Curious, careful, and confident with AI.
             </h1>
             <p className="text-base text-background/85 lg:text-lg">
-              Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.
+              Bugley is the fun, safe way for families to learn AI together, growing with your child from 5 to 12.
             </p>
             <div className="home-hero-actions flex gap-3">
               <Button onClick={() => open("start_free")}>Start free</Button>

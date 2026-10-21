@@ -2,7 +2,7 @@ import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Older-audience takes on Bugley for pre-teens and teens.
+ * Older-audience takes on Bugley for older kids (10–12).
  * Same firefly DNA (round head, two antennae, glowing tail) with less "cute":
  * smaller eyes, no cheeks, thinner lines, more attitude.
  */
