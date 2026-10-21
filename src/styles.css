@@ -249,6 +249,12 @@
 .home-hero-words { gap: 14px; }
 .home-hero-actions { flex-wrap: wrap; }
 .home-hero-actions a, .home-hero-actions button { padding-inline: 18px; }
+@media (max-width: 599px) {
+  .home-hero-copy { padding-bottom: 16px; }
+  .home-hero-words { gap: 10px; }
+  .home-hero-words h1 { font-size: 26px; }
+  .home-hero-words p { font-size: 14px; line-height: 20px; }
+}
 @media (min-width: 600px) {
   .home-hero-art { width: max(100cqw, 149.057cqh); height: max(100cqh, 67.089cqw); }
   .home-hero-window-bugley { left: 78%; top: 19%; width: 7%; }
