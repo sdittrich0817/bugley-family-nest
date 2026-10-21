@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
 import sapphireComicAsset from "@/assets/sapphire-comic.png.asset.json";
+import sheaPhotoAsset from "@/assets/shea-photo.jpg.asset.json";
 import { useWaitlist } from "@/components/site/WaitlistModal";
 
 const TITLE = "Our mission — Bugley";
@@ -71,14 +72,14 @@ function Mission() {
       {/* Founder story */}
       <section className="container-page py-14 sm:py-20">
         <div className="grid items-start gap-10 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          <div className="flex flex-col items-center gap-4 text-center md:sticky md:top-28">
-            <div
-              className="grid size-40 place-items-center rounded-full bg-primary/25 font-display text-5xl text-foreground shadow-soft sm:size-48"
-              aria-label="Photo of Shea coming soon"
-              role="img"
-            >
-              SD
-            </div>
+          <div className="flex w-full flex-col items-center gap-4 text-center">
+            <img
+              src={sheaPhotoAsset.url}
+              alt="Shea Dittrich, founder of Bugley, sitting beside his daughter at a stadium event"
+              className="w-full max-w-xs rounded-2xl object-cover shadow-soft sm:max-w-sm"
+              width={476}
+              height={408}
+            />
             <div>
               <p className="font-display text-2xl text-foreground">Shea Dittrich</p>
               <p className="text-muted-foreground">Founder · Dad · Technology executive</p>
