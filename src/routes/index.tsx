@@ -51,18 +51,16 @@ function Home() {
   return (
     <>
       {/* 1. Hero — image-led */}
-      <section className="relative isolate flex min-h-[85svh] items-end overflow-hidden lg:min-h-[90svh]">
+      <section className="overflow-hidden bg-dusk">
         <img
           src={kitchenDusk}
           alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
-          className="absolute inset-0 -z-20 size-full object-cover object-[60%_center]"
+          className="max-h-[60svh] w-full object-contain"
           width={1280}
           height={960}
         />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-dusk via-dusk/60 to-transparent lg:bg-gradient-to-r lg:from-dusk/90 lg:via-dusk/55" />
-        <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 h-3/5 bg-gradient-to-t from-dusk via-dusk/85 to-transparent lg:hidden" />
-        <div className="container-page flex w-full flex-col gap-6 pb-12 pt-40 sm:pb-16 lg:max-w-none lg:pb-24">
-          <div className="flex max-w-2xl flex-col gap-6 [text-shadow:0_2px_22px_rgb(0_0_0/0.5)]">
+        <div className="container-page flex w-full flex-col gap-6 py-8 sm:py-10">
+          <div className="flex max-w-2xl flex-col gap-6">
             <Bugley stage="scout" expression="happy" glow size={72} title="Bugley the firefly" />
             <h1 className="text-4xl text-background sm:text-5xl lg:text-6xl">
               Curious, careful, and confident with AI.
