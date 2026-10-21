@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { AccountFrame, AccountField } from "@/components/site/AccountFrame";
@@ -10,6 +10,24 @@ export const Route = createFileRoute("/login")({ head: () => accountHead("Parent
 function Login() {
   const [busy, setBusy] = useState(false); const [error, setError] = useState("");
   const navigate = useNavigate(); const { user } = useParentSession();
+  useEffect(() => {
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const access = hash.get("access_token");
+    const refresh = hash.get("refresh_token");
+    if (hash.get("error_description")) {
+      setError("This confirmation link is invalid or expired. Please request a new confirmation by signing up again.");
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+    if (!access || !refresh) return;
+    async function confirm() {
+      const { error: authError } = await supabase.auth.setSession({ access_token: access ?? "", refresh_token: refresh ?? "" });
+      window.history.replaceState(null, "", window.location.pathname);
+      if (authError) { setError("This confirmation link is invalid or expired."); return; }
+      await navigate({ to: "/account", replace: true });
+    }
+    void confirm();
+  }, [navigate]);
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); const fd = new FormData(e.currentTarget);
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
