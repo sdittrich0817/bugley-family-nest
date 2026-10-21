@@ -68,7 +68,7 @@ function WaitlistForm({ source, onDone }: { source: Source; onDone: () => void }
         </Glow>
         <DialogHeader className="items-center text-center">
           <DialogTitle className="font-display text-2xl">You're in line, {name}!</DialogTitle>
-          <DialogDescription>We'll email you the moment the doors open.</DialogDescription>
+          <DialogDescription>Your family's spot is saved. See you soon!</DialogDescription>
         </DialogHeader>
         <Button onClick={onDone}>Sounds good</Button>
       </div>
@@ -113,7 +113,7 @@ function WaitlistForm({ source, onDone }: { source: Source; onDone: () => void }
   );
 }
 
-function Field({ id, label, error, children }: { id: string; label: string; error?: string; children: ReactNode }) {
+function Field({ id, label, error, children }: { id: string; label: string; error?: string | undefined; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
