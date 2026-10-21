@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Bugley, BUGLEY_EXPRESSIONS, BUGLEY_STAGES } from "@/components/brand/Bugley";
-import { BugleyIcon, Logo, type LogoVariant } from "@/components/brand/Logo";
-import { BugleyMature, type MatureStyle } from "@/components/brand/BugleyMature";
+import { BugleyIcon, Logo } from "@/components/brand/Logo";
+import { BugleyMature } from "@/components/brand/BugleyMature";
 import { BugleyCard } from "@/components/brand/BugleyCard";
 import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
@@ -47,26 +47,6 @@ const illustrations = [
   { src: journal, label: "Field-journal sketch" },
   { src: emptyJar, label: "Empty state: waiting for fireflies" },
   { src: emptyPicnic, label: "Empty state: spotting the first light" },
-];
-
-const logos: { v: LogoVariant; name: string; note: string }[] = [
-  { v: "trail", name: "A · Flight path", note: "A glow dot drifts off the y on a dotted trail." },
-  { v: "firefly", name: "B · Bugley leads (chosen)", note: "Bugley's head and glow sit beside the name. Now used in the header." },
-  { v: "lantern", name: "C · Lantern", note: "A glow dot hangs above the l like a lantern." },
-];
-
-const matureOptions: { v: MatureStyle; name: string; note: string }[] = [
-  { v: "streamlined", name: "Streamlined", note: "Smaller open eyes, relaxed brows, slim wings, a half smile." },
-  { v: "headphones", name: "Streamlined + headphones", note: "Same Bugley with gear teens actually wear." },
-  { v: "monoline", name: "Monoline", note: "One clean line weight, like an app icon or sticker." },
-  { v: "glyph", name: "Glyph", note: "Pure shapes: head, antennae, glowing tail. Eyes are tiny glow bars." },
-];
-
-const logoB: { name: string; note: string; mark: ReactNode }[] = [
-  { name: "B1 · Original", note: "Friendly and round. Great for Sprouts and Explorers.", mark: <BugleyIcon size={56} /> },
-  { name: "B2 · Streamlined", note: "Older Bugley with a confident look. Works for all ages.", mark: <BugleyMature variant="streamlined" size={64} glow={false} /> },
-  { name: "B3 · Monoline", note: "Clean outline; feels like a modern app.", mark: <BugleyMature variant="monoline" size={64} glow={false} /> },
-  { name: "B4 · Glyph", note: "Most grown-up. Still clearly a firefly with a glow.", mark: <BugleyMature variant="glyph" size={64} glow={false} /> },
 ];
 
 function AgeStep({ label, dark, children }: { label: string; dark?: boolean; children: ReactNode }) {
@@ -130,59 +110,21 @@ function BrandPage() {
           <AgeStep label="Ages 8–10 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
           <AgeStep label="Ages 11–15 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
         </div>
-        <h3 className="text-xl">Pre-teen and teen Bugley options</h3>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {matureOptions.map((m) => (
-            <BugleyCard key={m.v} variant={m.v === "headphones" ? "glow" : "default"} className="flex flex-col gap-3 p-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
-                <div className="skin-builders rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
-              </div>
-              <p className="flex items-center gap-2 font-display">{m.name}{m.v === "headphones" && <Badge>Chosen</Badge>}</p>
-              <p className="text-sm text-muted-foreground">{m.note}</p>
-            </BugleyCard>
-          ))}
-        </div>
+        <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
+          <span className="text-sm text-muted-foreground">Builders Bugley, light and dark:</span>
+          <div className="size-28 rounded-xl bg-background p-2"><BugleyMature variant="headphones" size="100%" /></div>
+          <div className="skin-builders size-28 rounded-xl bg-background p-2"><BugleyMature variant="headphones" size="100%" /></div>
+        </BugleyCard>
       </Block>
 
-      <Block eyebrow="Logo" title="Option B, grown up">
-        <p className="max-w-2xl text-muted-foreground">Keeps your favorite (Bugley beside the name) but swaps in an older Bugley. B1 is the original for comparison.</p>
+      <Block eyebrow="Logo" title="The Bugley logo">
         <div className="grid gap-6 md:grid-cols-2">
-          {logoB.map((l) => (
-            <BugleyCard key={l.name} className="flex flex-col gap-4">
-              <div className="flex min-h-28 items-center justify-center gap-3 rounded-xl bg-background px-4">
-                {l.mark}
-                <span className="font-display text-5xl leading-none tracking-tight text-dusk">Bugley</span>
-              </div>
-              <div className="skin-builders flex min-h-20 items-center justify-center gap-2 rounded-xl bg-background">
-                {l.mark}
-                <span className="font-display text-2xl leading-none tracking-tight text-dusk">Bugley</span>
-              </div>
-              <div>
-                <h3 className="text-lg">{l.name}</h3>
-                <p className="text-sm text-muted-foreground">{l.note}</p>
-              </div>
-            </BugleyCard>
-          ))}
-        </div>
-      </Block>
-
-      <Block eyebrow="Logo" title="Three logo options">
-        <div className="grid gap-6 md:grid-cols-3">
-          {logos.map((l) => (
-            <BugleyCard key={l.v} className="flex flex-col gap-6">
-              <div className="flex min-h-32 items-center justify-center rounded-xl bg-background">
-                <Logo variant={l.v} size="lg" />
-              </div>
-              <div className="skin-builders flex min-h-20 items-center justify-center rounded-xl bg-background">
-                <span className="text-foreground"><Logo variant={l.v} className="text-foreground" /></span>
-              </div>
-              <div>
-                <h3 className="text-lg">{l.name}</h3>
-                <p className="text-sm text-muted-foreground">{l.note}</p>
-              </div>
-            </BugleyCard>
-          ))}
+          <div className="flex min-h-40 items-center justify-center rounded-2xl border border-border bg-card p-6">
+            <Logo variant="firefly" size="lg" />
+          </div>
+          <div className="skin-builders flex min-h-40 items-center justify-center rounded-2xl bg-background p-6">
+            <Logo variant="firefly" size="lg" />
+          </div>
         </div>
         <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
           <span className="text-sm text-muted-foreground">Favicon & app icon:</span>
