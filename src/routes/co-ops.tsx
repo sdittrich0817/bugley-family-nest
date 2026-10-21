@@ -33,7 +33,7 @@ export const Route = createFileRoute("/co-ops")({
 });
 
 const GETS = [
-  { icon: CalendarDays, title: "Weekly 50-minute sessions", body: "Built for mixed ages, so a 6-year-old and a 14-year-old learn side by side." },
+  { icon: CalendarDays, title: "Weekly 50-minute sessions", body: "Built for mixed ages, so a 5-year-old and a 12-year-old learn side by side." },
   { icon: FileText, title: "Scripts and 5-minute primers", body: "Read a short primer, follow the script, and lead with confidence." },
   { icon: Printer, title: "Printables", body: "Warm-ups, field-journal pages, and handouts ready to print." },
   { icon: Users, title: "A leader view", body: "Manage your families, see who's joined, and keep everyone on track." },

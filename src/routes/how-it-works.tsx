@@ -23,7 +23,7 @@ import { useWaitlist } from "@/components/site/WaitlistModal";
 
 const TITLE = "How it works — Bugley";
 const DESC =
-  "Bugley in under two minutes: one weekly family session, a journey that grows from 6 to 15, and half the week off-screen together.";
+  "Bugley in under two minutes: one weekly family session, a journey that grows from 5 to 12, and half the week off-screen together.";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
@@ -43,7 +43,7 @@ const LAYERS = [
   {
     icon: Sprout,
     title: "Kid Journey",
-    body: "Each child follows their own path from 6 to 15, built on what they've actually mastered — not their age or grade.",
+    body: "Each child follows their own path from 5 to 12, built on what they've actually mastered — not their age or grade.",
   },
   {
     icon: Users,
@@ -88,22 +88,22 @@ const BANDS = [
     skin: "skin-sprouts",
     stage: "hatchling" as const,
     name: "Sprouts",
-    ages: "6–8",
+    ages: "5–6",
     activity: "Bugley helps them write and illustrate their own bedtime story.",
   },
   {
     skin: "skin-explorers",
     stage: "scout" as const,
     name: "Explorers",
-    ages: "9–11",
+    ages: "7–9",
     activity: "They build a mini comic with AI, then hunt down its mistakes.",
   },
   {
     skin: "skin-builders",
     stage: "engineer" as const,
     name: "Builders",
-    ages: "12–15",
-    activity: "They fact-check an AI research report line by line.",
+    ages: "10–12",
+    activity: "They fact-check an AI answer and catch what it got wrong.",
   },
 ];
 
@@ -215,7 +215,7 @@ function HowItWorks() {
       <section className="bg-muted py-14 sm:py-20">
         <div className="container-page">
           <SectionHeader
-            eyebrow="Ages 6 to 15"
+            eyebrow="Ages 5 to 12"
             title="Same family session. Different levels."
             description="Every kid works at their own level inside the same weekly topic."
           />
