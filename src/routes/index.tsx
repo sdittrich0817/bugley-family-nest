@@ -7,7 +7,8 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
-import kitchenDusk from "@/assets/illustrations/hero-horizon.jpg";
+import kitchenDusk from "@/assets/illustrations/hero-family-wide.jpg";
+import kitchenPortrait from "@/assets/illustrations/hero-family-mobile.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
@@ -51,24 +52,27 @@ function Home() {
   return (
     <>
       {/* 1. Hero — image-led */}
-      <section className="overflow-hidden bg-dusk">
-        <img
+      <section className="home-hero relative overflow-hidden bg-dusk">
+        <picture className="absolute inset-0">
+          <source media="(max-width: 767px)" srcSet={kitchenPortrait} />
+          <img
           src={kitchenDusk}
           alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
-          className="max-h-[60svh] w-full object-contain"
-          width={1280}
-          height={960}
+          className="h-full w-full object-cover"
+          width={1264}
+          height={848}
         />
-        <div className="container-page flex w-full flex-col gap-6 py-8 sm:py-10">
-          <div className="flex max-w-2xl flex-col gap-6">
-            <Bugley stage="scout" expression="happy" glow size={72} title="Bugley the firefly" />
-            <h1 className="text-4xl text-background sm:text-5xl lg:text-6xl">
+        </picture>
+        <div className="home-hero-copy container-page relative flex h-full flex-col justify-end pb-8 md:justify-center md:py-10">
+          <div className="flex max-w-xl flex-col gap-5 md:w-[40%] md:max-w-md">
+            <div className="hidden md:block"><Bugley stage="scout" expression="happy" glow size={60} title="Bugley the firefly" /></div>
+            <h1 className="text-3xl text-background sm:text-4xl lg:text-5xl">
               Curious, careful, and confident with AI.
             </h1>
-            <p className="text-lg text-background/85 sm:text-xl">
+            <p className="text-base text-background/85 lg:text-lg">
               Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.
             </p>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-wrap gap-3 md:flex-col md:items-start xl:flex-row">
               <Button size="lg" onClick={() => open("start_free")}>Start free</Button>
               <Button size="lg" variant="secondary" asChild>
                 <Link to="/co-ops">Book a co-op demo</Link>
