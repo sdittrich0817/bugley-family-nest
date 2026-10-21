@@ -6,9 +6,11 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Wordmark } from "@/components/brand/Wordmark";
 import { mainNav } from "@/lib/nav";
 import { useWaitlist } from "./WaitlistModal";
+import { useParentSession } from "./ParentSession";
 
 export function SiteHeader() {
   const { open } = useWaitlist();
+  const { user, signOut } = useParentSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const linkCls =
     "rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary";
@@ -27,12 +29,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button variant="secondary" size="sm" onClick={() => open("log_in")}>Log in</Button>
-          <Button size="sm" onClick={() => open("start_free")}>Start free</Button>
+          {user ? <><Button asChild size="sm"><Link to="/account">Your account</Link></Button><Button variant="secondary" size="sm" onClick={() => void signOut()}>Log out</Button></> : <><Button variant="secondary" size="sm" onClick={() => open("log_in")}>Log in</Button><Button size="sm" onClick={() => open("start_free")}>Start free</Button></>}
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          <Button size="sm" onClick={() => open("start_free")}>Start free</Button>
+          {user ? <Button asChild size="sm"><Link to="/account">Your account</Link></Button> : <Button size="sm" onClick={() => open("start_free")}>Start free</Button>}
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
@@ -53,8 +54,7 @@ export function SiteHeader() {
                 ))}
               </nav>
               <div className="mt-auto flex flex-col gap-3">
-                <Button variant="secondary" onClick={() => { setMenuOpen(false); open("log_in"); }}>Log in</Button>
-                <Button onClick={() => { setMenuOpen(false); open("start_free"); }}>Start free</Button>
+                {user ? <Button variant="secondary" onClick={() => { setMenuOpen(false); void signOut(); }}>Log out</Button> : <><Button variant="secondary" onClick={() => { setMenuOpen(false); open("log_in"); }}>Log in</Button><Button onClick={() => { setMenuOpen(false); open("start_free"); }}>Start free</Button></>}
               </div>
             </SheetContent>
           </Sheet>

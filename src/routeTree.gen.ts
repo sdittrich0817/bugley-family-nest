@@ -10,23 +10,39 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BrandRouteImport } from './routes/brand'
 import { Route as CoOpsRouteImport } from './routes/co-ops'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MissionRouteImport } from './routes/mission'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SafetyRouteImport } from './routes/safety'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrandRoute = BrandRouteImport.update({
@@ -44,9 +60,19 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MissionRoute = MissionRouteImport.update({
@@ -64,9 +90,19 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SafetyRoute = SafetyRouteImport.update({
   id: '/safety',
   path: '/safety',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -84,6 +120,11 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
   id: '/resources/',
   path: '/resources/',
@@ -97,50 +138,69 @@ const ResourcesSlugRoute = ResourcesSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/safety': typeof SafetyRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/safety': typeof SafetyRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/safety': typeof SafetyRoute
+  '/signup': typeof SignupRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
 }
@@ -148,63 +208,88 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
     | '/brand'
     | '/co-ops'
     | '/contact'
+    | '/forgot-password'
     | '/how-it-works'
+    | '/login'
     | '/mission'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/safety'
+    | '/signup'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/account'
     | '/resources/$slug'
     | '/resources/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auth'
     | '/brand'
     | '/co-ops'
     | '/contact'
+    | '/forgot-password'
     | '/how-it-works'
+    | '/login'
     | '/mission'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/safety'
+    | '/signup'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/account'
     | '/resources/$slug'
     | '/resources'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
     | '/brand'
     | '/co-ops'
     | '/contact'
+    | '/forgot-password'
     | '/how-it-works'
+    | '/login'
     | '/mission'
     | '/pricing'
     | '/privacy'
+    | '/reset-password'
     | '/safety'
+    | '/signup'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/_authenticated/account'
     | '/resources/$slug'
     | '/resources/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   CoOpsRoute: typeof CoOpsRoute
   ContactRoute: typeof ContactRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  LoginRoute: typeof LoginRoute
   MissionRoute: typeof MissionRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   SafetyRoute: typeof SafetyRoute
+  SignupRoute: typeof SignupRoute
   StudioRoute: typeof StudioRoute
   StudioPreviewRoute: typeof StudioPreviewRoute
   TermsRoute: typeof TermsRoute
@@ -219,6 +304,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/brand': {
@@ -242,11 +341,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/how-it-works': {
       id: '/how-it-works'
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mission': {
@@ -270,11 +383,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/safety': {
       id: '/safety'
       path: '/safety'
       fullPath: '/safety'
       preLoaderRoute: typeof SafetyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -298,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/resources/': {
       id: '/resources/'
       path: '/resources'
@@ -315,16 +449,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   CoOpsRoute: CoOpsRoute,
   ContactRoute: ContactRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
+  LoginRoute: LoginRoute,
   MissionRoute: MissionRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   SafetyRoute: SafetyRoute,
+  SignupRoute: SignupRoute,
   StudioRoute: StudioRoute,
   StudioPreviewRoute: StudioPreviewRoute,
   TermsRoute: TermsRoute,
