@@ -84,13 +84,13 @@ function WaitlistForm({ source, onDone }: { source: Source; onDone: () => void }
         <DialogDescription>Leave a few details and we'll save your family a spot.</DialogDescription>
       </DialogHeader>
 
-      <Field id="firstName" label="Your first name" error={errors.firstName}>
+      <Field id="firstName" label="Your first name" error={errors["firstName"]}>
         <Input id="firstName" name="firstName" autoComplete="given-name" maxLength={80} className="h-11 rounded-xl" />
       </Field>
-      <Field id="email" label="Email" error={errors.email}>
+      <Field id="email" label="Email" error={errors["email"]}>
         <Input id="email" name="email" type="email" autoComplete="email" maxLength={255} className="h-11 rounded-xl" />
       </Field>
-      <Field id="kidsCount" label="How many kids?" error={errors.kidsCount}>
+      <Field id="kidsCount" label="How many kids?" error={errors["kidsCount"]}>
         <select
           id="kidsCount"
           name="kidsCount"
