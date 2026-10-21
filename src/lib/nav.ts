@@ -1,5 +1,6 @@
 export const mainNav = [
   { to: "/how-it-works", label: "How it works" },
+  { to: "/learning", label: "How they learn" },
   { to: "/studio-preview", label: "Bugley's Studio" },
   { to: "/safety", label: "Safety" },
   { to: "/co-ops", label: "For co-ops" },
