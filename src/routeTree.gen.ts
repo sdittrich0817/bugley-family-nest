@@ -17,11 +17,12 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as MissionRouteImport } from './routes/mission'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
+import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -63,11 +64,6 @@ const PrivacyRoute = PrivacyRouteImport.update({
   path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ResourcesRoute = ResourcesRouteImport.update({
-  id: '/resources',
-  path: '/resources',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SafetyRoute = SafetyRouteImport.update({
   id: '/safety',
   path: '/safety',
@@ -88,6 +84,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
+  id: '/resources/',
+  path: '/resources/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResourcesSlugRoute = ResourcesSlugRouteImport.update({
+  id: '/resources/$slug',
+  path: '/resources/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -98,11 +104,12 @@ export interface FileRoutesByFullPath {
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/resources/$slug': typeof ResourcesSlugRoute
+  '/resources/': typeof ResourcesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -113,11 +120,12 @@ export interface FileRoutesByTo {
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/resources/$slug': typeof ResourcesSlugRoute
+  '/resources': typeof ResourcesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -129,11 +137,12 @@ export interface FileRoutesById {
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
-  '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
+  '/resources/$slug': typeof ResourcesSlugRoute
+  '/resources/': typeof ResourcesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -146,11 +155,12 @@ export interface FileRouteTypes {
     | '/mission'
     | '/pricing'
     | '/privacy'
-    | '/resources'
     | '/safety'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/resources/$slug'
+    | '/resources/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,11 +171,12 @@ export interface FileRouteTypes {
     | '/mission'
     | '/pricing'
     | '/privacy'
-    | '/resources'
     | '/safety'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/resources/$slug'
+    | '/resources'
   id:
     | '__root__'
     | '/'
@@ -176,11 +187,12 @@ export interface FileRouteTypes {
     | '/mission'
     | '/pricing'
     | '/privacy'
-    | '/resources'
     | '/safety'
     | '/studio'
     | '/studio-preview'
     | '/terms'
+    | '/resources/$slug'
+    | '/resources/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -192,11 +204,12 @@ export interface RootRouteChildren {
   MissionRoute: typeof MissionRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
-  ResourcesRoute: typeof ResourcesRoute
   SafetyRoute: typeof SafetyRoute
   StudioRoute: typeof StudioRoute
   StudioPreviewRoute: typeof StudioPreviewRoute
   TermsRoute: typeof TermsRoute
+  ResourcesSlugRoute: typeof ResourcesSlugRoute
+  ResourcesIndexRoute: typeof ResourcesIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -257,13 +270,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/resources': {
-      id: '/resources'
-      path: '/resources'
-      fullPath: '/resources'
-      preLoaderRoute: typeof ResourcesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/safety': {
       id: '/safety'
       path: '/safety'
@@ -292,6 +298,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/resources/': {
+      id: '/resources/'
+      path: '/resources'
+      fullPath: '/resources/'
+      preLoaderRoute: typeof ResourcesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources/$slug': {
+      id: '/resources/$slug'
+      path: '/resources/$slug'
+      fullPath: '/resources/$slug'
+      preLoaderRoute: typeof ResourcesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -304,11 +324,12 @@ const rootRouteChildren: RootRouteChildren = {
   MissionRoute: MissionRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
-  ResourcesRoute: ResourcesRoute,
   SafetyRoute: SafetyRoute,
   StudioRoute: StudioRoute,
   StudioPreviewRoute: StudioPreviewRoute,
   TermsRoute: TermsRoute,
+  ResourcesSlugRoute: ResourcesSlugRoute,
+  ResourcesIndexRoute: ResourcesIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
