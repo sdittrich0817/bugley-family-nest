@@ -2,11 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   BookMarked,
+  Hammer,
   Image,
   Library,
   MoonStar,
   PenLine,
+  Printer,
   Quote,
+  Truck,
   WandSparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,10 +24,12 @@ import comicMystery from "@/assets/illustrations/studio-comic-mystery.jpg";
 import comicSpace from "@/assets/illustrations/studio-comic-space.jpg";
 import studioStory from "@/assets/illustrations/studio-story.jpg";
 import studioPicture from "@/assets/illustrations/studio-picture.jpg";
+import studioPrintBook from "@/assets/illustrations/studio-print-book.jpg";
+import studioBookshelf from "@/assets/illustrations/studio-bookshelf.jpg";
 
 const TITLE = "Bugley's Studio — Bugley";
 const DESC =
-  "Kids write and decide. Bugley suggests, illustrates, and asks what happens next. Comics, illustrated stories, and pictures — saved to every child's own shelf.";
+  "Kids write and decide. Bugley suggests, illustrates, and asks what happens next. Comics, illustrated stories, and books of what they build — saved to every child's own shelf, and printed and shipped to your house.";
 
 export const Route = createFileRoute("/studio-preview")({
   head: () => ({
@@ -103,9 +108,40 @@ const SHELF = [
   },
   {
     icon: BookMarked,
-    title: "Printed Family Story Book",
-    body: "Once a year, turn a family's best stories and pictures into a real book for the coffee table.",
+    title: "Books you can order and hold",
+    body: "A shelf of work turns into small printed books, shipped to your house. Ordering is being set up now.",
     comingSoon: true,
+  },
+];
+
+const BOOK_KINDS = [
+  {
+    icon: BookMarked,
+    title: "Comic books",
+    body: "A run of panels becomes a real comic — their cover, their order, their ending. Bound soft, sized for two hands.",
+  },
+  {
+    icon: Hammer,
+    title: "Books of what they build",
+    body: "A blanket fort, a marble run, a board game they invented. They write it up, Bugley illustrates the steps, and it becomes a how-to book someone else could follow.",
+  },
+];
+
+const ORDER_STEPS = [
+  {
+    icon: Library,
+    title: "Pick what goes inside",
+    body: "Choose the comics, stories, or build pages you want between one cover. Nothing gets picked for you.",
+  },
+  {
+    icon: Printer,
+    title: "Order it in Bugley",
+    body: "One tap from the shelf. You see the size, the page count, and the price before anything is charged.",
+  },
+  {
+    icon: Truck,
+    title: "It comes to your house",
+    body: "Printed in short runs and shipped to your door — with a spare copy for grandma if you want one.",
   },
 ];
 
@@ -122,8 +158,8 @@ function StudioPreview() {
           <Badge variant="secondary">Bugley's Studio</Badge>
           <h1 className="text-4xl text-foreground sm:text-5xl">Your kids are the creators. Bugley helps.</h1>
           <p className="text-lg text-muted-foreground">
-            Comics, illustrated stories, and pictures that your children make themselves — with a firefly who draws
-            the pictures and never takes over the story.
+            Comics, illustrated stories, and books of what they build — made by your children themselves, with a
+            firefly who draws the pictures and never takes over the story.
           </p>
         </div>
       </section>
@@ -277,7 +313,82 @@ function StudioPreview() {
         </div>
       </section>
 
-      {/* 6. CTA */}
+      {/* 6. Printed books, ordered in Bugley */}
+      <section className="container-page py-14 sm:py-20">
+        <SectionHeader
+          eyebrow="Printed books"
+          title="Comics and build books, printed and shipped to your door"
+          description="Kids turn their work into small books of their own. Parents order them right in Bugley — no uploading files, no email back and forth, no third-party site."
+        />
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {BOOK_KINDS.map(({ icon: Icon, title, body }) => (
+            <BugleyCard key={title} className="flex flex-col gap-3">
+              <Glow size="sm" className="self-start">
+                <span className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                  <Icon className="size-6" />
+                </span>
+              </Glow>
+              <h3 className="text-xl text-foreground">{title}</h3>
+              <p className="text-muted-foreground">{body}</p>
+            </BugleyCard>
+          ))}
+        </div>
+
+        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+          <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+            <img
+              src={studioBookshelf}
+              alt="A low shelf at home holding five small printed books a kid made, each with a hand-drawn cover"
+              loading="lazy"
+              width={1024}
+              height={768}
+              className="h-auto w-full"
+            />
+            <figcaption className="p-5">
+              <p className="font-display text-lg text-foreground">Most of them are small</p>
+              <p className="text-sm text-muted-foreground">
+                Comic and pocket sizes, printed in short runs — a book small enough to hold in two hands or slip into a
+                school bag.
+              </p>
+            </figcaption>
+          </figure>
+          <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+            <img
+              src={studioPrintBook}
+              alt="A parent and two children at a kitchen table at dusk, looking through a small printed book together"
+              loading="lazy"
+              width={1024}
+              height={768}
+              className="h-auto w-full"
+            />
+            <figcaption className="p-5">
+              <p className="font-display text-lg text-foreground">Ordered in Bugley, delivered to your house</p>
+              <p className="text-sm text-muted-foreground">
+                Pick what goes between one cover, tap order, and a copy shows up at your door.
+              </p>
+            </figcaption>
+          </figure>
+        </div>
+
+        <div className="mt-12 grid gap-5 sm:grid-cols-3">
+          {ORDER_STEPS.map(({ icon: Icon, title, body }) => (
+            <BugleyCard key={title} variant="muted" className="flex flex-col gap-3">
+              <span className="grid size-11 place-items-center rounded-full bg-primary/25 text-foreground">
+                <Icon className="size-5" />
+              </span>
+              <p className="font-display text-lg text-foreground">{title}</p>
+              <p className="text-sm text-muted-foreground">{body}</p>
+            </BugleyCard>
+          ))}
+        </div>
+
+        <p className="mt-8 text-sm text-muted-foreground">
+          We keep printing simple: small books, short runs, made with a print partner we trust. Ordering opens with the
+          first family sessions, and the bigger Family Story Book is still on the way.
+        </p>
+      </section>
+
+      {/* 7. CTA */}
       <section className="bg-dusk py-16 sm:py-24">
         <div className="container-page flex flex-col items-center gap-6 text-center">
           <Glow size="lg">
