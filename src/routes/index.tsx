@@ -60,6 +60,7 @@ function Home() {
           height={960}
         />
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-dusk via-dusk/60 to-transparent lg:bg-gradient-to-r lg:from-dusk/90 lg:via-dusk/55" />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 -z-10 h-3/5 bg-gradient-to-t from-dusk via-dusk/85 to-transparent lg:hidden" />
         <div className="container-page flex w-full flex-col gap-6 pb-12 pt-40 sm:pb-16 lg:max-w-none lg:pb-24">
           <div className="flex max-w-2xl flex-col gap-6 [text-shadow:0_2px_22px_rgb(0_0_0/0.5)]">
             <Bugley stage="scout" expression="happy" glow size={72} title="Bugley the firefly" />
