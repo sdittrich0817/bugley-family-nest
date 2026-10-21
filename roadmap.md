@@ -8,5 +8,5 @@
 - [ ] Replace placeholder article text on /resources with real parent posts.
 - [ ] Build the child profile backend (first name or nickname, age, avatar) once accounts are in use.
 - [ ] Add email notifications for new co-op demo requests and waitlist entries.
-- [ ] Add a "How they learn" page to the main menu (method, strands by age, seasons, end goals).
-- [ ] Reshape How it Works into the whole Bugley picture: learning + studio + parent side, linking to both.
+- [x] Add a "How they learn" page to the main menu (method, strands by age, seasons, end goals).
+- [x] Reshape How it Works into the whole Bugley picture: learning + studio + parent side, linking to both.
