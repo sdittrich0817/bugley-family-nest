@@ -20,6 +20,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as StudioRouteImport } from './routes/studio'
+import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
 
 const IndexRoute = IndexRouteImport.update({
@@ -77,6 +78,11 @@ const StudioRoute = StudioRouteImport.update({
   path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StudioPreviewRoute = StudioPreviewRouteImport.update({
+  id: '/studio-preview',
+  path: '/studio-preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
+  '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
 }
 export interface FileRoutesByTo {
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
+  '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
 }
 export interface FileRoutesById {
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/resources': typeof ResourcesRoute
   '/safety': typeof SafetyRoute
   '/studio': typeof StudioRoute
+  '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
 }
 export interface FileRouteTypes {
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/safety'
     | '/studio'
+    | '/studio-preview'
     | '/terms'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/safety'
     | '/studio'
+    | '/studio-preview'
     | '/terms'
   id:
     | '__root__'
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/resources'
     | '/safety'
     | '/studio'
+    | '/studio-preview'
     | '/terms'
   fileRoutesById: FileRoutesById
 }
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   ResourcesRoute: typeof ResourcesRoute
   SafetyRoute: typeof SafetyRoute
   StudioRoute: typeof StudioRoute
+  StudioPreviewRoute: typeof StudioPreviewRoute
   TermsRoute: typeof TermsRoute
 }
 
@@ -265,6 +278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/studio-preview': {
+      id: '/studio-preview'
+      path: '/studio-preview'
+      fullPath: '/studio-preview'
+      preLoaderRoute: typeof StudioPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -287,6 +307,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResourcesRoute: ResourcesRoute,
   SafetyRoute: SafetyRoute,
   StudioRoute: StudioRoute,
+  StudioPreviewRoute: StudioPreviewRoute,
   TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
