@@ -50,34 +50,31 @@ function Home() {
   const { open } = useWaitlist();
   return (
     <>
-      {/* 1. Hero */}
-      <section className="container-page grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-2 lg:py-24">
-        <div className="flex flex-col gap-6">
-          <h1 className="text-4xl text-foreground sm:text-5xl lg:text-6xl">
-            Your kids are already using AI. Now you can learn it together.
-          </h1>
-          <p className="text-lg text-muted-foreground sm:text-xl">
-            Bugley is the fun, safe family platform that grows with your child from 6 to 15.
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" onClick={() => open("start_free")}>Start free</Button>
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/co-ops">Book a co-op demo</Link>
-            </Button>
-          </div>
-        </div>
-        <div className="relative">
-          <img
-            src={kitchenDusk}
-            alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
-            className="aspect-[4/3] w-full rounded-3xl object-cover shadow-lift"
-            width={1280}
-            height={960}
-          />
-          <div className="absolute -top-6 right-4 sm:-top-8 sm:right-8">
-            <Glow size="lg">
-              <Bugley stage="scout" expression="happy" glow size={110} title="Bugley the firefly" />
-            </Glow>
+      {/* 1. Hero — image-led */}
+      <section className="relative isolate flex min-h-[85svh] items-end overflow-hidden lg:min-h-[90svh]">
+        <img
+          src={kitchenDusk}
+          alt="A family at the kitchen table at dusk, kids excited, a golden horizon through the window"
+          className="absolute inset-0 -z-20 size-full object-cover object-[60%_center]"
+          width={1280}
+          height={960}
+        />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-dusk via-dusk/60 to-transparent lg:bg-gradient-to-r lg:from-dusk/90 lg:via-dusk/40" />
+        <div className="container-page flex w-full flex-col gap-6 pb-12 pt-40 sm:pb-16 lg:max-w-none lg:pb-24">
+          <div className="flex max-w-2xl flex-col gap-6">
+            <Bugley stage="scout" expression="happy" glow size={72} title="Bugley the firefly" />
+            <h1 className="text-4xl text-background sm:text-5xl lg:text-6xl">
+              Raise kids who are ready for a world with AI.
+            </h1>
+            <p className="text-lg text-background/85 sm:text-xl">
+              Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.
+            </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button size="lg" onClick={() => open("start_free")}>Start free</Button>
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/co-ops">Book a co-op demo</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
