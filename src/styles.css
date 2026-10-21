@@ -226,12 +226,24 @@
 
 /* Age-band skins: wrap any subtree in one of these classes */
 .home-hero {
-  height: max(850px, 145vw);
+  height: calc(100svh - 89px);
 }
-@media (min-width: 768px) {
-  .home-hero {
-    height: min(740px, max(600px, 70svh));
-  }
+.home-hero-copy { justify-content: flex-end; padding-bottom: 24px; }
+.home-hero-words { gap: 14px; }
+.home-hero-mascot { display: none; }
+.home-hero-actions { flex-wrap: wrap; }
+.home-hero-actions a, .home-hero-actions button { padding-inline: 18px; }
+@media (min-width: 600px) {
+  .home-hero-copy { justify-content: center; padding-block: 24px; }
+  .home-hero-words { width: 40%; max-width: 448px; gap: 18px; }
+  .home-hero-actions { flex-direction: column; align-items: flex-start; }
+}
+@media (min-width: 1024px) {
+  .home-hero { height: min(740px, calc(100svh - 105px)); }
+  .home-hero-mascot { display: block; }
+}
+@media (min-width: 1280px) {
+  .home-hero-actions { flex-direction: row; }
 }
 
 .skin-sprouts {
