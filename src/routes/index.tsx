@@ -11,7 +11,7 @@ import kitchenDusk from "@/assets/illustrations/hero-horizon.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
 
 const TITLE = "Bugley — Learn AI together as a family";
-const DESC = "Your kids are already using AI. Bugley is the fun, safe family platform that grows with your child from 6 to 15.";
+const DESC = "Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -64,7 +64,7 @@ function Home() {
           <div className="flex max-w-2xl flex-col gap-6">
             <Bugley stage="scout" expression="happy" glow size={72} title="Bugley the firefly" />
             <h1 className="text-4xl text-background sm:text-5xl lg:text-6xl">
-              Raise kids who are ready for a world with AI.
+              Curious, careful, and confident with AI.
             </h1>
             <p className="text-lg text-background/85 sm:text-xl">
               Bugley is the fun, safe way for families to learn AI together, growing with your child from 6 to 15.
