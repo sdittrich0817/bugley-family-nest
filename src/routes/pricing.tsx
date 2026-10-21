@@ -41,7 +41,7 @@ const PLANS = [
       "Up to 5 kids",
       "Every Season, included",
       "The Parent Hub",
-      "Bugley's Studio — 10 glow per child per day",
+      "Bugley's Studio — stories and games, 10 glow per child per day",
     ],
   },
   {

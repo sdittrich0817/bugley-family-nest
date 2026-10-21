@@ -72,13 +72,13 @@ const SESSION_STEPS = [
 
 const EXTRAS = [
   { icon: Utensils, title: "Dinner question", note: "One AI question to talk over at the table" },
-  { icon: PencilRuler, title: "Studio time", note: "Kids keep creating on their own schedule" },
+  { icon: PencilRuler, title: "Studio time", note: "Kids keep making stories or games on their own schedule" },
   { icon: NotebookPen, title: "Field journal", note: "A few notes on what they noticed" },
 ];
 
 const STRANDS = [
   { icon: Lightbulb, title: "Understand", line: "Know what AI is and how it works — in plain words." },
-  { icon: Palette, title: "Create", line: "Make real things with AI: stories, comics, pictures." },
+  { icon: Palette, title: "Create", line: "Make real things with AI: stories, comics, pictures, games." },
   { icon: ScanSearch, title: "Discern", line: "Spot when AI is wrong, biased, or made something up." },
   { icon: Compass, title: "Decide", line: "Choose when to use AI — and when to do it yourself." },
 ];
