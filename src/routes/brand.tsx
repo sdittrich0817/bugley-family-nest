@@ -56,7 +56,7 @@ const logos: { v: LogoVariant; name: string; note: string }[] = [
 ];
 
 const matureOptions: { v: MatureStyle; name: string; note: string }[] = [
-  { v: "streamlined", name: "Streamlined", note: "Almond eyes, slim wings, a half smile. Confident, not cute." },
+  { v: "streamlined", name: "Streamlined", note: "Smaller open eyes, relaxed brows, slim wings, a half smile." },
   { v: "headphones", name: "Streamlined + headphones", note: "Same Bugley with gear teens actually wear." },
   { v: "monoline", name: "Monoline", note: "One clean line weight, like an app icon or sticker." },
   { v: "glyph", name: "Glyph", note: "Pure shapes: head, antennae, glowing tail. Eyes are tiny glow bars." },
