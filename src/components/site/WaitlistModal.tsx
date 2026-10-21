@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Glow } from "@/components/brand/Glow";
+import { Bugley } from "@/components/brand/Bugley";
 import { waitlistSchema } from "@/lib/waitlist";
 import { joinWaitlist } from "@/lib/waitlist.functions";
 
@@ -64,7 +65,7 @@ function WaitlistForm({ source, onDone }: { source: Source; onDone: () => void }
     return (
       <div className="flex flex-col items-center gap-5 py-4 text-center">
         <Glow size="sm">
-          <span className="text-5xl" aria-hidden>✨</span>
+          <Bugley stage="scout" expression="celebrating" size={120} />
         </Glow>
         <DialogHeader className="items-center text-center">
           <DialogTitle className="font-display text-2xl">You're in line, {name}!</DialogTitle>
@@ -77,6 +78,7 @@ function WaitlistForm({ source, onDone }: { source: Source; onDone: () => void }
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+      <Bugley stage="scout" expression="happy" size={72} className="-mb-2" />
       <DialogHeader className="text-left">
         <DialogTitle className="font-display text-2xl sm:text-3xl">
           We're opening the doors soon. Be first in line!

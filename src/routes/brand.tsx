@@ -126,7 +126,6 @@ function BrandPage() {
             <Logo variant="firefly" size="lg" />
           </div>
         </div>
-        </div>
         <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
           <span className="text-sm text-muted-foreground">Favicon & app icon:</span>
           <BugleyIcon size={16} />
