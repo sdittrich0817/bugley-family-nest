@@ -1,0 +1,4 @@
+- [ ] Add verified parent signup, adult attestation, profiles and timestamped consent.
+- [ ] Add login, forgot/reset password and private parent account page.
+- [ ] Replace waitlist actions with real account navigation; preserve waitlist data.
+- [ ] Verify account flows and family isolation.
