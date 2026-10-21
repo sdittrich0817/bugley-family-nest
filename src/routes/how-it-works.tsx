@@ -12,6 +12,8 @@ import {
   PencilRuler,
   NotebookPen,
   ArrowRight,
+  GraduationCap,
+  HeartHandshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +40,30 @@ export const Route = createFileRoute("/how-it-works")({
   }),
   component: HowItWorks,
 });
+
+const ECOSYSTEM = [
+  {
+    icon: GraduationCap,
+    title: "Learning",
+    body: "A weekly 50-minute family session. Make it, break it, think about it — at each kid's own level.",
+    to: "/learning" as const,
+    cta: "How they learn",
+  },
+  {
+    icon: Palette,
+    title: "Bugley's Studio",
+    body: "Where kids make stories, comics, and games — and play adventures with Bugley. Books can be printed and shipped home.",
+    to: "/studio-preview" as const,
+    cta: "Visit the Studio",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Parent Hub",
+    body: "You create every account, see everything your kids make, and get a dinner question each week.",
+    to: "/safety" as const,
+    cta: "How we keep it safe",
+  },
+];
 
 const LAYERS = [
   {
@@ -120,8 +146,35 @@ function HowItWorks() {
           <Badge variant="secondary">How Bugley works</Badge>
           <h1 className="text-4xl text-foreground sm:text-5xl">One family. Every age. One conversation.</h1>
           <p className="text-lg text-muted-foreground">
-            Bugley in under two minutes: what your family does each week, what your kids learn, and how it all grows with them.
+            The whole of Bugley in one place: how your kids learn, where they create, and how you stay in the loop.
           </p>
+        </div>
+      </section>
+
+      {/* 1b. The Bugley world */}
+      <section className="container-page py-14 sm:py-20">
+        <SectionHeader
+          eyebrow="The Bugley world"
+          title="Learn it. Make it. Share it at home."
+          description="Three parts that work together, all in one family account."
+        />
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
+          {ECOSYSTEM.map(({ icon: Icon, title, body, to, cta }) => (
+            <BugleyCard key={title} variant="interactive" className="flex flex-col gap-3">
+              <Glow size="sm" className="self-start">
+                <span className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                  <Icon className="size-6" />
+                </span>
+              </Glow>
+              <h3 className="text-xl text-foreground">{title}</h3>
+              <p className="flex-1 text-muted-foreground">{body}</p>
+              {to && (
+                <Link to={to} className="inline-flex items-center gap-1 font-display text-foreground underline-offset-4 hover:underline">
+                  {cta} <ArrowRight className="size-4" />
+                </Link>
+              )}
+            </BugleyCard>
+          ))}
         </div>
       </section>
 
@@ -209,6 +262,13 @@ function HowItWorks() {
             </li>
           ))}
         </ul>
+        <div className="mt-8 flex justify-center">
+          <Button variant="outline" asChild>
+            <Link to="/learning">
+              See how they learn, age by age <ArrowRight />
+            </Link>
+          </Button>
+        </div>
       </section>
 
       {/* 5. Age bands */}
