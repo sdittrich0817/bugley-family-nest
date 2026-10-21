@@ -109,7 +109,7 @@ const SHELF = [
   {
     icon: BookMarked,
     title: "Books you can order and hold",
-    body: "A shelf of work turns into small printed books, shipped to your house. Ordering is being set up now.",
+    body: "A shelf of work turns into printed books, shipped to your house — from a first comic to a story with chapter after chapter. Ordering is being set up now.",
     comingSoon: true,
   },
 ];
@@ -118,7 +118,7 @@ const BOOK_KINDS = [
   {
     icon: BookMarked,
     title: "Comic books",
-    body: "A run of panels becomes a real comic — their cover, their order, their ending. Bound soft, sized for two hands.",
+    body: "A run of panels becomes a real comic — their cover, their order, their ending. A quick adventure or a growing series, made their way.",
   },
   {
     icon: Hammer,
@@ -136,12 +136,12 @@ const ORDER_STEPS = [
   {
     icon: Printer,
     title: "Order it in Bugley",
-    body: "One tap from the shelf. You see the size, the page count, and the price before anything is charged.",
+    body: "Parents choose the layout and review the size, page count, and price before placing an order.",
   },
   {
     icon: Truck,
     title: "It comes to your house",
-    body: "Printed in short runs and shipped to your door — with a spare copy for grandma if you want one.",
+    body: "Made by our print partner and shipped straight to your door.",
   },
 ];
 
@@ -318,7 +318,7 @@ function StudioPreview() {
         <SectionHeader
           eyebrow="Printed books"
           title="Comics and build books, printed and shipped to your door"
-          description="Kids turn their work into small books of their own. Parents order them right in Bugley — no uploading files, no email back and forth, no third-party site."
+          description="Kids turn their work into books of their own, from a few pages of ideas to chapter after chapter. Parents choose layouts and order right in Bugley — shipped straight to your house."
         />
         <div className="mt-10 grid gap-5 sm:grid-cols-2">
           {BOOK_KINDS.map(({ icon: Icon, title, body }) => (
@@ -345,10 +345,10 @@ function StudioPreview() {
               className="h-auto w-full"
             />
             <figcaption className="p-5">
-              <p className="font-display text-lg text-foreground">Most of them are small</p>
+              <p className="font-display text-lg text-foreground">A little book. Or a big idea that keeps growing.</p>
               <p className="text-sm text-muted-foreground">
-                Comic and pocket sizes, printed in short runs — a book small enough to hold in two hands or slip into a
-                school bag.
+                Most books will be short, but they do not have to stay that way. Some kids will keep adding chapters
+                until their story fills a much bigger book.
               </p>
             </figcaption>
           </figure>
@@ -364,7 +364,7 @@ function StudioPreview() {
             <figcaption className="p-5">
               <p className="font-display text-lg text-foreground">Ordered in Bugley, delivered to your house</p>
               <p className="text-sm text-muted-foreground">
-                Pick what goes between one cover, tap order, and a copy shows up at your door.
+                Pick what goes between one cover, choose a layout, and review the book before ordering it to your door.
               </p>
             </figcaption>
           </figure>
@@ -383,8 +383,8 @@ function StudioPreview() {
         </div>
 
         <p className="mt-8 text-sm text-muted-foreground">
-          We keep printing simple: small books, short runs, made with a print partner we trust. Ordering opens with the
-          first family sessions, and the bigger Family Story Book is still on the way.
+          Printed-book ordering is coming soon, with books made by a print partner. A minimum page count may apply;
+          we are still working out the printing details. The Family Story Book is also on the way.
         </p>
       </section>
 
