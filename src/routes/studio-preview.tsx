@@ -1,14 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
+  Blocks,
   BookMarked,
+  Compass,
+  Gamepad2,
   Hammer,
   Image,
   Library,
+  Map as MapIcon,
   MoonStar,
   PenLine,
   Printer,
+  Puzzle,
   Quote,
+  Sparkles,
+  Spline,
   Truck,
   WandSparkles,
 } from "lucide-react";
@@ -26,10 +33,12 @@ import studioStory from "@/assets/illustrations/studio-story.jpg";
 import studioPicture from "@/assets/illustrations/studio-picture.jpg";
 import studioPrintBook from "@/assets/illustrations/studio-print-book.jpg";
 import studioBookshelf from "@/assets/illustrations/studio-bookshelf.jpg";
+import studioGamePlay from "@/assets/illustrations/studio-game-play.jpg";
+import studioGameCreate from "@/assets/illustrations/studio-game-create.jpg";
 
 const TITLE = "Bugley's Studio — Bugley";
 const DESC =
-  "Kids write and decide. Bugley suggests, illustrates, and asks what happens next. Comics, illustrated stories, and books of what they build — saved to every child's own shelf, and printed and shipped to your house.";
+  "One studio, two doors. Stories: kids write comics, illustrated stories, and books of what they build. Games: they play adventures with Bugley, then make their own. Everything is saved to their own shelf.";
 
 export const Route = createFileRoute("/studio-preview")({
   head: () => ({
@@ -44,6 +53,25 @@ export const Route = createFileRoute("/studio-preview")({
   }),
   component: StudioPreview,
 });
+
+const DOORS = [
+  {
+    icon: Library,
+    name: "Stories",
+    headline: "Comics, illustrated stories, and books of what they build",
+    body: "Kids pick a genre and tell Bugley what happens. He draws the pictures, offers ideas when asked, and always hands the decisions back.",
+    anchor: "#stories",
+    cta: "See the stories",
+  },
+  {
+    icon: Gamepad2,
+    name: "Games",
+    headline: "Play adventures with Bugley. Then make your own.",
+    body: "Kids step into guided story games, solve puzzles, and invent games the family can play — choices and endings written by them.",
+    anchor: "#games",
+    cta: "See the games",
+  },
+];
 
 const COMICS = [
   {
@@ -69,6 +97,42 @@ const COMICS = [
   },
 ];
 
+const PLAY_GAMES = [
+  {
+    icon: Compass,
+    title: "Mystery adventures",
+    body: "Kids explore a story, gather clues, and ask Bugley for a hint when they get stuck.",
+  },
+  {
+    icon: Puzzle,
+    title: "Puzzle quests",
+    body: "Mazes, treasure hunts, and matching games. When a child struggles, the help changes — not just the difficulty.",
+  },
+  {
+    icon: Sparkles,
+    title: "Invent-a-world adventures",
+    body: "They choose what happens next while Bugley brings a guided story to life around them.",
+  },
+];
+
+const MAKE_GAMES = [
+  {
+    icon: MapIcon,
+    title: "Choose-your-path adventures",
+    body: "Kids write the choices and the endings, then the whole family plays the story they built.",
+  },
+  {
+    icon: Blocks,
+    title: "Puzzle makers",
+    body: "Build a maze, a scavenger hunt, or a matching game using clues and drawings they made themselves.",
+  },
+  {
+    icon: Spline,
+    title: "Game worlds",
+    body: "Characters from their comics become a place to walk through, search, and explore.",
+  },
+];
+
 const RULE = [
   {
     icon: PenLine,
@@ -78,7 +142,7 @@ const RULE = [
   {
     icon: WandSparkles,
     title: "Bugley suggests, illustrates, and asks",
-    body: "Stuck? Bugley offers three ideas and draws whatever the child describes. Then he always asks the same thing: \"what happens next?\"",
+    body: "Stuck? Bugley offers three ideas and draws whatever the child describes. Then he always asks the same thing: “what happens next?”",
   },
 ];
 
@@ -158,89 +222,214 @@ function StudioPreview() {
           <Badge variant="secondary">Bugley's Studio</Badge>
           <h1 className="text-4xl text-foreground sm:text-5xl">Your kids are the creators. Bugley helps.</h1>
           <p className="text-lg text-muted-foreground">
-            Comics, illustrated stories, and books of what they build — made by your children themselves, with a
-            firefly who draws the pictures and never takes over the story.
+            One studio, two doors. <span className="font-semibold text-foreground">Stories</span> for comics,
+            illustrated books, and drawings. <span className="font-semibold text-foreground">Games</span> for playing
+            adventures and inventing their own.
           </p>
         </div>
       </section>
 
-      {/* 2. What kids make */}
+      {/* 2. The two doors */}
       <section className="container-page py-14 sm:py-20">
         <SectionHeader
-          eyebrow="What kids make"
-          title="Comics in any genre, stories with pictures, and drawings that are all theirs"
-          description="Kids pick a genre, tell Bugley what happens, and leave with something finished — not a half-finished idea."
+          eyebrow="Two doors, one studio"
+          title="Stories and games, in the same place"
+          description="A character made in one door can show up in the other. Same shelf, same glow, same rules."
         />
-        <ul className="mt-10 grid gap-6 sm:grid-cols-3">
-          {COMICS.map((comic) => (
-            <li key={comic.title}>
-              <div className="overflow-hidden rounded-2xl border border-border shadow-soft">
-                <img
-                  src={comic.src}
-                  alt={comic.alt}
-                  loading="lazy"
-                  width={768}
-                  height={1024}
-                  className="h-auto w-full"
-                />
+        <div className="mt-10 grid gap-5 sm:grid-cols-2">
+          {DOORS.map(({ icon: Icon, name, headline, body, anchor, cta }) => (
+            <BugleyCard key={name} className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <Glow size="sm" className="self-start">
+                  <span className="grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground">
+                    <Icon className="size-6" />
+                  </span>
+                </Glow>
+                <h3 className="text-2xl text-foreground">{name}</h3>
               </div>
-              <div className="mt-3">
-                <Badge variant="leaf">{comic.genre}</Badge>
-              </div>
-              <p className="mt-1 font-display text-lg text-foreground">{comic.title}</p>
-              <p className="text-sm text-muted-foreground">{comic.line}</p>
-            </li>
+              <p className="font-display text-lg text-foreground">{headline}</p>
+              <p className="text-muted-foreground">{body}</p>
+              <a
+                href={anchor}
+                className="mt-1 inline-flex w-fit items-center gap-1 font-semibold text-primary underline-offset-4 hover:underline"
+              >
+                {cta} <ArrowRight className="size-4" />
+              </a>
+            </BugleyCard>
           ))}
-        </ul>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Every example here is stand-in art we made for this preview. A real shelf will be full of your kids' work.
-        </p>
+        </div>
+      </section>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      {/* 3. Stories */}
+      <section id="stories" className="scroll-mt-28 bg-leaf/50 py-14 sm:py-20">
+        <div className="container-page">
+          <SectionHeader
+            eyebrow="Door one — Stories"
+            title="Comics in any genre, stories with pictures, and drawings that are all theirs"
+            description="Kids pick a genre, tell Bugley what happens, and leave with something finished — not a half-finished idea."
+          />
+          <ul className="mt-10 grid gap-6 sm:grid-cols-3">
+            {COMICS.map((comic) => (
+              <li key={comic.title}>
+                <div className="overflow-hidden rounded-2xl border border-border shadow-soft">
+                  <img
+                    src={comic.src}
+                    alt={comic.alt}
+                    loading="lazy"
+                    width={768}
+                    height={1024}
+                    className="h-auto w-full"
+                  />
+                </div>
+                <div className="mt-3">
+                  <Badge variant="leaf">{comic.genre}</Badge>
+                </div>
+                <p className="mt-1 font-display text-lg text-foreground">{comic.title}</p>
+                <p className="text-sm text-muted-foreground">{comic.line}</p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm text-muted-foreground">
+            Every example here is stand-in art we made for this preview. A real shelf will be full of your kids' work.
+          </p>
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-2">
+            <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <img
+                src={studioStory}
+                alt="Kid-made illustrated story: an open picture book showing a child reading aloud to a glowing firefly beside a tent at night"
+                loading="lazy"
+                width={1024}
+                height={768}
+                className="h-auto w-full"
+              />
+              <figcaption className="p-5">
+                <Badge variant="sky">Illustrated story</Badge>
+                <p className="mt-2 font-display text-lg text-foreground">The Tent on Quiet Lake</p>
+                <p className="text-sm text-muted-foreground">
+                  Written by a 7-year-old, illustrated by Bugley from her description of the light.
+                </p>
+              </figcaption>
+            </figure>
+            <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+              <img
+                src={studioPicture}
+                alt="Kid-made picture: a crayon drawing of a friendly dragon on a lakeshore watching a paper boat near a castle"
+                loading="lazy"
+                width={1024}
+                height={768}
+                className="h-auto w-full"
+              />
+              <figcaption className="p-5">
+                <Badge variant="sky">Picture</Badge>
+                <p className="mt-2 font-display text-lg text-foreground">Dragon, Paper Boat, Castle</p>
+                <p className="text-sm text-muted-foreground">
+                  One line from a kid, one finished scene — then she painted over the dragon's tail on purpose.
+                </p>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Games */}
+      <section id="games" className="scroll-mt-28 container-page py-14 sm:py-20">
+        <SectionHeader
+          eyebrow="Door two — Games"
+          title="Play an adventure. Then build one nobody has played before."
+          description="Games are part of the studio, not a separate app. Kids play inside guided worlds, then turn their own ideas into something the family can play."
+        />
+
+        <div className="mt-10 grid gap-6 lg:grid-cols-2">
           <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
             <img
-              src={studioStory}
-              alt="Kid-made illustrated story: an open picture book showing a child reading aloud to a glowing firefly beside a tent at night"
+              src={studioGamePlay}
+              alt="Two children on a rug at dusk holding a tablet, with a paper castle, a winding path, a friendly dragon, and a treasure chest unfolding out of the screen while a glowing firefly hovers nearby"
               loading="lazy"
               width={1024}
               height={768}
               className="h-auto w-full"
             />
             <figcaption className="p-5">
-              <Badge variant="sky">Illustrated story</Badge>
-              <p className="mt-2 font-display text-lg text-foreground">The Tent on Quiet Lake</p>
+              <Badge variant="leaf">Play with Bugley</Badge>
+              <p className="mt-2 font-display text-lg text-foreground">Step into a story that answers back</p>
               <p className="text-sm text-muted-foreground">
-                Written by a 7-year-old, illustrated by Bugley from her description of the light.
+                Guided worlds with rules Bugley can follow — not an open chat box.
               </p>
             </figcaption>
           </figure>
           <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
             <img
-              src={studioPicture}
-              alt="Kid-made picture: a crayon drawing of a friendly dragon on a lakeshore watching a paper boat near a castle"
+              src={studioGameCreate}
+              alt="Three children around a low wooden table at dusk inventing a board game from hand-drawn tiles, a crayon maze, and paper characters, with a glowing firefly hovering over the table"
               loading="lazy"
               width={1024}
               height={768}
               className="h-auto w-full"
             />
             <figcaption className="p-5">
-              <Badge variant="sky">Picture</Badge>
-              <p className="mt-2 font-display text-lg text-foreground">Dragon, Paper Boat, Castle</p>
+              <Badge variant="sky">Make your own</Badge>
+              <p className="mt-2 font-display text-lg text-foreground">Their rules, their map, their ending</p>
               <p className="text-sm text-muted-foreground">
-                One line from a kid, one finished scene — then she painted over the dragon's tail on purpose.
+                A game a kid invents is a story they have to explain — which is the whole point.
               </p>
             </figcaption>
           </figure>
         </div>
+
+        <h3 className="mt-14 font-display text-2xl text-foreground">Play with Bugley</h3>
+        <div className="mt-6 grid gap-5 sm:grid-cols-3">
+          {PLAY_GAMES.map(({ icon: Icon, title, body }) => (
+            <BugleyCard key={title} className="flex flex-col gap-3">
+              <Glow size="sm" className="self-start">
+                <span className="grid size-12 place-items-center rounded-2xl bg-sky text-sky-foreground">
+                  <Icon className="size-6" />
+                </span>
+              </Glow>
+              <p className="font-display text-lg text-foreground">{title}</p>
+              <p className="text-sm text-muted-foreground">{body}</p>
+            </BugleyCard>
+          ))}
+        </div>
+
+        <h3 className="mt-14 font-display text-2xl text-foreground">Make your own</h3>
+        <div className="mt-6 grid gap-5 sm:grid-cols-3">
+          {MAKE_GAMES.map(({ icon: Icon, title, body }) => (
+            <BugleyCard key={title} variant="muted" className="flex flex-col gap-3">
+              <span className="grid size-11 place-items-center rounded-full bg-primary/25 text-foreground">
+                <Icon className="size-5" />
+              </span>
+              <p className="font-display text-lg text-foreground">{title}</p>
+              <p className="text-sm text-muted-foreground">{body}</p>
+            </BugleyCard>
+          ))}
+        </div>
+
+        <BugleyCard className="mt-12 flex flex-col gap-4 border-primary/30">
+          <div className="flex items-center gap-3">
+            <Glow size="sm" className="self-start">
+              <Bugley stage="hatchling" expression="thinking" glow size={56} title="Bugley thinking about game rules" />
+            </Glow>
+            <p className="font-display text-xl text-foreground">How we keep games safe</p>
+          </div>
+          <p className="text-muted-foreground">
+            Games run on rules Bugley can follow, not open-ended chat. Kids pick from choices the game already knows,
+            every reply is checked before it reaches them, and if something fails a check the game falls back to a
+            safe path. That keeps play predictable — it does not make the AI perfect, and we will never claim it does.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            No ads, no purchases a child can make, no streaks to keep. Play is not timed or scored against anyone.
+          </p>
+        </BugleyCard>
       </section>
 
-      {/* 3. The rule */}
-      <section className="bg-leaf/50 py-14 sm:py-20">
+      {/* 5. The rule */}
+      <section className="bg-muted py-14 sm:py-20">
         <div className="container-page">
           <SectionHeader
             eyebrow="The rule"
             title="Kids write and decide. Bugley suggests, illustrates, and asks."
-            description="This one rule keeps every creation your kid's own."
+            description="This one rule applies to stories and games alike, and it keeps every creation your kid's own."
           />
           <div className="mt-10 grid gap-5 sm:grid-cols-2">
             {RULE.map(({ icon: Icon, title, body }) => (
@@ -258,7 +447,7 @@ function StudioPreview() {
         </div>
       </section>
 
-      {/* 4. The glow, simply */}
+      {/* 6. The glow, simply */}
       <section className="container-page py-14 sm:py-20">
         <SectionHeader
           eyebrow="The glow, simply"
@@ -286,8 +475,8 @@ function StudioPreview() {
         </div>
       </section>
 
-      {/* 5. Shelf + printed book */}
-      <section className="bg-muted py-14 sm:py-20">
+      {/* 7. Shelf + printed book */}
+      <section className="bg-leaf/50 py-14 sm:py-20">
         <div className="container-page">
           <SectionHeader
             eyebrow="Their shelf"
@@ -313,7 +502,7 @@ function StudioPreview() {
         </div>
       </section>
 
-      {/* 6. Printed books, ordered in Bugley */}
+      {/* 8. Printed books, ordered in Bugley */}
       <section className="container-page py-14 sm:py-20">
         <SectionHeader
           eyebrow="Printed books"
@@ -388,7 +577,7 @@ function StudioPreview() {
         </p>
       </section>
 
-      {/* 7. CTA */}
+      {/* 9. CTA */}
       <section className="bg-dusk py-16 sm:py-24">
         <div className="container-page flex flex-col items-center gap-6 text-center">
           <Glow size="lg">

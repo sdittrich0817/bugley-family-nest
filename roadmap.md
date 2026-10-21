@@ -2,3 +2,9 @@
 - [x] Add login, forgot/reset password and private parent account page.
 - [x] Replace waitlist actions with real account navigation; preserve waitlist data.
 - [x] Verify account flows and family isolation.
+- [x] Name the studio: one Bugley's Studio with two doors, Stories and Games; add the Games door to the site.
+- [ ] Confirm the print partner's real limits (minimum page count, sizes, layouts) and replace the provisional wording on /studio-preview.
+- [ ] Confirm the COPPA answer on /safety with legal review before it stays published.
+- [ ] Replace placeholder article text on /resources with real parent posts.
+- [ ] Build the child profile backend (first name or nickname, age, avatar) once accounts are in use.
+- [ ] Add email notifications for new co-op demo requests and waitlist entries.

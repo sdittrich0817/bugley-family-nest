@@ -31,7 +31,7 @@ export const Route = createFileRoute("/")({
 const HOW = [
   { icon: Users, title: "Learn together, every week", body: "One family session. Every kid at their own level." },
   { icon: Sprout, title: "Bugley grows with each child", body: "A personal journey from age 5 to 12." },
-  { icon: Palette, title: "Create in Bugley's Studio", body: "Stories, comics, and pictures your kids make themselves." },
+  { icon: Palette, title: "Create in Bugley's Studio", body: "Two doors: stories and games. Comics, books, and adventures your kids make themselves." },
 ];
 
 const LOOP = [
