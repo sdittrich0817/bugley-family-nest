@@ -16,6 +16,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { WaitlistProvider } from "@/components/site/WaitlistModal";
 import { Bugley } from "@/components/brand/Bugley";
+import { ParentSessionProvider } from "@/components/site/ParentSession";
 
 function NotFoundComponent() {
   return (
@@ -124,6 +125,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ParentSessionProvider>
       <WaitlistProvider>
         <div className="flex min-h-screen flex-col">
           <SiteHeader />
@@ -133,6 +135,7 @@ function RootComponent() {
           <SiteFooter />
         </div>
       </WaitlistProvider>
+      </ParentSessionProvider>
     </QueryClientProvider>
   );
 }

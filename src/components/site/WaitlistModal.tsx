@@ -8,6 +8,7 @@ import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
 import { waitlistSchema } from "@/lib/waitlist";
 import { joinWaitlist } from "@/lib/waitlist.functions";
+import { useNavigate } from "@tanstack/react-router";
 
 type Source = "start_free" | "log_in";
 const Ctx = createContext<{ open: (s: Source) => void }>({ open: () => {} });
@@ -15,8 +16,9 @@ export const useWaitlist = () => useContext(Ctx);
 
 export function WaitlistProvider({ children }: { children: ReactNode }) {
   const [source, setSource] = useState<Source | null>(null);
+  const navigate = useNavigate();
   return (
-    <Ctx.Provider value={{ open: setSource }}>
+    <Ctx.Provider value={{ open: (s) => { void navigate({ to: s === "start_free" ? "/signup" : "/login" }); } }}>
       {children}
       <Dialog open={source !== null} onOpenChange={(o) => !o && setSource(null)}>
         <DialogContent className="rounded-3xl border-border p-6 sm:max-w-md sm:p-8">

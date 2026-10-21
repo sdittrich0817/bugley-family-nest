@@ -16,3 +16,6 @@
 - Waitlist submissions go through the `joinWaitlist` server function (publishable client, insert-only RLS). Why: anonymous visitors can add but never read entries.
 - Bugley the character is one code-drawn SVG (`src/components/brand/Bugley.tsx`) with stage/expression props; never use raster images of Bugley. Why: identical everywhere at any size.
 - Age-band looks are CSS classes (`skin-sprouts`, `skin-explorers`, `skin-builders`) that override tokens on a subtree. Why: one component set, three themes.
+- Parent session state has one root-mounted subscriber; protected pages use the authenticated layout and user-scoped server functions. Why: no competing session listeners or private-data leaks.
+- Parent signup records validated adult attestation and versioned consent atomically in an auth lifecycle trigger; consent rows are immutable to users, and RLS requires verified email plus recorded consent. Why: bypassing the signup UI must not bypass consent or family isolation.
+- Existing waitlist action context now navigates to real account pages while retaining the insert-only waitlist storage. Why: every existing CTA changes consistently without deleting historical entries.
