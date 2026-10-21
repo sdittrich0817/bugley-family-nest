@@ -148,15 +148,17 @@ function StudioPreview() {
                   className="h-auto w-full"
                 />
               </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-3">
                 <Badge variant="leaf">{comic.genre}</Badge>
-                <span className="text-xs text-muted-foreground">Placeholder example</span>
               </div>
               <p className="mt-1 font-display text-lg text-foreground">{comic.title}</p>
               <p className="text-sm text-muted-foreground">{comic.line}</p>
             </li>
           ))}
         </ul>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Every example here is stand-in art we made for this preview. A real shelf will be full of your kids' work.
+        </p>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
