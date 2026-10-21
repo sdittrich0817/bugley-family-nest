@@ -47,7 +47,7 @@ export function BugleyMature({
       {variant === "glyph" && (
         <g>
           <circle cx="128" cy="138" r="22" fill={g} />
-          <circle cx="86" cy="94" r="38" fill={body} />
+          <circle cx="86" cy="94" r="38" fill={body} stroke={ink} strokeWidth="3" />
           <path d="M70 60 L58 30 M102 60 L114 30" stroke={body} strokeWidth="8" strokeLinecap="round" />
           <rect x="68" y="90" width="12" height="6" rx="3" fill={g} />
           <rect x="94" y="90" width="12" height="6" rx="3" fill={g} />
