@@ -6,6 +6,7 @@ import { BugleyCard } from "@/components/brand/BugleyCard";
 import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
+import sapphireComicAsset from "@/assets/sapphire-comic.png.asset.json";
 import { useWaitlist } from "@/components/site/WaitlistModal";
 
 const TITLE = "Our mission — Bugley";
@@ -31,7 +32,7 @@ const STORY = [
   "I'm a C-level technology executive, and I watched AI burst onto the scene firsthand. It was scary and exciting. Honestly, it still is.",
   "I'm also the dad of an 8-year-old girl. Some nights it terrifies me to think about the world she'll grow up in.",
   "But tech taught me one thing for sure: you can't run away from it. It keeps moving forward. So you have to embrace it — responsibly, and safely.",
-  "One afternoon, trying to get her off a screen, I asked her to write a story. She did. She even put a football player in it, wearing number 15. Turns out she knows her daddy well — I'm a huge Chiefs and Patrick Mahomes fan.",
+  "One afternoon, trying to get her off a screen, I asked her to write a story. She did — \"Sapphire and the Robot Named Jeff,\" about a brave girl and a robot who plays soccer. Turns out she knows her daddy well — I'm a huge Chiefs and Patrick Mahomes fan.",
   "I turned her story into a comic with the AI tools I use every day. She loved it. We did it again, and again, and she kept loving it — because it was hers.",
   "That's when it clicked. Families need this. Kids need to be creative, and to see what they can build while they learn. That's what AI can do. But the tools I used weren't made for kids. So I set out to build something every family could use, safely and responsibly.",
 ];
@@ -94,6 +95,17 @@ function Mission() {
             {STORY.map((p) => (
               <p key={p.slice(0, 24)}>{p}</p>
             ))}
+            <figure className="mx-auto w-64 max-w-full -rotate-2 sm:w-72">
+              <img
+                src={sapphireComicAsset.url}
+                alt='Comic book cover: "Sapphire and the Robot Named Jeff," a girl and a robot in a soccer jersey'
+                className="rounded-lg shadow-soft"
+                loading="lazy"
+              />
+              <figcaption className="mt-3 text-sm text-muted-foreground">
+                Adventure Comics #1 — the first comic we made together. Authored and illustrated by Amaya.
+              </figcaption>
+            </figure>
             <p className="font-display text-xl">— Shea</p>
           </div>
         </div>
