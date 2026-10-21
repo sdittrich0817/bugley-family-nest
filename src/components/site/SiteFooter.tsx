@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
 import { Wordmark } from "@/components/brand/Wordmark";
-import { Bugley } from "@/components/brand/Bugley";
 import { legalNav, mainNav } from "@/lib/nav";
 
 export function SiteFooter() {
@@ -11,7 +10,6 @@ export function SiteFooter() {
         <div className="flex flex-col gap-3 lg:col-span-2">
           <Wordmark />
           <p className="font-display text-lg text-foreground">Figure out AI, together.</p>
-          <Bugley stage="scout" expression="happy" size={64} glow={false} className="mt-2" />
         </div>
         <nav aria-label="Explore" className="flex flex-col gap-3">
           <p className="font-display text-sm text-foreground">Explore</p>
