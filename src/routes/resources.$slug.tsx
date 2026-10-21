@@ -69,7 +69,7 @@ function ArticlePage() {
       </div>
       <div className="mt-12 rounded-2xl bg-muted p-6 text-center sm:p-8">
         <h2 className="text-2xl text-foreground">Ready to figure out AI, together?</h2>
-        <Button className="mt-4" onClick={() => open("article")}>Start free</Button>
+        <Button className="mt-4" onClick={() => open("start_free")}>Start free</Button>
       </div>
     </article>
   );
