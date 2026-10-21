@@ -17,6 +17,7 @@ import { Route as CoOpsRouteImport } from './routes/co-ops'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LearningRouteImport } from './routes/learning'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MissionRouteImport } from './routes/mission'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -68,6 +69,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LearningRoute = LearningRouteImport.update({
+  id: '/learning',
+  path: '/learning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
@@ -190,6 +198,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
   '/pricing': typeof PricingRoute
@@ -214,6 +223,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/learning'
     | '/login'
     | '/mission'
     | '/pricing'
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/learning'
     | '/login'
     | '/mission'
     | '/pricing'
@@ -259,6 +270,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/learning'
     | '/login'
     | '/mission'
     | '/pricing'
@@ -283,6 +295,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  LearningRoute: typeof LearningRoute
   LoginRoute: typeof LoginRoute
   MissionRoute: typeof MissionRoute
   PricingRoute: typeof PricingRoute
@@ -353,6 +366,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/learning': {
+      id: '/learning'
+      path: '/learning'
+      fullPath: '/learning'
+      preLoaderRoute: typeof LearningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -469,6 +489,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
+  LearningRoute: LearningRoute,
   LoginRoute: LoginRoute,
   MissionRoute: MissionRoute,
   PricingRoute: PricingRoute,
