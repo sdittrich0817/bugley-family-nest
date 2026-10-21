@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Bugley, BUGLEY_EXPRESSIONS, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { BugleyIcon, Logo, type LogoVariant } from "@/components/brand/Logo";
+import { BugleyMature, type MatureStyle } from "@/components/brand/BugleyMature";
 import { BugleyCard } from "@/components/brand/BugleyCard";
 import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
@@ -54,6 +55,29 @@ const logos: { v: LogoVariant; name: string; note: string }[] = [
   { v: "lantern", name: "C · Lantern", note: "A glow dot hangs above the l like a lantern." },
 ];
 
+const matureOptions: { v: MatureStyle; name: string; note: string }[] = [
+  { v: "streamlined", name: "Streamlined", note: "Almond eyes, slim wings, a half smile. Confident, not cute." },
+  { v: "headphones", name: "Streamlined + headphones", note: "Same Bugley with gear teens actually wear." },
+  { v: "monoline", name: "Monoline", note: "One clean line weight, like an app icon or sticker." },
+  { v: "glyph", name: "Glyph", note: "Pure shapes: head, antennae, glowing tail. Eyes are tiny glow bars." },
+];
+
+const logoB: { name: string; note: string; mark: ReactNode }[] = [
+  { name: "B1 · Original", note: "Friendly and round. Great for Sprouts and Explorers.", mark: <BugleyIcon size={56} /> },
+  { name: "B2 · Streamlined", note: "Older Bugley with a confident look. Works for all ages.", mark: <BugleyMature variant="streamlined" size={64} glow={false} /> },
+  { name: "B3 · Monoline", note: "Clean outline; feels like a modern app.", mark: <BugleyMature variant="monoline" size={64} glow={false} /> },
+  { name: "B4 · Glyph", note: "Most grown-up. Still clearly a firefly with a glow.", mark: <BugleyMature variant="glyph" size={64} glow={false} /> },
+];
+
+function AgeStep({ label, dark, children }: { label: string; dark?: boolean; children: ReactNode }) {
+  return (
+    <figure className={cn("flex flex-col items-center gap-2 rounded-2xl border border-border bg-background p-4", dark && "skin-builders")}>
+      <div className="w-full max-w-36">{children}</div>
+      <figcaption className="text-center text-xs text-muted-foreground">{label}</figcaption>
+    </figure>
+  );
+}
+
 function Block({ title, eyebrow, children }: { title: string; eyebrow: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-8 border-t border-border py-section first:border-t-0">
@@ -96,6 +120,51 @@ function BrandPage() {
               <Bugley key={s} stage="navigator" size={s} glow={false} />
             ))}
           </BugleyCard>
+        </div>
+      </Block>
+
+      <Block eyebrow="Growing up" title="Bugley grows up with your kid">
+        <p className="max-w-2xl text-muted-foreground">Same firefly, same glow, less cute as kids get older. Each step shrinks the eyes, drops the cheeks, thins the lines and adds attitude.</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <AgeStep label="Ages 5–7 · Sprouts"><Bugley stage="hatchling" size="100%" /></AgeStep>
+          <AgeStep label="Ages 8–10 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
+          <AgeStep label="Ages 11–13 · Builders" dark><BugleyMature variant="streamlined" size="100%" /></AgeStep>
+          <AgeStep label="Ages 14+ · Builders" dark><BugleyMature variant="glyph" size="100%" /></AgeStep>
+        </div>
+        <h3 className="text-xl">Pre-teen and teen Bugley options</h3>
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {matureOptions.map((m) => (
+            <BugleyCard key={m.v} className="flex flex-col gap-3 p-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
+                <div className="skin-builders rounded-xl bg-background p-2"><BugleyMature variant={m.v} size="100%" /></div>
+              </div>
+              <p className="font-display">{m.name}</p>
+              <p className="text-sm text-muted-foreground">{m.note}</p>
+            </BugleyCard>
+          ))}
+        </div>
+      </Block>
+
+      <Block eyebrow="Logo" title="Option B, grown up">
+        <p className="max-w-2xl text-muted-foreground">Keeps your favorite (Bugley beside the name) but swaps in an older Bugley. B1 is the original for comparison.</p>
+        <div className="grid gap-6 md:grid-cols-2">
+          {logoB.map((l) => (
+            <BugleyCard key={l.name} className="flex flex-col gap-4">
+              <div className="flex min-h-28 items-center justify-center gap-3 rounded-xl bg-background px-4">
+                {l.mark}
+                <span className="font-display text-5xl leading-none tracking-tight text-dusk">Bugley</span>
+              </div>
+              <div className="skin-builders flex min-h-20 items-center justify-center gap-2 rounded-xl bg-background">
+                {l.mark}
+                <span className="font-display text-2xl leading-none tracking-tight text-dusk">Bugley</span>
+              </div>
+              <div>
+                <h3 className="text-lg">{l.name}</h3>
+                <p className="text-sm text-muted-foreground">{l.note}</p>
+              </div>
+            </BugleyCard>
+          ))}
         </div>
       </Block>
 
