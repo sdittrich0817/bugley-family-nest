@@ -128,8 +128,8 @@ function BrandPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <AgeStep label="Ages 5–7 · Sprouts"><Bugley stage="hatchling" size="100%" /></AgeStep>
           <AgeStep label="Ages 8–10 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
-          <AgeStep label="Ages 11–13 · Builders" dark><BugleyMature variant="streamlined" size="100%" /></AgeStep>
-          <AgeStep label="Ages 14+ · Builders" dark><BugleyMature variant="glyph" size="100%" /></AgeStep>
+          <AgeStep label="Ages 11–13 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
+          <AgeStep label="Ages 14+ · Builders" dark><BugleyMature variant="headphones" size="100%" glow={false} /></AgeStep>
         </div>
         <h3 className="text-xl">Pre-teen and teen Bugley options</h3>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -249,29 +249,35 @@ function BrandPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           <SkinPreview skin="skin-sprouts" name="Sprouts" note="Brighter, rounder, bigger touch targets." stage="hatchling" />
           <SkinPreview skin="skin-explorers" name="Explorers" note="The signature Bugley look." stage="scout" />
-          <SkinPreview skin="skin-builders" name="Builders" note="Dusk Navy dark mode, cleaner and sharper." stage="navigator" icon />
+          <SkinPreview skin="skin-builders" name="Builders" note="Deep Dusk Navy, sharper corners, glow as the accent. Headphones Bugley." stage="navigator" mature />
         </div>
       </Block>
     </div>
   );
 }
 
-function SkinPreview({ skin, name, note, stage, icon }: { skin: string; name: string; note: string; stage: "hatchling" | "scout" | "navigator"; icon?: boolean }) {
+function SkinPreview({ skin, name, note, stage, mature }: { skin: string; name: string; note: string; stage: "hatchling" | "scout" | "navigator"; mature?: boolean }) {
   return (
     <div className={cn(skin, "flex flex-col gap-5 rounded-2xl border border-border bg-background p-6 text-foreground")}>
       <div className="flex items-center gap-3">
-        {icon ? <BugleyIcon size={40} /> : <Bugley stage={stage} expression="happy" size={72} />}
+        {mature ? <BugleyMature variant="headphones" size={72} /> : <Bugley stage={stage} expression="happy" size={72} />}
         <div>
           <h3 className="text-2xl">{name}</h3>
           <p className="text-sm text-muted-foreground">{note}</p>
         </div>
       </div>
       <BugleyCard className="flex flex-col gap-3">
-        <Badge variant="secondary" className="self-start">Today's quest</Badge>
-        <p className="font-display text-lg">How does a computer guess the next word?</p>
+        <Badge variant={mature ? "outline" : "secondary"} className="self-start">{mature ? "Challenge · 12 min" : "Today's quest"}</Badge>
+        <p className="font-display text-lg">{mature ? "Train a model to predict the next word" : "How does a computer guess the next word?"}</p>
+        {mature && (
+          <div className="flex flex-col gap-1.5">
+            <div className="h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full w-3/5 rounded-full bg-primary shadow-glow" /></div>
+            <p className="text-xs text-muted-foreground">Level 3 · 60% complete</p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-2">
-          <Button>Let's go</Button>
-          <Button variant="secondary">Later</Button>
+          <Button>{mature ? "Continue" : "Let's go"}</Button>
+          <Button variant="secondary">{mature ? "Skip" : "Later"}</Button>
         </div>
       </BugleyCard>
     </div>

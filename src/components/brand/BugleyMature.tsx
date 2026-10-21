@@ -79,14 +79,16 @@ export function BugleyMature({
           <path d="M72 60 Q66 38 52 30 M100 60 Q108 38 122 30" stroke={ink} strokeWidth="3.5" strokeLinecap="round" fill="none" />
           <circle cx="52" cy="30" r="4" fill={g} />
           <circle cx="122" cy="30" r="4" fill={g} />
-          {/* almond eyes with lids: confident look */}
-          <path d="M64 92 Q73 82 82 92 Q73 98 64 92 Z" fill="white" />
-          <path d="M92 92 Q101 82 110 92 Q101 98 92 92 Z" fill="white" />
-          <circle cx="75" cy="91" r="3.6" fill={ink} />
-          <circle cx="103" cy="91" r="3.6" fill={ink} />
-          <path d="M62 86 Q73 80 84 86 M90 86 Q101 80 112 85" stroke={ink} strokeWidth="3.5" strokeLinecap="round" fill="none" />
-          {/* half smile */}
-          <path d="M80 110 Q90 114 98 106" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
+          {/* open, slightly smaller eyes with relaxed brows: confident, not cute */}
+          <ellipse cx="73" cy="92" rx="9" ry="10.5" fill="white" />
+          <ellipse cx="101" cy="92" rx="9" ry="10.5" fill="white" />
+          <circle cx="75" cy="93.5" r="4.6" fill={ink} />
+          <circle cx="103" cy="93.5" r="4.6" fill={ink} />
+          <circle cx="76.6" cy="91.4" r="1.6" fill="white" />
+          <circle cx="104.6" cy="91.4" r="1.6" fill="white" />
+          <path d="M65 77 Q73 74 81 77 M93 77 Q101 73 110 76" stroke={ink} strokeWidth="3" strokeLinecap="round" fill="none" />
+          {/* easy half smile */}
+          <path d="M80 111 Q90 116 99 108" stroke="white" strokeWidth="3" strokeLinecap="round" fill="none" />
           {variant === "headphones" && (
             <g>
               <path d="M48 92 Q48 46 86 46 Q124 46 124 92" stroke={ink} strokeWidth="6" fill="none" strokeLinecap="round" />
