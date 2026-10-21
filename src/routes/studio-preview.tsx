@@ -2,12 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   ArrowRight,
   BookMarked,
-  ImageIcon,
+  Image,
   Library,
   MoonStar,
   PenLine,
   Quote,
-  Sparkles,
   WandSparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -80,7 +79,7 @@ const RULE = [
 
 const GLOW_RULES = [
   {
-    icon: ImageIcon,
+    icon: Image,
     title: "The glow powers pictures",
     body: "Every picture Bugley illustrates takes a little glow. It is the one thing that runs low.",
   },
