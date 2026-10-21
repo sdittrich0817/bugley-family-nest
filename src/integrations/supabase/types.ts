@@ -50,6 +50,62 @@ export type Database = {
         }
         Relationships: []
       }
+      parental_consents: {
+        Row: {
+          adult_attested: boolean
+          agreed_at: string
+          consent_text: string
+          consent_version: string
+          id: string
+          parent_id: string
+        }
+        Insert: {
+          adult_attested: boolean
+          agreed_at?: string
+          consent_text: string
+          consent_version: string
+          id?: string
+          parent_id: string
+        }
+        Update: {
+          adult_attested?: boolean
+          agreed_at?: string
+          consent_text?: string
+          consent_version?: string
+          id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parental_consents_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          id: string
+          last_name: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          id?: string
+          last_name?: string
+        }
+        Relationships: []
+      }
       waitlist_signups: {
         Row: {
           created_at: string
@@ -82,7 +138,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_active_parent: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
