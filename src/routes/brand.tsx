@@ -117,9 +117,9 @@ function BrandPage() {
       <Block eyebrow="Growing up" title="Bugley grows up with your kid">
         <p className="max-w-2xl text-muted-foreground">Same firefly, same glow, less cute as kids get older. Each step shrinks the eyes, drops the cheeks, thins the lines and adds attitude.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <AgeStep label="Ages 5–7 · Sprouts"><Bugley stage="hatchling" size="100%" /></AgeStep>
-          <AgeStep label="Ages 8–10 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
-          <AgeStep label="Ages 11–15 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
+          <AgeStep label="Ages 6–8 · Sprouts"><Bugley stage="hatchling" size="100%" /></AgeStep>
+          <AgeStep label="Ages 9–11 · Explorers"><Bugley stage="scout" size="100%" /></AgeStep>
+          <AgeStep label="Ages 12–15 · Builders" dark><BugleyMature variant="headphones" size="100%" /></AgeStep>
         </div>
         <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
           <span className="text-sm text-muted-foreground">Builders Bugley, light and dark:</span>
