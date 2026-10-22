@@ -29,7 +29,7 @@ const FIELDS: Record<EntityTable, Field[]> = {
 };
 const PARENT_KEY: Partial<Record<EntityTable, string>> = { units: "season_id", sessions: "unit_id", activities: "session_id" };
 const LABEL: Record<EntityTable, string> = { seasons: "Season", units: "Unit", sessions: "Session", activities: "Activity" };
-type Sel = { table: EntityTable; id?: string; parentId?: string };
+type Sel = { table: EntityTable; id?: string | undefined; parentId?: string | undefined };
 
 function Admin() {
   const { data: isAdmin } = useSuspenseQuery(isAdminOptions);
@@ -51,7 +51,7 @@ function AdminArea() {
   const sortBy = (k: string) => (a: any, b: any) => a[k] - b[k];
   const Row = ({ s, label, depth, children }: { s: Sel; label: string; depth: number; children?: React.ReactNode }) => <li>
     <button onClick={() => setSel(s)} style={{ paddingLeft: `${depth * 14 + 8}px` }} className={`flex w-full items-center gap-1 rounded-md py-1.5 pr-2 text-left text-sm hover:bg-muted ${sel?.id === s.id ? "bg-muted font-semibold" : ""}`}><ChevronRight className="size-3 shrink-0" /><span className="truncate">{label}</span></button>{children}</li>;
-  const Add = ({ table, parentId, depth }: { table: EntityTable; parentId?: string; depth: number }) => <li><button onClick={() => setSel({ table, parentId })} style={{ paddingLeft: `${depth * 14 + 8}px` }} className="flex items-center gap-1 py-1 text-xs text-muted-foreground hover:text-foreground"><Plus className="size-3" />Add {LABEL[table].toLowerCase()}</button></li>;
+  const Add = ({ table, parentId, depth }: { table: EntityTable; parentId?: string | undefined; depth: number }) => <li><button onClick={() => setSel({ table, parentId })} style={{ paddingLeft: `${depth * 14 + 8}px` }} className="flex items-center gap-1 py-1 text-xs text-muted-foreground hover:text-foreground"><Plus className="size-3" />Add {LABEL[table].toLowerCase()}</button></li>;
   return <section className="container-page py-8">
     <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 className="text-3xl">Curriculum admin</h1><Button asChild variant="ghost" size="sm"><Link to="/hub">Parent Hub</Link></Button></div>
     <div className="grid gap-6 md:grid-cols-[300px_1fr]">
