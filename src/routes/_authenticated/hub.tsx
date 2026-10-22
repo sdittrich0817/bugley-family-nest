@@ -1,6 +1,9 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { giftGlow, setFamilyTimezone } from "@/lib/glow.functions";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Award, BookHeart, ChevronRight, Clock, CreditCard, Download, FileText, Gift, Play, ShieldCheck, UserRound, Users } from "lucide-react";
 import { familyOptions } from "@/lib/family.functions";
@@ -34,6 +37,7 @@ function Hub() {
   const { data: controls } = useSuspenseQuery(controlsOptions);
   const { data: cur } = useSuspenseQuery(familyCurriculumOptions);
   const { data: isAdmin } = useSuspenseQuery(isAdminOptions);
+  useEffect(() => { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (tz) void setFamilyTimezone({ data: { tz } }).catch(() => {}); }, []);
   return <section className="container-page py-8 sm:py-12">
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -135,6 +139,29 @@ function ControlsCard({ child, value }: { child: ChildProfile; value: ChildContr
         {TIME_LIMITS.map((m) => <option key={m ?? "none"} value={m ?? ""}>{m ? `${m} min` : "No limit"}</option>)}
       </select></label>
     <div className="mt-3 space-y-3">{toggles.map(([k, label]) => <label key={k} className="flex items-center justify-between text-sm"><span>{label}</span><Switch checked={state[k] as boolean} onCheckedChange={(v) => void update({ [k]: v })} /></label>)}</div>
-    <Button variant="secondary" className="mt-5 w-full" onClick={() => toast("Gifting bonus glow is coming soon.")}><Gift />Gift bonus glow</Button>
+    <GiftGlow child={child} />
   </div>;
+}
+
+function GiftGlow({ child }: { child: ChildProfile }) {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState(3);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function send(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true);
+    try { const r = await giftGlow({ data: { childId: child.id, amount, reason } }); toast.success(`Sent ${amount} glow to ${child.nickname}. They now have ${r.total}.`); setOpen(false); setReason(""); }
+    catch (err) { toast.error(err instanceof Error ? err.message : "Couldn’t gift glow."); } finally { setBusy(false); }
+  }
+  return <>
+    <Button variant="secondary" className="mt-5 w-full" onClick={() => setOpen(true)}><Gift />Gift bonus glow</Button>
+    <Dialog open={open} onOpenChange={setOpen}><DialogContent>
+      <DialogHeader><DialogTitle>Gift glow to {child.nickname}</DialogTitle><DialogDescription>Bonus glow is used after today’s glow and stays until it’s spent.</DialogDescription></DialogHeader>
+      <form onSubmit={send} className="space-y-4">
+        <div className="flex flex-wrap gap-2">{[1, 3, 5, 10].map((n) => <Button key={n} type="button" variant={amount === n ? "default" : "secondary"} onClick={() => setAmount(n)}>{n} glow</Button>)}</div>
+        <label className="block text-sm"><span className="mb-1 block font-medium">Reason (optional)</span><Input value={reason} maxLength={120} placeholder="Finished a mission!" onChange={(e) => setReason(e.target.value)} /></label>
+        <Button type="submit" className="w-full" disabled={busy}>{busy ? "Sending…" : `Gift ${amount} glow`}</Button>
+      </form>
+    </DialogContent></Dialog>
+  </>;
 }

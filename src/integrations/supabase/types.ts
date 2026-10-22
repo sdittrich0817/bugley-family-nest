@@ -90,6 +90,38 @@ export type Database = {
           },
         ]
       }
+      admin_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          parent_id: string | null
+          resolved: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          parent_id?: string | null
+          resolved?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          parent_id?: string | null
+          resolved?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_alerts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_activity_progress: {
         Row: {
           activity_id: string
@@ -214,6 +246,45 @@ export type Database = {
           },
           {
             foreignKeyName: "child_controls_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_glow: {
+        Row: {
+          bonus_balance: number
+          child_id: string
+          daily_balance: number
+          parent_id: string
+          refill_date: string | null
+        }
+        Insert: {
+          bonus_balance?: number
+          child_id: string
+          daily_balance?: number
+          parent_id: string
+          refill_date?: string | null
+        }
+        Update: {
+          bonus_balance?: number
+          child_id?: string
+          daily_balance?: number
+          parent_id?: string
+          refill_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_glow_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_glow_parent_id_fkey"
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -349,6 +420,86 @@ export type Database = {
           notes?: string | null
         }
         Relationships: []
+      }
+      family_glow_settings: {
+        Row: {
+          alerted_month: string | null
+          monthly_ceiling: number | null
+          parent_id: string
+          plan: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          alerted_month?: string | null
+          monthly_ceiling?: number | null
+          parent_id: string
+          plan?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          alerted_month?: string | null
+          monthly_ceiling?: number | null
+          parent_id?: string
+          plan?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_glow_settings_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      glow_ledger: {
+        Row: {
+          amount: number
+          child_id: string
+          created_at: string
+          id: string
+          kind: string
+          parent_id: string
+          reason: string
+        }
+        Insert: {
+          amount: number
+          child_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          parent_id: string
+          reason?: string
+        }
+        Update: {
+          amount?: number
+          child_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          parent_id?: string
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "glow_ledger_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "glow_ledger_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       parental_consents: {
         Row: {
@@ -612,6 +763,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      glow_gift: {
+        Args: { _amount: number; _child: string; _reason: string }
+        Returns: Json
+      }
+      glow_refill: {
+        Args: { _child: string }
+        Returns: {
+          bonus_balance: number
+          child_id: string
+          daily_balance: number
+          parent_id: string
+          refill_date: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "child_glow"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      glow_spend: {
+        Args: { _child: string; _kind: string; _reason: string }
+        Returns: Json
+      }
+      glow_status: { Args: { _child: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -621,6 +797,7 @@ export type Database = {
       }
       is_active_parent: { Args: never; Returns: boolean }
       session_is_published: { Args: { _session_id: string }; Returns: boolean }
+      set_family_timezone: { Args: { _tz: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin"

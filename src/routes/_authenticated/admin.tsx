@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ChevronRight, FileUp, Plus, Trash2 } from "lucide-react";
 import { adminTreeOptions, addPrintable, deleteEntity, isAdminOptions, saveEntity, saveVersions } from "@/lib/admin.functions";
 import { BANDS, STEP_KEYS, STRAND_KEYS, type EntityTable } from "@/lib/curriculum";
+import { getGlowAdmin, resolveAlert, setFamilyGlowSettings } from "@/lib/glow.functions";
 import { accountHead } from "@/lib/parent-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -67,7 +68,33 @@ function AdminArea() {
       </ul></nav>
       <div>{sel ? <Editor key={`${sel.table}-${sel.id ?? "new"}-${sel.parentId ?? ""}`} sel={sel} row={find(sel)} onSaved={(id) => setSel({ ...sel, id })} onDeleted={() => setSel(null)} /> : <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">Pick something on the left to edit, or add a new Season.</p>}</div>
     </div>
+    <GlowAdmin />
   </section>;
+}
+
+function GlowAdmin() {
+  const qc = useQueryClient();
+  const { data } = useQuery({ queryKey: ["glow-admin"], queryFn: () => getGlowAdmin() });
+  const refresh = () => qc.invalidateQueries({ queryKey: ["glow-admin"] });
+  if (!data) return null;
+  return <div className="mt-10 space-y-4">
+    <h2 className="text-2xl">Glow safety net</h2>
+    <p className="text-sm text-muted-foreground">Set a monthly glow ceiling per family. You get an alert here when a family reaches 80%, and Studio pictures stop for that family at 100% until next month.</p>
+    {data.alerts.length > 0 && <ul className="space-y-2">{data.alerts.map((a: any) => <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-card px-4 py-3 text-sm"><span>{data.families.find((f) => f.parentId === a.parent_id)?.name ?? "Family"}: {a.message}</span><Button size="sm" variant="ghost" onClick={() => void resolveAlert({ data: { id: a.id } }).then(refresh)}>Dismiss</Button></li>)}</ul>}
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card"><table className="w-full text-sm"><thead><tr className="text-left text-muted-foreground"><th className="p-3">Family</th><th className="p-3">Plan</th><th className="p-3">Glow used this month</th><th className="p-3">Monthly ceiling</th><th className="p-3" /></tr></thead>
+      <tbody>{data.families.map((f) => <FamilyRow key={f.parentId} f={f} onSaved={refresh} />)}</tbody></table>
+      {!data.families.length && <p className="p-4 text-sm text-muted-foreground">No families yet.</p>}</div>
+  </div>;
+}
+function FamilyRow({ f, onSaved }: { f: { parentId: string; name: string; plan: string; ceiling: number | null; used: number }; onSaved: () => void }) {
+  const [plan, setPlan] = useState(f.plan as "family" | "family_plus");
+  const [ceiling, setCeiling] = useState(f.ceiling === null ? "" : String(f.ceiling));
+  async function save() { try { await setFamilyGlowSettings({ data: { parentId: f.parentId, plan, ceiling: ceiling === "" ? null : Number(ceiling) } }); toast.success("Saved"); onSaved(); } catch (e) { toast.error(e instanceof Error ? e.message : "Couldn’t save."); } }
+  return <tr className="border-t border-border"><td className="p-3">{f.name}</td>
+    <td className="p-3"><select className="h-9 rounded-lg border border-input bg-background px-2" value={plan} onChange={(e) => setPlan(e.target.value as "family" | "family_plus")}><option value="family">Family (10/day)</option><option value="family_plus">Family Plus (20/day)</option></select></td>
+    <td className="p-3">{f.used}{f.ceiling ? ` (${Math.round((f.used / f.ceiling) * 100)}%)` : ""}</td>
+    <td className="p-3"><Input type="number" min={0} className="w-28" placeholder="No limit" value={ceiling} onChange={(e) => setCeiling(e.target.value)} /></td>
+    <td className="p-3"><Button size="sm" onClick={() => void save()}>Save</Button></td></tr>;
 }
 
 function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved: (id: string) => void; onDeleted: () => void }) {
