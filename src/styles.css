@@ -273,6 +273,14 @@
   50% { transform: translate(-50%, -50%) translate(-28cqw, 2cqw) rotate(-6deg); }
   75% { transform: translate(-50%, -50%) translate(-10cqw, 6cqw) rotate(8deg); }
 }
+/* Desktop loop: wide sweep from the castle across the top of the picture */
+@keyframes home-bugley-flight-wide {
+  0%, 100% { transform: translate(-50%, -50%) translate(-2cqw, -8cqw) rotate(-8deg); }
+  20% { transform: translate(-50%, -50%) translate(-16cqw, -10cqw) rotate(6deg); }
+  40% { transform: translate(-50%, -50%) translate(-30cqw, -2cqw) rotate(-6deg); }
+  60% { transform: translate(-50%, -50%) translate(-26cqw, 4cqw) rotate(8deg); }
+  80% { transform: translate(-50%, -50%) translate(-6cqw, -4cqw) rotate(-4deg); }
+}
 @media (prefers-reduced-motion: reduce) {
   .home-hero-window-bugley { animation: none; }
   .home-hero-window-bugley::before { animation: none; }
