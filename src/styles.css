@@ -239,8 +239,8 @@
 }
 .home-hero-window-bugley {
   position: absolute;
-  left: 78%;
-  top: 30%;
+  left: 64%;
+  top: 10%;
   width: 10%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
@@ -266,13 +266,12 @@
   0%, 100% { opacity: 0.9; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(0.88); }
 }
-/* Wide loop: sweeps from the castle across the top of the picture and back */
+/* Mobile loop: sweeps across the window and castle in the upper sky */
 @keyframes home-bugley-flight {
-  0%, 100% { transform: translate(-50%, -50%) translate(-2cqw, -16cqh) rotate(-8deg); }
-  20% { transform: translate(-50%, -50%) translate(-16cqw, -22cqh) rotate(6deg); }
-  40% { transform: translate(-50%, -50%) translate(-30cqw, -4cqh) rotate(-4deg); }
-  60% { transform: translate(-50%, -50%) translate(-26cqw, 5cqh) rotate(8deg); }
-  80% { transform: translate(-50%, -50%) translate(-6cqw, -6cqh) rotate(-6deg); }
+  0%, 100% { transform: translate(-50%, -50%) translate(-4cqw, 0cqw) rotate(-8deg); }
+  25% { transform: translate(-50%, -50%) translate(-16cqw, -4cqw) rotate(6deg); }
+  50% { transform: translate(-50%, -50%) translate(-28cqw, 2cqw) rotate(-6deg); }
+  75% { transform: translate(-50%, -50%) translate(-10cqw, 6cqw) rotate(8deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero-window-bugley { animation: none; }
@@ -290,7 +289,7 @@
 }
 @media (min-width: 600px) {
   .home-hero-art { width: max(100cqw, 149.057cqh); height: max(100cqh, 67.089cqw); }
-  .home-hero-window-bugley { left: 70%; top: 14%; }
+  .home-hero-window-bugley { left: 78%; top: 30%; width: 7%; animation-name: home-bugley-flight-wide; }
   .home-hero-copy { justify-content: center; padding-block: 24px; }
   .home-hero-words { width: 40%; max-width: 448px; gap: 18px; }
   .home-hero-actions { flex-direction: column; align-items: flex-start; }
