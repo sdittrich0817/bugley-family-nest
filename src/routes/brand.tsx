@@ -129,12 +129,27 @@ function BrandPage() {
       </Block>
 
       <Block eyebrow="Logo" title="The Bugley logo">
+        <p className="max-w-2xl text-muted-foreground">The hand-lettered name — every letter leans a little, like a kid wrote it. Three finishes for the copy; the flight takeoff is on the site now.</p>
+        <div className="grid gap-6 md:grid-cols-3">
+          <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
+            <Logo variant="flight" size="lg" />
+            <figcaption className="text-xs font-medium">On the site now · the "y" takes off</figcaption>
+          </figure>
+          <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
+            <Logo variant="swash" size="lg" />
+            <figcaption className="text-xs text-muted-foreground">Looping underline swash</figcaption>
+          </figure>
+          <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
+            <Logo variant="glowg" size="lg" />
+            <figcaption className="text-xs text-muted-foreground">Glow in the "g" + sparkle</figcaption>
+          </figure>
+        </div>
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="flex min-h-40 items-center justify-center rounded-2xl border border-border bg-card p-6">
-            <Logo variant="firefly" size="lg" />
-          </div>
           <div className="skin-builders flex min-h-40 items-center justify-center rounded-2xl bg-background p-6">
-            <Logo variant="firefly" size="lg" />
+            <Logo variant="flight" size="lg" />
+          </div>
+          <div className="flex min-h-40 items-center justify-center rounded-2xl border border-border bg-card p-4">
+            <Logo variant="flight" />
           </div>
         </div>
         <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
