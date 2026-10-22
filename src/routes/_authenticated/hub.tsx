@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { Award, BookHeart, ChevronRight, Clock, CreditCard, Download, FileText, Gift, Play, ShieldCheck, UserRound, Users } from "lucide-react";
 import { familyOptions } from "@/lib/family.functions";
 import { controlsOptions, saveChildControls } from "@/lib/hub.functions";
-import { DEFAULT_CONTROLS, STRANDS, THIS_WEEK, TIME_LIMITS, type ChildControls } from "@/lib/hub";
+import { DEFAULT_CONTROLS, STRANDS, TIME_LIMITS, type ChildControls } from "@/lib/hub";
+import { familyCurriculumOptions } from "@/lib/curriculum.functions";
+import { isAdminOptions } from "@/lib/admin.functions";
 import type { ChildProfile } from "@/lib/family";
 import { accountHead } from "@/lib/parent-auth";
 import { ChildAvatar } from "@/components/site/ChildAvatar";
@@ -19,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/hub")({
   loader: async ({ context }) => {
     const family = await context.queryClient.ensureQueryData(familyOptions);
     if (!family.completed) throw redirect({ to: "/setup" });
-    await context.queryClient.ensureQueryData(controlsOptions);
+    await Promise.all([context.queryClient.ensureQueryData(controlsOptions), context.queryClient.ensureQueryData(familyCurriculumOptions), context.queryClient.ensureQueryData(isAdminOptions)]);
   },
   errorComponent: ({ error }) => <div role="alert" className="container-page py-16 text-center">{error instanceof Error ? error.message : "Something went wrong."}</div>,
   component: Hub,
@@ -30,17 +32,19 @@ const card = "rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6";
 function Hub() {
   const { data: family } = useSuspenseQuery(familyOptions);
   const { data: controls } = useSuspenseQuery(controlsOptions);
+  const { data: cur } = useSuspenseQuery(familyCurriculumOptions);
+  const { data: isAdmin } = useSuspenseQuery(isAdminOptions);
   return <section className="container-page py-8 sm:py-12">
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div><h1 className="text-3xl sm:text-4xl">Parent Hub</h1><p className="text-muted-foreground">Everything for your family, in one calm place.</p></div>
-        <Button asChild size="lg"><Link to="/kids"><Users />Go to Kid Zone</Link></Button>
+        <div className="flex flex-wrap gap-2">{isAdmin && <Button asChild variant="secondary"><Link to="/admin">Curriculum admin</Link></Button>}<Button asChild size="lg"><Link to="/kids"><Users />Go to Kid Zone</Link></Button></div>
       </div>
 
-      <ThisWeek />
+      <ThisWeek current={cur.current} />
 
       <Section title="My kids">
-        <div className="grid gap-4 md:grid-cols-2">{family.children.map((c) => <KidCard key={c.id} child={c} />)}</div>
+        <div className="grid gap-4 md:grid-cols-2">{family.children.map((c) => <KidCard key={c.id} child={c} badges={cur.badges[c.id] ?? []} skills={cur.skills[c.id] ?? {}} totals={cur.strandTotals} />)}</div>
       </Section>
 
       <Section title="Activity">
@@ -81,17 +85,21 @@ function SettingRow({ to, icon, label, hint }: { to: "/settings" | "/account"; i
   return <li><Link to={to} className="flex items-center gap-3 px-5 py-4 hover:bg-muted [&_svg]:size-5">{icon}<span className="flex-1"><span className="block font-medium">{label}</span><span className="text-sm text-muted-foreground">{hint}</span></span><ChevronRight /></Link></li>;
 }
 
-function ThisWeek() {
+function ThisWeek({ current }: { current: (typeof familyCurriculumOptions)["queryFn"] extends any ? any : never }) {
   const [showScript, setShowScript] = useState(false);
+  if (!current) return <div className={card}><h2 className="text-xl">This week</h2><p className="mt-2 text-muted-foreground">Your first session is on its way.</p></div>;
+  const steps = String(current.script).split("\n").map((x: string) => x.trim()).filter(Boolean);
   return <div className="rounded-2xl bg-primary p-5 text-primary-foreground shadow-glow sm:p-7">
-    <p className="text-sm font-semibold uppercase tracking-wide">This week · {THIS_WEEK.season}</p>
-    <h2 className="mt-1 text-2xl sm:text-3xl">{THIS_WEEK.title}</h2>
+    <p className="text-sm font-semibold uppercase tracking-wide">This week · {current.season.title} · Unit {current.unit.number} · Week {current.week_number}</p>
+    <h2 className="mt-1 text-2xl sm:text-3xl">{current.title}</h2>
+    {current.unit.family_question && <p className="mt-2 font-medium">Family question: {current.unit.family_question}</p>}
     <div className="mt-5 grid gap-4 md:grid-cols-2">
-      <div className="rounded-xl bg-card p-4 text-card-foreground"><p className="flex items-center gap-2 font-semibold"><Clock className="size-4" />5-minute parent primer</p><p className="mt-2 text-sm leading-relaxed">{THIS_WEEK.primer}</p></div>
+      <div className="rounded-xl bg-card p-4 text-card-foreground"><p className="flex items-center gap-2 font-semibold"><Clock className="size-4" />5-minute parent primer</p><p className="mt-2 text-sm leading-relaxed">{current.parent_primer}</p>
+        {current.unit.dinner_question && <p className="mt-3 text-sm"><span className="font-semibold">Dinner question:</span> {current.unit.dinner_question}</p>}</div>
       <div className="rounded-xl bg-card p-4 text-card-foreground">
         <button className="flex w-full items-center gap-2 font-semibold" onClick={() => setShowScript(!showScript)} aria-expanded={showScript}><FileText className="size-4" />Session script<ChevronRight className={`ml-auto size-4 transition ${showScript ? "rotate-90" : ""}`} /></button>
-        {showScript ? <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">{THIS_WEEK.script.map((s) => <li key={s}>{s}</li>)}</ol> : <p className="mt-2 text-sm text-muted-foreground">50 minutes, step by step. Tap to open.</p>}
-        <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><Download className="size-4" />Printables: coming soon</p>
+        {showScript ? <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">{steps.map((x: string) => <li key={x}>{x}</li>)}</ol> : <p className="mt-2 text-sm text-muted-foreground">{steps.length} steps. Tap to open.</p>}
+        <div className="mt-3 space-y-1 text-sm">{current.printables.length ? current.printables.map((p: any) => p.url && <a key={p.id} href={p.url} className="flex items-center gap-2 underline"><Download className="size-4" />{p.title}</a>) : <p className="flex items-center gap-2 text-muted-foreground"><Download className="size-4" />No printables this week</p>}</div>
       </div>
     </div>
     <Button size="lg" variant="secondary" className="mt-5" disabled><Play />Start family session</Button>
@@ -99,15 +107,15 @@ function ThisWeek() {
   </div>;
 }
 
-function KidCard({ child }: { child: ChildProfile }) {
+function KidCard({ child, badges, skills, totals }: { child: ChildProfile; badges: string[]; skills: Record<string, number>; totals: Record<string, number> }) {
   return <div className={card}>
     <div className="flex items-center gap-3">
       <ChildAvatar avatar={child.avatar} className="size-14 shrink-0" />
       <div className="min-w-0"><h3 className="break-words text-lg">{child.nickname}</h3><p className="text-sm capitalize text-muted-foreground">{child.age_band} · Bugley {child.bugley_stage}</p></div>
       <Bugley stage={child.bugley_stage} size={44} className="ml-auto shrink-0" />
     </div>
-    <p className="mt-4 flex items-center gap-2 text-sm"><Award className="size-4" />1 badge earned · Joined the crew</p>
-    <div className="mt-4 space-y-2">{STRANDS.map((s) => <div key={s} className="flex items-center gap-3 text-sm"><span className="w-24">{s}</span><div className="h-2 flex-1 rounded-full bg-muted" role="progressbar" aria-label={`${s} progress`} aria-valuenow={0} aria-valuemin={0} aria-valuemax={100} /></div>)}</div>
+    <p className="mt-4 flex items-center gap-2 text-sm"><Award className="size-4" />{badges.length ? `${badges.length} badge${badges.length > 1 ? "s" : ""}: ${badges.join(", ")}` : "No badges yet"}</p>
+    <div className="mt-4 space-y-2">{STRANDS.map((s) => <div key={s} className="flex items-center gap-3 text-sm"><span className="w-24">{s}</span>{(() => { const k = s.toLowerCase(); const pct = totals[k] ? Math.round(((skills[k] ?? 0) / totals[k]) * 100) : 0; return <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={`${s} progress`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}><div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} /></div>; })()}</div>)}</div>
     <p className="mt-2 text-xs text-muted-foreground">Skills fill in as {child.nickname} completes sessions.</p>
   </div>;
 }
