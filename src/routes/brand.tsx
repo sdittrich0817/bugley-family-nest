@@ -129,7 +129,7 @@ function BrandPage() {
       </Block>
 
       <Block eyebrow="Logo" title="The Bugley logo">
-        <p className="max-w-2xl text-muted-foreground">The hand-lettered name — every letter leans a little, like a kid wrote it. Three finishes for the copy; the flight takeoff is on the site now.</p>
+        <p className="max-w-2xl text-muted-foreground">The hand-lettered name — every letter leans a little, like a kid wrote it, and the "g" wears the glow. No dots, no circles: the fun is in the letters. Three finishes; the flight takeoff is on the site now.</p>
         <div className="grid gap-6 md:grid-cols-3">
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
             <Logo variant="flight" size="lg" />
@@ -140,8 +140,8 @@ function BrandPage() {
             <figcaption className="text-xs text-muted-foreground">Looping underline swash</figcaption>
           </figure>
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
-            <Logo variant="glowg" size="lg" />
-            <figcaption className="text-xs text-muted-foreground">Glow in the "g" + sparkle</figcaption>
+            <Logo variant="hop" size="lg" />
+            <figcaption className="text-xs text-muted-foreground">The silly hops</figcaption>
           </figure>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
