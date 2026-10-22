@@ -137,7 +137,7 @@ function BrandPage() {
           </figure>
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
             <Logo variant="swash" size="lg" />
-            <figcaption className="text-xs text-muted-foreground">Looping underline swash</figcaption>
+            <figcaption className="text-xs text-muted-foreground">Loopy underline</figcaption>
           </figure>
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
             <Logo variant="hop" size="lg" />
