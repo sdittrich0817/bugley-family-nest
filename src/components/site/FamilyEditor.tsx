@@ -45,7 +45,7 @@ export function FamilyEditor({ onFinish, finishing = false }: { onFinish?: () =>
   </div>;
 }
 
-function ChildForm({ child, onSave, onCancel, busy, error }: { child?: ChildProfile; onSave: (input: SaveChildInput) => Promise<void>; onCancel: () => void; busy: boolean; error: string }) {
+function ChildForm({ child, onSave, onCancel, busy, error }: { child?: ChildProfile | undefined; onSave: (input: SaveChildInput) => Promise<void>; onCancel: () => void; busy: boolean; error: string }) {
   const [nickname, setNickname] = useState(child?.nickname ?? ""); const [age, setAge] = useState(child?.age ?? 5);
   const [avatar, setAvatar] = useState<typeof AVATARS[number]>(child?.avatar ?? "fox");
   const [step, setStep] = useState<"details" | "login">("details");
