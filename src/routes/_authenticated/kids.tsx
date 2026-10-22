@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Award, BookOpen, Delete, Lock, Sparkles, Users, Volume2 } from "lucide-react";
 import { familyOptions } from "@/lib/family.functions";
 import { verifyChildLogin } from "@/lib/kid.functions";
+import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Check } from "lucide-react";
 import { BAND_COPY, setKidZoneLocked, type Band } from "@/lib/kid-zone";
 import { PICTURES, type ChildProfile } from "@/lib/family";
 import { ChildAvatar, PictureIcon } from "@/components/site/ChildAvatar";
@@ -98,6 +102,12 @@ function KidHome({ child }: { child: ChildProfile }) {
   const speak = () => { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(greeting); u.rate = 0.9; u.pitch = 1.2; s.speak(u); };
   useEffect(() => { if (band === "sprouts") speak(); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const sprouts = band === "sprouts", builders = band === "builders";
+  const qc = useQueryClient();
+  const { data: m } = useQuery({ queryKey: ["curriculum", "child", child.id], queryFn: () => getChildMission({ data: { childId: child.id } }) });
+  async function done(activityId: string) {
+    try { const r = await completeActivity({ data: { childId: child.id, activityId } }); if (r.badge) toast.success(`You earned the ${r.badge} badge!`); else toast.success(sprouts ? "Yay! You did it!" : "Nice work!"); await qc.invalidateQueries({ queryKey: ["curriculum"] }); }
+    catch { toast.error("Oops! Try again."); }
+  }
   return <section className="mx-auto max-w-5xl px-4 pb-16">
     <div className={cn("flex items-center gap-5 rounded-3xl bg-card p-6 shadow-soft", sprouts && "flex-col text-center")}>
       {builders ? <BugleyMature variant="headphones" size={72} /> : <Bugley stage={child.bugley_stage} expression="happy" glow size={sprouts ? 160 : 120} />}
@@ -108,9 +118,18 @@ function KidHome({ child }: { child: ChildProfile }) {
       </div>
     </div>
     <div className="mt-6 grid gap-5 md:grid-cols-2">
-      <div className="rounded-3xl border-2 border-dashed border-border bg-card p-6">
+      <div className="rounded-3xl border-2 border-border bg-card p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{copy.mission}</p>
-        <p className={cn("mt-2 font-display", sprouts ? "text-3xl" : "text-2xl")}>{sprouts ? "Coming soon!" : builders ? "Your first project is on its way." : "Your first mission is on its way!"}</p>
+        {!m ? <p className="mt-2 text-muted-foreground">Loading…</p> : !m.mission ? <p className={cn("mt-2 font-display", sprouts ? "text-3xl" : "text-2xl")}>Coming soon!</p> : <>
+          <p className={cn("mt-1 font-display", sprouts ? "text-3xl" : "text-2xl")}>{m.mission.unitTitle}</p>
+          <ul className="mt-4 space-y-3">{m.mission.activities.map((a: any) => <li key={a.id} className="rounded-2xl bg-muted p-4">
+            <div className="flex items-start justify-between gap-3"><p className={cn("font-display", sprouts ? "text-2xl" : "text-lg")}>{a.title}</p>{!sprouts && <span className="shrink-0 text-xs text-muted-foreground">{a.minutes} min</span>}</div>
+            {!sprouts && <p className="mt-1 text-sm leading-relaxed">{a.instructions}</p>}
+            {sprouts && <p className="mt-1">{a.instructions}</p>}
+            {a.done ? <p className="mt-3 flex items-center gap-2 font-semibold"><Check className="size-5" />Done!</p> : <Button size={sprouts ? "lg" : "sm"} className="mt-3" onClick={() => void done(a.id)}>{sprouts ? "I did it!" : "Mark done"}</Button>}
+          </li>)}</ul>
+          {m.mission.storyPrompt && <p className="mt-4 text-sm text-muted-foreground">Story idea: {m.mission.storyPrompt}</p>}
+        </>}
       </div>
       <button disabled className={cn("flex flex-col items-start justify-center gap-2 rounded-3xl bg-primary p-6 text-left text-primary-foreground shadow-glow", sprouts && "min-h-44 items-center text-center")}>
         <Sparkles className={sprouts ? "size-12" : "size-8"} />
@@ -122,7 +141,7 @@ function KidHome({ child }: { child: ChildProfile }) {
       <div className="rounded-3xl bg-card p-6 shadow-soft">
         <h2 className="flex items-center gap-2 text-xl"><Award className="size-5" />{copy.badges}</h2>
         <ul className="mt-4 flex flex-wrap gap-3">
-          <li className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground"><Sparkles className="size-4" />Joined the crew</li>
+          {(m?.badges ?? []).map((b: string) => <li key={b} className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 font-semibold text-primary-foreground"><Sparkles className="size-4" />{b}</li>)}
           {[1, 2, 3].map((i) => <li key={i} aria-label="Badge still to earn" className="flex size-10 items-center justify-center rounded-full border-2 border-dashed border-border text-muted-foreground"><Lock className="size-4" /></li>)}
         </ul>
       </div>

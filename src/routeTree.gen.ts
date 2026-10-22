@@ -29,6 +29,7 @@ import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
@@ -135,6 +136,11 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
   id: '/hub',
   path: '/hub',
@@ -186,6 +192,7 @@ export interface FileRoutesByFullPath {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/kids': typeof AuthenticatedKidsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
@@ -271,6 +280,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/admin'
     | '/hub'
     | '/kids'
     | '/settings'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/admin'
     | '/hub'
     | '/kids'
     | '/settings'
@@ -326,6 +337,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/_authenticated/account'
+    | '/_authenticated/admin'
     | '/_authenticated/hub'
     | '/_authenticated/kids'
     | '/_authenticated/settings'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/hub': {
       id: '/_authenticated/hub'
       path: '/hub'
@@ -547,6 +566,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
@@ -555,6 +575,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedKidsRoute: AuthenticatedKidsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,

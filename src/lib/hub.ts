@@ -10,10 +10,3 @@ export const controlsSchema = z.object({
 });
 export type ChildControls = Omit<z.infer<typeof controlsSchema>, "childId">;
 export const DEFAULT_CONTROLS: ChildControls = { daily_minutes: null, studio_stories: true, studio_games: true, read_aloud: true };
-// Placeholder until the curriculum ships: the current family session.
-export const THIS_WEEK = {
-  season: "Season 1 · Week 1",
-  title: "Meet Bugley: What is AI, anyway?",
-  primer: "AI is a tool that learns patterns from lots of examples and makes guesses. It can be helpful and it can be wrong. This week your kids learn that a person is always the one who decides. Ask them: “How do you know when a guess is a good one?”",
-  script: ["Bugley’s Hello (5 min)", "Unplugged warm-up: the guessing game (10 min)", "Make it (15 min)", "Break it (10 min)", "Think about it (10 min)"],
-};
