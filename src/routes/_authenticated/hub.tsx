@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/hub")({
     if (!family.completed) throw redirect({ to: "/setup" });
     await context.queryClient.ensureQueryData(controlsOptions);
   },
-  errorComponent: ({ error }) => <div role="alert" className="container-page py-16 text-center">{error.message}</div>,
+  errorComponent: ({ error }) => <div role="alert" className="container-page py-16 text-center">{error instanceof Error ? error.message : "Something went wrong."}</div>,
   component: Hub,
 });
 
