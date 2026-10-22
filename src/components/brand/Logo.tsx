@@ -1,33 +1,8 @@
 import { cn } from "@/lib/utils";
 
-export type LogoVariant = "trail" | "firefly" | "lantern" | "flight" | "swash" | "glowg";
+export type LogoVariant = "flight" | "swash" | "hop";
 
-/** Small glowing dot used inside the logos. */
-function GlowDot({ size = 14, className }: { size?: number; className?: string }) {
-  return (
-    <span aria-hidden className={cn("relative inline-flex", className)} style={{ width: size, height: size }}>
-      <span className="glow-blob absolute -inset-2 rounded-full" />
-      <span className="relative size-full rounded-full bg-glow ring-2 ring-dusk/80" />
-    </span>
-  );
-}
-
-/** Tiny hand-drawn sparkle star. */
-function Sparkle({ className, size = 12 }: { className?: string; size?: number }) {
-  return (
-    <svg aria-hidden viewBox="0 0 24 24" width={size} height={size} className={cn("overflow-visible", className)}>
-      <path
-        d="M12 2 Q13 9 12 12 Q15 11 22 12 Q15 13 12 12 Q13 15 12 22 Q11 15 12 12 Q9 13 2 12 Q9 11 12 12 Q11 9 12 2 Z"
-        fill="var(--glow)"
-        stroke="var(--dusk)"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-/** Bugley's head + glow — used for favicon, app icon and logo B. */
+/** Bugley's head + glow — used for favicon, app icon and the mark beside the name. */
 export function BugleyIcon({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} className={className} aria-hidden>
@@ -44,11 +19,8 @@ export function BugleyIcon({ size = 32, className }: { size?: number; className?
   );
 }
 
-/**
- * Hand-lettered "Bugley": each letter leans a little, like a kid wrote it,
- * so the name feels drawn rather than typed.
- */
-const LETTER_TILTS = [
+/** Mild kid-wrote-it bounce: the letters lean instead of standing in a row. */
+const BOUNCE = [
   "-rotate-2",
   "rotate-[1.5deg] translate-y-[0.05em]",
   "-rotate-[1.5deg]",
@@ -57,26 +29,65 @@ const LETTER_TILTS = [
   "rotate-[1.5deg]",
 ];
 
-function BouncyWord({ children }: { children: (letter: string, i: number) => React.ReactNode }) {
+/** A sillier hop: every letter lands somewhere different. */
+const HOP = [
+  "-rotate-[4deg] -translate-y-[0.07em]",
+  "rotate-[2.5deg] translate-y-[0.07em]",
+  "-rotate-[2deg] translate-y-[-0.03em]",
+  "rotate-[4deg] translate-y-[0.09em]",
+  "-rotate-[3deg] -translate-y-[0.05em]",
+  "rotate-[2deg] translate-y-[0.04em]",
+];
+
+/**
+ * The name, letter by letter. `glowIndex` paints one letter glow yellow with a
+ * thin dusk outline, so the colour does the play instead of any added dot.
+ */
+function BouncyWord({ styles, glowIndex }: { styles: string[]; glowIndex?: number }) {
   return (
     <span aria-hidden className="inline-flex items-baseline">
       {"Bugley".split("").map((letter, i) => (
-        <span key={i} className={cn("inline-block origin-bottom", LETTER_TILTS[i])}>
-          {children(letter, i)}
+        <span
+          key={i}
+          className={cn("inline-block origin-bottom", styles[i], i === glowIndex && "wordmark-glow")}
+        >
+          {letter}
         </span>
       ))}
     </span>
   );
 }
 
+/** Hand-drawn tapered swoosh that trails away from the "y". */
+function Swoosh({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 72 26" fill="none" className={cn("overflow-visible", className)}>
+      <path d="M4 7 C14 16 40 18 68 5 C46 20 16 24 4 7 Z" fill="var(--dusk)" />
+    </svg>
+  );
+}
+
+/** Loopy underline, drawn like a kid signing off. */
+function Swash({ className }: { className?: string }) {
+  return (
+    <svg aria-hidden viewBox="0 0 96 24" fill="none" className={cn("overflow-visible", className)}>
+      <path
+        d="M3 11 C14 19 27 19 38 12 C46 7 54 7 60 12 C66 17 72 16 74 11 C76 6 70 4 68 8"
+        stroke="var(--dusk)"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
 /**
- * Logo variants, all Nunito ExtraBold in Dusk Navy:
- * - trail: a glow dot drifts off the "y" with a dotted flight path (original)
- * - firefly: Bugley's head leads a plain name (previous chosen logo B)
- * - lantern: glow dot sits inside the curve of the "l" like a lantern
- * - flight: bouncy letters; the "y" tail takes off as a dotted flight path ending in a glow dot
- * - swash: bouncy letters with a looping underline swash that ends in a glow dot
- * - glowg: bouncy letters; the "g" holds a lantern glow and a sparkle sits over the "l"
+ * Logo variants. All Nunito ExtraBold in Dusk Navy, all with Bugley's head
+ * leading the name. The play lives in the letterforms — no dots, no circles:
+ * - flight (on the site): bouncy letters, a glow-yellow "g", and a swoosh off the "y"
+ * - swash: the same letters with a loopy underline
+ * - hop: bigger, sillier hops in plain dusk
  */
 export function Logo({
   variant = "flight",
@@ -88,110 +99,24 @@ export function Logo({
   className?: string;
 }) {
   const text = size === "lg" ? "text-6xl" : size === "sm" ? "text-xl" : "text-2xl";
-  const dot = size === "lg" ? 22 : size === "sm" ? 9 : 11;
   const head = size === "lg" ? 76 : size === "sm" ? 26 : 34;
   const base = cn("inline-flex items-center font-display leading-none text-dusk tracking-tight", text, className);
 
-  if (variant === "firefly") {
-    return (
-      <span className={cn(base, "gap-[0.2em]")} aria-label="Bugley">
-        <BugleyIcon size={head} />
-        <span aria-hidden>Bugley</span>
-      </span>
-    );
-  }
-  if (variant === "lantern") {
-    return (
-      <span className={cn(base, "relative")} aria-label="Bugley">
-        <span aria-hidden>Bug</span>
-        <span aria-hidden className="relative">
-          l
-          <GlowDot size={dot} className="absolute left-1/2 -top-[0.32em] -translate-x-1/2" />
-        </span>
-        <span aria-hidden>ey</span>
-      </span>
-    );
-  }
-  if (variant === "trail") {
-    return (
-      <span className={cn(base, "relative pr-[0.55em]")} aria-label="Bugley">
-        <span aria-hidden>Bugley</span>
-        <svg aria-hidden viewBox="0 0 40 30" className="absolute right-0 top-[-0.35em] h-[0.7em] w-[0.9em] overflow-visible">
-          <path d="M2 28 Q14 26 20 16" stroke="var(--dusk)" strokeOpacity="0.45" strokeWidth="2.5" strokeDasharray="1 5" strokeLinecap="round" fill="none" />
-        </svg>
-        <GlowDot size={dot} className="absolute right-0 top-[-0.42em]" />
-      </span>
-    );
-  }
-
-  if (variant === "flight") {
-    return (
-      <span className={cn(base, "gap-[0.14em] pr-[1em]")} aria-label="Bugley">
-        <BugleyIcon size={head} />
-        <span aria-hidden className="relative">
-          <BouncyWord>{(letter) => letter}</BouncyWord>
-          <svg aria-hidden viewBox="0 0 44 36" className="absolute -right-[0.78em] top-[0.32em] h-[1.05em] w-[1.2em] overflow-visible">
-            <path
-              d="M2 33 Q9 31 13 24 Q17 16 26 14 Q35 12 41 9"
-              stroke="var(--dusk)"
-              strokeOpacity="0.5"
-              strokeWidth="2.4"
-              strokeDasharray="0.5 5.5"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
-          <GlowDot size={dot} className="absolute -right-[0.62em] top-[-0.02em]" />
-        </span>
-      </span>
-    );
-  }
-
-  if (variant === "swash") {
-    return (
-      <span className={cn(base, "gap-[0.14em]")} aria-label="Bugley">
-        <BugleyIcon size={head} />
-        <span aria-hidden className="relative pr-[0.3em]">
-          <BouncyWord>{(letter) => letter}</BouncyWord>
-          <svg aria-hidden viewBox="0 0 130 26" className="absolute left-[0.05em] top-[0.78em] h-[0.42em] w-[calc(100%+0.1em)] overflow-visible">
-            <path
-              d="M3 16 Q22 24 48 15 Q64 9 76 15 Q86 20 98 13 Q112 5 122 9"
-              stroke="var(--dusk)"
-              strokeOpacity="0.5"
-              strokeWidth="2.4"
-              strokeDasharray="0.5 5.5"
-              strokeLinecap="round"
-              fill="none"
-            />
-          </svg>
-          <GlowDot size={dot} className="absolute right-[-0.28em] top-[0.3em]" />
-        </span>
-      </span>
-    );
-  }
-
-  // glowg
   return (
-    <span className={cn(base, "gap-[0.14em] pt-[0.18em]")} aria-label="Bugley">
+    <span
+      className={cn(base, "gap-[0.14em]", variant === "flight" && "pr-[0.7em]")}
+      aria-label="Bugley"
+      data-logo={variant}
+    >
       <BugleyIcon size={head} />
       <span aria-hidden className="relative">
-        <BouncyWord>
-          {(letter, i) =>
-            i === 2 ? (
-              <span className="relative">
-                {letter}
-                <GlowDot size={Math.round(dot * 0.55)} className="absolute left-[0.33em] top-[0.24em]" />
-              </span>
-            ) : i === 3 ? (
-              <span className="relative">
-                {letter}
-                <Sparkle size={Math.round(dot * 0.75)} className="absolute left-[0.5em] top-[0.12em]" />
-              </span>
-            ) : (
-              letter
-            )
-          }
-        </BouncyWord>
+        <BouncyWord styles={variant === "hop" ? HOP : BOUNCE} glowIndex={variant === "hop" ? undefined : 2} />
+        {variant === "flight" && (
+          <Swoosh className="absolute -right-[0.5em] top-[0.5em] h-[0.4em] w-[1.15em]" />
+        )}
+        {variant === "swash" && (
+          <Swash className="absolute left-[0.02em] top-[0.82em] h-[0.34em] w-[calc(100%+0.06em)]" />
+        )}
       </span>
     </span>
   );
