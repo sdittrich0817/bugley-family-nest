@@ -21,6 +21,7 @@ export type Database = {
           offscreen: boolean
           position: number
           session_id: string
+          step: string
           strand: string
           title: string
         }
@@ -30,6 +31,7 @@ export type Database = {
           offscreen?: boolean
           position?: number
           session_id: string
+          step?: string
           strand: string
           title: string
         }
@@ -39,6 +41,7 @@ export type Database = {
           offscreen?: boolean
           position?: number
           session_id?: string
+          step?: string
           strand?: string
           title?: string
         }
@@ -511,6 +514,7 @@ export type Database = {
           dinner_question: string
           family_question: string
           id: string
+          journal_prompt: string
           lead_strand: string
           mission_project: string
           number: number
@@ -525,6 +529,7 @@ export type Database = {
           dinner_question?: string
           family_question?: string
           id?: string
+          journal_prompt?: string
           lead_strand: string
           mission_project?: string
           number: number
@@ -539,6 +544,7 @@ export type Database = {
           dinner_question?: string
           family_question?: string
           id?: string
+          journal_prompt?: string
           lead_strand?: string
           mission_project?: string
           number?: number
