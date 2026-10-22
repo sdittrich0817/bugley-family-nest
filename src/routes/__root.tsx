@@ -8,7 +8,9 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone } from "@/lib/kid-zone";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -127,15 +129,28 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ParentSessionProvider>
       <WaitlistProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-          <SiteFooter />
-        </div>
+        <KidZoneShell />
       </WaitlistProvider>
       </ParentSessionProvider>
     </QueryClientProvider>
+  );
+}
+
+function KidZoneShell() {
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
+  const target = kidZoneRedirect(pathname, locked);
+  useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
+  if (target) return null;
+  if (isKidZonePath(pathname)) return <main className="min-h-screen"><Outlet /></main>;
+  return (
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <SiteFooter />
+    </div>
   );
 }

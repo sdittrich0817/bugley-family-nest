@@ -29,6 +29,7 @@ import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
@@ -133,6 +134,11 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKidsRoute = AuthenticatedKidsRouteImport.update({
+  id: '/kids',
+  path: '/kids',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/resources/$slug': typeof ResourcesSlugRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/resources/$slug': typeof ResourcesSlugRoute
@@ -226,6 +234,7 @@ export interface FileRoutesById {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/kids': typeof AuthenticatedKidsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/resources/$slug': typeof ResourcesSlugRoute
@@ -253,6 +262,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/kids'
     | '/settings'
     | '/setup'
     | '/resources/$slug'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/kids'
     | '/settings'
     | '/setup'
     | '/resources/$slug'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/_authenticated/account'
+    | '/_authenticated/kids'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/resources/$slug'
@@ -476,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kids': {
+      id: '/_authenticated/kids'
+      path: '/kids'
+      fullPath: '/kids'
+      preLoaderRoute: typeof AuthenticatedKidsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -509,12 +528,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedKidsRoute: AuthenticatedKidsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
 }
