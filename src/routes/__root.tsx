@@ -145,7 +145,7 @@ function KidZoneShell() {
   const target = kidZoneRedirect(pathname, locked);
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
   if (target) return null;
-  if (isKidZonePath(pathname)) return <main className="min-h-screen"><Outlet /></main>;
+  if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />

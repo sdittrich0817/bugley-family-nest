@@ -43,6 +43,13 @@
       "when": 1792695193488,
       "tag": "0005_curriculum_content",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792695558044,
+      "tag": "0006_family_table_steps",
+      "breakpoints": true
     }
   ]
 }

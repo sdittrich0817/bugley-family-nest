@@ -34,6 +34,7 @@ import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hu
 import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
+import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/table'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 
@@ -161,6 +162,11 @@ const AuthenticatedSetupRoute = AuthenticatedSetupRouteImport.update({
   path: '/setup',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTableRoute = AuthenticatedTableRouteImport.update({
+  id: '/table',
+  path: '/table',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
   id: '/resources/',
   path: '/resources/',
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/table': typeof AuthenticatedTableRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
 }
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
+  '/table': typeof AuthenticatedTableRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
 }
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/_authenticated/kids': typeof AuthenticatedKidsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
+  '/_authenticated/table': typeof AuthenticatedTableRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
 }
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/settings'
     | '/setup'
+    | '/table'
     | '/resources/$slug'
     | '/resources/'
   fileRoutesByTo: FileRoutesByTo
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/settings'
     | '/setup'
+    | '/table'
     | '/resources/$slug'
     | '/resources'
   id:
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/_authenticated/kids'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
+    | '/_authenticated/table'
     | '/resources/$slug'
     | '/resources/'
   fileRoutesById: FileRoutesById
@@ -547,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSetupRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/table': {
+      id: '/_authenticated/table'
+      path: '/table'
+      fullPath: '/table'
+      preLoaderRoute: typeof AuthenticatedTableRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/resources/': {
       id: '/resources/'
       path: '/resources'
@@ -571,6 +590,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
+  AuthenticatedTableRoute: typeof AuthenticatedTableRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -580,6 +600,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedKidsRoute: AuthenticatedKidsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
+  AuthenticatedTableRoute: AuthenticatedTableRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
