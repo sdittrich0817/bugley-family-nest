@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      child_controls: {
+        Row: {
+          child_id: string
+          daily_minutes: number | null
+          parent_id: string
+          read_aloud: boolean
+          studio_games: boolean
+          studio_stories: boolean
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          daily_minutes?: number | null
+          parent_id: string
+          read_aloud?: boolean
+          studio_games?: boolean
+          studio_stories?: boolean
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          daily_minutes?: number | null
+          parent_id?: string
+          read_aloud?: boolean
+          studio_games?: boolean
+          studio_stories?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_controls_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_controls_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       children: {
         Row: {
           age: number
