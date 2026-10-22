@@ -85,7 +85,7 @@ function SettingRow({ to, icon, label, hint }: { to: "/settings" | "/account"; i
   return <li><Link to={to} className="flex items-center gap-3 px-5 py-4 hover:bg-muted [&_svg]:size-5">{icon}<span className="flex-1"><span className="block font-medium">{label}</span><span className="text-sm text-muted-foreground">{hint}</span></span><ChevronRight /></Link></li>;
 }
 
-function ThisWeek({ current }: { current: (typeof familyCurriculumOptions)["queryFn"] extends any ? any : never }) {
+function ThisWeek({ current }: { current: any }) {
   const [showScript, setShowScript] = useState(false);
   if (!current) return <div className={card}><h2 className="text-xl">This week</h2><p className="mt-2 text-muted-foreground">Your first session is on its way.</p></div>;
   const steps = String(current.script).split("\n").map((x: string) => x.trim()).filter(Boolean);
