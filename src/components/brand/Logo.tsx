@@ -43,7 +43,7 @@ const HOP = [
  * The name, letter by letter. `glowIndex` paints one letter glow yellow with a
  * thin dusk outline, so the colour does the play instead of any added dot.
  */
-function BouncyWord({ styles, glowIndex }: { styles: string[]; glowIndex?: number }) {
+function BouncyWord({ styles, glowIndex }: { styles: string[]; glowIndex?: number | undefined }) {
   return (
     <span aria-hidden className="inline-flex items-baseline">
       {"Bugley".split("").map((letter, i) => (
