@@ -239,12 +239,12 @@
 }
 .home-hero-window-bugley {
   position: absolute;
-  left: 64%;
+  left: 88%;
   top: 10%;
   width: 10%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  animation: home-bugley-flight 9s ease-in-out infinite;
+  animation: home-bugley-flight 10s ease-in-out infinite;
   filter: drop-shadow(0 0 12px color-mix(in oklab, var(--glow) 70%, transparent));
 }
 /* Soft light halo that travels with Bugley */
@@ -266,12 +266,15 @@
   0%, 100% { opacity: 0.9; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(0.88); }
 }
-/* Mobile loop: sweeps across the window and castle in the upper sky */
+/* Mobile loop: a wide tour of the whole sky — castle, dragon, birds, then down the dark left wall */
 @keyframes home-bugley-flight {
-  0%, 100% { transform: translate(-50%, -50%) translate(-4cqw, 0cqw) rotate(-8deg); }
-  25% { transform: translate(-50%, -50%) translate(-16cqw, -4cqw) rotate(6deg); }
-  50% { transform: translate(-50%, -50%) translate(-28cqw, 2cqw) rotate(-6deg); }
-  75% { transform: translate(-50%, -50%) translate(-10cqw, 6cqw) rotate(8deg); }
+  0%, 100% { transform: translate(-50%, -50%) translate(0cqw, 0cqh) rotate(-6deg); }
+  15% { transform: translate(-50%, -50%) translate(-14cqw, 5cqh) rotate(6deg); }
+  30% { transform: translate(-50%, -50%) translate(-32cqw, 1cqh) rotate(-8deg); }
+  45% { transform: translate(-50%, -50%) translate(-58cqw, 9cqh) rotate(5deg); }
+  58% { transform: translate(-50%, -50%) translate(-74cqw, 24cqh) rotate(-5deg); }
+  70% { transform: translate(-50%, -50%) translate(-78cqw, 8cqh) rotate(8deg); }
+  85% { transform: translate(-50%, -50%) translate(-40cqw, 2cqh) rotate(-6deg); }
 }
 /* Desktop loop: wide sweep from the castle across the top of the picture */
 @keyframes home-bugley-flight-wide {
