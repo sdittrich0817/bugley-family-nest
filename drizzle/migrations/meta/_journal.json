@@ -36,6 +36,13 @@
       "when": 1792694776475,
       "tag": "0004_child_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792695193488,
+      "tag": "0005_curriculum_content",
+      "breakpoints": true
     }
   ]
 }

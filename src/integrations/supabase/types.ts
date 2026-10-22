@@ -14,6 +14,165 @@ export type Database = {
   }
   public: {
     Tables: {
+      activities: {
+        Row: {
+          created_at: string
+          id: string
+          offscreen: boolean
+          position: number
+          session_id: string
+          strand: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          offscreen?: boolean
+          position?: number
+          session_id: string
+          strand: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          offscreen?: boolean
+          position?: number
+          session_id?: string
+          strand?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activity_versions: {
+        Row: {
+          activity_id: string
+          age_band: string
+          id: string
+          instructions: string
+          kid_title: string
+          minutes: number
+        }
+        Insert: {
+          activity_id: string
+          age_band: string
+          id?: string
+          instructions: string
+          kid_title: string
+          minutes?: number
+        }
+        Update: {
+          activity_id?: string
+          age_band?: string
+          id?: string
+          instructions?: string
+          kid_title?: string
+          minutes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_versions_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_activity_progress: {
+        Row: {
+          activity_id: string
+          child_id: string
+          completed_at: string
+          parent_id: string
+        }
+        Insert: {
+          activity_id: string
+          child_id: string
+          completed_at?: string
+          parent_id: string
+        }
+        Update: {
+          activity_id?: string
+          child_id?: string
+          completed_at?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_activity_progress_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_activity_progress_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_activity_progress_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_badges: {
+        Row: {
+          child_id: string
+          earned_at: string
+          parent_id: string
+          unit_id: string
+        }
+        Insert: {
+          child_id: string
+          earned_at?: string
+          parent_id: string
+          unit_id: string
+        }
+        Update: {
+          child_id?: string
+          earned_at?: string
+          parent_id?: string
+          unit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_badges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_badges_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_badges_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_controls: {
         Row: {
           child_id: string
@@ -55,6 +214,49 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_session_progress: {
+        Row: {
+          child_id: string
+          completed_at: string
+          parent_id: string
+          session_id: string
+        }
+        Insert: {
+          child_id: string
+          completed_at?: string
+          parent_id: string
+          session_id: string
+        }
+        Update: {
+          child_id?: string
+          completed_at?: string
+          parent_id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_session_progress_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_session_progress_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "child_session_progress_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
         ]
@@ -180,6 +382,38 @@ export type Database = {
           },
         ]
       }
+      printables: {
+        Row: {
+          created_at: string
+          file_path: string
+          id: string
+          session_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          file_path: string
+          id?: string
+          session_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          file_path?: string
+          id?: string
+          session_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "printables_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -201,6 +435,142 @@ export type Database = {
           first_name?: string
           id?: string
           last_name?: string
+        }
+        Relationships: []
+      }
+      seasons: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          number: number
+          published: boolean
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          number: number
+          published?: boolean
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          number?: number
+          published?: boolean
+          title?: string
+        }
+        Relationships: []
+      }
+      sessions: {
+        Row: {
+          created_at: string
+          id: string
+          parent_primer: string
+          script: string
+          title: string
+          unit_id: string
+          week_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_primer?: string
+          script?: string
+          title: string
+          unit_id: string
+          week_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_primer?: string
+          script?: string
+          title?: string
+          unit_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_unit_id_fkey"
+            columns: ["unit_id"]
+            isOneToOne: false
+            referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      units: {
+        Row: {
+          badge_description: string
+          badge_name: string
+          created_at: string
+          dinner_question: string
+          family_question: string
+          id: string
+          lead_strand: string
+          mission_project: string
+          number: number
+          season_id: string
+          story_prompt: string
+          title: string
+        }
+        Insert: {
+          badge_description?: string
+          badge_name?: string
+          created_at?: string
+          dinner_question?: string
+          family_question?: string
+          id?: string
+          lead_strand: string
+          mission_project?: string
+          number: number
+          season_id: string
+          story_prompt?: string
+          title: string
+        }
+        Update: {
+          badge_description?: string
+          badge_name?: string
+          created_at?: string
+          dinner_question?: string
+          family_question?: string
+          id?: string
+          lead_strand?: string
+          mission_project?: string
+          number?: number
+          season_id?: string
+          story_prompt?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "units_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -236,10 +606,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_active_parent: { Args: never; Returns: boolean }
+      session_is_published: { Args: { _session_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -366,6 +744,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin"],
+    },
   },
 } as const
