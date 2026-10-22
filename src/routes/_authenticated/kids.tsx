@@ -5,6 +5,8 @@ import { ArrowLeft, Award, BookOpen, Delete, Lock, Sparkles, Users, Volume2 } fr
 import { familyOptions } from "@/lib/family.functions";
 import { verifyChildLogin } from "@/lib/kid.functions";
 import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
+import { getChildGlow } from "@/lib/glow.functions";
+import { isGlowLow } from "@/lib/glow";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
@@ -104,6 +106,7 @@ function KidHome({ child }: { child: ChildProfile }) {
   const sprouts = band === "sprouts", builders = band === "builders";
   const qc = useQueryClient();
   const { data: m } = useQuery({ queryKey: ["curriculum", "child", child.id], queryFn: () => getChildMission({ data: { childId: child.id } }) });
+  const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   async function done(activityId: string) {
     try { const r = await completeActivity({ data: { childId: child.id, activityId } }); if (r.badge) toast.success(`You earned the ${r.badge} badge!`); else toast.success(sprouts ? "Yay! You did it!" : "Nice work!"); await qc.invalidateQueries({ queryKey: ["curriculum"] }); }
     catch { toast.error("Oops! Try again."); }
@@ -117,6 +120,7 @@ function KidHome({ child }: { child: ChildProfile }) {
         {!sprouts && <p className="mt-1 text-sm capitalize text-muted-foreground">Bugley stage: {child.bugley_stage}</p>}
       </div>
     </div>
+    {glow && <GlowMeter total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} big={sprouts} />}
     <div className="mt-6 grid gap-5 md:grid-cols-2">
       <div className="rounded-3xl border-2 border-border bg-card p-6">
         <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{copy.mission}</p>
@@ -181,4 +185,17 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
       </form>
     </DialogContent>
   </Dialog>;
+}
+
+function GlowMeter({ total, allowance, stage, big }: { total: number; allowance: number; stage: ChildProfile["bugley_stage"]; big: boolean }) {
+  const pct = Math.min(100, Math.round((total / Math.max(allowance, 1)) * 100));
+  const low = isGlowLow(total);
+  return <div className="mt-6 flex items-center gap-4 rounded-3xl bg-card p-5 shadow-soft" role="meter" aria-valuemin={0} aria-valuemax={allowance} aria-valuenow={total} aria-label="Glow">
+    <Bugley stage={stage} expression={low ? "sleepy" : "happy"} glow={!low} size={big ? 84 : 64} className="shrink-0" />
+    <div className="min-w-0 flex-1">
+      <div className="flex items-baseline justify-between gap-2"><p className={cn("font-display", big ? "text-2xl" : "text-lg")}>Glow</p><p className="font-display text-lg">{total}</p></div>
+      <div className="mt-2 h-4 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary shadow-glow transition-all" style={{ width: `${pct}%` }} /></div>
+      {low && <p className="mt-2 text-sm font-medium">I’m almost out of glow! Let’s write the next page and I’ll draw it tomorrow.</p>}
+    </div>
+  </div>;
 }
