@@ -18,6 +18,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { WaitlistProvider } from "@/components/site/WaitlistModal";
 import { Bugley } from "@/components/brand/Bugley";
+import { Toaster } from "@/components/ui/sonner";
 import { ParentSessionProvider } from "@/components/site/ParentSession";
 
 function NotFoundComponent() {
@@ -130,6 +131,7 @@ function RootComponent() {
       <ParentSessionProvider>
       <WaitlistProvider>
         <KidZoneShell />
+        <Toaster />
       </WaitlistProvider>
       </ParentSessionProvider>
     </QueryClientProvider>

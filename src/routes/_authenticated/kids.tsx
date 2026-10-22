@@ -150,7 +150,7 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
     window.speechSynthesis?.cancel();
     setKidZoneLocked(false);
     onOpenChange(false);
-    await navigate({ to: "/account", replace: true });
+    await navigate({ to: "/hub", replace: true });
   }
   return <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); setPassword(""); setError(""); }}>
     <DialogContent>

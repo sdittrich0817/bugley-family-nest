@@ -29,11 +29,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          {user ? <><Button asChild size="sm"><Link to="/account">Your account</Link></Button><Button variant="secondary" size="sm" onClick={() => void signOut()}>Log out</Button></> : <><Button variant="secondary" size="sm" onClick={() => open("log_in")}>Log in</Button><Button size="sm" onClick={() => open("start_free")}>Start free</Button></>}
+          {user ? <><Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button><Button variant="secondary" size="sm" onClick={() => void signOut()}>Log out</Button></> : <><Button variant="secondary" size="sm" onClick={() => open("log_in")}>Log in</Button><Button size="sm" onClick={() => open("start_free")}>Start free</Button></>}
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          {user ? <Button asChild size="sm"><Link to="/account">Your account</Link></Button> : <Button size="sm" onClick={() => open("start_free")}>Start free</Button>}
+          {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button size="sm" onClick={() => open("start_free")}>Start free</Button>}
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
