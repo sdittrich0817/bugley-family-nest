@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Award, BookHeart, ChevronRight, Clock, CreditCard, Download, FileText, Gift, Play, Settings, ShieldCheck, Sparkles, UserRound, Users } from "lucide-react";
+import { Award, BookHeart, ChevronRight, Clock, CreditCard, Download, FileText, Gift, Play, ShieldCheck, UserRound, Users } from "lucide-react";
 import { familyOptions } from "@/lib/family.functions";
 import { controlsOptions, saveChildControls } from "@/lib/hub.functions";
 import { DEFAULT_CONTROLS, STRANDS, THIS_WEEK, TIME_LIMITS, type ChildControls } from "@/lib/hub";

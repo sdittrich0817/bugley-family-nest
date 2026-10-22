@@ -38,7 +38,7 @@ function Signup() {
     } catch (err) { setError(err instanceof Error ? err.message : "We couldn’t create your account. Please try again."); }
     finally { setBusy(false); }
   }
-  if (user) return <AccountFrame title="You're already signed in" subtitle="Your parent account is ready."><Button asChild className="w-full"><Link to="/account">Your account</Link></Button></AccountFrame>;
+  if (user) return <AccountFrame title="You're already signed in" subtitle="Your parent account is ready."><Button asChild className="w-full"><Link to="/hub">Parent Hub</Link></Button></AccountFrame>;
   if (sent) return <AccountFrame title="Check your email" subtitle={`We sent a confirmation link to ${email}. Your account won't be active until you verify your email.`}><p className="mb-6 text-center text-sm text-muted-foreground">Check your spam folder, too. If you already have an account, log in instead.</p><Button asChild className="w-full"><Link to="/login">Go to log in</Link></Button></AccountFrame>;
   return <AccountFrame title={details ? "Your family. Your permission." : "Welcome to Bugley"} subtitle={details ? "Step 2 of 2 · Parental consent" : "Step 1 of 2 · Create your parent account"}>
     {details ? <div className="space-y-6">

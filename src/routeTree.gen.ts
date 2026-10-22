@@ -29,6 +29,7 @@ import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StudioPreviewRouteImport } from './routes/studio-preview'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
+import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
@@ -134,6 +135,11 @@ const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
+  id: '/hub',
+  path: '/hub',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedKidsRoute = AuthenticatedKidsRouteImport.update({
   id: '/kids',
   path: '/kids',
@@ -180,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -206,6 +213,7 @@ export interface FileRoutesByTo {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/account': typeof AuthenticatedAccountRoute
+  '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
@@ -234,6 +242,7 @@ export interface FileRoutesById {
   '/studio-preview': typeof StudioPreviewRoute
   '/terms': typeof TermsRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
+  '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/kids': typeof AuthenticatedKidsRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/hub'
     | '/kids'
     | '/settings'
     | '/setup'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/account'
+    | '/hub'
     | '/kids'
     | '/settings'
     | '/setup'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/studio-preview'
     | '/terms'
     | '/_authenticated/account'
+    | '/_authenticated/hub'
     | '/_authenticated/kids'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
@@ -488,6 +500,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccountRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/hub': {
+      id: '/_authenticated/hub'
+      path: '/hub'
+      fullPath: '/hub'
+      preLoaderRoute: typeof AuthenticatedHubRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/kids': {
       id: '/_authenticated/kids'
       path: '/kids'
@@ -528,6 +547,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
+  AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
@@ -535,6 +555,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
+  AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedKidsRoute: AuthenticatedKidsRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,

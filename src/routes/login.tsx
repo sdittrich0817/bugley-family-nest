@@ -24,7 +24,7 @@ function Login() {
       const { error: authError } = await supabase.auth.setSession({ access_token: access ?? "", refresh_token: refresh ?? "" });
       window.history.replaceState(null, "", window.location.pathname);
       if (authError) { setError("This confirmation link is invalid or expired."); return; }
-      await navigate({ to: "/account", replace: true });
+      await navigate({ to: "/hub", replace: true });
     }
     void confirm();
   }, [navigate]);
@@ -33,8 +33,8 @@ function Login() {
     const parsed = loginSchema.safeParse({ email: fd.get("email"), password: fd.get("password") });
     if (!parsed.success) { setError("Enter a valid email and password."); return; }
     setBusy(true); setError("");
-    try { const { error: authError } = await supabase.auth.signInWithPassword(parsed.data); if (authError) throw authError; await navigate({ to: "/account" }); }
+    try { const { error: authError } = await supabase.auth.signInWithPassword(parsed.data); if (authError) throw authError; await navigate({ to: "/hub" }); }
     catch (err) { setError(err instanceof Error ? err.message : "We couldn’t log you in."); } finally { setBusy(false); }
   }
-  return <AccountFrame title="Welcome back, parent" subtitle="Your family's next chapter starts here.">{user ? <Button asChild className="w-full"><Link to="/account">Your account</Link></Button> : <form onSubmit={submit} className="space-y-5"><AccountField id="email" label="Email"><Input id="email" name="email" type="email" autoComplete="email" maxLength={255} required /></AccountField><AccountField id="password" label="Password"><Input id="password" name="password" type="password" autoComplete="current-password" maxLength={128} required /></AccountField><Link to="/forgot-password" className="inline-block text-sm underline">Forgot password?</Link>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" disabled={busy} className="w-full">{busy ? "Logging in…" : "Log in"}</Button><p className="text-center text-sm">New to Bugley? <Link to="/signup" className="underline">Create a parent account</Link></p></form>}</AccountFrame>;
+  return <AccountFrame title="Welcome back, parent" subtitle="Your family's next chapter starts here.">{user ? <Button asChild className="w-full"><Link to="/hub">Parent Hub</Link></Button> : <form onSubmit={submit} className="space-y-5"><AccountField id="email" label="Email"><Input id="email" name="email" type="email" autoComplete="email" maxLength={255} required /></AccountField><AccountField id="password" label="Password"><Input id="password" name="password" type="password" autoComplete="current-password" maxLength={128} required /></AccountField><Link to="/forgot-password" className="inline-block text-sm underline">Forgot password?</Link>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}<Button type="submit" disabled={busy} className="w-full">{busy ? "Logging in…" : "Log in"}</Button><p className="text-center text-sm">New to Bugley? <Link to="/signup" className="underline">Create a parent account</Link></p></form>}</AccountFrame>;
 }
