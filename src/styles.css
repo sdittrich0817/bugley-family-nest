@@ -239,21 +239,44 @@
 }
 .home-hero-window-bugley {
   position: absolute;
-  left: 73%;
-  top: 7%;
+  left: 78%;
+  top: 30%;
   width: 10%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  animation: home-bugley-flight 7s ease-in-out infinite;
+  animation: home-bugley-flight 9s ease-in-out infinite;
+  filter: drop-shadow(0 0 12px color-mix(in oklab, var(--glow) 70%, transparent));
 }
+/* Soft light halo that travels with Bugley */
+.home-hero-window-bugley::before {
+  content: "";
+  position: absolute;
+  inset: -65%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--glow) 50%, transparent) 0%,
+    color-mix(in oklab, var(--glow) 20%, transparent) 45%,
+    transparent 70%
+  );
+  animation: home-bugley-halo 3.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes home-bugley-halo {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.88); }
+}
+/* Wide loop: sweeps from the castle across the top of the picture and back */
 @keyframes home-bugley-flight {
-  0%, 100% { transform: translate(-50%, -50%) rotate(-8deg); }
-  25% { transform: translate(-65%, -85%) rotate(4deg); }
-  50% { transform: translate(-85%, -65%) rotate(8deg); }
-  75% { transform: translate(-95%, -95%) rotate(2deg); }
+  0%, 100% { transform: translate(-50%, -50%) translate(-2cqw, -16cqh) rotate(-8deg); }
+  20% { transform: translate(-50%, -50%) translate(-16cqw, -22cqh) rotate(6deg); }
+  40% { transform: translate(-50%, -50%) translate(-30cqw, -4cqh) rotate(-4deg); }
+  60% { transform: translate(-50%, -50%) translate(-26cqw, 5cqh) rotate(8deg); }
+  80% { transform: translate(-50%, -50%) translate(-6cqw, -6cqh) rotate(-6deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero-window-bugley { animation: none; }
+  .home-hero-window-bugley::before { animation: none; }
 }
 .home-hero-copy { justify-content: flex-end; padding-bottom: 24px; }
 .home-hero-words { gap: 14px; }
