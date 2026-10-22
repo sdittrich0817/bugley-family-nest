@@ -266,14 +266,14 @@
   0%, 100% { opacity: 0.9; transform: scale(1); }
   50% { opacity: 0.55; transform: scale(0.88); }
 }
-/* Mobile loop: a wide tour of the whole sky — castle, dragon, birds, then down the dark left wall */
+/* Mobile loop: a wide tour — over the lake below the castle, across the top, out to the paper birds and back */
 @keyframes home-bugley-flight {
   0%, 100% { transform: translate(-50%, -50%) translate(0cqw, 0cqh) rotate(-6deg); }
-  15% { transform: translate(-50%, -50%) translate(-14cqw, 5cqh) rotate(6deg); }
-  30% { transform: translate(-50%, -50%) translate(-32cqw, 1cqh) rotate(-8deg); }
-  45% { transform: translate(-50%, -50%) translate(-58cqw, 9cqh) rotate(5deg); }
-  58% { transform: translate(-50%, -50%) translate(-83cqw, 11cqh) rotate(-5deg); }
-  70% { transform: translate(-50%, -50%) translate(-83cqw, 4cqh) rotate(8deg); }
+  15% { transform: translate(-50%, -50%) translate(-12cqw, 14cqh) rotate(6deg); }
+  30% { transform: translate(-50%, -50%) translate(-16cqw, 18cqh) rotate(-8deg); }
+  45% { transform: translate(-50%, -50%) translate(-40cqw, 8cqh) rotate(5deg); }
+  58% { transform: translate(-50%, -50%) translate(-70cqw, 4cqh) rotate(-6deg); }
+  70% { transform: translate(-50%, -50%) translate(-78cqw, 8cqh) rotate(8deg); }
   85% { transform: translate(-50%, -50%) translate(-40cqw, 2cqh) rotate(-6deg); }
 }
 /* Desktop loop: wide sweep from the castle across the top of the picture */
