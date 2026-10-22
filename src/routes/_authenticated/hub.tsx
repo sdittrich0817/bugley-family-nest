@@ -102,8 +102,7 @@ function ThisWeek({ current }: { current: any }) {
         <div className="mt-3 space-y-1 text-sm">{current.printables.length ? current.printables.map((p: any) => p.url && <a key={p.id} href={p.url} className="flex items-center gap-2 underline"><Download className="size-4" />{p.title}</a>) : <p className="flex items-center gap-2 text-muted-foreground"><Download className="size-4" />No printables this week</p>}</div>
       </div>
     </div>
-    <Button size="lg" variant="secondary" className="mt-5" disabled><Play />Start family session</Button>
-    <p className="mt-2 text-sm">Family Table mode is coming soon.</p>
+    <Button asChild size="lg" variant="secondary" className="mt-5"><Link to="/table"><Play />Start family session</Link></Button>
   </div>;
 }
 

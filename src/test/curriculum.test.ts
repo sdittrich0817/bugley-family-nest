@@ -10,3 +10,9 @@ describe("Current session", () => {
     expect([...familyCompleted(["w1", "w2"], ["a", "b"], done)]).toEqual(["w1"]);
   });
 });
+import { stepMinutes, TABLE_STEPS } from "@/lib/curriculum";
+describe("Family Table steps", () => {
+  it("walks the five steps in order", () => { expect(TABLE_STEPS.map((s) => s.label)).toEqual(["Bugley’s Hello", "Unplugged warm-up", "Make it", "Break it", "Think about it"]); });
+  it("times a step by its longest age version", () => { expect(stepMinutes("warmup", [{ step: "warmup", activity_versions: [{ minutes: 10 }, { minutes: 15 }] }])).toBe(15); });
+  it("falls back to the step default with no activity", () => { expect(stepMinutes("break", [])).toBe(10); });
+});

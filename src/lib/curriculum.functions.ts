@@ -5,14 +5,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyCompleted, pickCurrentSession } from "@/lib/curriculum";
 
 type Ctx = { supabase: any; userId: string };
-const TREE = "id,number,title,units(id,number,title,lead_strand,family_question,dinner_question,story_prompt,mission_project,badge_name,badge_description,sessions(id,week_number,title,parent_primer,script,activities(id,position,title,strand,offscreen,activity_versions(age_band,kid_title,instructions,minutes)),printables(id,title,file_path)))";
+const TREE = "id,number,title,units(id,number,title,lead_strand,family_question,dinner_question,story_prompt,mission_project,badge_name,badge_description,journal_prompt,sessions(id,week_number,title,parent_primer,script,activities(id,position,title,strand,step,offscreen,activity_versions(age_band,kid_title,instructions,minutes)),printables(id,title,file_path)))";
 
 async function loadOrdered(ctx: Ctx) {
   const { data, error } = await ctx.supabase.from("seasons").select(TREE).eq("published", true).order("number");
   if (error) throw new Error("We couldn’t load this week’s session.");
   const out: any[] = [];
   for (const se of data ?? []) for (const u of [...se.units].sort((a: any, b: any) => a.number - b.number)) for (const s of [...u.sessions].sort((a: any, b: any) => a.week_number - b.week_number))
-    out.push({ ...s, activities: [...s.activities].sort((a: any, b: any) => a.position - b.position), season: { number: se.number, title: se.title }, unit: { id: u.id, number: u.number, title: u.title, lead_strand: u.lead_strand, family_question: u.family_question, dinner_question: u.dinner_question, story_prompt: u.story_prompt, mission_project: u.mission_project, badge_name: u.badge_name, badge_description: u.badge_description } });
+    out.push({ ...s, activities: [...s.activities].sort((a: any, b: any) => a.position - b.position), season: { number: se.number, title: se.title }, unit: { id: u.id, number: u.number, title: u.title, lead_strand: u.lead_strand, family_question: u.family_question, dinner_question: u.dinner_question, story_prompt: u.story_prompt, mission_project: u.mission_project, badge_name: u.badge_name, badge_description: u.badge_description, journal_prompt: u.journal_prompt } });
   return out;
 }
 async function progress(ctx: Ctx) {
@@ -82,4 +82,28 @@ export const completeActivity = createServerFn({ method: "POST" }).middleware([r
   await sb.from("child_badges").upsert({ ...base, unit_id: unitId }, { ignoreDuplicates: true });
   const { data: unit } = await sb.from("units").select("badge_name").eq("id", unitId).single();
   return { badge: unit?.badge_name ?? null };
+});
+
+/** Family Table finish: records every activity and the session for each child who took part, and awards the unit badge when the unit is complete. */
+export const completeFamilySession = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ sessionId: z.string().uuid(), childIds: z.array(z.string().uuid()).min(1).max(5) }).parse(i)).handler(async ({ data, context }) => {
+  const sb = context.supabase;
+  const { data: kids } = await sb.from("children").select("id").eq("parent_id", context.userId).in("id", data.childIds);
+  const ids = (kids ?? []).map((k) => k.id);
+  if (ids.length !== data.childIds.length) throw new Error("We couldn’t find one of those players.");
+  const { data: session } = await sb.from("sessions").select("id,unit_id").eq("id", data.sessionId).single();
+  if (!session) throw new Error("We couldn’t find this session.");
+  const { data: acts } = await sb.from("activities").select("id").eq("session_id", session.id);
+  const rows = ids.flatMap((c) => (acts ?? []).map((a) => ({ child_id: c, activity_id: a.id, parent_id: context.userId })));
+  if (rows.length) { const { error } = await sb.from("child_activity_progress").upsert(rows, { ignoreDuplicates: true }); if (error) throw new Error("We couldn’t save progress."); }
+  const { error: se } = await sb.from("child_session_progress").upsert(ids.map((c) => ({ child_id: c, session_id: session.id, parent_id: context.userId })), { ignoreDuplicates: true });
+  if (se) throw new Error("We couldn’t save progress.");
+  const { data: unitSessions } = await sb.from("sessions").select("id").eq("unit_id", session.unit_id);
+  const { data: unit } = await sb.from("units").select("badge_name").eq("id", session.unit_id).single();
+  const awarded: string[] = [];
+  for (const c of ids) {
+    const { data: ds } = await sb.from("child_session_progress").select("session_id").eq("child_id", c);
+    const set = new Set((ds ?? []).map((d) => d.session_id));
+    if ((unitSessions ?? []).every((s) => set.has(s.id))) { await sb.from("child_badges").upsert({ child_id: c, unit_id: session.unit_id, parent_id: context.userId }, { ignoreDuplicates: true }); awarded.push(c); }
+  }
+  return { awarded, badge: unit?.badge_name ?? null };
 });

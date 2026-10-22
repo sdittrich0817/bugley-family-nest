@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ChevronRight, FileUp, Plus, Trash2 } from "lucide-react";
 import { adminTreeOptions, addPrintable, deleteEntity, isAdminOptions, saveEntity, saveVersions } from "@/lib/admin.functions";
-import { BANDS, STRAND_KEYS, type EntityTable } from "@/lib/curriculum";
+import { BANDS, STEP_KEYS, STRAND_KEYS, type EntityTable } from "@/lib/curriculum";
 import { accountHead } from "@/lib/parent-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -20,12 +20,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Field = { key: string; label: string; kind: "text" | "long" | "int" | "bool" | "strand" };
+type Field = { key: string; label: string; kind: "text" | "long" | "int" | "bool" | "strand" | "step" };
 const FIELDS: Record<EntityTable, Field[]> = {
   seasons: [{ key: "number", label: "Season number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "description", label: "Description", kind: "long" }, { key: "published", label: "Published (families can see it)", kind: "bool" }],
-  units: [{ key: "number", label: "Unit number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "lead_strand", label: "Lead strand", kind: "strand" }, { key: "family_question", label: "Family question", kind: "long" }, { key: "dinner_question", label: "Dinner question", kind: "long" }, { key: "story_prompt", label: "Story Studio prompt", kind: "text" }, { key: "mission_project", label: "Mission Week project", kind: "long" }, { key: "badge_name", label: "Badge name", kind: "text" }, { key: "badge_description", label: "Badge description", kind: "text" }],
+  units: [{ key: "number", label: "Unit number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "lead_strand", label: "Lead strand", kind: "strand" }, { key: "family_question", label: "Family question", kind: "long" }, { key: "dinner_question", label: "Dinner question", kind: "long" }, { key: "story_prompt", label: "Story Studio prompt", kind: "text" }, { key: "mission_project", label: "Mission Week project", kind: "long" }, { key: "badge_name", label: "Badge name", kind: "text" }, { key: "badge_description", label: "Badge description", kind: "text" }, { key: "journal_prompt", label: "Field journal prompt", kind: "long" }],
   sessions: [{ key: "week_number", label: "Week number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "parent_primer", label: "5-minute parent primer", kind: "long" }, { key: "script", label: "Session script (one step per line)", kind: "long" }],
-  activities: [{ key: "position", label: "Order", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "strand", label: "Strand", kind: "strand" }, { key: "offscreen", label: "Off-screen activity", kind: "bool" }],
+  activities: [{ key: "position", label: "Order", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "strand", label: "Strand", kind: "strand" }, { key: "step", label: "Family Table step", kind: "step" }, { key: "offscreen", label: "Off-screen activity", kind: "bool" }],
 };
 const PARENT_KEY: Partial<Record<EntityTable, string>> = { units: "season_id", sessions: "unit_id", activities: "session_id" };
 const LABEL: Record<EntityTable, string> = { seasons: "Season", units: "Unit", sessions: "Session", activities: "Activity" };
@@ -73,7 +73,8 @@ function AdminArea() {
 function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved: (id: string) => void; onDeleted: () => void }) {
   const qc = useQueryClient();
   const fields = FIELDS[sel.table];
-  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "strand" ? "understand" : "")])));
+  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
+          : f.kind === "strand" ? "understand" : f.kind === "step" ? "make" : "")])));
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tree"] }).then(() => qc.invalidateQueries({ queryKey: ["curriculum"] }));
   async function save() {
@@ -96,6 +97,7 @@ function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved:
         {f.kind === "long" ? <Textarea rows={4} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
           : f.kind === "int" ? <Input type="number" min={1} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: Number(e.target.value) })} />
           : f.kind === "bool" ? <Switch checked={values[f.key]} onCheckedChange={(c) => setValues({ ...values, [f.key]: c })} />
+          : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
           : f.kind === "strand" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3 capitalize" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STRAND_KEYS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
           : <Input value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />}
       </label>)}
