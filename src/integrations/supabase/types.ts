@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      children: {
+        Row: {
+          age: number
+          age_band: string | null
+          avatar: string
+          bugley_stage: string | null
+          created_at: string
+          credential_hash: string
+          credential_salt: string
+          id: string
+          login_kind: string
+          nickname: string
+          parent_id: string
+        }
+        Insert: {
+          age: number
+          age_band?: string | null
+          avatar: string
+          bugley_stage?: string | null
+          created_at?: string
+          credential_hash: string
+          credential_salt: string
+          id?: string
+          login_kind: string
+          nickname: string
+          parent_id: string
+        }
+        Update: {
+          age?: number
+          age_band?: string | null
+          avatar?: string
+          bugley_stage?: string | null
+          created_at?: string
+          credential_hash?: string
+          credential_salt?: string
+          id?: string
+          login_kind?: string
+          nickname?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "children_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_requests: {
         Row: {
           age_range: string
@@ -88,18 +138,21 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string
+          family_setup_completed_at: string | null
           first_name: string
           id: string
           last_name: string
         }
         Insert: {
           created_at?: string
+          family_setup_completed_at?: string | null
           first_name: string
           id: string
           last_name: string
         }
         Update: {
           created_at?: string
+          family_setup_completed_at?: string | null
           first_name?: string
           id?: string
           last_name?: string

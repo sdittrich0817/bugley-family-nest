@@ -1,0 +1,12 @@
+import { describe, expect, it } from "vitest";
+import { agePlacement, childDetailsSchema, credentialSchema, credentialValue, MAX_CHILDREN, saveChildSchema } from "@/lib/family";
+describe("Family setup rules", () => {
+  it("limits families to five children", () => { expect(MAX_CHILDREN).toBe(5); });
+  it("accepts only elementary ages 5–12", () => { for (const age of [4, 13, 15, 5.5]) expect(() => agePlacement(age)).toThrow(); expect(agePlacement(5).age_band).toBe("sprouts"); expect(agePlacement(12).age_band).toBe("builders"); });
+  it("places children in the three current bands", () => { expect([5,6,7,8,9,10,11,12].map(a => agePlacement(a).age_band)).toEqual(["sprouts","sprouts","explorers","explorers","explorers","builders","builders","builders"]); });
+  it("keeps five starting stages across ages 5–12", () => { expect([5,6,7,8,9,10,11,12].map(a => agePlacement(a).bugley_stage)).toEqual(["grub","grub","hatchling","hatchling","scout","scout","engineer","navigator"]); });
+  it("allows only a first name or nickname and approved avatar", () => { expect(childDetailsSchema.safeParse({nickname:"Amaya",age:8,avatar:"fox"}).success).toBe(true); expect(childDetailsSchema.safeParse({nickname:"Amaya Dittrich",age:8,avatar:"fox"}).success).toBe(false); expect(childDetailsSchema.safeParse({nickname:"Amaya",age:8,avatar:"photo"}).success).toBe(false); });
+  it("requires exactly four PIN digits", () => { for (const pin of ["123","12345","abcd"]) expect(credentialSchema.safeParse({kind:"pin",pin}).success).toBe(false); expect(credentialSchema.safeParse({kind:"pin",pin:"0123"}).success).toBe(true); });
+  it("requires three approved pictures in order", () => { expect(credentialSchema.safeParse({kind:"pictures",pictures:["sun","moon"]}).success).toBe(false); expect(credentialSchema.safeParse({kind:"pictures",pictures:["sun","moon","photo"]}).success).toBe(false); expect(credentialValue({kind:"pictures",pictures:["sun","moon","star"]})).not.toBe(credentialValue({kind:"pictures",pictures:["star","moon","sun"]})); });
+  it("requires a login for new children but preserves one on edit", () => { const details = {nickname:"Amaya",age:8,avatar:"fox"}; expect(saveChildSchema.safeParse(details).success).toBe(false); expect(saveChildSchema.safeParse({...details,id:"00000000-0000-4000-8000-000000000001"}).success).toBe(true); });
+});

@@ -22,6 +22,13 @@
       "when": 1792616008078,
       "tag": "0002_parent_profiles_and_consent",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792631579867,
+      "tag": "0003_family_setup",
+      "breakpoints": true
     }
   ]
 }
