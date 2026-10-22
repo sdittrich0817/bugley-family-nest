@@ -129,27 +129,27 @@ function BrandPage() {
       </Block>
 
       <Block eyebrow="Logo" title="The Bugley logo">
-        <p className="max-w-2xl text-muted-foreground">The hand-lettered name — every letter leans a little, like a kid wrote it, and the "g" wears the glow. No dots, no circles: the fun is in the letters. Three finishes; the flight takeoff is on the site now.</p>
+        <p className="max-w-2xl text-muted-foreground">The hand-lettered name — every letter leans and hops a little, like a kid wrote it. No dots, no circles: the fun is in the letters. Three finishes; the silly hops are on the site now.</p>
         <div className="grid gap-6 md:grid-cols-3">
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
+            <Logo variant="hop" size="lg" />
+            <figcaption className="text-xs font-medium">On the site now · the silly hops</figcaption>
+          </figure>
+          <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
             <Logo variant="flight" size="lg" />
-            <figcaption className="text-xs font-medium">On the site now · the "y" takes off</figcaption>
+            <figcaption className="text-xs text-muted-foreground">Flight · the "y" takes off</figcaption>
           </figure>
           <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
             <Logo variant="swash" size="lg" />
             <figcaption className="text-xs text-muted-foreground">Loopy underline</figcaption>
           </figure>
-          <figure className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card p-6">
-            <Logo variant="hop" size="lg" />
-            <figcaption className="text-xs text-muted-foreground">The silly hops</figcaption>
-          </figure>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           <div className="skin-builders flex min-h-40 items-center justify-center rounded-2xl bg-background p-6">
-            <Logo variant="flight" size="lg" />
+            <Logo variant="hop" size="lg" />
           </div>
           <div className="flex min-h-40 items-center justify-center rounded-2xl border border-border bg-card p-4">
-            <Logo variant="flight" />
+            <Logo variant="hop" />
           </div>
         </div>
         <BugleyCard variant="muted" className="flex flex-wrap items-center gap-6">
