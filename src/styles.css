@@ -171,6 +171,13 @@
   font-weight: 800;
 }
 
+/* One wordmark letter painted glow yellow with a thin dusk cartoon outline. */
+@utility wordmark-glow {
+  color: var(--glow);
+  -webkit-text-stroke: 0.035em var(--dusk);
+  paint-order: stroke fill;
+}
+
 /* Soft radial glow to sit behind images or icons */
 @utility glow-blob {
   background: radial-gradient(
