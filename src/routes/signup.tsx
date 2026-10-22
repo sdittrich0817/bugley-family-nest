@@ -34,7 +34,7 @@ function Signup() {
       const { data, error: authError } = await supabase.auth.signUp({ email: details.email, password: details.password, options: { emailRedirectTo: `${window.location.origin}/login`, data: { first_name: details.firstName, last_name: details.lastName, adult_attested: true, parental_consent: true, consent_version: CONSENT_VERSION } } });
       if (authError) throw authError;
       setEmail(details.email); setDetails(null); setSent(true);
-      if (data.session) await navigate({ to: "/account" });
+      if (data.session) await navigate({ to: "/setup" });
     } catch (err) { setError(err instanceof Error ? err.message : "We couldn’t create your account. Please try again."); }
     finally { setBusy(false); }
   }
@@ -42,7 +42,7 @@ function Signup() {
   if (sent) return <AccountFrame title="Check your email" subtitle={`We sent a confirmation link to ${email}. Your account won't be active until you verify your email.`}><p className="mb-6 text-center text-sm text-muted-foreground">Check your spam folder, too. If you already have an account, log in instead.</p><Button asChild className="w-full"><Link to="/login">Go to log in</Link></Button></AccountFrame>;
   return <AccountFrame title={details ? "Your family. Your permission." : "Welcome to Bugley"} subtitle={details ? "Step 2 of 2 · Parental consent" : "Step 1 of 2 · Create your parent account"}>
     {details ? <div className="space-y-6">
-      <div className="space-y-4 leading-relaxed"><h2 className="text-xl">What we collect about children</h2><p>Their <strong>first name or nickname, age, chosen avatar, and what they create</strong>.</p><h2 className="text-xl">Why we collect it</h2><p>To tailor age-appropriate activities, display their avatar, and save their creations to their own shelf.</p><h2 className="text-xl">You're in charge</h2><p>You can view or delete your children’s information and creations anytime. Children don’t need an email address.</p><p>No ads. We never sell your family’s data.</p><p className="text-sm text-muted-foreground">Child profiles and the Studio are not open yet; this step records your permission before any child information is added.</p></div>
+      <div className="space-y-4 leading-relaxed"><h2 className="text-xl">What we collect about children</h2><p>Their <strong>first name or nickname, age, chosen avatar, and what they create</strong>.</p><h2 className="text-xl">Why we collect it</h2><p>To tailor age-appropriate activities, display their avatar, and save their creations to their own shelf.</p><h2 className="text-xl">You're in charge</h2><p>You can view or delete your children’s information and creations anytime. Children don’t need an email address.</p><p>No ads. We never sell your family’s data.</p><p className="text-sm text-muted-foreground">After verifying your email, you’ll set up your children’s profiles and choose a PIN or picture password for each. Studio play and sessions are coming soon.</p></div>
       <div className="flex items-start gap-3"><Checkbox id="consent" checked={agreed} onCheckedChange={(v) => setAgreed(v === true)} /><Label htmlFor="consent" className="leading-relaxed">I agree to Bugley collecting and using my child’s information for the purposes explained above.</Label></div>
       <p className="text-sm text-muted-foreground">Your agreement is saved with today’s date and this consent version. <Link to="/privacy" className="underline">Privacy policy</Link></p>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
