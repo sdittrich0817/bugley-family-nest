@@ -272,8 +272,8 @@
   15% { transform: translate(-50%, -50%) translate(-14cqw, 5cqh) rotate(6deg); }
   30% { transform: translate(-50%, -50%) translate(-32cqw, 1cqh) rotate(-8deg); }
   45% { transform: translate(-50%, -50%) translate(-58cqw, 9cqh) rotate(5deg); }
-  58% { transform: translate(-50%, -50%) translate(-74cqw, 24cqh) rotate(-5deg); }
-  70% { transform: translate(-50%, -50%) translate(-78cqw, 8cqh) rotate(8deg); }
+  58% { transform: translate(-50%, -50%) translate(-80cqw, 16cqh) rotate(-5deg); }
+  70% { transform: translate(-50%, -50%) translate(-80cqw, 6cqh) rotate(8deg); }
   85% { transform: translate(-50%, -50%) translate(-40cqw, 2cqh) rotate(-6deg); }
 }
 /* Desktop loop: wide sweep from the castle across the top of the picture */
