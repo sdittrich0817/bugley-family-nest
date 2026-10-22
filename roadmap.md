@@ -6,7 +6,8 @@
 - [ ] Confirm the print partner's real limits (minimum page count, sizes, layouts) and replace the provisional wording on /studio-preview.
 - [ ] Confirm the COPPA answer on /safety with legal review before it stays published.
 - [ ] Replace placeholder article text on /resources with real parent posts.
-- [ ] Build private /setup, child profiles and credentials, parent child settings, and verify family isolation.
+- [x] Build private /setup, child profiles and credentials, and parent child settings for ages 5–12.
+- [ ] Verify saved family setup, editing/removal and family isolation with an active parent session (blocked: no signed-up parent exists).
 - [ ] Add email notifications for new co-op demo requests and waitlist entries.
 - [x] Add a "How they learn" page to the main menu (method, strands by age, seasons, end goals).
 - [x] Reshape How it Works into the whole Bugley picture: learning + studio + parent side, linking to both.
