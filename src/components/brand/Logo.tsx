@@ -180,12 +180,12 @@ export function Logo({
             i === 2 ? (
               <span className="relative">
                 {letter}
-                <GlowDot size={Math.round(dot * 0.6)} className="absolute left-[0.36em] top-[0.16em]" />
+                <GlowDot size={Math.round(dot * 0.55)} className="absolute left-[0.33em] top-[0.24em]" />
               </span>
             ) : i === 3 ? (
               <span className="relative">
                 {letter}
-                <Sparkle size={Math.round(dot * 0.8)} className="absolute left-[0.55em] -top-[0.26em]" />
+                <Sparkle size={Math.round(dot * 0.75)} className="absolute left-[0.5em] top-[0.12em]" />
               </span>
             ) : (
               letter
