@@ -73,8 +73,7 @@ function AdminArea() {
 function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved: (id: string) => void; onDeleted: () => void }) {
   const qc = useQueryClient();
   const fields = FIELDS[sel.table];
-  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
-          : f.kind === "strand" ? "understand" : f.kind === "step" ? "make" : "")])));
+  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "strand" ? "understand" : f.kind === "step" ? "make" : "")])));
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tree"] }).then(() => qc.invalidateQueries({ queryKey: ["curriculum"] }));
   async function save() {
@@ -97,6 +96,7 @@ function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved:
         {f.kind === "long" ? <Textarea rows={4} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
           : f.kind === "int" ? <Input type="number" min={1} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: Number(e.target.value) })} />
           : f.kind === "bool" ? <Switch checked={values[f.key]} onCheckedChange={(c) => setValues({ ...values, [f.key]: c })} />
+          : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
           : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
           : f.kind === "strand" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3 capitalize" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STRAND_KEYS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
           : <Input value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />}
