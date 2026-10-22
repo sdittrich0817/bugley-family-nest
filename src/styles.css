@@ -241,14 +241,16 @@
   position: absolute;
   left: 73%;
   top: 7%;
-  width: 8%;
+  width: 10%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   animation: home-bugley-flight 7s ease-in-out infinite;
 }
 @keyframes home-bugley-flight {
   0%, 100% { transform: translate(-50%, -50%) rotate(-8deg); }
-  50% { transform: translate(-75%, -75%) rotate(8deg); }
+  25% { transform: translate(-65%, -85%) rotate(4deg); }
+  50% { transform: translate(-85%, -65%) rotate(8deg); }
+  75% { transform: translate(-95%, -95%) rotate(2deg); }
 }
 @media (prefers-reduced-motion: reduce) {
   .home-hero-window-bugley { animation: none; }
@@ -265,7 +267,7 @@
 }
 @media (min-width: 600px) {
   .home-hero-art { width: max(100cqw, 149.057cqh); height: max(100cqh, 67.089cqw); }
-  .home-hero-window-bugley { left: 83%; top: 22%; width: 5%; }
+  .home-hero-window-bugley { left: 83%; top: 22%; width: 6.5%; }
   .home-hero-copy { justify-content: center; padding-block: 24px; }
   .home-hero-words { width: 40%; max-width: 448px; gap: 18px; }
   .home-hero-actions { flex-direction: column; align-items: flex-start; }
