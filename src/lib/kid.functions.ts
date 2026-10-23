@@ -1,15 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { familyHasAccess } from "@/lib/billing.functions";
 import { credentialSchema, credentialValue } from "@/lib/family";
 
 export const verifyChildLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ childId: z.string().uuid(), credential: credentialSchema }).parse(input))
+  .inputValidator((input: unknown) => z.object({ childId: z.string().uuid(), credential: credentialSchema, environment: z.enum(["sandbox", "live"]) }).parse(input))
   .handler(async ({ data, context }) => {
     // Confirm the child belongs to this verified parent (RLS) before reading the secret.
     const { data: owned } = await context.supabase.from("children").select("id,login_kind").eq("id", data.childId).eq("parent_id", context.userId).maybeSingle();
     if (!owned) throw new Error("We couldn’t find that player.");
+    if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false, paused: true };
     if (owned.login_kind !== data.credential.kind) return { ok: false };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: secret } = await supabaseAdmin.from("children").select("credential_hash,credential_salt").eq("id", data.childId).single();

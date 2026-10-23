@@ -21,6 +21,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { useParentSession } from "@/components/site/ParentSession";
 import { cn } from "@/lib/utils";
+import { billingOptions } from "@/lib/billing.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/kids")({
   head: () => ({ meta: [
@@ -39,6 +41,16 @@ function KidZone() {
   const [exitOpen, setExitOpen] = useState(false);
   useEffect(() => { setKidZoneLocked(true); }, []);
   const band = (player?.age_band ?? "explorers") as Band;
+  const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
+  if (billing && !billing.active) return <div className="min-h-screen bg-background text-foreground">
+    <header className="mx-auto flex max-w-5xl justify-end px-4 py-4"><Button variant="ghost" size="sm" onClick={() => setExitOpen(true)}><Lock />Exit to Parent Hub</Button></header>
+    <section className="mx-auto max-w-lg px-4 py-10 text-center">
+      <Bugley stage="scout" expression="sleepy" size={130} className="mx-auto" />
+      <h1 className="mt-6 text-3xl">Bugley is taking a little nap</h1>
+      <p className="mt-4 leading-relaxed text-muted-foreground">Grown-ups: the Kid Zone is paused until your family has an active plan. Every story, picture and badge is saved safely. Exit to the Parent Hub to start or restart your plan.</p>
+    </section>
+    <ExitDialog open={exitOpen} onOpenChange={setExitOpen} />
+  </div>;
   return <div className={cn("min-h-screen bg-background text-foreground", player && `skin-${band}`)}>
     <header className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
       {player ? <Button variant="secondary" onClick={() => { window.speechSynthesis?.cancel(); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Kid Zone</span>}
@@ -72,8 +84,8 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
     if (entry.length !== need) return;
     setBusy(true);
     const credential = isPin ? { kind: "pin" as const, pin: entry.join("") } : { kind: "pictures" as const, pictures: entry as (typeof PICTURES)[number][] };
-    verifyChildLogin({ data: { childId: child.id, credential } })
-      .then((r) => { if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
+    verifyChildLogin({ data: { childId: child.id, credential, environment: getStripeEnvironment() } })
+      .then((r) => { if (r.paused) { setError("The Kid Zone is paused. Ask a grown-up!"); setEntry([]); } else if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
       .catch(() => { setError("Something went wrong. Try again."); setEntry([]); })
       .finally(() => setBusy(false));
   }, [entry]); // eslint-disable-line react-hooks/exhaustive-deps
