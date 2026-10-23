@@ -15,6 +15,8 @@ import { BAND_COPY, getActivePlayer, setActivePlayer, setKidZoneLocked, type Ban
 import { PICTURES, type ChildProfile } from "@/lib/family";
 import { ChildAvatar, PictureIcon } from "@/components/site/ChildAvatar";
 import { Bugley } from "@/components/brand/Bugley";
+import { BugBuilder } from "@/components/site/BugBuilder";
+import { toBug, type BugConfig } from "@/lib/bug-avatar";
 import { BugleyMature } from "@/components/brand/BugleyMature";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +41,7 @@ function KidZone() {
   const { data } = useSuspenseQuery(familyOptions);
   const [picking, setPicking] = useState<ChildProfile | null>(null);
   const [player, setPlayer] = useState<ChildProfile | null>(null);
+  const qcRoot = useQueryClient();
   const [exitOpen, setExitOpen] = useState(false); useScrollTopOn(`${picking?.id ?? ""}|${player?.id ?? ""}`);
   useEffect(() => { setKidZoneLocked(true); const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
@@ -57,7 +60,7 @@ function KidZone() {
       {player ? <Button variant="secondary" onClick={() => { window.speechSynthesis?.cancel(); setActivePlayer(null); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Kid Zone</span>}
       <Button variant="ghost" size="sm" onClick={() => setExitOpen(true)}><Lock />Exit to Parent Hub</Button>
     </header>
-    {player ? <KidHome child={player} /> : picking ? <ChildLogin child={picking} onBack={() => setPicking(null)} onSuccess={() => { setActivePlayer(picking.id); setPlayer(picking); setPicking(null); }} /> : <WhosPlaying children={data.children} onPick={setPicking} />}
+    {player ? <KidHome child={player} onBug={(bug) => { setPlayer({ ...player, bug }); void qcRoot.invalidateQueries({ queryKey: ["family"] }); }} /> : picking ? <ChildLogin child={picking} onBack={() => setPicking(null)} onSuccess={() => { setActivePlayer(picking.id); setPlayer(picking); setPicking(null); }} /> : <WhosPlaying children={data.children} onPick={setPicking} />}
     <ExitDialog open={exitOpen} onOpenChange={setExitOpen} />
   </div>;
 }
@@ -69,7 +72,7 @@ function WhosPlaying({ children, onPick }: { children: ChildProfile[]; onPick: (
     {!children.length && <p className="mt-6 text-muted-foreground">No players yet. Ask a grown-up to add you in the Parent Hub.</p>}
     <ul className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3">{children.map((c) => <li key={c.id}>
       <button onClick={() => onPick(c)} className="flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-border bg-card p-6 shadow-soft transition hover:-translate-y-1 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-        <ChildAvatar avatar={c.avatar} className="size-24 md:size-28" />
+        <ChildAvatar avatar={c.bug ?? c.avatar} seed={c.id} className="size-24 md:size-28" />
         <span className="break-all font-display text-2xl">{c.nickname}</span>
       </button></li>)}</ul>
   </section>;
@@ -93,7 +96,7 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
   const add = (v: string) => { if (!busy && entry.length < need) { setError(""); setEntry([...entry, v]); } };
   return <section className="mx-auto max-w-md px-4 pb-16 pt-4 text-center">
     <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />Back</Button>
-    <div className="mt-4 flex justify-center"><ChildAvatar avatar={child.avatar} className="size-24" /></div>
+    <div className="mt-4 flex justify-center"><ChildAvatar avatar={child.bug ?? child.avatar} seed={child.id} className="size-24" /></div>
     <h1 className="mt-3 text-3xl">Hi, {child.nickname}!</h1>
     <p className="mt-2 text-muted-foreground">{isPin ? "Tap your 4 secret numbers." : "Tap your 3 secret pictures in order."}</p>
     <div className="my-6 flex justify-center gap-3" aria-live="polite">{Array.from({ length: need }, (_, i) => <span key={i} className={cn("size-5 rounded-full border-2 border-foreground", i < entry.length && "bg-primary")} />)}</div>
@@ -110,7 +113,8 @@ function PadKey({ children, onClick, label }: { children: React.ReactNode; onCli
   return <button aria-label={label} onClick={onClick} className="flex h-20 items-center justify-center rounded-2xl border-2 border-border bg-card font-display text-3xl shadow-soft active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">{children}</button>;
 }
 
-function KidHome({ child }: { child: ChildProfile }) {
+function KidHome({ child, onBug }: { child: ChildProfile; onBug: (b: BugConfig) => void }) {
+  const [building, setBuilding] = useState(false); useScrollTopOn(String(building));
   const band = child.age_band as Band;
   const copy = BAND_COPY[band];
   const greeting = copy.greeting(child.nickname);
@@ -124,7 +128,12 @@ function KidHome({ child }: { child: ChildProfile }) {
     try { const r = await completeActivity({ data: { childId: child.id, activityId } }); if (r.badge) toast.success(`You earned the ${r.badge} badge!`); else toast.success(sprouts ? "Yay! You did it!" : "Nice work!"); await qc.invalidateQueries({ queryKey: ["curriculum"] }); }
     catch { toast.error("Oops! Try again."); }
   }
+  if (building) return <BugBuilder childId={child.id} start={toBug(child.bug ?? child.avatar, child.id)} big={sprouts} onClose={() => setBuilding(false)} onSaved={(b) => { onBug(b); setBuilding(false); toast.success(sprouts ? "Cool bug!" : "Your bug is saved!"); }} />;
   return <section className="mx-auto max-w-5xl px-4 pb-16">
+    <button onClick={() => setBuilding(true)} className="mb-4 flex w-full items-center gap-4 rounded-3xl border-2 border-border bg-card p-4 text-left shadow-soft transition hover:border-primary">
+      <ChildAvatar avatar={child.bug ?? child.avatar} seed={child.id} className="size-16 shrink-0" />
+      <span><span className="block font-display text-xl">{child.bug ? "My bug" : "Build your bug!"}</span><span className="text-sm text-muted-foreground">{child.bug ? "Tap to change it" : "Pick a beetle, bee, spider and more"}</span></span>
+    </button>
     <div className={cn("flex items-center gap-5 rounded-3xl bg-card p-6 shadow-soft", sprouts && "flex-col text-center")}>
       {builders ? <BugleyMature variant="headphones" size={72} /> : <Bugley stage={child.bugley_stage} expression="happy" glow size={sprouts ? 160 : 120} />}
       <div className="min-w-0 flex-1">

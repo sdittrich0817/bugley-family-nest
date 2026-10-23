@@ -13,7 +13,7 @@ import { GAMES, BONUS_GLOW_DAILY_CAP, canPlay, type Band, type GameKey } from "@
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 
-type Kid = { id: string; nickname: string; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator"; avatar: any };
+type Kid = { id: string; nickname: string; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator"; avatar: any; bug?: any };
 type Round = Awaited<ReturnType<typeof startRound>>;
 type Item = Round["items"][number];
 type Player = { kid: Kid; round: Round; idx: number };
@@ -90,7 +90,7 @@ function Setup({ child, family, game, info, onBack, onStart }: { child: Kid; fam
     <div><span className="text-5xl" aria-hidden>{g.emoji}</span><h1 className="text-3xl">{g.name}</h1><p className="text-muted-foreground">{g.blurb} Rounds take about 4 minutes.</p></div>
     <section className="space-y-2"><h2 className="text-xl">Level</h2><div className="flex flex-wrap gap-2">{[1, 2, 3].map((l) => { const has = info.levels.includes(l); const open = has && l <= info.unlocked; return <Button key={l} variant={level === l ? "primary" : "outline"} disabled={!open} aria-pressed={level === l} onClick={() => setLevel(l)}>{!open && <Lock />}Level {l}</Button>; })}</div><p className="text-sm text-muted-foreground">Get 7 out of 10 right to unlock the next level.</p></section>
     <section className="space-y-2"><h2 className="text-xl">Who’s playing?</h2><div className="flex gap-2"><Button variant={!pass ? "primary" : "outline"} onClick={() => setPass(false)}>Just me</Button><Button variant={pass ? "primary" : "outline"} disabled={eligible.length < 2} onClick={() => setPass(true)}><Users />Pass and play</Button></div>
-      {pass && <div className="flex flex-wrap gap-2">{eligible.map((k) => <Button key={k.id} variant={picked.includes(k.id) ? "primary" : "outline"} className="h-auto py-2" disabled={k.id === child.id} onClick={() => setPicked(picked.includes(k.id) ? picked.filter((x) => x !== k.id) : [...picked, k.id])}><ChildAvatar avatar={k.avatar} className="size-8" />{k.nickname}</Button>)}</div>}
+      {pass && <div className="flex flex-wrap gap-2">{eligible.map((k) => <Button key={k.id} variant={picked.includes(k.id) ? "primary" : "outline"} className="h-auto py-2" disabled={k.id === child.id} onClick={() => setPicked(picked.includes(k.id) ? picked.filter((x) => x !== k.id) : [...picked, k.id])}><ChildAvatar avatar={k.bug ?? k.avatar} seed={k.id} className="size-8" />{k.nickname}</Button>)}</div>}
       {pass && <p className="text-sm text-muted-foreground">Take turns on this device. Each player gets their own questions.</p>}
     </section>
     <Button size="lg" disabled={busy || (pass && picked.length < 2)} onClick={() => void go()}><PlayIcon />{busy ? "Getting ready…" : "Start"}</Button>
@@ -139,11 +139,11 @@ function Play({ players: initial, onDone }: { players: Player[]; onDone: (r: Res
   const game = p.round.game as GameKey;
   return <div className={cn("space-y-5", `skin-${p.kid.age_band}`)}>
     <div className="flex items-center justify-between gap-3 rounded-2xl bg-card p-3 shadow-soft">
-      <span className="flex items-center gap-2 font-semibold"><ChildAvatar avatar={p.kid.avatar} className="size-8" />{p.kid.nickname} · {GAMES[game].name} · Level {p.round.level}</span>
+      <span className="flex items-center gap-2 font-semibold"><ChildAvatar avatar={p.kid.bug ?? p.kid.avatar} seed={p.kid.id} className="size-8" />{p.kid.nickname} · {GAMES[game].name} · Level {p.round.level}</span>
       <span className="text-sm">{Math.min(p.idx + 1, p.round.items.length)} / {p.round.items.length} · ⏱ {mm}</span>
       <Button size="icon" variant="ghost" aria-label="End round" onClick={() => void finish()}><X /></Button>
     </div>
-    {handoff ? <div className="flex flex-col items-center gap-4 rounded-3xl bg-card p-10 text-center shadow-soft"><ChildAvatar avatar={p.kid.avatar} className="size-24" /><h2 className="text-3xl">Pass to {p.kid.nickname}!</h2><Button size="lg" onClick={() => setHandoff(false)}>I’m {p.kid.nickname}. Let’s go!</Button></div>
+    {handoff ? <div className="flex flex-col items-center gap-4 rounded-3xl bg-card p-10 text-center shadow-soft"><ChildAvatar avatar={p.kid.bug ?? p.kid.avatar} seed={p.kid.id} className="size-24" /><h2 className="text-3xl">Pass to {p.kid.nickname}!</h2><Button size="lg" onClick={() => setHandoff(false)}>I’m {p.kid.nickname}. Let’s go!</Button></div>
       : item && <>
         {game === "real_robot" && <RealRobot item={item as any} feedback={feedback} onAnswer={(choice) => void answer({ choice })} big={sprouts} />}
         {game === "fact_fib" && <FactFib item={item as any} feedback={feedback} onAnswer={(choice) => void answer({ choice })} stage={p.kid.bugley_stage} big={sprouts} />}
@@ -245,7 +245,7 @@ function Results({ results, onAgain, onHome }: { results: Result[]; onAgain: () 
     <Bugley stage={results[0]?.kid.bugley_stage ?? "grub"} expression="celebrating" glow size={110} />
     <h1 className="text-3xl">Round complete!</h1>
     <div className="grid gap-3 sm:grid-cols-2">{best.map((r) => <div key={r.kid.id} className="rounded-3xl bg-card p-5 shadow-soft">
-      <p className="flex items-center justify-center gap-2 font-display text-xl"><ChildAvatar avatar={r.kid.avatar} className="size-8" />{r.kid.nickname}</p>
+      <p className="flex items-center justify-center gap-2 font-display text-xl"><ChildAvatar avatar={r.kid.bug ?? r.kid.avatar} seed={r.kid.id} className="size-8" />{r.kid.nickname}</p>
       <p className="mt-2 font-display text-4xl">{r.score} / {r.total}</p>
       {r.newBadges.map((b) => <p key={b} className="mt-2 flex items-center justify-center gap-1 text-sm font-semibold"><Trophy className="size-4" />New badge: {b}</p>)}
       {r.unlockedLevel && <p className="mt-1 text-sm font-semibold">Level {r.unlockedLevel} unlocked!</p>}

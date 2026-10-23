@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { BugConfig } from "./bug-avatar";
 export const AVATARS = ["fox", "bunny", "bear", "cat", "frog", "owl"] as const;
 export const PICTURES = ["sun", "moon", "flower", "fish", "apple", "star"] as const;
 export const MAX_CHILDREN = 5;
@@ -13,13 +14,13 @@ export const credentialSchema = z.discriminatedUnion("kind", [
 export const childDetailsSchema = z.object({
   nickname: z.string().trim().min(1, "Enter a first name or nickname.").max(40).regex(/^\S+( \S+)?$/, "Use a first name or nickname of up to two words, like “Mary Kate”. No last names, please."),
   age: z.number().int().min(5).max(12),
-  avatar: z.enum(AVATARS),
+  avatar: z.enum(AVATARS).default("fox"),
 });
 export const saveChildSchema = childDetailsSchema.extend({ id: z.string().uuid().optional(), credential: credentialSchema.optional() }).superRefine((value, ctx) => {
   if (!value.id && !value.credential) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Choose a child login.", path: ["credential"] });
 });
 export type SaveChildInput = z.infer<typeof saveChildSchema>;
-export type ChildProfile = { id: string; nickname: string; age: number; avatar: typeof AVATARS[number]; login_kind: "pin" | "pictures"; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator" };
+export type ChildProfile = { id: string; nickname: string; age: number; avatar: typeof AVATARS[number]; bug?: BugConfig | null; login_kind: "pin" | "pictures"; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator" };
 export function credentialValue(credential: z.infer<typeof credentialSchema>) {
   return credential.kind === "pin" ? `pin:${credential.pin}` : `pictures:${credential.pictures.join(",")}`;
 }

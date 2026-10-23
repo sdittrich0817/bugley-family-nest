@@ -370,6 +370,7 @@ export type Database = {
           age: number
           age_band: string | null
           avatar: string
+          bug: Json | null
           bugley_stage: string | null
           created_at: string
           credential_hash: string
@@ -383,6 +384,7 @@ export type Database = {
           age: number
           age_band?: string | null
           avatar: string
+          bug?: Json | null
           bugley_stage?: string | null
           created_at?: string
           credential_hash: string
@@ -396,6 +398,7 @@ export type Database = {
           age?: number
           age_band?: string | null
           avatar?: string
+          bug?: Json | null
           bugley_stage?: string | null
           created_at?: string
           credential_hash?: string
