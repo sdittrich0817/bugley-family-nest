@@ -92,6 +92,13 @@
       "when": 1792771102801,
       "tag": "0012_printed_books",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1792771887841,
+      "tag": "0013_allow_two_word_nicknames",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,2 @@
+ALTER TABLE public.children DROP CONSTRAINT children_nickname_check;
+ALTER TABLE public.children ADD CONSTRAINT children_nickname_check CHECK (length(btrim(nickname)) BETWEEN 1 AND 40 AND btrim(nickname) ~ '^\S+( \S+)?$');
