@@ -13,6 +13,8 @@ import { GlowMeter } from "@/components/studio/GlowMeter";
 import { Sidekick, speak, useBugleyChat, useVoiceInput, type BugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { Bugley } from "@/components/brand/Bugley";
 import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
+import { StoryMaker } from "@/components/studio/StoryMaker";
+import { Button } from "@/components/ui/button";
 import { BugleyMature } from "@/components/brand/BugleyMature";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +48,7 @@ function StudioPage() {
 const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolean }[] = [
   { key: "picture", label: "Picture", icon: ImageIcon, ready: true },
   { key: "character", label: "Characters", icon: Smile, ready: true },
-  { key: "story", label: "Story", icon: BookOpen, ready: false },
+  { key: "story", label: "Story", icon: BookOpen, ready: true },
   { key: "comic", label: "Comic", icon: LayoutGrid, ready: false },
   { key: "games", label: "Games", icon: Gamepad2, ready: false },
   { key: "album", label: "My Album", icon: Library, ready: true },
@@ -56,9 +58,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts", builders = band === "builders";
   const [view, setView] = useState<View>("home");
+  const [storyId, setStoryId] = useState<string | null>(null);
   const greeting = `Hi ${child.nickname}! What should we make today?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting,
-    sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"]);
+    sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"], view === "story" ? storyId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => { if (sprouts) speak(greeting); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -77,15 +80,16 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={setView} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
           : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
-          : <Album child={child} />}
+          : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} />
+          : <Album child={child} onStory={(id) => { setStoryId(id); setView("story"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />
     </div>
   </div>;
 }
 
-type View = "home" | "album" | "picture" | "character";
-const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator" };
+type View = "home" | "album" | "picture" | "character" | "story";
+const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker" };
 
 function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; chat: BugleyChat; greeting: string; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts", builders = child.age_band === "builders";
@@ -126,7 +130,7 @@ function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; c
 
 const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Characters", game: "Games" };
 
-function Album({ child }: { child: SidekickChild }) {
+function Album({ child, onStory }: { child: SidekickChild; onStory: (id: string) => void }) {
   const qc = useQueryClient();
   const key = ["album", child.id];
   const { data: items = [], isLoading } = useQuery({ queryKey: key, queryFn: () => listAlbum({ data: { childId: child.id } }) });
@@ -159,15 +163,15 @@ function Album({ child }: { child: SidekickChild }) {
           <p className="font-display text-xl">{items.length ? "Nothing here yet!" : "Your album is waiting for its first creation."}</p>
           <p className="text-muted-foreground">Everything you make in the Studio saves here by itself.</p>
         </div>
-      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} />)}</ul>
+      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} />)}</ul>
       : <div className="space-y-6">{projects.map(([name, list]) => <section key={name} className="rounded-3xl bg-card p-5 shadow-soft">
           <h2 className="text-xl">{name} <span className="text-sm font-normal text-muted-foreground">· {list.length} {list.length === 1 ? "piece" : "pieces"}</span></h2>
-          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} />)}</ul>
+          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} />)}</ul>
         </section>)}</div>}
   </div>;
 }
 
-function CreationCard({ c, onUpdate }: { c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void }) {
+function CreationCard({ c, onUpdate, onStory }: { c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
   const [confirm, setConfirm] = useState(false);
@@ -178,6 +182,7 @@ function CreationCard({ c, onUpdate }: { c: Creation; onUpdate: (id: string, p: 
       <button onClick={() => onUpdate(c.id, { favorite: !c.favorite })} aria-label={c.favorite ? "Unfavorite" : "Favorite"} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/85"><Heart className={cn("size-5", c.favorite && "fill-current text-destructive")} /></button>
     </div>
     <div className="p-3">
+      {c.kind === "story" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onStory(c.id)}><BookOpen />Open story</Button>}
       {editing ? <form onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} onBlur={() => setEditing(false)} aria-label="New name" className="w-full rounded-lg border-2 border-primary bg-background px-2 py-1" />
       </form> : <p className="truncate font-display">{c.title}</p>}
