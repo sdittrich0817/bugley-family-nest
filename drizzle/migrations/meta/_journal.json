@@ -99,6 +99,13 @@
       "when": 1792771887841,
       "tag": "0013_allow_two_word_nicknames",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792773229184,
+      "tag": "0014_kid_built_bug_avatars",
+      "breakpoints": true
     }
   ]
 }
