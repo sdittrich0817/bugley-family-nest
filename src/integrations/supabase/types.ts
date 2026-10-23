@@ -486,6 +486,165 @@ export type Database = {
           },
         ]
       }
+      game_badges: {
+        Row: {
+          badge: string
+          child_id: string
+          earned_at: string
+          game: string
+          id: string
+          parent_id: string
+        }
+        Insert: {
+          badge: string
+          child_id: string
+          earned_at?: string
+          game: string
+          id?: string
+          parent_id: string
+        }
+        Update: {
+          badge?: string
+          child_id?: string
+          earned_at?: string
+          game?: string
+          id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_badges_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_content: {
+        Row: {
+          active: boolean
+          bands: string[]
+          created_at: string
+          data: Json
+          game: string
+          id: string
+          image_path: string | null
+          level: number
+          position: number
+        }
+        Insert: {
+          active?: boolean
+          bands?: string[]
+          created_at?: string
+          data?: Json
+          game: string
+          id?: string
+          image_path?: string | null
+          level?: number
+          position?: number
+        }
+        Update: {
+          active?: boolean
+          bands?: string[]
+          created_at?: string
+          data?: Json
+          game?: string
+          id?: string
+          image_path?: string | null
+          level?: number
+          position?: number
+        }
+        Relationships: []
+      }
+      game_progress: {
+        Row: {
+          child_id: string
+          game: string
+          parent_id: string
+          sparks: number
+          unlocked: number
+          updated_at: string
+        }
+        Insert: {
+          child_id: string
+          game: string
+          parent_id: string
+          sparks?: number
+          unlocked?: number
+          updated_at?: string
+        }
+        Update: {
+          child_id?: string
+          game?: string
+          parent_id?: string
+          sparks?: number
+          unlocked?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_progress_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_rounds: {
+        Row: {
+          answers: Json
+          bonus: number
+          child_id: string
+          finished_at: string | null
+          game: string
+          id: string
+          items: string[]
+          level: number
+          parent_id: string
+          score: number | null
+          started_at: string
+          total: number
+        }
+        Insert: {
+          answers?: Json
+          bonus?: number
+          child_id: string
+          finished_at?: string | null
+          game: string
+          id?: string
+          items: string[]
+          level: number
+          parent_id: string
+          score?: number | null
+          started_at?: string
+          total: number
+        }
+        Update: {
+          answers?: Json
+          bonus?: number
+          child_id?: string
+          finished_at?: string | null
+          game?: string
+          id?: string
+          items?: string[]
+          level?: number
+          parent_id?: string
+          score?: number | null
+          started_at?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_rounds_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glow_ledger: {
         Row: {
           amount: number

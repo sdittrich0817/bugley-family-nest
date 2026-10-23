@@ -78,6 +78,13 @@
       "when": 1792764064959,
       "tag": "0010_image_system",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792769545704,
+      "tag": "0011_game_arcade",
+      "breakpoints": true
     }
   ]
 }
