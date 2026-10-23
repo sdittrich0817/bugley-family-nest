@@ -144,6 +144,8 @@ function KidZoneShell() {
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   const target = kidZoneRedirect(pathname, locked);
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
+  // Every new page starts at the top (links to a #section still scroll to it).
+  useEffect(() => { if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [pathname]);
   if (target) return null;
   if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
