@@ -37,7 +37,12 @@ export function useBugleyChat(child: SidekickChild, context: string, opening: st
       setMessages((m) => [...m, { from: "bugley", text: "Hmm, my glow flickered! Let’s try that again." }]);
     } finally { setBusy(false); }
   }, [busy, child.id, context, readAloud]);
-  return { messages, chips, busy, send, readAloud };
+  const say = useCallback((text: string, next?: string[]) => {
+    setMessages((m) => [...m, { from: "bugley", text }]);
+    if (next) setChips(next);
+    if (readAloud) speak(text);
+  }, [readAloud]);
+  return { messages, chips, busy, send, say, readAloud };
 }
 export type BugleyChat = ReturnType<typeof useBugleyChat>;
 
