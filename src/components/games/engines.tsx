@@ -44,7 +44,7 @@ export function GamePlayer({ file, urls, title, onEnd, onClose }: { file: GameFi
   const s = file.settings;
   const [run, setRun] = useState(0);
   const [end, setEnd] = useState<Playtest | null>(null);
-  const [left, setLeft] = useState(s.timer);
+  const [left, setLeft] = useState<number>(s.timer);
   const started = useRef(performance.now());
   const timed = s.timer > 0 && ["maze", "catch", "jump", "memory"].includes(file.template);
   useEffect(() => { started.current = performance.now(); setLeft(s.timer); setEnd(null); }, [run, s.timer]);
