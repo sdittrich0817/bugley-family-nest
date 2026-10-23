@@ -85,7 +85,7 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
     setBusy(true);
     const credential = isPin ? { kind: "pin" as const, pin: entry.join("") } : { kind: "pictures" as const, pictures: entry as (typeof PICTURES)[number][] };
     verifyChildLogin({ data: { childId: child.id, credential, environment: getStripeEnvironment() } })
-      .then((r) => { if (r.paused) { setError("The Kid Zone is paused. Ask a grown-up!"); setEntry([]); } else if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
+      .then((r) => { if ("paused" in r && r.paused) { setError("The Kid Zone is paused. Ask a grown-up!"); setEntry([]); } else if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
       .catch(() => { setError("Something went wrong. Try again."); setEntry([]); })
       .finally(() => setBusy(false));
   }, [entry]); // eslint-disable-line react-hooks/exhaustive-deps
