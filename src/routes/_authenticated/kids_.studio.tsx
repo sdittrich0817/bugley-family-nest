@@ -59,6 +59,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const sprouts = band === "sprouts", builders = band === "builders";
   const [view, setView] = useState<View>("home");
   const [storyId, setStoryId] = useState<string | null>(null);
+  const [storyDirty, setStoryDirty] = useState(false);
   const greeting = `Hi ${child.nickname}! What should we make today?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting,
     sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"], view === "story" ? storyId ?? undefined : undefined);
@@ -69,7 +70,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
         {view !== "home"
-          ? <button onClick={() => setView("home")} className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />Studio</button>
+          ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); setView("home"); }}><ArrowLeft className="size-5" />Studio</Button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
         <span className="hidden font-display text-lg sm:block">Bugley’s Studio</span>
         {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}
@@ -77,10 +78,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     </header>
     <div className="mx-auto flex max-w-6xl gap-6 px-4 pb-28 pt-6">
       <main className="min-w-0 flex-1">
-        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={setView} />
+        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={(v) => { if (v === "story") setStoryId(null); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
           : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
-          : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} />
+          : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
           : <Album child={child} onStory={(id) => { setStoryId(id); setView("story"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />

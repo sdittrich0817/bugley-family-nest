@@ -62,7 +62,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireS
     const description = data.action === "cover" ? data.description : page?.description;
     if (!description || description.length < 3) throw new Error("Describe your picture first.");
     const { generateImage } = await import("./images.server");
-    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final" });
+    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true });
     if (!result.ok) throw new Error(result.reply);
     if (data.action === "cover") story.data.cover = result.path;
     else if (page) page.image = result.path;

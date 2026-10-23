@@ -18,7 +18,7 @@ const MAP_LABELS = { hero: "Who is the hero?", want: "What do they want most?", 
 const field = "w-full rounded-lg border-2 border-border bg-background p-3 text-foreground outline-none focus:border-primary";
 const HINTS = ["Meet your hero and their world", "Until one day…", "Because of that…", "Everything changes…", "Until finally…"];
 
-export function StoryMaker({ child, chat, storyId, onStory }: { child: SidekickChild; chat: BugleyChat; storyId: string | null; onStory: (id: string) => void }) {
+export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: SidekickChild; chat: BugleyChat; storyId: string | null; onStory: (id: string) => void; onDirty: (dirty: boolean) => void }) {
   const [story, setStory] = useState<Story | null>(null);
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState<StoryData["genre"]>("Adventure");
@@ -32,6 +32,7 @@ export function StoryMaker({ child, chat, storyId, onStory }: { child: SidekickC
   const [coverDescription, setCoverDescription] = useState("");
   const [mapDraft, setMapDraft] = useState({ ...EMPTY_MAP });
   const [mapEditing, setMapEditing] = useState(true);
+  useEffect(() => { onDirty(dirty); }, [dirty, onDirty]);
   const create = useServerFn(createStory), edit = useServerFn(editStory), load = useServerFn(getStory), ask = useServerFn(askBugley);
   const qc = useQueryClient();
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });

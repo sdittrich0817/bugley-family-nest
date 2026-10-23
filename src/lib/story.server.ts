@@ -27,8 +27,8 @@ export async function assistStory(sb: SupabaseClient<any>, userId: string, child
   const task = purpose === "picture"
     ? "Draft ONLY an illustration description from the child's saved page, under 600 characters. This is not story prose. No new plot events. Return it in description for the child to edit."
     : purpose === "spelling" ? "Give optional spelling help for at most three words in the saved page. Never rewrite any sentence. Return description as empty."
-    : "Coach the child's question. Only ask one question if needed. Return description as empty.";
+    : "Coach the child's question. Only ask one question if needed. If the question requests a quiet continuity check, return an empty reply and empty chips unless there is a specific conflict with the map or earlier pages. Return description as empty.";
   const out = await aiObject(z.object({ reply: z.string(), chips: z.array(z.string()), description: z.string() }), `${storyCoachingInstructions(child.age_band)} ${task} Return a brief reply and 2–3 idea sparks (maximum 6 words each). End the reply with Your call!`, JSON.stringify({ question: text, genre: story.data.genre, map: story.data.map, pages: story.data.pages.map((p) => ({ step: p.step, text: p.text, chapter: p.chapter })), currentPage: page?.text ?? "" }));
   if (!out) throw new Error("Bugley couldn’t check your story right now. Your words are still saved.");
-  return { reply: out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: out.chips.slice(0, 3).map((c) => c.slice(0, 50)), description: purpose === "picture" ? out.description.slice(0, 600) : "" };
+  return { reply: !out.reply.trim() ? "" : out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: out.chips.slice(0, 3).map((c) => c.replace(/\s*Your call!$/i, "").trim().split(/\s+/).slice(0, 6).join(" ")), description: purpose === "picture" ? out.description.slice(0, 600) : "" };
 }
