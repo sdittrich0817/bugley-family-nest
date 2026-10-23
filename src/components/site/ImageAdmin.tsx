@@ -1,35 +1,37 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { getImageAdmin, saveImageModel, saveStyle } from "@/lib/images.functions";
+import { getDriftReport, getImageAdmin, saveImageModel, saveStyle } from "@/lib/images.functions";
 import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
-const MODE_LABEL: Record<string, string> = { sketch: "Sketches (1 glow)", final: "Finals (3 glow, print quality)", character: "Character references (1 glow)" };
+const MODE_LABEL: Record<string, string> = { hero: "Hero creation (3 options, 1 glow)", sheet: "Character sheets (behind the scenes)", scene_chars: "Scenes with characters (must support reference images)", scene: "Scenes without characters", sketch: "Sketches (1 glow)", final: "Picture Maker finals (3 glow)", character: "Old character portraits (fallback)" };
+const MODE_ORDER = ["hero", "sheet", "scene_chars", "scene", "sketch", "final", "character"];
 
 export function ImageAdmin() {
   const { data } = useQuery({ queryKey: ["image-admin"], queryFn: () => getImageAdmin() });
-  const [tab, setTab] = useState<"models" | "styles">("models");
+  const [tab, setTab] = useState<"models" | "styles" | "drift">("models");
   if (!data) return null;
   return <div className="mt-10 space-y-4">
     <div className="flex flex-wrap items-center gap-3"><h2 className="text-2xl">Studio images</h2>
-      <div className="flex rounded-full bg-muted p-1">{(["models", "styles"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === t ? "bg-card shadow-soft" : ""}`}>{t === "models" ? "Image Models" : "Style Recipes"}</button>)}</div></div>
-    {tab === "models" ? <div className="grid gap-4 lg:grid-cols-3">{data.models.map((m) => <ModelCard key={m.mode} m={m} />)}
+      <div className="flex rounded-full bg-muted p-1">{(["models", "styles", "drift"] as const).map((t) => <button key={t} onClick={() => setTab(t)} className={`rounded-full px-4 py-1.5 text-sm font-semibold ${tab === t ? "bg-card shadow-soft" : ""}`}>{t === "models" ? "Image Models" : t === "styles" ? "Style Recipes" : "Drift Report"}</button>)}</div></div>
+    {tab === "drift" ? <DriftReport /> : tab === "models" ? <div className="grid gap-4 lg:grid-cols-3">{[...data.models].sort((a, b) => MODE_ORDER.indexOf(a.mode) - MODE_ORDER.indexOf(b.mode)).map((m) => <ModelCard key={m.mode} m={m} />)}
       <p className="text-sm text-muted-foreground lg:col-span-3">Model is a Replicate “owner/name”. Leave version empty to use an official model’s latest. Settings are sent to the model as-is (for finals, set the size/resolution so pictures print well at 300 DPI, e.g. 2400×3000 for 8×10 in). Two optional keys: <code>reference_field</code> names the model input that takes character images (e.g. <code>image_input</code>), and <code>reference_single: true</code> sends just one image. Until a model is set, kids see “My paintbrush isn’t ready yet!”.</p></div>
       : <div className="grid gap-4 md:grid-cols-2">{data.styles.map((s) => <StyleCard key={s.key} s={s} />)}</div>}
   </div>;
 }
 
-function ModelCard({ m }: { m: { mode: string; model: string; version: string; settings: string } }) {
+function ModelCard({ m }: { m: { mode: string; model: string; version: string; settings: string; supportsReference: boolean } }) {
   const qc = useQueryClient();
+  const [refs, setRefs] = useState(m.supportsReference);
   const [model, setModel] = useState(m.model), [version, setVersion] = useState(m.version), [settings, setSettings] = useState(m.settings);
   async function save() {
     let parsed: Record<string, unknown>;
     try { parsed = JSON.parse(settings || "{}"); if (typeof parsed !== "object" || Array.isArray(parsed)) throw 0; } catch { toast.error("Settings must be a JSON object."); return; }
-    try { await saveImageModel({ data: { mode: m.mode as "sketch", model, version, settings: parsed } }); await qc.invalidateQueries({ queryKey: ["image-admin"] }); toast.success("Saved"); }
+    try { await saveImageModel({ data: { mode: m.mode as "sketch", model, version, settings: parsed, supportsReference: refs } }); await qc.invalidateQueries({ queryKey: ["image-admin"] }); toast.success("Saved"); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Couldn’t save."); }
   }
   return <div className="space-y-3 rounded-2xl border border-border bg-card p-5">
@@ -37,6 +39,8 @@ function ModelCard({ m }: { m: { mode: string; model: string; version: string; s
     <label className="block text-sm"><span className="mb-1 block font-medium">Model</span><Input value={model} onChange={(e) => setModel(e.target.value)} placeholder="owner/model-name" /></label>
     <label className="block text-sm"><span className="mb-1 block font-medium">Version (optional)</span><Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="version hash" /></label>
     <label className="block text-sm"><span className="mb-1 block font-medium">Default settings (JSON)</span><Textarea rows={5} className="font-mono text-xs" value={settings} onChange={(e) => setSettings(e.target.value)} /></label>
+    <label className="flex items-center gap-2 text-sm"><Switch checked={refs} onCheckedChange={setRefs} />Supports reference images</label>
+    {m.mode === "scene_chars" && !refs && <p className="text-sm text-destructive">Scenes with characters need a model that supports reference images.</p>}
     <Button onClick={() => void save()}>Save</Button>
   </div>;
 }
@@ -56,5 +60,18 @@ function StyleCard({ s }: { s: { key: string; name: string; description: string;
       <Textarea rows={3} value={v.recipe} onChange={(e) => setV({ ...v, recipe: e.target.value })} aria-label="Hidden prompt recipe" />
       <div className="flex items-center justify-between"><label className="flex items-center gap-2 text-sm"><Switch checked={v.active} onCheckedChange={(c) => setV({ ...v, active: c })} />Shown to kids</label><Button size="sm" onClick={() => void save()}>Save</Button></div>
     </div>
+  </div>;
+}
+
+function DriftReport() {
+  const { data } = useQuery({ queryKey: ["drift-report"], queryFn: () => getDriftReport() });
+  if (!data) return null;
+  if (!data.rows.length) return <p className="text-muted-foreground">No drift checks yet. They run on every picture that includes a locked hero.</p>;
+  return <div className="space-y-6">
+    <div className="overflow-x-auto rounded-2xl border border-border bg-card"><table className="w-full text-sm">
+      <thead><tr className="text-left"><th className="p-3">Model</th><th className="p-3">Style</th><th className="p-3">Checks</th><th className="p-3">Fail rate</th><th className="p-3">Avg match</th></tr></thead>
+      <tbody>{data.rows.map((r) => <tr key={r.model + r.style} className="border-t border-border"><td className="p-3 font-mono text-xs">{r.model}</td><td className="p-3">{r.style}</td><td className="p-3">{r.checks}</td><td className="p-3 font-semibold">{r.failRate}%</td><td className="p-3">{r.avgScore}</td></tr>)}</tbody>
+    </table></div>
+    {data.recent.length > 0 && <div><h3 className="mb-2 text-lg">Recent drift failures</h3><ul className="space-y-2 text-sm">{data.recent.map((r, i) => <li key={i} className="rounded-xl bg-card p-3"><span className="font-semibold">{r.style}</span> · {r.score}/100 · {new Date(r.at).toLocaleString()}<br /><span className="text-muted-foreground">{r.notes}</span></li>)}</ul></div>}
   </div>;
 }
