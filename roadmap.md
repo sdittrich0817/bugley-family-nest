@@ -15,5 +15,6 @@
 - [x] Studio foundation: home, sidekick, safety guard, album, Hub feed.
 - [ ] Go live with real payments (blocked: Shea claims the payments account and verifies the business in the Payments tab).
 - [x] Image pipeline, admin Image Models + Style Recipes, 10 art styles, Character Creator, Picture Maker.
-- [ ] Build Story Maker: map, child-authored pages, continuity coaching, locked-style illustrations, chapters and album flipbook.
+- [x] Build Story Maker: map, child-authored pages, continuity coaching, locked-style illustrations, chapters and album flipbook.
+- [ ] Verify Story Maker save/reopen/illustrate/finish end to end (blocked: no parent account; image models still need admin configuration).
 - [ ] Pick Replicate models for sketch, final and character in /admin, then test a real picture end to end (blocked: Shea chooses models).

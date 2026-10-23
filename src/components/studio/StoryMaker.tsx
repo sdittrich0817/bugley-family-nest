@@ -77,6 +77,12 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
       if (kind === "add") setIndex(next.data.pages.length - 1);
       if (kind === "finish") { setReading(true); setIndex(0); chat.say("You kept going and made a whole story! Your choices brought it to life."); }
       toast.success(kind === "finish" ? "Your story is in your album!" : "Saved!");
+      if (kind === "page" && page?.text.trim()) {
+        try {
+          const response = await ask({ data: { childId: child.id, storyId: story.id, pageId: page.id, purpose: "coach", context: "Story Maker", source: "chip", environment: getStripeEnvironment(), text: "Quietly check my saved page for a specific continuity conflict. Stay quiet if it fits." } });
+          if (response.reply.trim()) chat.say(response.reply, response.chips);
+        } catch { toast("Your page is saved. Bugley couldn’t check continuity right now."); }
+      }
     } catch (e) { toast.error(e instanceof Error ? e.message : "Your words are still here. Try saving again."); }
     finally { setBusy(false); refresh(); }
   }
