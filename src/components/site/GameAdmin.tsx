@@ -45,13 +45,13 @@ function Editor({ row, onDone }: { row: any; onDone: () => void }) {
     const path = `${crypto.randomUUID()}.${file.name.split(".").pop() ?? "jpg"}`;
     const { error } = await supabase.storage.from("game-images").upload(path, file, { contentType: file.type });
     setBusy(false);
-    if (error) return toast.error("Upload failed.");
+    if (error) { toast.error("Upload failed."); return; }
     setR({ ...r, image_path: path, url: URL.createObjectURL(file) });
   }
   async function save() {
     let data: Record<string, unknown>;
-    try { data = real ? { answer: r.data.answer, clue: r.data.clue } : JSON.parse(json); } catch { return toast.error("That item text isn’t valid JSON."); }
-    if (real && !r.image_path) return toast.error("Upload an image first.");
+    try { data = real ? { answer: r.data.answer, clue: r.data.clue } : JSON.parse(json); } catch { toast.error("That item text isn’t valid JSON."); return; }
+    if (real && !r.image_path) { toast.error("Upload an image first."); return; }
     setBusy(true);
     try { await saveGameContent({ data: { id: r.id, game: r.game, level: r.level, bands: r.bands, data, image_path: r.image_path, position: r.position, active: r.active } }); toast.success("Saved"); onDone(); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Save failed"); } finally { setBusy(false); }
