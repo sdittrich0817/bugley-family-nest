@@ -27,15 +27,15 @@ export const getBillingStatus = createServerFn({ method: "POST" }).middleware([r
 
 export const billingOptions = (environment: StripeEnv) => queryOptions({ queryKey: ["billing", environment], queryFn: () => getBillingStatus({ data: { environment } }) });
 
-async function resolveOrCreateCustomer(stripe: Stripe, options: { email?: string; userId: string }) {
+async function resolveOrCreateCustomer(stripe: Stripe, options: { email?: string | undefined; userId: string }) {
   if (!/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
   const found = await stripe.customers.search({ query: `metadata['userId']:'${options.userId}'`, limit: 1 });
-  if (found.data.length) return found.data[0].id;
+  const hit = found.data[0]; if (hit) return hit.id;
   if (options.email) {
     const existing = await stripe.customers.list({ email: options.email, limit: 1 });
-    if (existing.data.length) {
-      const c = existing.data[0];
-      if (c.metadata?.userId !== options.userId) await stripe.customers.update(c.id, { metadata: { ...c.metadata, userId: options.userId } });
+    const c = existing.data[0];
+    if (c) {
+      if (c.metadata?.["userId"] !== options.userId) await stripe.customers.update(c.id, { metadata: { ...c.metadata, userId: options.userId } });
       return c.id;
     }
   }
@@ -50,13 +50,13 @@ export const createCheckoutSession = createServerFn({ method: "POST" }).middlewa
     try {
       const stripe = createStripeClient(data.environment);
       const prices = await stripe.prices.list({ lookup_keys: [data.priceId] });
-      if (!prices.data.length) return { error: "That plan isn’t available right now." };
+      const price = prices.data[0]; if (!price) return { error: "That plan isn’t available right now." };
       const { data: { user } } = await context.supabase.auth.getUser();
       const customer = await resolveOrCreateCustomer(stripe, { email: user?.email ?? undefined, userId: context.userId });
       // A family gets one free trial; returning families start paid.
       const trial = existing ? undefined : TRIAL_DAYS;
       const session = await stripe.checkout.sessions.create({
-        line_items: [{ price: prices.data[0].id, quantity: 1 }],
+        line_items: [{ price: price.id, quantity: 1 }],
         mode: "subscription",
         ui_mode: "embedded_page",
         return_url: data.returnUrl,

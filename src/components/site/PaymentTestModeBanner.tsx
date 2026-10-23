@@ -1,4 +1,4 @@
-const clientToken = import.meta.env.VITE_PAYMENTS_CLIENT_TOKEN as string | undefined;
+const clientToken = import.meta.env["VITE_PAYMENTS_CLIENT_TOKEN"] as string | undefined;
 
 export function PaymentTestModeBanner() {
   if (!clientToken) return <div className="w-full border-b border-destructive/40 bg-destructive/10 px-4 py-2 text-center text-sm">Real checkout isn’t switched on yet.</div>;

@@ -28,6 +28,7 @@ export const Route = createFileRoute("/pricing")({
   component: Pricing,
 });
 
+type Billing = "monthly" | "annual";
 
 const GLOW_FACTS = [
   { icon: Sparkles, title: "Glow powers pictures", body: "Every picture your child asks Bugley to make spends a little glow." },

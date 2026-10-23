@@ -32,6 +32,7 @@ import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
 import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
+import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/table'
@@ -153,6 +154,11 @@ const AuthenticatedKidsRoute = AuthenticatedKidsRouteImport.update({
   path: '/kids',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
+  id: '/plan',
+  path: '/plan',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -208,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
+  '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
@@ -238,6 +245,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
   '/kids': typeof AuthenticatedKidsRoute
+  '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
   '/_authenticated/kids': typeof AuthenticatedKidsRoute
+  '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/table': typeof AuthenticatedTableRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/hub'
     | '/kids'
+    | '/plan'
     | '/settings'
     | '/setup'
     | '/table'
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/hub'
     | '/kids'
+    | '/plan'
     | '/settings'
     | '/setup'
     | '/table'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/hub'
     | '/_authenticated/kids'
+    | '/_authenticated/plan'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/table'
@@ -559,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKidsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/plan': {
+      id: '/_authenticated/plan'
+      path: '/plan'
+      fullPath: '/plan'
+      preLoaderRoute: typeof AuthenticatedPlanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings': {
       id: '/_authenticated/settings'
       path: '/settings'
@@ -609,6 +628,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
   AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
+  AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTableRoute: typeof AuthenticatedTableRoute
@@ -619,6 +639,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
   AuthenticatedKidsRoute: AuthenticatedKidsRoute,
+  AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTableRoute: AuthenticatedTableRoute,
