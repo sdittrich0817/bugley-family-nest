@@ -60,15 +60,15 @@ export function PictureMaker({ child, chat }: { child: SidekickChild; chat: Bugl
   const { data: styles = [], isPending: stylesPending } = useQuery(stylesOptions);
   const refresh = useGlowRefresh(child.id);
   useScrollTopOn(`${step}-${busy}-${result?.id}-${result?.final}`);
-  useEffect(() => { chat.say(["What should I paint?", "Pick a look!", "Add one of your heroes?", "Mixing my colors!"][step], []); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { chat.say(["What should I paint?", "Pick a look!", "Add one of your heroes?", "Mixing my colors!"][step] ?? "What should I paint?", []); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function paint(selectedHero: string | null, upgrade = false) {
+  async function paint(selectedHero: string | null, upgrade = false, selectedStyle = style) {
     if (busy) return;
     setHero(selectedHero); setStep(3); setBusy(true); setNote("");
     try {
       const r = upgrade && result
         ? await upgradePicture({ data: { childId: child.id, environment: getStripeEnvironment(), previewId: result.id } })
-        : await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: style, description: text, characterIds: selectedHero ? [selectedHero] : [], mode: "sketch" } });
+        : await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: selectedStyle, description: text, characterIds: selectedHero ? [selectedHero] : [], mode: "sketch" } });
       if (r.ok) {
         setResult({ id: r.id, url: r.url, final: upgrade });
         chat.say(upgrade ? "Wow! Your awesome picture is saved in My Album." : "Ta-da! Your preview is saved in My Album. Want to make it awesome?", []);
@@ -88,14 +88,14 @@ export function PictureMaker({ child, chat }: { child: SidekickChild; chat: Bugl
     {step === 0 && <BugleyStep child={child} bare question="What should I paint?" step={0} steps={cast.length ? 3 : 2} choices={ideas} ownIdeaBelow onOwnIdea={chooseIdea} onChoose={(c) => chooseIdea(c.label)} />}
     {step === 1 && (stylesPending ? <p role="status" className="text-center font-display text-xl">Getting the paints…</p> : styles.length ? <BugleyStep child={child} bare question="Pick a look!" step={1} steps={cast.length ? 3 : 2} onBack={() => setStep(0)} allowOwnIdea={false}
       choices={styles.map((s) => ({ key: s.key, label: s.name, image: STYLE_THUMBS[s.key] }))}
-      onChoose={(c) => { setStyle(c.key); if (castPending || cast.length) setStep(2); else void paint(null); }} /> : <p role="alert">My paints aren’t ready yet. Ask a grown-up!</p>)}
+      onChoose={(c) => { setStyle(c.key); if (castPending || cast.length) setStep(2); else void paint(null, false, c.key); }} /> : <p role="alert">My paints aren’t ready yet. Ask a grown-up!</p>)}
     {step === 2 && (castPending ? <p role="status" className="text-center font-display text-xl">Finding your heroes…</p> : <>
       <BugleyStep child={child} bare question="Add one of your heroes?" step={2} steps={3} onBack={() => setStep(1)} allowOwnIdea={false}
         choices={cast.map((c) => ({ key: c.id, label: c.title, image: c.url }))} onChoose={(c) => void paint(c.key)} />
       <Button variant="secondary" className="mx-auto flex h-14 text-xl" onClick={() => void paint(null)}>No thanks</Button>
     </>)}
     {step === 3 && <>
-      {busy ? <BugleyStep child={child} bare question="Painting your picture…" choices={[]} mood="painting" allowOwnIdea={false} />
+      {busy ? <BugleyStep child={child} bare question="Painting your picture…" choices={[]} onChoose={() => {}} mood="painting" allowOwnIdea={false} />
         : result ? <img src={result.url} alt={text} className="mx-auto max-h-[70vh] w-full rounded-2xl object-contain shadow-lift" /> : null}
       {!busy && <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Button size="lg" className="h-16 flex-col gap-0 whitespace-normal text-xl" disabled={!result || result.final} onClick={() => void paint(hero, true)}><span><Sparkles className="mr-2 inline" />Make it awesome!</span><span className="text-sm">{result?.final ? "Saved to My Album" : "2 more glow"}</span></Button>
