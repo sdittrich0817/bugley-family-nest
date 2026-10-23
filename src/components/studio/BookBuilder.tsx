@@ -52,7 +52,7 @@ export function BookBuilder({ child, chat, bookId, onBook, onOpenChapter }: { ch
   async function run<T>(fn: () => Promise<T>, ok?: string) {
     setBusy(true);
     try { const r = await fn(); if (ok) toast.success(ok); return r; }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); return undefined; }
     finally { setBusy(false); refresh(); }
   }
   const doEdit = (action: "bible" | "author" | "dedication" | "cover" | "absorb" | "order", extra: { bible?: Bible; text?: string; chapterIds?: string[] }, ok = "Saved!") =>

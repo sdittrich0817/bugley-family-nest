@@ -182,7 +182,7 @@ function Album({ child, onStory, onComic, onBook }: { child: SidekickChild; onSt
   </div>;
 }
 
-function CreationCard({ c, onUpdate, onStory, onComic, onBook, childId }: { onBook: (id: string) => void; childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
+function CreationCard({ c, onUpdate, onStory, onComic, onBook, childId }: { childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
   const [confirm, setConfirm] = useState(false);
