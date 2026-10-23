@@ -8,14 +8,14 @@ import { speak, useVoiceInput, type SidekickChild } from "./Sidekick";
 import { StepDots } from "./Guided";
 import { cn } from "@/lib/utils";
 
-export type StepChoice = { key: string; label: string; image?: string; emoji?: string };
+export type StepChoice = { key: string; label: string; image?: string | undefined; emoji?: string | undefined };
 export type BugleyMood = "flying" | "cheering" | "painting" | "celebrating";
 
 const PAINT_LINES = ["Mixing the colors...", "Dipping my brush...", "Adding sparkle...", "Almost there..."];
 
 export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false }: {
   child: SidekickChild; question: string; choices: StepChoice[]; onChoose: (c: StepChoice) => void;
-  onOwnIdea?: (text: string) => void; onBack?: () => void; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean;
+  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean;
 }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
