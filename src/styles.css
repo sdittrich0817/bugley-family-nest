@@ -322,6 +322,14 @@
 .studio-bugley-paint { animation: studio-paint 0.9s ease-in-out infinite; }
 .studio-paint-bar { animation: studio-paint-fill 12s ease-out forwards; }
 .studio-door-glow { animation: studio-door-glow 3s ease-in-out infinite; }
+@keyframes play-preview { from { transform: scale(1); } to { transform: scale(1.07); } }
+@keyframes play-pop { 0% { transform: translateY(70px) scale(0.4); } 65% { transform: translateY(-15px) scale(1.08); } 100% { transform: translateY(0) scale(1); } }
+@keyframes play-egg { 0%,100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+.play-preview { animation: play-preview 2.5s ease-out both; }
+.play-pop { animation: play-pop 0.8s ease-out both; }
+.play-egg { animation: play-egg 0.45s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .play-preview,.play-pop,.play-egg { animation: none; } }
+.skin-builders { --play-mint: oklch(0.32 0.055 165); }
 @media (prefers-reduced-motion: reduce) { .studio-guide-fly, .studio-bugley-cheer, .studio-bugley-paint, .studio-door-glow { animation: none; } }
 .home-hero-copy { justify-content: flex-end; padding-bottom: 24px; }
 .home-hero-words { gap: 14px; }

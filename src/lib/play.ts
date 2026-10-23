@@ -27,5 +27,5 @@ export const BLANKS = [
 export const DOODLES = ['sun', 'cat', 'pizza', 'rocket'];
 export const DOODLE_CLUES = ['I’m round, warm, and shine in the sky.', 'I have whiskers and say meow.', 'I’m a cheesy triangle you can eat.', 'I zoom into space with a fiery tail.'];
 export type Stroke = { points: [number, number][]; color: number };
-export type PlayState = { turn: number; moves: number; words: string[]; feedback?: string; stickerKey?: string; solved?: boolean; rare?: boolean; power?: string; name?: string; story?: string; drawGuesses?: number; drawingGuessed?: boolean };
+export type PlayState = { turn: number; moves: number; words: string[]; feedback?: string | undefined; stickerKey?: string | undefined; solved?: boolean | undefined; rare?: boolean; power?: string; name?: string; story?: string; drawGuesses?: number; drawingGuessed?: boolean };
 export const initialPlayState = (): PlayState => ({ turn: 0, moves: 0, words: [] });

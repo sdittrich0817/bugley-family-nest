@@ -47,7 +47,9 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
   let state=r.state as unknown as PlayState,score=r.score;
   try {
-    if(data.next) { if(!state.feedback)throw new Error('Try this turn first.');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false}; }
+    const maxTurns=r.game==='creature_lab'?3:r.game==='story_blanks'?3:4;
+    if(state.turn>=maxTurns)throw new Error('This round is ready for results!');
+    if(data.next) { if(!state.feedback||state.turn>=maxTurns-1)throw new Error('See your stars!');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false}; }
     else if(r.game==='doodle_duel'&&state.turn%2===0) {
       if(!data.strokes?.some(s=>s.points.length>1)||state.drawingGuessed|| (state.drawGuesses??0)>=6)throw new Error('Try the next turn!');
       const {renderDoodle}=await import('./doodle.server');const {aiObject}=await import('./studio-ai.server');
@@ -55,6 +57,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
       const check=await aiObject(z.object({safe:z.boolean(),personal:z.boolean()}),'Check this in-app child drawing. safe=false for sexual, hateful, violent, or harmful content. personal=true for names, addresses, contact details or other personal information.','Check this drawing before guessing.',image);
       if(!check?.safe||check.personal){await a.from('studio_events').insert({parent_id:context.userId,child_id:kid.id,source:'doodle',decision:'unsafe',input:'[in-app drawing blocked]',reply:'Try a friendly object.'});throw new Error('Let’s draw a friendly object instead.');}
       const verdict=await aiObject(z.object({guess:z.string().max(40),matches:z.boolean()}),'Guess the object drawn by a child. Return a short kid-safe object name, never personal names. matches only if the drawing reasonably matches the target.','Target: '+DOODLES[Math.floor(state.turn/2)%DOODLES.length],image);if(!verdict)throw new Error('I couldn’t see that doodle right now.');
+      await safe(context,kid,verdict.guess);
       state={...state,drawGuesses:(state.drawGuesses??0)+1,drawingGuessed:verdict.matches,feedback:verdict.matches?'I got it! We both score!':`Is it a ${verdict.guess}?`};if(verdict.matches)score+=2;
     } else {
       if(!data.text)throw new Error('Pick or say an idea first.');if(state.feedback)throw new Error('Go to the next turn first.');
@@ -63,6 +66,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
         const puzzle=PUZZLES[state.turn%PUZZLES.length];if(!puzzle)throw new Error('Round complete.');
         const {aiObject}=await import('./studio-ai.server');
         const verdict=await aiObject(z.object({works:z.boolean(),creative:z.boolean(),object:z.string().max(60),animation:z.enum(['bounce','fly','climb','float']),reply:z.string().max(140)}),'Judge a silly child puzzle generously: any reasonable imaginative solution works. Extract only the object concept, never personal information. Reply one playful child-friendly sentence; no instructions outside the puzzle.',JSON.stringify({puzzle:puzzle.task,idea:data.text}));if(!verdict)throw new Error('Bugley needs a moment.');
+        await safe(context,kid,verdict.object);
         if(!verdict.works)state={...state,feedback:verdict.reply,solved:false};else {const s=await stickerFor(context,kid,verdict.object,data.make);state={...state,feedback:verdict.reply,solved:true,stickerKey:s.key};score+=verdict.creative?3:2;}
       }else if(r.game==='creature_lab') {
         if(!data.second)throw new Error('Pick two things!');

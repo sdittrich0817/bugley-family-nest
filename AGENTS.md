@@ -28,6 +28,7 @@
 - Billing state lives in the webhook-fed `subscriptions` table (filtered by environment); a trigger copies the plan into family glow settings, and Kid Zone access is decided server-side by `hasAccess` in `src/lib/billing.ts`. Why: the browser can't grant itself a plan, and glow follows billing automatically.
 - Bugley's Studio lives at /kids/studio (inside the Kid Zone lock). Every piece of child text goes through `guardChildText` in `src/lib/studio.server.ts` (family-name/pattern checks plus an AI check) before any AI model sees it; every decision is logged to `studio_events`, personal-info hits create `parent_notifications`, and all Bugley replies come from the `askBugley` server function. Why: no child text reaches a model unchecked, and parents see everything.
 - Every Studio image goes through `src/lib/images.server.ts`; Character Lock and pipeline rules live in `src/lib/AGENTS.md`. Why: one audited image path.
+- PLAY launches through PlayStudio with bounded private sessions, reusable safe stickers and server-rendered doodles; persistence and rewards follow src/lib/AGENTS.md. Why: games share safety and rewards without exposing family data.
 
 - Subdirectories may have their own `AGENTS.md` (see `src/lib/AGENTS.md` for Studio makers and books); read it before changing files there.
 - Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
