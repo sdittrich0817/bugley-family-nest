@@ -38,7 +38,7 @@ export function StepNav({ onBack, onNext, nextLabel = "Next", canNext = true, bu
 }
 
 /** A big tappable card. Used for genres, styles and the Studio's three doors. */
-export function ChoiceTile({ selected, onClick, emoji, image, label, sub, className }: { selected?: boolean; onClick: () => void; emoji?: string; image?: string | undefined; label: string; sub?: string; className?: string }) {
+export function ChoiceTile({ selected, onClick, emoji, image, label, sub, className }: { selected?: boolean; onClick: () => void; emoji?: string | undefined; image?: string | undefined; label: string; sub?: string; className?: string }) {
   return <button type="button" onClick={onClick} aria-pressed={selected}
     className={cn("group flex flex-col overflow-hidden rounded-3xl border-2 bg-card text-left shadow-soft transition hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", selected ? "border-primary shadow-glow" : "border-border", className)}>
     {image ? <img src={image} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : emoji ? <span className="flex aspect-[4/3] w-full items-center justify-center bg-primary/15 text-5xl" aria-hidden>{emoji}</span> : null}
