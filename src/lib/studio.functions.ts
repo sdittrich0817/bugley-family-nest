@@ -23,6 +23,10 @@ export const askBugley = createServerFn({ method: "POST" }).middleware([requireS
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { reply: "I’m taking a little nap right now. Ask a grown-up!", chips: [] as string[], blocked: true };
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.text, data.source);
     if (guard.decision !== "allowed") return { reply: guard.reply ?? "Let’s try a safe idea.", chips: guard.chips ?? [], blocked: true };
+    if (data.purpose === "spelling") {
+      const { data: controls } = await context.supabase.from("child_controls").select("spelling_help").eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();
+      if (!controls?.spelling_help) return { reply: "Your words are yours. Spelling help is turned off by your grown-up.", chips: [] as string[], blocked: true };
+    }
     const out = data.comicId
       ? await (await import("./comic.server")).assistComic(context.supabase, context.userId, child, data.comicId, data.text, data.pageId)
       : data.storyId
