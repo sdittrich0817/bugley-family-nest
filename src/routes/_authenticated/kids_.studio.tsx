@@ -2,7 +2,7 @@ import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Smile, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { familyOptions } from "@/lib/family.functions";
 import { getChildGlow } from "@/lib/glow.functions";
@@ -13,6 +13,7 @@ import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
 import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { BugleyGuide } from "@/components/studio/Guided";
+import { BugleyStep, type StepChoice } from "@/components/studio/BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
 import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
 import { StoryMaker } from "@/components/studio/StoryMaker";
@@ -52,16 +53,10 @@ function StudioPage() {
   return <Studio child={child as SidekickChild & { age_band: Band }} />;
 }
 
-const DOORS: { key: View; label: string; sub: string; image: string }[] = [
-  { key: "picture", label: "Make a picture", sub: "Pick a style, tell Bugley, done!", image: pictureArt },
-  { key: "comic", label: "Make a comic", sub: "Panels, heroes and POW!", image: comicArt },
-  { key: "story", label: "Write a story", sub: "You write it, Bugley draws it", image: storyArt },
-];
-const EXTRAS: { key: View | "games"; label: string; icon: typeof ImageIcon }[] = [
-  { key: "album", label: "My Album", icon: Library },
-  { key: "character", label: "My Cast", icon: Smile },
-  { key: "book", label: "Books", icon: BookOpen },
-  { key: "games", label: "Games", icon: Gamepad2 },
+const CREATE_CHOICES: StepChoice[] = [
+  { key: "picture", label: "Make a Picture", image: pictureArt },
+  { key: "comic", label: "Build a Comic", image: comicArt },
+  { key: "story", label: "Tell a Story", image: storyArt },
 ];
 
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
@@ -74,7 +69,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const [bookId, setBookId] = useState<string | null>(null);
   const [inBook, setInBook] = useState(false);
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
-  const greeting = `Hi ${child.nickname}! What do you want to make today?`;
+  const greeting = `Hi ${child.nickname}! Want to create something or play a game?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
@@ -86,14 +81,15 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {view !== "home"
           ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); if (inBook && (view === "story" || view === "comic")) { setView("book"); } else { setInBook(false); setView("home"); } }}><ArrowLeft className="size-5" />{inBook && (view === "story" || view === "comic") ? "My book" : "Studio"}</Button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
-        <span className="hidden font-display text-lg sm:block">Bugley’s Studio</span>
+        <span className="flex items-center gap-2">{view === "home" && <Button variant="ghost" onClick={() => setView("album")}><Library className="size-5" />My Album</Button>}</span>
         {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}
       </div>
     </header>
     <div className="mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-5">
-      <BugleyGuide child={child} chat={chat} />
+      {view !== "create" && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
-        {view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
+        {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
+          : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
           : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
@@ -106,24 +102,22 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   </div>;
 }
 
-type View = "home" | "album" | "picture" | "character" | "story" | "comic" | "book";
-const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker", book: "Book Builder" };
+type View = "home" | "create" | "album" | "picture" | "character" | "story" | "comic" | "book";
+const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", create: "Choosing what to create", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker", book: "Book Builder" };
 
 function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts";
   const navigate = useNavigate();
-  return <div className="space-y-8">
-    <section className="grid gap-4 sm:grid-cols-3">
-      {DOORS.map((d, i) => <button key={d.key} onClick={() => onOpen(d.key)} style={{ animationDelay: `${i * 80}ms` }}
-        className="group overflow-hidden rounded-[2rem] border-2 border-border bg-card text-left shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-        <img src={d.image} alt="" className="aspect-[4/3] w-full object-cover transition group-hover:scale-105" />
-        <span className="block p-4"><span className={cn("block font-display leading-tight", sprouts ? "text-3xl" : "text-2xl")}>{d.label}</span><span className="mt-1 block text-muted-foreground">{d.sub}</span></span>
-      </button>)}
-    </section>
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {EXTRAS.map(({ key, label, icon: Icon }) => <button key={key} onClick={key === "games" ? () => void navigate({ to: "/kids/studio/games" }) : () => onOpen(key)}
-        className="flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-4 py-3 font-display shadow-soft transition hover:border-primary">
-        <Icon className="size-6 shrink-0" />{label}
+  const doors = [
+    { label: "CREATE", icon: Paintbrush, go: () => onOpen("create") },
+    { label: "PLAY", icon: Gamepad2, go: () => void navigate({ to: "/kids/studio/games" }) },
+  ];
+  return <div className="space-y-6">
+    <section className="grid gap-5 sm:grid-cols-2">
+      {doors.map(({ label, icon: Icon, go }, i) => <button key={label} onClick={go} style={{ animationDelay: `${i * 120}ms` }}
+        className={cn("studio-door-glow flex flex-col items-center justify-center gap-4 rounded-[2.5rem] border-4 border-primary bg-card p-8 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-[300px]" : "min-h-[260px]")}>
+        <span className="flex size-28 items-center justify-center rounded-full bg-primary text-primary-foreground"><Icon className="size-14" /></span>
+        <span className={cn("font-display tracking-wide", sprouts ? "text-5xl" : "text-4xl")}>{label}</span>
       </button>)}
     </section>
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
