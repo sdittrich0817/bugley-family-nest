@@ -57,6 +57,13 @@
       "when": 1792696000545,
       "tag": "0007_glow_system",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792762321456,
+      "tag": "0008_billing_subscriptions",
+      "breakpoints": true
     }
   ]
 }
