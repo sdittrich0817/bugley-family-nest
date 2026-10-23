@@ -84,7 +84,8 @@ export function BookBuilder({ child, chat, bookId, onBook, onOpenChapter }: { ch
       <div className="rounded-2xl bg-card p-4 shadow-soft">
         <p className="font-display text-lg">{printMessage(book.data.format, pages)}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (pages / (pages + left || 1)) * 100)}%` }} /></div>
-        <p className="mt-1 text-xs text-muted-foreground">{pages} pages, counting the title page and “The End.” {book.data.format === "comic" ? `Comics print at ${rule.min}+ pages, in groups of ${rule.multiple}.` : `Story books print at ${rule.min}+ pages.`} Printing comes later.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{pages} pages, counting the title page and “The End.” {book.data.format === "comic" ? `Comics print at ${rule.min}+ pages; blank pages fill it to a group of ${rule.multiple}.` : `Story books print at ${rule.min}+ pages.`}</p>
+        {left === 0 && <AskToPrint childId={child.id} bookId={book.id} onAsked={() => chat.say("I sent it to your grown-up! Fingers crossed!")} />}
       </div>
       <Button variant="secondary" disabled={busy} onClick={() => setReading(true)}><BookOpen />Preview the whole book</Button>
     </div>
