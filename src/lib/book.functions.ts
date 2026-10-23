@@ -32,7 +32,7 @@ export const getBook = createServerFn({ method: "POST" }).middleware([requireSup
   return loadBook(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createBook = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createBook = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child, check } = await ctx(context.supabase, context.userId, data.childId, data.environment);
   await check(data.title, "book_title");
   const a = await admin();
@@ -111,7 +111,7 @@ export const editBook = createServerFn({ method: "POST" }).middleware([requireSu
   } else if (data.action === "cover") {
     if (!data.text || data.text.length < 3) throw new Error("Describe your cover first.");
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description: data.text, styleKey: book.data.styleKey, characterIds: book.data.characterIds, mode: "final", requireReferences: true });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description: data.text, styleKey: book.data.styleKey, characterIds: book.data.characterIds, mode: "final", requireReferences: true, lockId: book.id });
     if (!r.ok) throw new Error(r.reply);
     book.data.cover = r.path;
   } else if (data.action === "absorb") {

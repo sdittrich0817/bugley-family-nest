@@ -9,7 +9,7 @@ export const getStory = createServerFn({ method: "POST" }).middleware([requireSu
   const { loadStory } = await import("./story.server");
   return loadStory(context.supabase, context.userId, data.childId, data.id);
 });
-export const createStory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
+export const createStory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -62,7 +62,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireS
     const description = data.action === "cover" ? data.description : page?.description;
     if (!description || description.length < 3) throw new Error("Describe your picture first.");
     const { generateImage } = await import("./images.server");
-    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true });
+    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true, lockId: story.id });
     if (!result.ok) throw new Error(result.reply);
     if (data.action === "cover") story.data.cover = result.path;
     else if (page) page.image = result.path;
