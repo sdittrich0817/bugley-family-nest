@@ -14,6 +14,7 @@ import { Sidekick, speak, useBugleyChat, useVoiceInput, type BugleyChat, type Si
 import { Bugley } from "@/components/brand/Bugley";
 import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
 import { StoryMaker } from "@/components/studio/StoryMaker";
+import { ComicMaker } from "@/components/studio/ComicMaker";
 import { Button } from "@/components/ui/button";
 import { BugleyMature } from "@/components/brand/BugleyMature";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolea
   { key: "picture", label: "Picture", icon: ImageIcon, ready: true },
   { key: "character", label: "Characters", icon: Smile, ready: true },
   { key: "story", label: "Story", icon: BookOpen, ready: true },
-  { key: "comic", label: "Comic", icon: LayoutGrid, ready: false },
+  { key: "comic", label: "Comic", icon: LayoutGrid, ready: true },
   { key: "games", label: "Games", icon: Gamepad2, ready: false },
   { key: "album", label: "My Album", icon: Library, ready: true },
 ];
@@ -60,9 +61,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const [view, setView] = useState<View>("home");
   const [storyId, setStoryId] = useState<string | null>(null);
   const [storyDirty, setStoryDirty] = useState(false);
+  const [comicId, setComicId] = useState<string | null>(null);
   const greeting = `Hi ${child.nickname}! What should we make today?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting,
-    sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"], view === "story" ? storyId ?? undefined : undefined);
+    sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => { if (sprouts) speak(greeting); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -78,19 +80,20 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     </header>
     <div className="mx-auto flex max-w-6xl gap-6 px-4 pb-28 pt-6">
       <main className="min-w-0 flex-1">
-        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={(v) => { if (v === "story") setStoryId(null); setView(v); }} />
+        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
           : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
-          : <Album child={child} onStory={(id) => { setStoryId(id); setView("story"); }} />}
+          : view === "comic" ? <ComicMaker child={child} chat={chat} comicId={comicId} onComic={setComicId} onDirty={setStoryDirty} />
+          : <Album child={child} onStory={(id) => { setStoryId(id); setView("story"); }} onComic={(id) => { setComicId(id); setView("comic"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />
     </div>
   </div>;
 }
 
-type View = "home" | "album" | "picture" | "character" | "story";
-const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker" };
+type View = "home" | "album" | "picture" | "character" | "story" | "comic";
+const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker" };
 
 function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; chat: BugleyChat; greeting: string; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts", builders = child.age_band === "builders";
@@ -131,7 +134,7 @@ function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; c
 
 const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Characters", game: "Games" };
 
-function Album({ child, onStory }: { child: SidekickChild; onStory: (id: string) => void }) {
+function Album({ child, onStory, onComic }: { child: SidekickChild; onStory: (id: string) => void; onComic: (id: string) => void }) {
   const qc = useQueryClient();
   const key = ["album", child.id];
   const { data: items = [], isLoading } = useQuery({ queryKey: key, queryFn: () => listAlbum({ data: { childId: child.id } }) });
@@ -164,15 +167,15 @@ function Album({ child, onStory }: { child: SidekickChild; onStory: (id: string)
           <p className="font-display text-xl">{items.length ? "Nothing here yet!" : "Your album is waiting for its first creation."}</p>
           <p className="text-muted-foreground">Everything you make in the Studio saves here by itself.</p>
         </div>
-      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} />)}</ul>
+      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} />)}</ul>
       : <div className="space-y-6">{projects.map(([name, list]) => <section key={name} className="rounded-3xl bg-card p-5 shadow-soft">
           <h2 className="text-xl">{name} <span className="text-sm font-normal text-muted-foreground">· {list.length} {list.length === 1 ? "piece" : "pieces"}</span></h2>
-          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} />)}</ul>
+          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} />)}</ul>
         </section>)}</div>}
   </div>;
 }
 
-function CreationCard({ c, onUpdate, onStory }: { c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void }) {
+function CreationCard({ c, onUpdate, onStory, onComic }: { c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
   const [confirm, setConfirm] = useState(false);
@@ -184,6 +187,7 @@ function CreationCard({ c, onUpdate, onStory }: { c: Creation; onUpdate: (id: st
     </div>
     <div className="p-3">
       {c.kind === "story" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onStory(c.id)}><BookOpen />Open story</Button>}
+      {c.kind === "comic" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onComic(c.id)}><LayoutGrid />Open comic</Button>}
       {editing ? <form onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} onBlur={() => setEditing(false)} aria-label="New name" className="w-full rounded-lg border-2 border-primary bg-background px-2 py-1" />
       </form> : <p className="truncate font-display">{c.title}</p>}

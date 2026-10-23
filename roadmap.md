@@ -18,3 +18,4 @@
 - [x] Build Story Maker: map, child-authored pages, continuity coaching, locked-style illustrations, chapters and album flipbook.
 - [ ] Verify Story Maker save/reopen/illustrate/finish end to end (blocked: no parent account; image models still need admin configuration).
 - [ ] Pick Replicate models for sketch, final and character in /admin, then test a real picture end to end (blocked: Shea chooses models).
+- [x] Comic Maker (one-shot comics, layouts, panels, text layers, cover, flipbook)
