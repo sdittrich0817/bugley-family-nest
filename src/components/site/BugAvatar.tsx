@@ -21,7 +21,7 @@ function BodyShape({ kind, fill }: { kind: BugConfig["kind"]; fill: string }) {
 }
 
 export function BugAvatar({ bug, className = "size-16", label }: { bug: BugConfig; className?: string; label?: string }) {
-  const id = useId().replace(/:/g, "");
+  const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const body = BUG_COLORS[bug.body], accent = BUG_COLORS[bug.accent];
   const mantis = bug.kind === "mantis";
   const eyeY = mantis ? 40 : 44, dx = mantis ? 15 : 9, mY = mantis ? 52 : 56;
