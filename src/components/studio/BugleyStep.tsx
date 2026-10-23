@@ -34,7 +34,8 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
   const shown = choices.slice((page % pages) * size, (page % pages) * size + size);
   useEffect(() => setPage(0), [question]);
 
-  useEffect(() => { if (sprouts && !bare) speak(question); setTyping(!!initialAnswer); setText(initialAnswer); }, [question, sprouts, bare, initialAnswer]);
+  useEffect(() => { if (sprouts && !bare) speak(question); }, [question, sprouts, bare]);
+  useEffect(() => { setTyping(longAnswer || !!initialAnswer); setText(initialAnswer); }, [longAnswer, initialAnswer]);
   useEffect(() => {
     if (mood !== "painting") return;
     const t = setInterval(() => setPaintLine((n) => (n + 1) % PAINT_LINES.length), 1800);

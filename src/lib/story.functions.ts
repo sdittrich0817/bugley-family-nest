@@ -66,6 +66,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireS
     if (!page) throw new Error("We couldn’t find that page.");
     if (data.page.chapter && child.age_band !== "builders") throw new Error("Chapter names are for Builders.");
     for (const key of ["text", "description", "chapter"] as const) if (data.page[key] !== page[key]) await check(data.page[key]);
+    if (data.page.text !== page.text) page.image = null;
     Object.assign(page, data.page);
   } else if (data.action === "title") {
     if (!data.title) throw new Error("Choose a title first.");
