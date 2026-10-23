@@ -91,6 +91,10 @@ const LOOKS = ["tall", "tiny", "fluffy", "spotty", "sparkly", "stripy", "big eye
 const CLOTHES = ["a cape", "a hoodie", "rain boots", "a crown", "goggles", "a backpack", "a tutu", "a scarf"];
 const COLORS = ["red", "orange", "yellow", "green", "blue", "purple", "pink", "rainbow"];
 
+function Own({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => void }) { const [v, setV] = useState(""); const add = () => { const t = v.trim().replace(/\s+/g, " "); if (t) { onAdd(t.slice(0, 40)); setV(""); } };
+    return <div className="flex gap-2"><input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} maxLength={40} placeholder={placeholder} aria-label={placeholder} className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 outline-none focus:border-primary" /><button onClick={add} className="rounded-full border-2 border-primary px-5 font-semibold">Add</button></div>;
+}
+
 export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild; chat: BugleyChat; onDone: () => void }) {
   const [step, setStep] = useState(0);
   const [type, setType] = useState("");
@@ -111,8 +115,6 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
   const canNext = [!!type, looks.length + clothes.length + colors.length > 0, true, !!name.trim() && !!personality, !!style][step] ?? true;
   const Chips = ({ list, value, onPick }: { list: string[]; value: string[]; onPick: (v: string) => void }) => <div className="flex flex-wrap gap-2">{[...list, ...value.filter((x) => x && !list.includes(x))].map((v) => <button key={v} onClick={() => onPick(v)} aria-pressed={value.includes(v)} className={cn(chip, "capitalize", value.includes(v) && chipOn)}>{v}</button>)}</div>;
 
-  const Own = ({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => void }) => { const [v, setV] = useState(""); const add = () => { const t = v.trim().replace(/\s+/g, " "); if (t) { onAdd(t.slice(0, 40)); setV(""); } };
-    return <div className="flex gap-2"><input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} maxLength={40} placeholder={placeholder} aria-label={placeholder} className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 outline-none focus:border-primary" /><button onClick={add} className="rounded-full border-2 border-primary px-5 font-semibold">Add</button></div>; };
   const addTo = (list: string[], set: (v: string[]) => void) => (v: string) => { if (!list.includes(v)) set([...list, v]); };
 
   async function generate() {
