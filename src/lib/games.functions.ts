@@ -29,7 +29,7 @@ export const getArcade = createServerFn({ method: "POST" }).middleware([requireS
     context.supabase.from("game_progress").select("child_id,game,unlocked,sparks").eq("parent_id", context.userId),
     context.supabase.from("game_badges").select("game,badge,earned_at").eq("child_id", child.id).order("earned_at"),
     context.supabase.from("game_rounds").select("child_id,game,level,score,total,bonus,finished_at").eq("parent_id", context.userId).not("finished_at", "is", null),
-    context.supabase.from("children").select("id,nickname,avatar").eq("parent_id", context.userId),
+    context.supabase.from("children").select("id,nickname,avatar,bug").eq("parent_id", context.userId),
   ]);
   const band = child.age_band as Band;
   const games = GAME_KEYS.map((key) => {
@@ -38,14 +38,14 @@ export const getArcade = createServerFn({ method: "POST" }).middleware([requireS
     const board = (kids ?? []).map((k: any) => {
       const mine = (rounds ?? []).filter((r: any) => r.child_id === k.id && r.game === key);
       const best = mine.reduce((m: number, r: any) => Math.max(m, Math.round((r.score / Math.max(1, r.total)) * 100)), -1);
-      return { childId: k.id, nickname: k.nickname, avatar: k.avatar, best, rounds: mine.length, level: (progress ?? []).find((x: any) => x.child_id === k.id && x.game === key)?.unlocked ?? 1 };
+      return { childId: k.id, nickname: k.nickname, avatar: k.bug ?? k.avatar, best, rounds: mine.length, level: (progress ?? []).find((x: any) => x.child_id === k.id && x.game === key)?.unlocked ?? 1 };
     }).filter((r) => r.rounds > 0).sort((x, y) => y.best - x.best);
     return { key, available: canPlay(key, band), levels, unlocked: p?.unlocked ?? 1, sparks: p?.sparks ?? 0, scoreboard: board };
   });
   const today = startOfUtcDay();
   const bonusToday = (rounds ?? []).filter((r: any) => r.child_id === child.id && r.finished_at >= today).reduce((n: number, r: any) => n + r.bonus, 0);
   const sparks = (progress ?? []).filter((x: any) => x.child_id === child.id).reduce((n: number, x: any) => n + x.sparks, 0);
-  return { games, badges: badges ?? [], bonusToday, sparks, players: (kids ?? []).map((k: any) => ({ id: k.id, nickname: k.nickname, avatar: k.avatar })) };
+  return { games, badges: badges ?? [], bonusToday, sparks, players: (kids ?? []).map((k: any) => ({ id: k.id, nickname: k.nickname, avatar: k.bug ?? k.avatar })) };
 });
 
 export const startRound = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), game: gameKey, level: z.number().int().min(1).max(MAX_LEVEL), environment: env }).parse(i)).handler(async ({ data, context }) => {

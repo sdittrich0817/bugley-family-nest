@@ -121,7 +121,7 @@ function ThisWeek({ current }: { current: any }) {
 function KidCard({ child, badges, skills, totals }: { child: ChildProfile; badges: string[]; skills: Record<string, number>; totals: Record<string, number> }) {
   return <div className={card}>
     <div className="flex items-center gap-3">
-      <ChildAvatar avatar={child.avatar} className="size-14 shrink-0" />
+      <ChildAvatar avatar={child.bug ?? child.avatar} className="size-14 shrink-0" />
       <div className="min-w-0"><h3 className="break-words text-lg">{child.nickname}</h3><p className="text-sm capitalize text-muted-foreground">{child.age_band} · Bugley {child.bugley_stage}</p></div>
       <Bugley stage={child.bugley_stage} size={44} className="ml-auto shrink-0" />
     </div>
@@ -141,7 +141,7 @@ function ControlsCard({ child, value }: { child: ChildProfile; value: ChildContr
   }
   const toggles: [keyof ChildControls, string][] = [["studio_stories", "Studio: Stories"], ["studio_games", "Studio: Games"], ["read_aloud", "Bugley reads aloud"]];
   return <div className={card}>
-    <div className="flex items-center gap-3"><ChildAvatar avatar={child.avatar} className="size-10" /><h3 className="text-lg">{child.nickname}</h3></div>
+    <div className="flex items-center gap-3"><ChildAvatar avatar={child.bug ?? child.avatar} className="size-10" /><h3 className="text-lg">{child.nickname}</h3></div>
     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><Clock className="size-4" />Daily time limit</span>
       <select className="h-10 rounded-lg border border-input bg-background px-3" value={state.daily_minutes ?? ""} onChange={(e) => void update({ daily_minutes: e.target.value ? Number(e.target.value) : null })}>
         {TIME_LIMITS.map((m) => <option key={m ?? "none"} value={m ?? ""}>{m ? `${m} min` : "No limit"}</option>)}

@@ -100,7 +100,7 @@ function ActivityStep({ acts, kids }: { acts: any[]; kids: ChildProfile[] }) {
     <h2 className="text-4xl">{a.title}</h2>
     <div className="mt-5 grid gap-6" style={{ gridTemplateColumns: `repeat(${Math.max(bands.length, 1)}, minmax(0, 1fr))` }}>
       {bands.map((b) => { const v = a.activity_versions.find((x: any) => x.age_band === b); return <div key={b} className={cn(`skin-${b}`, "rounded-3xl bg-card p-6 text-card-foreground shadow-soft")}>
-        <div className="flex flex-wrap items-center gap-3">{kids.filter((k) => k.age_band === b).map((k) => <span key={k.id} className="flex items-center gap-2"><ChildAvatar avatar={k.avatar} className="size-14" /><span className="font-display text-2xl">{k.nickname}</span></span>)}</div>
+        <div className="flex flex-wrap items-center gap-3">{kids.filter((k) => k.age_band === b).map((k) => <span key={k.id} className="flex items-center gap-2"><ChildAvatar avatar={k.bug ?? k.avatar} className="size-14" /><span className="font-display text-2xl">{k.nickname}</span></span>)}</div>
         <p className="mt-2 text-sm uppercase tracking-wide text-muted-foreground">{BAND_LABEL[b]}{v ? ` · ${v.minutes} min` : ""}</p>
         <p className="mt-3 font-display text-3xl">{v?.kid_title ?? a.title}</p>
         <p className="mt-3 text-xl leading-relaxed">{v?.instructions ?? "No version for this age yet."}</p>
@@ -125,7 +125,7 @@ function Think({ s, kids, onDone }: { s: any; kids: ChildProfile[]; onDone: () =
     <div>
       <p className="text-2xl font-semibold">Who took part today?</p>
       <div className="mt-4 flex flex-wrap gap-4">{kids.map((k) => { const on = picked.has(k.id); return <button key={k.id} aria-pressed={on} onClick={() => { const n = new Set(picked); on ? n.delete(k.id) : n.add(k.id); setPicked(n); }} className={cn("flex items-center gap-3 rounded-full border-4 px-5 py-3 text-2xl transition", on ? "border-primary bg-card" : "border-border opacity-60")}>
-        <ChildAvatar avatar={k.avatar} className="size-14" /><span className="font-display">{k.nickname}</span>{on && <Check className="size-7" />}</button>; })}</div>
+        <ChildAvatar avatar={k.bug ?? k.avatar} className="size-14" /><span className="font-display">{k.nickname}</span>{on && <Check className="size-7" />}</button>; })}</div>
       {error && <p role="alert" className="mt-4 text-xl text-destructive">{error}</p>}
       <Button size="lg" className="mt-6 h-16 px-10 text-2xl" disabled={!picked.size || busy} onClick={() => void finish()}>{busy ? "Saving…" : "We did it! Finish session"}</Button>
     </div>
@@ -140,7 +140,7 @@ function EndScreen({ session, kids }: { session: any; kids: ChildProfile[] }) {
     {session.unit.journal_prompt && <div className="mt-10 w-full max-w-5xl">
       <p className="text-2xl font-semibold">Field journal</p>
       <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{kids.map((k) => <div key={k.id} className={cn(`skin-${k.age_band}`, "rounded-3xl bg-card p-6 text-left text-card-foreground shadow-soft")}>
-        <div className="flex items-center gap-3"><ChildAvatar avatar={k.avatar} className="size-14" /><span className="font-display text-2xl">{k.nickname}</span></div>
+        <div className="flex items-center gap-3"><ChildAvatar avatar={k.bug ?? k.avatar} className="size-14" /><span className="font-display text-2xl">{k.nickname}</span></div>
         <p className="mt-4 text-xl leading-relaxed">{session.unit.journal_prompt}</p></div>)}</div>
     </div>}
     <Button asChild size="lg" className="mt-10 h-16 px-10 text-2xl"><Link to="/hub">Back to Parent Hub</Link></Button>
