@@ -50,7 +50,6 @@ function images(doc: PDFDocument) {
     const s = Math.max(w / img.width, h / img.height);
     const dw = img.width * s, dh = img.height * s;
     if (img.width / (w / 72) < 300 || img.height / (h / 72) < 300) report.lowRes++;
-    page.pushOperators();
     page.drawRectangle({ x, y, width: w, height: h, color: CREAM });
     page.drawImage(img, { x: x + (w - dw) / 2, y: y + (h - dh) / 2, width: dw, height: dh });
   }
@@ -101,7 +100,6 @@ export async function buildInterior(book: Book, nickname: string, format: PrintF
 
   for (const ch of book.chapters) {
     if (ch.kind === "story") {
-      ch.story.data.pages.forEach(() => undefined);
       for (const [i, sp] of ch.story.data.pages.entries()) {
         const p = blank();
         let top = H - BLEED - SAFE;
@@ -129,8 +127,7 @@ export async function buildInterior(book: Book, nickname: string, format: PrintF
             const lw = (l.w / 100) * cw, lh = (l.h / 100) * rh, lx = x + (l.x / 100) * cw, ly = y + rh - (l.y / 100) * rh - lh;
             if (l.type === "sfx") { fitText(p, l.text.toUpperCase(), fonts.sfx, lx, ly, lw, lh, 28); continue; }
             if (l.type === "speech" || l.type === "thought") {
-              const tx = lx + (l.tx / 100) * lw, ty = ly - Math.min(18, lh * 0.4);
-              p.drawSvgPath(`M ${lx + lw / 2 - 6} 0 L ${tx - lx} ${-(ty - ly)} L ${lx + lw / 2 + 6 - lx} 0`, { x: lx, y: ly, color: rgb(1, 1, 1), borderColor: NAVY, borderWidth: 1 });
+              p.drawLine({ start: { x: lx + lw / 2, y: ly + lh / 2 }, end: { x: lx + (l.tx / 100) * lw, y: ly - Math.min(16, lh * 0.5) }, thickness: 1.2, color: NAVY });
               p.drawEllipse({ x: lx + lw / 2, y: ly + lh / 2, xScale: lw / 2, yScale: lh / 2, color: rgb(1, 1, 1), borderColor: NAVY, borderWidth: 1.2 });
               fitText(p, l.text, fonts.letter, lx + lw * 0.15, ly + lh * 0.15, lw * 0.7, lh * 0.7, 12);
             } else {

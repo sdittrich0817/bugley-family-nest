@@ -27,7 +27,7 @@ export const getBillingStatus = createServerFn({ method: "POST" }).middleware([r
 
 export const billingOptions = (environment: StripeEnv) => queryOptions({ queryKey: ["billing", environment], queryFn: () => getBillingStatus({ data: { environment } }) });
 
-async function resolveOrCreateCustomer(stripe: Stripe, options: { email?: string | undefined; userId: string }) {
+export async function resolveOrCreateCustomer(stripe: Stripe, options: { email?: string | undefined; userId: string }) {
   if (!/^[a-zA-Z0-9_-]+$/.test(options.userId)) throw new Error("Invalid userId");
   const found = await stripe.customers.search({ query: `metadata['userId']:'${options.userId}'`, limit: 1 });
   const hit = found.data[0]; if (hit) return hit.id;
