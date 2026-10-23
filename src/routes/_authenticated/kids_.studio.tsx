@@ -114,7 +114,7 @@ function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; c
     <section className={cn("grid gap-4", sprouts ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
       {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={ready ? () => onOpen(key as View) : () => toast(`${label} is coming soon!`)}
         style={{ animationDelay: `${i * 60}ms` }}
-        className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && !sprouts && "col-span-2 sm:col-span-1")}>
+        className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && (sprouts ? "col-span-2" : "col-span-2 sm:col-span-3"))}>
         <span className={cn("flex items-center justify-center rounded-2xl bg-primary/25 transition group-hover:bg-primary", sprouts ? "size-20" : "size-16")}><Icon className={sprouts ? "size-10" : "size-8"} /></span>
         <span className={cn("font-display", sprouts ? "text-2xl" : "text-xl")}>{label}</span>
         {!ready && <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-semibold text-muted-foreground">Coming soon</span>}
