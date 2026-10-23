@@ -25,12 +25,14 @@ function provider() {
 }
 
 /** Streams a structured answer and returns the parsed object, or null on any failure. */
-export async function aiObject<T extends z.ZodTypeAny>(schema: T, instructions: string, input: string): Promise<z.infer<T> | null> {
+export async function aiObject<T extends z.ZodTypeAny>(schema: T, instructions: string, input: string, imageUrl?: string): Promise<z.infer<T> | null> {
   try {
     const result = streamText({
       model: provider().responses(MODEL),
       instructions,
-      messages: [{ role: "user", content: input }],
+      messages: [imageUrl
+        ? { role: "user", content: [{ type: "text", text: input }, { type: "image", image: new URL(imageUrl) }] }
+        : { role: "user", content: input }],
       output: Output.object({ schema }),
       providerOptions: { openai: { forceReasoning: true, reasoningEffort: "low", reasoningSummary: "auto", store: false, include: ["reasoning.encrypted_content"] } },
     });
