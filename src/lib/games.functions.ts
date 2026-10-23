@@ -77,7 +77,7 @@ async function loadRound(sb: any, userId: string, childId: string, roundId: stri
   await kid(sb, userId, childId);
   const { data: r } = await (await admin()).from("game_rounds").select("*").eq("id", roundId).eq("parent_id", userId).eq("child_id", childId).maybeSingle();
   if (!r) throw new Error("We couldn’t find that game.");
-  return r as { id: string; game: GameKey; level: number; items: string[]; answers: Record<string, { points: number; max: number; tries: number; done: boolean }>; total: number; started_at: string; finished_at: string | null };
+  return r as unknown as { id: string; game: GameKey; level: number; items: string[]; answers: Record<string, { points: number; max: number; tries: number; done: boolean }>; total: number; started_at: string; finished_at: string | null };
 }
 
 export const answerItem = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), roundId: z.string().uuid(), itemId: z.string().uuid(), choice: z.string().max(20).optional(), plan: z.array(z.string().max(10)).max(20).optional(), sorted: z.record(z.string().max(10), z.string().max(40)).optional() }).parse(i)).handler(async ({ data, context }) => {
