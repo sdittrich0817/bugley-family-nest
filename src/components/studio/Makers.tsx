@@ -107,6 +107,7 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
   const [style, setStyle] = useState("cartoon");
   const [portrait, setPortrait] = useState<{ path: string; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
   const refresh = useGlowRefresh(child.id);
   const qc = useQueryClient();
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -121,8 +122,9 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
     setBusy(true);
     try {
       const r = await makeCharacterPortrait({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: style, description: `${name}, ${summary}` } });
-      if (r.ok) setPortrait({ path: r.path, url: r.url }); else chat.say(r.reply, "chips" in r ? r.chips : undefined);
-    } catch { chat.say("Oops, my paintbrush slipped! Try again?"); }
+      setNote("");
+      if (r.ok) setPortrait({ path: r.path, url: r.url }); else { setNote(r.reply); chat.say(r.reply, "chips" in r ? r.chips : undefined); }
+    } catch { setNote("Oops, my paintbrush slipped! Try again?"); chat.say("Oops, my paintbrush slipped! Try again?"); }
     finally { setBusy(false); refresh(); }
   }
   async function save() {
@@ -154,6 +156,7 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
         <h2 className="text-2xl">Meet {name}!</h2>
         {busy ? <Working child={child} label={`Drawing ${name}…`} /> : portrait ? <img src={portrait.url} alt={name} className="mx-auto w-full max-w-md rounded-3xl bg-background shadow-lift" />
           : <p className="text-muted-foreground">Bugley will draw {name} from head to toe. Each try uses 1 glow.</p>}
+        {note && !busy && <p role="alert" className="rounded-2xl bg-muted p-4 font-medium">{note}</p>}
         <div className="flex flex-wrap gap-3">
           <button onClick={() => void generate()} disabled={busy} className={cn("inline-flex h-14 items-center gap-2 rounded-full px-6 font-display text-lg shadow-glow disabled:opacity-50", portrait ? "border-2 border-primary bg-card" : "bg-primary text-primary-foreground")}>{portrait ? <><RefreshCw className="size-5" />Try again · 1 glow</> : <><Wand2 className="size-5" />Draw {name} · 1 glow</>}</button>
           {portrait && <button onClick={() => void save()} disabled={busy} className="inline-flex h-14 items-center gap-2 rounded-full bg-primary px-6 font-display text-lg text-primary-foreground shadow-glow disabled:opacity-50"><Check className="size-5" />I love it! Save to My Cast</button>}
