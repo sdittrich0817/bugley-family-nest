@@ -7,6 +7,7 @@ export const controlsSchema = z.object({
   studio_stories: z.boolean(),
   studio_games: z.boolean(),
   read_aloud: z.boolean(),
+  spelling_help: z.boolean().default(false),
 });
 export type ChildControls = Omit<z.infer<typeof controlsSchema>, "childId">;
-export const DEFAULT_CONTROLS: ChildControls = { daily_minutes: null, studio_stories: true, studio_games: true, read_aloud: true };
+export const DEFAULT_CONTROLS: ChildControls = { daily_minutes: null, studio_stories: true, studio_games: true, read_aloud: true, spelling_help: false };

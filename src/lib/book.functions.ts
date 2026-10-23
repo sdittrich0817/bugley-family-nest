@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "./billing.functions";
-import { GENRES, EMPTY_MAP, newStoryPage, type StoryData } from "./story";
+import { GENRES, EMPTY_MAP, newStoryPage, guidedPages, type StoryData } from "./story";
 import { newComicPage, type ComicData } from "./comic";
 import { BOOK_FORMATS, EMPTY_BIBLE, authorStatusFor, bibleSchema, type BookData } from "./book";
 
@@ -55,7 +55,7 @@ export const bookFromOneShot = createServerFn({ method: "POST" }).middleware([re
   const d = row.details as (StoryData | ComicData) & { bookId?: string };
   if (d.bookId) throw new Error("This is already part of a book.");
   const format = row.kind === "comic" ? "comic" : "story";
-  const details: BookData = { format, genre: d.genre, styleKey: d.styleKey, characterIds: d.characterIds, bible: { ...EMPTY_BIBLE, cast: d.characterIds.map((id) => ({ id, note: "" })) }, absorbed: [], chapterIds: [row.id], author: child.nickname, authorStatus: "approved", dedication: "", cover: null };
+  const details: BookData = { format, genre: d.genre, styleKey: d.styleKey, characterIds: d.characterIds, bible: { ...EMPTY_BIBLE, cast: d.characterIds.map((id) => ({ id, note: "" })) }, modelLock: d.modelLock, absorbed: [], chapterIds: [row.id], author: child.nickname, authorStatus: "approved", dedication: "", cover: d.cover };
   const id = await s.saveCreation(context.userId, { child_id: child.id, kind: "book", title: row.title, project: row.title, position: 0 });
   const a = await admin();
   await a.from("studio_creations").update({ details: details as never, style_key: d.styleKey }).eq("id", id);
@@ -80,7 +80,7 @@ export const startChapter = createServerFn({ method: "POST" }).middleware([requi
   book.data.bible = { ...r.bible, cast: [...r.bible.cast, ...added.map((id) => ({ id, note: "" }))] };
   book.data.absorbed = r.absorbed;
   const base = { genre: book.data.genre, styleKey: book.data.styleKey, characterIds: book.data.characterIds, map: EMPTY_MAP, finished: false, cover: null, bookId: book.id };
-  const details = book.data.format === "comic" ? { ...base, pages: [newComicPage("one")] } satisfies ComicData : { ...base, pages: [newStoryPage()] } satisfies StoryData;
+  const details = book.data.format === "comic" ? { ...base, pages: [newComicPage("one")] } satisfies ComicData : { ...base, pages: guidedPages(child.age_band), guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } satisfies StoryData;
   const cid = await s.saveCreation(context.userId, { child_id: child.id, kind: book.data.format, title: data.title, project: book.title, position: book.data.chapterIds.length + 1 });
   const a = await admin();
   await a.from("studio_creations").update({ details: details as never, style_key: book.data.styleKey }).eq("id", cid);

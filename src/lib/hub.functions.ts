@@ -4,10 +4,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { controlsSchema, DEFAULT_CONTROLS, type ChildControls } from "@/lib/hub";
 
 export const getChildControls = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
-  const { data, error } = await context.supabase.from("child_controls").select("child_id,daily_minutes,studio_stories,studio_games,read_aloud").eq("parent_id", context.userId);
+  const { data, error } = await context.supabase.from("child_controls").select("child_id,daily_minutes,studio_stories,studio_games,read_aloud,spelling_help").eq("parent_id", context.userId);
   if (error) throw new Error("We couldn’t load your controls. Please try again.");
   const map: Record<string, ChildControls> = {};
-  for (const r of data ?? []) map[r.child_id] = { daily_minutes: r.daily_minutes, studio_stories: r.studio_stories, studio_games: r.studio_games, read_aloud: r.read_aloud };
+  for (const r of data ?? []) map[r.child_id] = { daily_minutes: r.daily_minutes, studio_stories: r.studio_stories, studio_games: r.studio_games, read_aloud: r.read_aloud, spelling_help: r.spelling_help };
   return map;
 });
 export const controlsOptions = queryOptions({ queryKey: ["child-controls"], queryFn: () => getChildControls() });

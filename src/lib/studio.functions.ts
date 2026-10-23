@@ -15,7 +15,7 @@ export const askBugley = createServerFn({ method: "POST" }).middleware([requireS
   .inputValidator((i: unknown) => z.object({
     childId: z.string().uuid(), text: z.string().trim().min(1).max(600),
     source: z.enum(["prompt_bar", "sidekick", "chip"]), context: z.string().max(80), environment: z.enum(["sandbox", "live"]),
-    storyId: z.string().uuid().optional(), pageId: z.string().uuid().optional(), purpose: z.enum(["coach", "picture", "spelling"]).optional(), comicId: z.string().uuid().optional(),
+    storyId: z.string().uuid().optional(), pageId: z.string().uuid().optional(), purpose: z.enum(["coach", "picture", "spelling", "step", "titles"]).optional(), comicId: z.string().uuid().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const s = await import("@/lib/studio.server");
