@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/plan")({
   head: () => accountHead("Choose your plan", "Start your family’s 14-day free Bugley trial."),
-  validateSearch: (s: Record<string, unknown>): { checkout?: string } => ({ checkout: typeof s.checkout === "string" ? s.checkout : undefined }),
+  validateSearch: (s: Record<string, unknown>): { checkout?: string | undefined } => ({ checkout: typeof s["checkout"] === "string" ? s["checkout"] : undefined }),
   component: PlanPage,
 });
 
