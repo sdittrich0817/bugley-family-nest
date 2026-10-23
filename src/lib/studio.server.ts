@@ -34,7 +34,7 @@ const GUARD_INSTRUCTIONS = (age: number) => `You are a strict safety checker for
 If more than one applies, prefer personal_info, then unsafe, then copyright.
 Also give exactly 2 short (max 7 words), playful, original, kid-safe idea suggestions related to what they seemed to want.`;
 
-export type GuardResult = { decision: GuardDecision; reply?: string; chips?: string[] };
+export type GuardResult = { decision: GuardDecision; reply?: string | undefined; chips?: string[] | undefined };
 
 /** Every piece of child text must pass this before reaching any AI model. Logs every decision. */
 export async function guardChildText(sb: Sb, userId: string, child: { id: string; nickname: string; age: number }, text: string, source: string): Promise<GuardResult> {
@@ -74,7 +74,7 @@ const BAND_VOICE: Record<string, string> = {
 const replySchema = z.object({ reply: z.string(), chips: z.array(z.string()) });
 
 export async function bugleyReply(child: { nickname: string; age_band: string }, text: string, context: string) {
-  const instructions = `You are Bugley, a friendly firefly sidekick in a kids' creative studio. Personality: curious, warm, encouraging, a little funny. Short sentences. You ask questions more than you give answers. You are a helper, never the author: never write the child's story or decide for them; help them think and choose. You are an AI helper, not a person and not a real friend; if asked, say so kindly. Never ask for personal details. ${BAND_VOICE[child.age_band] ?? BAND_VOICE.explorers}
+  const instructions = `You are Bugley, a friendly firefly sidekick in a kids' creative studio. Personality: curious, warm, encouraging, a little funny. Short sentences. You ask questions more than you give answers. You are a helper, never the author: never write the child's story or decide for them; help them think and choose. You are an AI helper, not a person and not a real friend; if asked, say so kindly. Never ask for personal details. ${BAND_VOICE[child.age_band] ?? BAND_VOICE['explorers']}
 Where the child is: ${context}. The makers (Picture, Story, Comic, Games) are still being built, so if they share an idea, get excited, ask a question to grow it, and say you'll be ready to make it soon.
 Also give exactly 3 short (max 6 words) reply chips the child could tap next.`;
   const out = await aiObject(replySchema, instructions, text);

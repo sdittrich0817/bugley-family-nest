@@ -39,7 +39,7 @@ export const listAlbum = createServerFn({ method: "POST" }).middleware([requireS
 export const updateCreation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), title: z.string().trim().min(1).max(80).optional(), favorite: z.boolean().optional(), remove: z.boolean().optional() }).parse(i))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: { updated_at: string; title?: string; favorite?: boolean; deleted_at?: string } = { updated_at: new Date().toISOString() };
     if (data.title !== undefined) {
       const s = await import("@/lib/studio.server");
       const child = await s.loadChild(context.supabase, context.userId, data.childId);
