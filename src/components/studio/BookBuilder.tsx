@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, Library, Plus, RefreshCw, Save, Trash2, Volume2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, Library, Plus, Printer, RefreshCw, Save, Trash2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
@@ -9,6 +9,7 @@ import { StylePicker } from "./Makers";
 import { PageGrid } from "./ComicMaker";
 import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast } from "@/lib/images.functions";
+import { requestPrint } from "@/lib/print.functions";
 import { createBook, editBook, getBook, startChapter } from "@/lib/book.functions";
 import type { Book, BookChapter } from "@/lib/book.server";
 import { printMessage, printedPages, pagesUntilPrintable, PRINT_RULES, type Bible, type BookFormat } from "@/lib/book";
