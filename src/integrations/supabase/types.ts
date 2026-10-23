@@ -122,6 +122,36 @@ export type Database = {
           },
         ]
       }
+      art_styles: {
+        Row: {
+          active: boolean
+          description: string
+          key: string
+          name: string
+          position: number
+          recipe: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          description?: string
+          key: string
+          name: string
+          position?: number
+          recipe?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          description?: string
+          key?: string
+          name?: string
+          position?: number
+          recipe?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       child_activity_progress: {
         Row: {
           activity_id: string
@@ -501,6 +531,30 @@ export type Database = {
           },
         ]
       }
+      image_models: {
+        Row: {
+          mode: string
+          model: string
+          settings: Json
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          mode: string
+          model?: string
+          settings?: Json
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          mode?: string
+          model?: string
+          settings?: Json
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       parent_notifications: {
         Row: {
           child_id: string
@@ -701,6 +755,7 @@ export type Database = {
           child_id: string
           created_at: string
           deleted_at: string | null
+          details: Json | null
           favorite: boolean
           id: string
           images: string[]
@@ -708,6 +763,7 @@ export type Database = {
           parent_id: string
           position: number
           project: string | null
+          style_key: string | null
           title: string
           updated_at: string
         }
@@ -716,6 +772,7 @@ export type Database = {
           child_id: string
           created_at?: string
           deleted_at?: string | null
+          details?: Json | null
           favorite?: boolean
           id?: string
           images?: string[]
@@ -723,6 +780,7 @@ export type Database = {
           parent_id: string
           position?: number
           project?: string | null
+          style_key?: string | null
           title?: string
           updated_at?: string
         }
@@ -731,6 +789,7 @@ export type Database = {
           child_id?: string
           created_at?: string
           deleted_at?: string | null
+          details?: Json | null
           favorite?: boolean
           id?: string
           images?: string[]
@@ -738,6 +797,7 @@ export type Database = {
           parent_id?: string
           position?: number
           project?: string | null
+          style_key?: string | null
           title?: string
           updated_at?: string
         }
