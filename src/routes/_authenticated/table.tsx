@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -26,7 +27,7 @@ function FamilyTable() {
   const { data: cur } = useSuspenseQuery(familyCurriculumOptions);
   const s = cur.current as any;
   const [i, setI] = useState(0);
-  const [finished, setFinished] = useState(false);
+  const [finished, setFinished] = useState(false); useScrollTopOn(`${i}|${finished}`);
   if (!s) return <Shell><div className="flex flex-1 flex-col items-center justify-center gap-6 text-center"><Bugley stage="scout" expression="sleepy" size={200} /><p className="text-4xl">No session is ready yet.</p><Button asChild size="lg"><Link to="/hub">Back to Parent Hub</Link></Button></div></Shell>;
   if (finished) return <EndScreen session={s} kids={family.children} />;
   const step = TABLE_STEPS[i]!;

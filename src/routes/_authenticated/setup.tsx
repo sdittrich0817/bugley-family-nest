@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,7 @@ import { Bugley } from "@/components/brand/Bugley";
 import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/_authenticated/setup")({ head: () => accountHead("Meet your crew", "Set up your private Bugley family with child avatars and simple logins."), loader: ({context}) => context.queryClient.ensureQueryData(familyOptions), component: Setup });
 function Setup() {
-  const [step, setStep] = useState<"welcome" | "children" | "done">("welcome"); const [busy,setBusy] = useState(false); const [error,setError] = useState("");
+  const [step, setStep] = useState<"welcome" | "children" | "done">("welcome"); useScrollTopOn(step); const [busy,setBusy] = useState(false); const [error,setError] = useState("");
   const finish = useServerFn(finishFamilySetup); const queryClient = useQueryClient();
   async function complete() { setBusy(true);setError(""); try { await finish(); await queryClient.invalidateQueries({queryKey:["family"]}); setStep("done"); } catch(err) {setError(err instanceof Error ? err.message : "Please try again.");} finally {setBusy(false);} }
   return <section className="container-page py-12 sm:py-16"><div className="mx-auto max-w-xl">

@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -61,7 +62,7 @@ const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolea
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts", builders = band === "builders";
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>("home"); useScrollTopOn(view);
   const [storyId, setStoryId] = useState<string | null>(null);
   const [storyDirty, setStoryDirty] = useState(false);
   const [comicId, setComicId] = useState<string | null>(null);

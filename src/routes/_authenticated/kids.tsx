@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -38,7 +39,7 @@ function KidZone() {
   const { data } = useSuspenseQuery(familyOptions);
   const [picking, setPicking] = useState<ChildProfile | null>(null);
   const [player, setPlayer] = useState<ChildProfile | null>(null);
-  const [exitOpen, setExitOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false); useScrollTopOn(`${picking?.id ?? ""}|${player?.id ?? ""}`);
   useEffect(() => { setKidZoneLocked(true); const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));

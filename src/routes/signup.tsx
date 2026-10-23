@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +18,7 @@ function Signup() {
   const [sent, setSent] = useState(false);
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); useScrollTopOn(`${!!details}|${sent}`);
   const { user } = useParentSession();
   const navigate = useNavigate();
   function next(e: FormEvent<HTMLFormElement>) {
