@@ -23,9 +23,9 @@ export function ImageAdmin() {
   </div>;
 }
 
-function ModelCard({ m }: { m: { mode: string; model: string; version: string; settings: Record<string, unknown> } }) {
+function ModelCard({ m }: { m: { mode: string; model: string; version: string; settings: string } }) {
   const qc = useQueryClient();
-  const [model, setModel] = useState(m.model), [version, setVersion] = useState(m.version), [settings, setSettings] = useState(JSON.stringify(m.settings, null, 2));
+  const [model, setModel] = useState(m.model), [version, setVersion] = useState(m.version), [settings, setSettings] = useState(m.settings);
   async function save() {
     let parsed: Record<string, unknown>;
     try { parsed = JSON.parse(settings || "{}"); if (typeof parsed !== "object" || Array.isArray(parsed)) throw 0; } catch { toast.error("Settings must be a JSON object."); return; }

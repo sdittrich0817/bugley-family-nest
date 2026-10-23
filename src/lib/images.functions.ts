@@ -95,7 +95,7 @@ export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requi
     context.supabase.from("image_models").select("mode,model,version,settings").order("mode"),
     context.supabase.from("art_styles").select("key,name,description,recipe,position,active").order("position"),
   ]);
-  return { models: (m.data ?? []) as { mode: string; model: string; version: string; settings: Record<string, unknown> }[], styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
+  return { models: (m.data ?? []).map((r: any) => ({ mode: r.mode as string, model: r.model as string, version: r.version as string, settings: JSON.stringify(r.settings ?? {}, null, 2) })), styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
 });
 
 export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
