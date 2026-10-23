@@ -162,7 +162,6 @@ function KidZoneShell() {
     const offResolved = router.subscribe("onResolved", toTop);
     return () => { offResolved(); window.removeEventListener("popstate", onPop); };
   }, [router]);
-  useEffect(() => { if (!window.location.hash) scrollToTop(); }, [pathname]);
   if (target) return null;
   if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
