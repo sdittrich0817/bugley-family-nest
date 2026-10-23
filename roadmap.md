@@ -16,8 +16,8 @@
 - [ ] Go live with real payments (blocked: Shea claims the payments account and verifies the business in the Payments tab).
 - [x] Image pipeline, admin Image Models + Style Recipes, 10 art styles, Character Creator, Picture Maker.
 - [x] Build Story Maker: map, child-authored pages, continuity coaching, locked-style illustrations, chapters and album flipbook.
-- [ ] Verify Story Maker save/reopen/illustrate/finish end to end (blocked: no parent account; image models still need admin configuration).
-- [ ] Pick Replicate models for sketch, final and character in /admin, then test a real picture end to end (blocked: Shea chooses models).
+- [ ] Verify complete Story Maker finish/cover and chapter continuation with a longer live test (first-page save, illustration and album reopen verified; further drawings require more glow).
+- [x] Configure Replicate models; a live story illustration rendered and reopened successfully.
 - [x] Comic Maker (one-shot comics, layouts, panels, text layers, cover, flipbook)
 - [x] Multi-chapter Books (Story Bible, chapters, Book Builder, print counter, Hub view)
 - [x] Game Studio home + Arcade (4 games, pass and play, admin content)
@@ -27,4 +27,4 @@
 - [ ] Verify successful Picture preview and print-resolution upgrade readback (blocked: live test output was rejected by the image safety check; glow refunded).
 - [ ] Connect Lulu sandbox keys and run a test print order end to end (blocked: Shea creates a Lulu developer account).
 - [ ] Confirm Lulu product codes and the 24-page softcover minimum with Lulu (blocked: Lulu account).
-- [ ] Rebuild Tell a Story with Bugley Steps, hidden age-sized beats, child-authored pages, automatic illustrations/cover and chapter continuation; test the guided flow.
+- [x] Rebuild Tell a Story with Bugley Steps, hidden age-sized beats, child-authored pages, automatic illustrations/cover and chapter continuation; live first-page save/image/reopen and three screen widths checked.
