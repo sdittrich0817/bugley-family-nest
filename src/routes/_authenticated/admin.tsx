@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ImageAdmin } from "@/components/site/ImageAdmin";
+import { GameAdmin } from "@/components/site/GameAdmin";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -71,6 +72,7 @@ function AdminArea() {
     </div>
     <GlowAdmin />
     <ImageAdmin />
+    <GameAdmin />
   </section>;
 }
 

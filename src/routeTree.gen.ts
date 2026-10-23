@@ -39,6 +39,7 @@ import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 import { Route as AuthenticatedKidsStudioRouteImport } from './routes/_authenticated/kids_.studio'
+import { Route as AuthenticatedKidsStudioGamesRouteImport } from './routes/_authenticated/kids_.studio_.games'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -190,6 +191,12 @@ const AuthenticatedKidsStudioRoute = AuthenticatedKidsStudioRouteImport.update({
   path: '/kids/studio',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedKidsStudioGamesRoute =
+  AuthenticatedKidsStudioGamesRouteImport.update({
+    id: '/kids_/studio_/games',
+    path: '/kids/studio/games',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -227,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/kids/studio': typeof AuthenticatedKidsStudioRoute
+  '/kids/studio/games': typeof AuthenticatedKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
   '/kids/studio': typeof AuthenticatedKidsStudioRoute
+  '/kids/studio/games': typeof AuthenticatedKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -293,6 +302,7 @@ export interface FileRoutesById {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/_authenticated/kids_/studio': typeof AuthenticatedKidsStudioRoute
+  '/_authenticated/kids_/studio_/games': typeof AuthenticatedKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -327,6 +337,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources/'
     | '/kids/studio'
+    | '/kids/studio/games'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -359,6 +370,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources'
     | '/kids/studio'
+    | '/kids/studio/games'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -392,6 +404,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources/'
     | '/_authenticated/kids_/studio'
+    | '/_authenticated/kids_/studio_/games'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -632,6 +645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedKidsStudioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/kids_/studio_/games': {
+      id: '/_authenticated/kids_/studio_/games'
+      path: '/kids/studio/games'
+      fullPath: '/kids/studio/games'
+      preLoaderRoute: typeof AuthenticatedKidsStudioGamesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -652,6 +672,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTableRoute: typeof AuthenticatedTableRoute
   AuthenticatedKidsStudioRoute: typeof AuthenticatedKidsStudioRoute
+  AuthenticatedKidsStudioGamesRoute: typeof AuthenticatedKidsStudioGamesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -664,6 +685,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTableRoute: AuthenticatedTableRoute,
   AuthenticatedKidsStudioRoute: AuthenticatedKidsStudioRoute,
+  AuthenticatedKidsStudioGamesRoute: AuthenticatedKidsStudioGamesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

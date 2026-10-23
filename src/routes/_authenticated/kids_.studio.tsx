@@ -54,7 +54,7 @@ const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolea
   { key: "story", label: "Story", icon: BookOpen, ready: true },
   { key: "comic", label: "Comic", icon: LayoutGrid, ready: true },
   { key: "book", label: "Book", icon: Library, ready: true },
-  { key: "games", label: "Games", icon: Gamepad2, ready: false },
+  { key: "games", label: "Games", icon: Gamepad2, ready: true },
   { key: "album", label: "My Album", icon: Library, ready: true },
 ];
 
@@ -105,6 +105,7 @@ const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Alb
 function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; chat: BugleyChat; greeting: string; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts", builders = child.age_band === "builders";
   const [idea, setIdea] = useState("");
+  const navigate = useNavigate();
   const voice = useVoiceInput((t) => setIdea(t));
   const last = [...chat.messages].reverse().find((m) => m.from === "bugley")?.text ?? greeting;
   const submit = () => { if (idea.trim()) { void chat.send(idea, "prompt_bar"); setIdea(""); } };
@@ -127,7 +128,7 @@ function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; c
       </form>
     </section>
     <section className={cn("grid gap-4", sprouts ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
-      {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={ready ? () => onOpen(key as View) : () => toast(`${label} is coming soon!`)}
+      {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={!ready ? () => toast(`${label} is coming soon!`) : key === "games" ? () => void navigate({ to: "/kids/studio/games" }) : () => onOpen(key as View)}
         style={{ animationDelay: `${i * 60}ms` }}
         className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && (sprouts ? "col-span-2" : "col-span-2 sm:col-span-3"))}>
         <span className={cn("flex items-center justify-center rounded-2xl bg-primary/25 transition group-hover:bg-primary", sprouts ? "size-20" : "size-16")}><Icon className={sprouts ? "size-10" : "size-8"} /></span>
