@@ -5,6 +5,7 @@ import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
 import { chargeGlow, giftGlowServer } from "@/lib/glow.server";
 import { guardChildText, loadChild } from "@/lib/studio.server";
+import { enrichPictureIdea } from "./picture";
 
 type Sb = SupabaseClient<any>;
 export type ImageMode = "sketch" | "final" | "character";
@@ -77,13 +78,19 @@ async function driftCheck(image: string, refs: string[], dna: string, style: str
   return v ?? { pass: true, score: 50, issues: "check unavailable" }; // never block a picture just because the checker is down
 }
 
-async function store(src: string, userId: string, childId: string) {
+async function store(src: string, userId: string, childId: string, printSize = false) {
   const img = await fetch(src);
   if (!img.ok) throw new Error("fetch output failed");
   const type = img.headers.get("content-type") ?? "image/png";
+  const bytes = new Uint8Array(await img.arrayBuffer());
+  if (printSize) {
+    const png = bytes.length >= 24 && bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71;
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    if (!png || view.getUint32(16) < 2550 || view.getUint32(20) < 2550) throw new Error("Bugley couldn’t make that picture big enough to print. Your glow is back.");
+  }
   const ext = type.includes("jpeg") ? "jpg" : type.includes("webp") ? "webp" : "png";
   const path = `${userId}/${childId}/${crypto.randomUUID()}.${ext}`;
-  const { error } = await (await admin()).storage.from(BUCKET).upload(path, new Uint8Array(await img.arrayBuffer()), { contentType: type });
+  const { error } = await (await admin()).storage.from(BUCKET).upload(path, bytes, { contentType: type });
   if (error) throw error;
   return path;
 }
@@ -123,22 +130,27 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
-  if (guard.decision !== "allowed") return { ok: false, reply: guard.reply!, chips: guard.chips ?? [] };
+  if (guard.decision !== "allowed") return { ok: false, reply: guard.reply ?? "Let’s try a new idea!", chips: guard.chips ?? [] };
   const a = await admin();
   const ids = [...new Set(input.characterIds)].slice(0, MAX_LOCKED);
   const withChars = ids.length > 0 && input.mode !== "character";
-  const modeKey: ModelMode = input.mode === "character" ? "hero" : withChars ? "scene_chars" : input.mode === "final" && input.requireReferences ? "scene" : input.mode;
+  const modeKey: ModelMode = input.pictureFlow ? input.mode : input.mode === "character" ? "hero" : withChars ? "scene_chars" : input.mode === "final" && input.requireReferences ? "scene" : input.mode;
   const [{ data: style }, base] = await Promise.all([
     a.from("art_styles").select("name,recipe").eq("key", input.styleKey).eq("active", true).maybeSingle(),
     loadModel(modeKey).then(async (m) => m ?? (modeKey === "hero" ? loadModel("character") : modeKey === "scene" || modeKey === "scene_chars" ? loadModel("final") : null)),
   ]);
   if (!style) return { ok: false, reply: "Pick a style first!" };
-  const model = withChars ? await lockedModel(input.lockId, base) : base;
+  let model = withChars ? await lockedModel(input.lockId, base) : base;
   if (!model) return { ok: false, reply: NOT_READY };
+  const upgrade = input.pictureFlow === true && input.mode === "final" && !!input.previewPath;
+  if (upgrade) {
+    if (!input.previewPath?.startsWith(`${userId}/${child.id}/`) || !takesRefs(model, 1)) return { ok: false, reply: "My paintbrush needs matching-picture settings first. Your preview is safe!" };
+    if (model.model === "google/nano-banana-pro") model = { ...model, settings: { ...model.settings, resolution: "4K", output_format: "png" } };
+  }
   let locked: Locked[] = [];
   if (withChars) {
     if (!takesRefs(model, ids.length)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
@@ -147,20 +159,23 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     locked = l;
   }
   // 2) glow
-  const kind = input.mode === "final" ? "picture" : "sketch";
+  const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
   const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch");
   if (!charge.ok) return { ok: false, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
-  const refund = () => giftGlowServer(sb, userId, child.id, charge.cost ?? (kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
+  const refund = () => giftGlowServer(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
   try {
     // 3) server-built prompt; Character DNA inserted word for word
     const dna = locked.map((c) => `${c.title} — ${c.dna}`).join(" | ");
-    const description = locked.length ? `${input.description}. Featuring these characters looking EXACTLY as in the reference images and exactly as described (do not change their look unless the scene asks): ${dna}` : input.description;
+    const idea = input.pictureFlow ? enrichPictureIdea(input.description) : input.description;
+    const description = locked.length ? `${idea}. Featuring these characters looking EXACTLY as in the reference images and exactly as described (do not change their look unless the scene asks): ${dna}` : idea;
     const prompt = buildPrompt(style.recipe, description, input.mode);
-    const refs = locked.flatMap((c) => c.refs);
+    const previewRefs = upgrade && input.previewPath ? await signPaths([input.previewPath]) : [];
+    const refs = [...previewRefs, ...locked.flatMap((c) => c.refs)];
+    const paintPrompt = upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
     // 4–6) model, safety, drift (up to 2 free retries; keep the best match)
     let best: { src: string; score: number } | null = null;
     for (let attempt = 1; attempt <= (locked.length ? 3 : 1); attempt++) {
-      const src = await replicateRun(model, prompt, refs);
+      const src = await replicateRun(model, paintPrompt, refs);
       if (!(await imageIsSafe(src))) {
         if (attempt < 3 && locked.length) continue;
         await refund();
@@ -168,16 +183,17 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
         return { ok: false, reply: "Hmm, that picture didn’t come out right, so I tossed it. Your glow is back! Let’s try a new idea.", chips: ["Try it a little differently", "Pick a new style"] };
       }
       if (!locked.length) { best = { src, score: 100 }; break; }
-      const d = await driftCheck(src, refs, dna, style.name, input.description);
+      const d = await driftCheck(src, locked.flatMap((c) => c.refs), dna, style.name, input.description);
       await a.from("drift_checks").insert({ parent_id: userId, child_id: child.id, model: model.model, style_key: input.styleKey, attempt, passed: d.pass, score: Math.round(d.score), notes: d.issues });
       if (!best || d.score > best.score) best = { src, score: d.score };
       if (d.pass) break;
     }
     if (!best) throw new Error("no image");
     // 7) storage
-    const path = await store(best.src, userId, child.id);
+    const path = await store(best.src, userId, child.id, upgrade);
     const [url] = await signPaths([path]);
-    return { ok: true, path, url: url!, prompt, lock: withChars ? model : undefined };
+    if (!url) throw new Error("image signing failed");
+    return { ok: true, path, url, prompt: paintPrompt, lock: withChars ? model : undefined };
   } catch (e) {
     await refund();
     console.error("image pipeline", e);

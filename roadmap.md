@@ -23,5 +23,7 @@
 - [x] Game Studio home + Arcade (4 games, pass and play, admin content)
 - [x] Game Builder (6 templates, interview, editors, playtest coach, Family Arcade)
 - [x] Printed books: kid "Ask to print", Hub ordering with Lulu pricing + Stripe, free Family Plus credit, print PDFs, Lulu validation/submit, admin formats + sandbox/live.
+- [x] Simplify Make a Picture to idea → look → optional hero, auto-saved preview (1 glow), upgrade (2 more), and Try again; unit tests and signed-in idea/style flow verified.
+- [ ] Verify successful Picture preview and print-resolution upgrade readback (blocked: live test output was rejected by the image safety check; glow refunded).
 - [ ] Connect Lulu sandbox keys and run a test print order end to end (blocked: Shea creates a Lulu developer account).
 - [ ] Confirm Lulu product codes and the 24-page softcover minimum with Lulu (blocked: Lulu account).

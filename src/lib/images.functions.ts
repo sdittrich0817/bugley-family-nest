@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "@/lib/billing.functions";
+import { canUpgradePicture } from "./picture";
 
 export type ArtStyle = { key: string; name: string; description: string };
 export type CastMember = { id: string; title: string; url: string; details: { type?: string; personality?: string; summary?: string } | null };
@@ -35,20 +36,51 @@ const genInput = z.object({
   description: z.string().trim().min(3).max(600), characterIds: z.array(z.string().uuid()).max(4).default([]),
 });
 
-/** Picture Maker: sketch (1 glow) or final (3 glow). Saved straight to the album. */
+/** Picture Maker: saved one-glow preview. Legacy final calls retain their three-glow cost. */
 export const makePicture = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => genInput.extend({ mode: z.enum(["sketch", "final"]) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
     const { generateImage } = await import("@/lib/images.server");
-    const r = await generateImage(context.supabase, context.userId, data);
+    const r = await generateImage(context.supabase, context.userId, { ...data, characterIds: data.characterIds.slice(0, 1), pictureFlow: true });
     if (!r.ok) return r;
     const { saveCreation } = await import("@/lib/studio.server");
     const title = data.description.length > 40 ? `${data.description.slice(0, 38).trim()}…` : data.description;
     const id = await saveCreation(context.userId, { child_id: data.childId, kind: "picture", title, body: data.description, images: [r.path] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { mode: data.mode, characters: data.characterIds } }).eq("id", id);
+    const { error } = await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { mode: data.mode, characters: data.characterIds.slice(0, 1), pictureFlow: true, upgradeState: "ready" } }).eq("id", id);
+    if (error) throw new Error("Your picture was saved, but its upgrade isn’t ready. Ask a grown-up.");
     return { ok: true as const, id, url: r.url };
+  });
+
+/** The client supplies only a preview ID: ownership, eligibility, costs and references stay server-side. */
+export const upgradePicture = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, previewId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
+    const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await context.supabase.from("studio_creations").select("id,kind,body,style_key,images,details").eq("id", data.previewId).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).maybeSingle();
+    if (!canUpgradePicture(row) || !row?.body || !row.style_key || !row.images?.[0]) return { ok: false as const, reply: "Pick a fresh preview first!" };
+    const details = row.details as { characters: string[]; mode: string; pictureFlow: boolean; upgradeState: string };
+    const { data: claimed, error } = await a.from("studio_creations").update({ details: { ...details, upgradeState: "painting" } }).eq("id", row.id).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).contains("details", { mode: "sketch", pictureFlow: true, upgradeState: "ready" }).select("id").maybeSingle();
+    if (error || !claimed) return { ok: false as const, reply: "That picture is already being painted. Your preview is safe!" };
+    let painted = false;
+    try {
+      const { generateImage } = await import("./images.server");
+      const r = await generateImage(context.supabase, context.userId, { childId: data.childId, description: row.body, styleKey: row.style_key, mode: "final", characterIds: details.characters ?? [], pictureFlow: true, previewPath: row.images[0] });
+      if (!r.ok) { await a.from("studio_creations").update({ details }).eq("id", row.id); return r; }
+      painted = true;
+      const { error: saveError } = await a.from("studio_creations").update({ images: [r.path, ...row.images], details: { ...details, mode: "final", upgradeState: "done" } }).eq("id", row.id);
+      if (saveError) throw new Error("Your preview is saved, but the finished picture couldn’t be saved. Ask a grown-up.");
+      return { ok: true as const, id: row.id, url: r.url };
+    } catch (e) {
+      if (painted) {
+        const { giftGlowServer } = await import("./glow.server");
+        await giftGlowServer(context.supabase, context.userId, data.childId, 2, "Refund: finished picture couldn’t save");
+      }
+      await a.from("studio_creations").update({ details }).eq("id", row.id);
+      throw e;
+    }
   });
 
 /** Character Creator: portrait generation (1 glow each try). Not saved until the kid picks it. */

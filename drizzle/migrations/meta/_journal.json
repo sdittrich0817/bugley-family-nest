@@ -113,6 +113,13 @@
       "when": 1792778655050,
       "tag": "0015_character_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792783212626,
+      "tag": "0016_picture_preview_upgrade",
+      "breakpoints": true
     }
   ]
 }

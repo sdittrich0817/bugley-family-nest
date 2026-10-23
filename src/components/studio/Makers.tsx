@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Mic, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
-import { listCast, makeCharacterPortrait, makePicture, saveCharacter, stylesOptions } from "@/lib/images.functions";
+import { listCast, makeCharacterPortrait, makePicture, upgradePicture, saveCharacter, stylesOptions } from "@/lib/images.functions";
 import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
 import { useVoiceInput, type BugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { ChoiceTile, StepDots, StepNav } from "@/components/studio/Guided";
+import { Button } from "@/components/ui/button";
+import { BugleyStep } from "./BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
 import { cn } from "@/lib/utils";
 
@@ -37,61 +39,70 @@ function useGlowRefresh(childId: string) {
   return () => { void qc.invalidateQueries({ queryKey: ["glow", childId] }); void qc.invalidateQueries({ queryKey: ["album", childId] }); };
 }
 
+const PICTURE_IDEAS = [
+  { key: "dragon", label: "A dragon", emoji: "🐉" },
+  { key: "sea", label: "Under the sea", emoji: "🐠" },
+  { key: "castle", label: "A candy castle", emoji: "🍭" },
+  { key: "space", label: "A space party", emoji: "🚀" },
+];
+
 export function PictureMaker({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
-  const sprouts = child.age_band === "sprouts";
-  const [step, setStep] = useState<0 | 1>(0);
+  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
   const [text, setText] = useState("");
   const [style, setStyle] = useState("cartoon");
-  const [picked, setPicked] = useState<string[]>([]);
-  const [busy, setBusy] = useState<"sketch" | "final" | null>(null);
-  const [result, setResult] = useState<string | null>(null);
-  const voice = useVoiceInput((t) => setText((v) => (v ? `${v} ${t}` : t)));
-  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
-  const { data: styles = [] } = useQuery(stylesOptions);
+  const [hero, setHero] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const [result, setResult] = useState<{ id: string; url: string; final: boolean } | null>(null);
+  const [ideas, setIdeas] = useState(PICTURE_IDEAS);
+  useEffect(() => { setIdeas([...PICTURE_IDEAS].sort(() => Math.random() - 0.5)); }, []);
+  const { data: cast = [], isPending: castPending } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  const { data: styles = [], isPending: stylesPending } = useQuery(stylesOptions);
   const refresh = useGlowRefresh(child.id);
-  const ideas = ["a dragon", "under the sea", "in space", "a treehouse", "a rainy day", "a giant cupcake"];
-  useScrollTopOn(step);
-  useEffect(() => { chat.say(step === 0 ? "Let’s make a picture! First, pick how it should look." : "Ooh, good pick! Now tell me what to draw."); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+  useScrollTopOn(`${step}-${busy}-${result?.id}-${result?.final}`);
+  useEffect(() => { chat.say(["What should I paint?", "Pick a look!", "Add one of your heroes?", "Mixing my colors!"][step] ?? "What should I paint?", []); }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function go(mode: "sketch" | "final") {
-    if (text.trim().length < 3) { chat.say("Tell me a little more first!"); return; }
-    setBusy(mode); setResult(null);
+  async function paint(selectedHero: string | null, upgrade = false, selectedStyle = style) {
+    if (busy) return;
+    setHero(selectedHero); setStep(3); setBusy(true); setNote("");
     try {
-      const r = await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: style, description: text, characterIds: picked, mode } });
-      if (r.ok) { setResult(r.url); chat.say(mode === "final" ? "Ta-da! Your picture is in your album." : "Here’s your sketch! Like it? Make it final, or change your words and try again."); }
-      else chat.say(r.reply, "chips" in r ? r.chips : undefined);
-    } catch { chat.say("Oops, my paintbrush slipped! Try again?"); }
-    finally { setBusy(null); refresh(); }
+      const r = upgrade && result
+        ? await upgradePicture({ data: { childId: child.id, environment: getStripeEnvironment(), previewId: result.id } })
+        : await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: selectedStyle, description: text, characterIds: selectedHero ? [selectedHero] : [], mode: "sketch" } });
+      if (r.ok) {
+        setResult({ id: r.id, url: r.url, final: upgrade });
+        chat.say(upgrade ? "Wow! Your awesome picture is saved in My Album." : "Ta-da! Your preview is saved in My Album. Want to make it awesome?", []);
+      } else { setNote(r.reply); chat.say(r.reply, "chips" in r ? r.chips : []); }
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Oops, my paintbrush slipped! Your preview is safe.";
+      setNote(message); chat.say(message, []);
+    } finally { setBusy(false); refresh(); }
   }
-
-  if (step === 0) return <div className="space-y-5">
-    <StepDots count={2} at={0} />
-    <h1 className="text-center text-3xl sm:text-4xl">Pick a style</h1>
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{styles.map((s) => <ChoiceTile key={s.key} image={STYLE_THUMBS[s.key]} label={s.name} selected={style === s.key} onClick={() => { setStyle(s.key); setStep(1); }} />)}</div>
-  </div>;
+  const chooseIdea = (idea: string) => {
+    if (idea.trim().length < 3) { setNote("Tell me a little more first!"); return; }
+    setText(idea.trim()); setNote(""); setStep(1);
+  };
+  const retry = () => { setResult(null); setNote(""); setStep(0); setIdeas([...PICTURE_IDEAS].sort(() => Math.random() - 0.5)); };
 
   return <div className="space-y-5">
-    <StepDots count={2} at={1} />
-    <h1 className="text-center text-3xl sm:text-4xl">What should I draw?</h1>
-    <div className="relative">
-      <textarea id="pic" aria-label="What should Bugley draw?" value={text} onChange={(e) => setText(e.target.value)} maxLength={600} rows={sprouts ? 3 : 4}
-        placeholder="A friendly dragon having a picnic on a cloud..." className={cn("w-full rounded-3xl border-2 border-border bg-card p-5 shadow-soft outline-none focus:border-primary", sprouts ? "text-xl" : "text-lg")} />
-      {voice.supported && <button type="button" onClick={voice.start} aria-label="Say your idea" className={cn("absolute bottom-3 right-3 flex size-12 items-center justify-center rounded-full bg-secondary", voice.listening && "animate-pulse bg-primary")}><Mic className="size-6" /></button>}
-    </div>
-    {!text.trim() && <div className="flex flex-wrap justify-center gap-2">{ideas.map((i) => <button key={i} onClick={() => setText(i)} className={chip}>{i}</button>)}</div>}
-    {text.trim() && <button onClick={() => void chat.send(`Help me make my picture better: ${text}`, "chip")} disabled={chat.busy} className="mx-auto flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"><Sparkles className="size-4" />Ask Bugley a question about it</button>}
-    {cast.length > 0 && <details className="rounded-3xl bg-card p-4 shadow-soft"><summary className="cursor-pointer font-display text-lg">Add someone from My Cast {picked.length > 0 && `(${picked.length})`}</summary>
-      <div className="mt-3 flex gap-3 overflow-x-auto pb-2">{cast.map((c) => { const on = picked.includes(c.id); return <button key={c.id} onClick={() => setPicked(on ? picked.filter((x) => x !== c.id) : [...picked, c.id].slice(0, 4))} aria-pressed={on}
-        className={cn("relative w-24 shrink-0 overflow-hidden rounded-2xl border-2 bg-card", on ? "border-primary shadow-glow" : "border-border")}>
-        <img src={c.url} alt={c.title} className="aspect-square w-full object-cover" /><span className="block truncate px-2 py-1 text-sm font-semibold">{c.title}</span>
-        {on && <Check className="absolute right-1 top-1 size-6 rounded-full bg-primary p-1" />}</button>; })}</div></details>}
-    {busy ? <Working child={child} label={busy === "final" ? "Painting your masterpiece…" : "Sketching…"} />
-      : result && <img src={result} alt={text} className="w-full rounded-3xl shadow-lift animate-in fade-in zoom-in-95" />}
-    <div className="grid gap-3 sm:grid-cols-2">
-      <button onClick={() => void go("sketch")} disabled={!!busy || text.trim().length < 3} className={cn("rounded-full border-2 border-primary bg-card font-display shadow-soft disabled:opacity-50", sprouts ? "h-16 text-xl" : "h-14 text-lg")}>✏️ {result ? "Sketch again" : "Sketch it"} · 1 glow</button>
-      <button onClick={() => void go("final")} disabled={!!busy || text.trim().length < 3} className={cn("rounded-full bg-primary font-display text-primary-foreground shadow-glow disabled:opacity-50", sprouts ? "h-16 text-xl" : "h-14 text-lg")}>✨ Make it final · 3 glow</button>
-    </div>
-    <StepNav onBack={() => setStep(0)} />
+    {step === 0 && <BugleyStep child={child} bare question="What should I paint?" step={0} steps={cast.length ? 3 : 2} choices={ideas} ownIdeaBelow onOwnIdea={chooseIdea} onChoose={(c) => chooseIdea(c.label)} />}
+    {step === 1 && (stylesPending ? <p role="status" className="text-center font-display text-xl">Getting the paints…</p> : styles.length ? <BugleyStep child={child} bare question="Pick a look!" step={1} steps={cast.length ? 3 : 2} onBack={() => setStep(0)} allowOwnIdea={false}
+      choices={styles.map((s) => ({ key: s.key, label: s.name, image: STYLE_THUMBS[s.key] }))}
+      onChoose={(c) => { setStyle(c.key); if (castPending || cast.length) setStep(2); else void paint(null, false, c.key); }} /> : <p role="alert">My paints aren’t ready yet. Ask a grown-up!</p>)}
+    {step === 2 && (castPending ? <p role="status" className="text-center font-display text-xl">Finding your heroes…</p> : <>
+      <BugleyStep child={child} bare question="Add one of your heroes?" step={2} steps={3} onBack={() => setStep(1)} allowOwnIdea={false}
+        choices={cast.map((c) => ({ key: c.id, label: c.title, image: c.url }))} onChoose={(c) => void paint(c.key)} />
+      <Button variant="secondary" className="mx-auto flex h-14 text-xl" onClick={() => void paint(null)}>No thanks</Button>
+    </>)}
+    {step === 3 && <>
+      {busy ? <BugleyStep child={child} bare question="Painting your picture…" choices={[]} onChoose={() => {}} mood="painting" allowOwnIdea={false} />
+        : result ? <img src={result.url} alt={text} className="mx-auto max-h-[70vh] w-full rounded-2xl object-contain shadow-lift" /> : null}
+      {!busy && <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Button size="lg" className="h-16 flex-col gap-0 whitespace-normal text-xl" disabled={!result || result.final} onClick={() => void paint(hero, true)}><span><Sparkles className="mr-2 inline" />Make it awesome!</span><span className="text-sm">{result?.final ? "Saved to My Album" : "2 more glow"}</span></Button>
+        <Button variant="secondary" size="lg" className="h-16 text-xl" onClick={retry}><RefreshCw />Try again</Button>
+      </div>}
+    </>}
+    {note && <p role="alert" className="text-center font-semibold">{note}</p>}
   </div>;
 }
 
