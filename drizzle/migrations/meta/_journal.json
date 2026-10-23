@@ -64,6 +64,13 @@
       "when": 1792762321456,
       "tag": "0008_billing_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792763494658,
+      "tag": "0009_studio_foundation",
+      "breakpoints": true
     }
   ]
 }
