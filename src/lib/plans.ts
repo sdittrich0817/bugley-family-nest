@@ -25,6 +25,7 @@ export const PLANS = [
       "Everything in Family",
       "20 glow per child per day",
       "Builders tools for older kids (10–12), like app building",
+      "One printed Family Story Book per year",
     ],
   },
 ] as const;
