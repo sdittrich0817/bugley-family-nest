@@ -17,7 +17,7 @@ const PERSONAL_PATTERNS: RegExp[] = [
   /[\w.+-]+@[\w-]+\.[\w.]+/i, // email
   /(\+?\d[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/, // phone
   /\b\d{1,5}\s+(\w+\s){0,3}(street|st|road|rd|avenue|ave|lane|ln|drive|dr|court|ct|boulevard|blvd|way|place|pl|circle|cir|terrace)\b/i, // street address
-  /\b[A-Z][a-z]+(\s[A-Z][a-z]+)?\s(elementary|primary|middle|academy|school)\b/, // named school
+  /\b[A-Z][a-z]+(\s[A-Z][a-z]+)?\s([Ee]lementary|[Pp]rimary|[Mm]iddle|[Aa]cademy|[Ss]chool)\b/, // named school
   /\bmy\s+(school|teacher|address|street|town|city|hometown|phone|number|birthday|email)\b/i,
   /\bi\s+(live|go to school)\s+(in|on|at)\b/i,
   /\b(born on|my birthday is)\b/i,
