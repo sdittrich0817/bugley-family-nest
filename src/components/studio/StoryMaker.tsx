@@ -102,38 +102,74 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     } catch (e) { toast.error(e instanceof Error ? e.message : "Bugley couldn’t check that right now."); }
     finally { setBusy(false); }
   }
-  if (makingCharacter) return <div className="space-y-4"><Button variant="ghost" onClick={() => setMakingCharacter(false)}><ArrowLeft />Story Maker</Button><CharacterCreator child={child} chat={chat} onDone={() => setMakingCharacter(false)} /></div>;
   if (storyId && !story) return <div className="flex min-h-64 flex-col items-center justify-center gap-4"><Bugley expression="thinking" stage={child.bugley_stage} size={100} /><p>Opening your story…</p></div>;
-  if (!story) return <div className="space-y-6">
-    <h1 className="text-3xl">Story Maker</h1>
-    <label className="block space-y-2 font-semibold"><span>Your story’s title</span><input className={field} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="Give it a made-up name" /></label>
-    <section className="space-y-3"><h2 className="text-xl">What kind of story?</h2><div className="flex flex-wrap gap-2">{GENRES.map((g) => <Button key={g} variant={genre === g ? "primary" : "outline"} size="sm" aria-pressed={genre === g} onClick={() => setGenre(g)}>{g}</Button>)}</div></section>
-    <section className="space-y-3"><h2 className="text-xl">Who’s in it?</h2><div className="flex flex-wrap gap-3">{cast.map((c) => <Button key={c.id} variant={picked.includes(c.id) ? "primary" : "outline"} aria-pressed={picked.includes(c.id)} className="h-auto max-w-32 flex-col whitespace-normal p-2" onClick={() => setPicked(picked.includes(c.id) ? picked.filter((id) => id !== c.id) : [...picked, c.id])}><img src={c.url} alt="" className="size-20 rounded-lg object-cover" /><span className="break-words">{c.title}</span></Button>)}<Button variant="outline" onClick={() => setMakingCharacter(true)}><Plus />Create a character</Button></div></section>
-    <section className="space-y-3"><h2 className="text-xl">Your story’s art style</h2><StylePicker value={style} onChange={setStyle} /></section>
-    <Button disabled={busy || !title.trim()} onClick={async () => { setBusy(true); try { const next = await create({ data: { childId: child.id, title, genre, styleKey: style, characterIds: picked, environment: getStripeEnvironment() } }); adopt(next); onStory(next.id); chat.say("What does your hero want most? Your call!"); } catch (e) { toast.error(e instanceof Error ? e.message : "We couldn’t start your story."); } finally { setBusy(false); refresh(); } }}><BookOpen />{busy ? "Starting…" : "Start my story"}</Button>
-  </div>;
+  if (!story) return <MakerSetup child={child} chat={chat} kind="story" mapLabels={MAP_LABELS} defaultStyle="storybook" onCreate={async (r) => {
+    try {
+      const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, environment: getStripeEnvironment() } });
+      const next = await edit({ data: { childId: child.id, id: made.id, environment: getStripeEnvironment(), action: "map", map: r.map } });
+      adopt(next); setMapEditing(false); onStory(next.id); setIndex(0);
+      chat.say(`Page 1! Meet ${r.map.hero.split(/[,.]/)[0] || "your hero"} and their world. What do we see first? Your call!`);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "We couldn’t start your story."); } finally { refresh(); }
+  }} />;
   if (reading) return <StoryReader story={story} child={child} onBack={!story.data.finished ? () => setReading(false) : undefined} />;
-  return <div className="space-y-6" aria-busy={busy}>
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="break-words text-3xl">{story.title}</h1><span className="text-sm text-muted-foreground" role="status">{busy ? "Working…" : dirty ? "Unsaved changes" : "Saved"}</span></div>
-    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><span>{story.data.genre}</span><span>· {story.data.styleKey.replaceAll("_", " ")}</span><span>· {story.data.pages.length} pages</span><Button variant="ghost" size="sm" disabled={dirty || busy} onClick={() => setReading(true)}><BookOpen />Read</Button></div>
-    <section className="space-y-3 border-y border-border py-4"><div className="flex items-center justify-between gap-2"><h2 className="text-xl">My Story Map</h2><Button variant="ghost" size="sm" disabled={busy || dirty} onClick={() => { setMapEditing(!mapEditing); setMapDraft(story.data.map); }}> {mapEditing ? "Close" : "Edit"}</Button></div>
-      {mapEditing ? <><div className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([key, label]) => <label key={key} className="space-y-1 text-sm font-semibold"><span>{label}</span><textarea rows={2} maxLength={600} disabled={busy} className={field} value={mapDraft[key as keyof typeof mapDraft]} onChange={(e) => { setMapDraft({ ...mapDraft, [key]: e.target.value }); setDirty(true); }} /></label>)}</div><div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(mapDraft).some((v) => !v.trim())} onClick={() => void action("map")}><Save />Save Story Map</Button>{sprouts && mapVoice.supported && <Button variant="secondary" disabled={busy} aria-label="Dictate next empty Story Map answer" onClick={mapVoice.start}><Mic />{mapVoice.listening ? "Listening…" : "Say my answer"}</Button>}<Button variant="ghost" onClick={() => speak(Object.values(MAP_LABELS).join(" "))}><Volume2 />Hear questions</Button></div></>
-      : <dl className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([key, label]) => <div key={key}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words font-semibold">{story.data.map[key as keyof typeof mapDraft]}</dd></div>)}</dl>}
-    </section>
-    {!mapEditing && page && <>
-      <ol className="flex flex-wrap items-center gap-2" aria-label="Story path">{STORY_STEPS.map((step, i) => <li key={step} className="flex items-center gap-2"><Button size="sm" variant={page.step === step ? "primary" : "outline"} disabled={busy} aria-pressed={page.step === step} onClick={() => { changePage({ step }); if ([1, 3, 4].includes(i)) chat.say(i === 1 ? "What gets in your hero’s way? Your call!" : i === 3 ? "What changes everything for your hero? Your call!" : "How has your hero changed? Your call!"); }}><span className="flex size-5 items-center justify-center rounded-full bg-secondary text-secondary-foreground">{story.data.pages.some((p) => p.step === step && p.text.trim()) ? <Check /> : i + 1}</span>{step}</Button>{i < 4 && <ArrowRight className="size-3 text-muted-foreground" />}</li>)}</ol>
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-2"><h2 className="text-2xl">Page {index + 1}</h2><div className="flex gap-1"><Button variant="ghost" size="icon" aria-label="Previous writing page" disabled={!index || dirty || busy} onClick={() => setIndex(index - 1)}><ArrowLeft /></Button><Button variant="ghost" size="icon" aria-label="Next writing page" disabled={index >= story.data.pages.length - 1 || dirty || busy} onClick={() => setIndex(index + 1)}><ArrowRight /></Button></div></div>
-        {child.age_band === "builders" && <label className="block space-y-1"><span className="text-sm font-semibold">Chapter (optional)</span><input className={field} value={page.chapter} disabled={busy} maxLength={120} onChange={(e) => changePage({ chapter: e.target.value })} /></label>}
-        <label className="block space-y-2"><span className="font-semibold">{HINTS[STORY_STEPS.indexOf(page.step)]}</span><textarea className={cn(field, "min-h-48", sprouts && "text-xl")} rows={sprouts ? 4 : 8} value={page.text} disabled={busy} maxLength={20000} placeholder={sprouts ? "Your one or two sentences…" : child.age_band === "builders" ? "Your next page…" : "Your short paragraph…"} onChange={(e) => changePage({ text: e.target.value })} /></label>
-        <div className="flex flex-wrap gap-2"><Button disabled={busy || !dirty} onClick={() => void action("page")}><Save />Save page</Button>{sprouts && voice.supported && <Button variant="secondary" disabled={busy} aria-label="Dictate story page" onClick={voice.start}><Mic />{voice.listening ? "Listening…" : "Say my words"}</Button>}<Button variant="ghost" onClick={() => speak(page.text || HINTS[STORY_STEPS.indexOf(page.step)] || "Your words go here.")}><Volume2 />Hear page</Button><Button variant="ghost" disabled={busy} onClick={() => void assist("coach")}><Sparkles />Ask Bugley</Button><Button variant="ghost" disabled={busy || !page.text.trim()} onClick={() => void assist("spelling")}>Spelling help</Button></div>
-        <label className="block space-y-2"><span className="font-semibold">What should the picture show?</span><textarea rows={3} maxLength={600} className={field} disabled={busy} value={page.description} onChange={(e) => changePage({ description: e.target.value })} /></label>
-        <div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={busy || !page.text.trim()} className="h-auto min-h-11 whitespace-normal py-2" onClick={() => void assist("picture")}><Sparkles />Bugley, suggest a picture from my words</Button><Button disabled={busy || !page.text.trim() || page.description.trim().length < 3} onClick={() => void action("illustrate")}>{busy ? "Working…" : page.image ? "Draw again · 3 glow" : "Illustrate · 3 glow"}</Button></div>
-        {page.image && story.urls[page.image] && <img src={story.urls[page.image]} alt={page.description} className="aspect-square w-full rounded-lg object-contain bg-muted" />}
-        <Button variant="outline" disabled={busy} onClick={() => void action("add")}><Plus />Add a page</Button>
-      </section>
-      <section className="space-y-3 border-t border-border pt-6">{!story.data.bookId ? <><h2 className="text-2xl">The cover</h2><label className="block space-y-2"><span className="text-sm font-semibold">Describe the cover picture</span><textarea rows={2} maxLength={600} className={field} disabled={busy} value={coverDescription} onChange={(e) => setCoverDescription(e.target.value)} /></label><Button variant="secondary" disabled={busy || coverDescription.trim().length < 3} onClick={() => void action("cover")}>Draw cover · 3 glow</Button>{story.data.cover && <div className="relative"><img src={story.urls[story.data.cover]} alt="Story cover" className="aspect-square w-full rounded-lg object-contain bg-muted" /><p className="mt-2 break-words text-center font-display text-2xl">{story.title}</p></div>}</> : <h2 className="text-2xl">Finish this chapter</h2>}<div><Button disabled={busy || dirty || !readyToFinish(story.data)} onClick={() => void action("finish")}><Check />Finish my story</Button></div><p className="text-sm text-muted-foreground">{story.data.pages.length} {story.data.pages.length === 1 ? "page" : "pages"} · Printing comes later. Keep your story growing.</p></section>
+  const mapIncomplete = Object.values(story.data.map).some((v) => !v.trim());
+  const mapForm = <div className="space-y-3"><div className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([key, label]) => <label key={key} className="space-y-1 text-sm font-semibold"><span>{label}</span><textarea rows={2} maxLength={600} disabled={busy} className={field} value={mapDraft[key as keyof typeof mapDraft]} onChange={(e) => { setMapDraft({ ...mapDraft, [key]: e.target.value }); setDirty(true); }} /></label>)}</div><div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(mapDraft).some((v) => !v.trim())} onClick={() => void action("map")}><Save />Save Story Map</Button>{mapVoice.supported && <Button variant="secondary" disabled={busy} onClick={mapVoice.start}><Mic />{mapVoice.listening ? "Listening…" : "Say my answer"}</Button>}</div></div>;
+  if (mapIncomplete) return <div className="space-y-5"><h1 className="text-center text-3xl">Finish your Story Map</h1>{mapForm}</div>;
+  const missing = story.data.pages.filter((p) => !p.text.trim() || !p.image).length;
+  const stepsLeft = STORY_STEPS.filter((s) => !story.data.pages.some((p) => p.step === s && p.text.trim()));
+
+  if (finishing) return <div className="space-y-5" aria-busy={busy}>
+    <h1 className="text-center text-3xl sm:text-4xl">{story.data.bookId ? "Finish this chapter" : "Make your cover"}</h1>
+    {!story.data.bookId && <>
+      {story.data.cover && <div className="mx-auto max-w-sm"><img src={story.urls[story.data.cover]} alt="Story cover" className="aspect-square w-full rounded-3xl bg-muted object-contain shadow-lift" /><p className="mt-2 break-words text-center font-display text-2xl">{story.title}</p></div>}
+      <textarea rows={2} maxLength={600} className={field} disabled={busy} value={coverDescription} onChange={(e) => setCoverDescription(e.target.value)} placeholder="What’s on the cover?" aria-label="Describe the cover picture" />
+      <Button variant="secondary" size="lg" disabled={busy || coverDescription.trim().length < 3} onClick={() => void action("cover")}>{busy ? "Drawing…" : story.data.cover ? "Draw cover again · 3 glow" : "Draw cover · 3 glow"}</Button>
     </>}
+    {!readyToFinish(story.data) && <p className="rounded-2xl bg-muted p-4 font-medium">Almost there! {stepsLeft.length > 0 && `Your story still needs: ${stepsLeft.join(", ")}. `}{missing > 0 && `${missing} ${missing === 1 ? "page needs" : "pages need"} words and a picture. `}{!story.data.cover && !story.data.bookId && "And a cover!"}</p>}
+    <StepNav onBack={() => setFinishing(false)} busy={busy} canNext={readyToFinish(story.data) && !dirty} nextLabel={<><Check />Finish my story</>} onNext={() => void action("finish")} />
+  </div>;
+
+  if (!page) return null;
+  const last = index >= story.data.pages.length - 1;
+  return <div className="space-y-5" aria-busy={busy}>
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0"><h1 className="truncate text-2xl sm:text-3xl">{story.title}</h1><p className="text-sm text-muted-foreground" role="status">Page {index + 1} of {story.data.pages.length} · {busy ? "Working…" : dirty ? "Not saved yet" : "Saved"}</p></div>
+      <div className="flex shrink-0 gap-1"><Button variant="ghost" size="sm" disabled={busy} onClick={async () => { if (dirty && !(await action("page"))) return; setReading(true); }}><BookOpen />Read</Button>
+        <Button variant="ghost" size="sm" onClick={() => setShowMore(!showMore)} aria-expanded={showMore}><MoreHorizontal />More</Button></div>
+    </div>
+    {showMore && <section className="space-y-4 rounded-3xl bg-card p-4 shadow-soft animate-in fade-in">
+      <div><p className="mb-2 text-sm font-semibold">Which part of the story is this page?</p><div className="flex flex-wrap gap-2">{STORY_STEPS.map((step) => <Button key={step} size="sm" variant={page.step === step ? "primary" : "outline"} aria-pressed={page.step === step} onClick={() => changePage({ step })}>{story.data.pages.some((p) => p.step === step && p.text.trim()) && <Check />}{step}</Button>)}</div></div>
+      {child.age_band === "builders" && <label className="block space-y-1"><span className="text-sm font-semibold">Chapter name (optional)</span><input className={field} value={page.chapter} disabled={busy} maxLength={120} onChange={(e) => changePage({ chapter: e.target.value })} /></label>}
+      <Button variant="ghost" size="sm" disabled={busy || !page.text.trim()} onClick={() => void assist("spelling")}>Spelling help</Button>
+      <details><summary className="cursor-pointer font-semibold">My Story Map</summary><div className="mt-3">{mapForm}</div></details>
+    </section>}
+    <div className="relative">
+      <textarea aria-label={`Page ${index + 1}`} className={cn(field, "min-h-48 bg-card pb-16 shadow-soft", sprouts && "text-xl")} rows={sprouts ? 4 : 8} value={page.text} disabled={busy} maxLength={20000} placeholder={HINTS[STORY_STEPS.indexOf(page.step)] + "…"} onChange={(e) => changePage({ text: e.target.value })} />
+      <div className="absolute bottom-3 right-3 flex gap-2">
+        <Button variant="ghost" size="icon" aria-label="Hear my page" onClick={() => speak(page.text || "Your words go here.")}><Volume2 /></Button>
+        {voice.supported && <Button variant="secondary" size="icon" disabled={busy} aria-label="Say my words" className={cn(voice.listening && "animate-pulse")} onClick={voice.start}><Mic /></Button>}
+      </div>
+    </div>
+    <button onClick={() => void assist("coach")} disabled={busy} className="mx-auto flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"><Sparkles className="size-4" />I’m stuck. Ask me a question, Bugley!</button>
+
+    {page.image && story.urls[page.image] ? <img src={story.urls[page.image]} alt={page.description} className="aspect-square w-full rounded-3xl bg-muted object-contain shadow-soft" /> : null}
+    {page.text.trim() && <details open={!page.image} className="rounded-3xl bg-card p-4 shadow-soft">
+      <summary className="cursor-pointer font-display text-lg">{page.image ? "Change the picture" : "🎨 Draw a picture for this page"}</summary>
+      <div className="mt-3 space-y-3">
+        <textarea rows={2} maxLength={600} className={field} disabled={busy} value={page.description} placeholder="What should the picture show?" aria-label="What should the picture show?" onChange={(e) => changePage({ description: e.target.value })} />
+        <div className="flex flex-wrap gap-2"><Button variant="ghost" size="sm" disabled={busy} onClick={() => void assist("picture")}><Sparkles />Suggest from my words</Button>
+          <Button disabled={busy || page.description.trim().length < 3} onClick={() => void action("illustrate")}>{busy ? "Working…" : page.image ? "Draw again · 3 glow" : "Draw it · 3 glow"}</Button></div>
+      </div>
+    </details>}
+
+    <div className="flex items-center justify-between gap-2 pt-2">
+      <Button variant="ghost" size="lg" disabled={!index || busy} onClick={() => void turn(index - 1)}><ArrowLeft />Page {index}</Button>
+      <div className="flex gap-2">
+        <Button variant="outline" size="lg" disabled={busy} onClick={async () => { if (dirty && !(await action("page"))) return; setFinishing(true); }}><Check />I’m done</Button>
+        {last ? <Button variant="primary" size="lg" disabled={busy || !page.text.trim()} onClick={() => void action("add")}><Plus />New page</Button>
+          : <Button variant="primary" size="lg" disabled={busy} onClick={() => void turn(index + 1)}>Page {index + 2}<ArrowRight /></Button>}
+      </div>
+    </div>
   </div>;
 }
 
