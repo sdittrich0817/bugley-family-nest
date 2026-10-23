@@ -121,7 +121,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
   return fallback;
 }
 
-export type GenResult = { ok: true; path: string; url: string; prompt: string } | { ok: false; reply: string; chips?: string[] };
+export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
 export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
@@ -177,7 +177,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     // 7) storage
     const path = await store(best.src, userId, child.id);
     const [url] = await signPaths([path]);
-    return { ok: true, path, url: url!, prompt };
+    return { ok: true, path, url: url!, prompt, lock: withChars ? model : undefined };
   } catch (e) {
     await refund();
     console.error("image pipeline", e);

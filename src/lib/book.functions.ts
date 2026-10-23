@@ -113,6 +113,7 @@ export const editBook = createServerFn({ method: "POST" }).middleware([requireSu
     const { generateImage } = await import("./images.server");
     const r = await generateImage(context.supabase, context.userId, { childId: child.id, description: data.text, styleKey: book.data.styleKey, characterIds: book.data.characterIds, mode: "final", requireReferences: true, lockId: book.id });
     if (!r.ok) throw new Error(r.reply);
+    if (r.lock && !("bookId" in book.data && book.data.bookId)) book.data.modelLock ??= r.lock;
     book.data.cover = r.path;
   } else if (data.action === "absorb") {
     const r = await absorbAndRecap({ ...book, data: { ...book.data, absorbed: [] } });

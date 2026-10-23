@@ -64,6 +64,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireS
     const { generateImage } = await import("./images.server");
     const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true, lockId: story.id });
     if (!result.ok) throw new Error(result.reply);
+    if (result.lock && !("bookId" in story.data && story.data.bookId)) story.data.modelLock ??= result.lock;
     if (data.action === "cover") story.data.cover = result.path;
     else if (page) page.image = result.path;
   } else if (data.action === "finish") {

@@ -85,6 +85,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireS
     const { generateImage } = await import("./images.server");
     const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id });
     if (!r.ok) throw new Error(r.reply);
+    if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;
     else if (data.action === "sketch") { panel!.sketch = r.path; panel!.image = null; }
     else panel!.image = r.path;
