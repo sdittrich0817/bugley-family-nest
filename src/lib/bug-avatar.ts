@@ -17,7 +17,7 @@ export const bugSchema = z.object({
 export type BugConfig = z.infer<typeof bugSchema>;
 
 function hash(s: string) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
-const pick = <T,>(list: readonly T[], n: number) => list[n % list.length];
+const pick = <T,>(list: readonly T[], n: number) => list[n % list.length]!;
 /** A stable starter bug for a child who hasn't built one yet. */
 export function starterBug(seed: string): BugConfig {
   const h = hash(seed || "bug");

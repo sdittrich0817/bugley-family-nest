@@ -13,7 +13,7 @@ import { GAMES, BONUS_GLOW_DAILY_CAP, canPlay, type Band, type GameKey } from "@
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 
-type Kid = { id: string; nickname: string; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator"; avatar: any };
+type Kid = { id: string; nickname: string; age_band: string; bugley_stage: "grub" | "hatchling" | "scout" | "engineer" | "navigator"; avatar: any; bug?: any };
 type Round = Awaited<ReturnType<typeof startRound>>;
 type Item = Round["items"][number];
 type Player = { kid: Kid; round: Round; idx: number };
