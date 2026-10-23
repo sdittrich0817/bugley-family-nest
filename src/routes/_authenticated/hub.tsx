@@ -56,10 +56,7 @@ function Hub() {
       </Section>
 
       <Section title="Activity">
-        <div className={`${card} flex flex-col items-center gap-3 py-10 text-center`}>
-          <Bugley stage="scout" expression="sleepy" size={72} />
-          <p className="text-muted-foreground">Your kids’ creations will show up here.</p>
-        </div>
+        <StudioActivity kids={family.children} />
       </Section>
 
       <Section title="Controls">
