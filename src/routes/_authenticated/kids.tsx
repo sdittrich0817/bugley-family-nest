@@ -69,7 +69,7 @@ function WhosPlaying({ children, onPick }: { children: ChildProfile[]; onPick: (
     {!children.length && <p className="mt-6 text-muted-foreground">No players yet. Ask a grown-up to add you in the Parent Hub.</p>}
     <ul className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3">{children.map((c) => <li key={c.id}>
       <button onClick={() => onPick(c)} className="flex w-full flex-col items-center gap-3 rounded-3xl border-2 border-border bg-card p-6 shadow-soft transition hover:-translate-y-1 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-        <ChildAvatar avatar={c.bug ?? c.avatar} className="size-24 md:size-28" />
+        <ChildAvatar avatar={c.bug ?? c.avatar} seed={c.id} className="size-24 md:size-28" />
         <span className="break-all font-display text-2xl">{c.nickname}</span>
       </button></li>)}</ul>
   </section>;
@@ -93,7 +93,7 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
   const add = (v: string) => { if (!busy && entry.length < need) { setError(""); setEntry([...entry, v]); } };
   return <section className="mx-auto max-w-md px-4 pb-16 pt-4 text-center">
     <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft />Back</Button>
-    <div className="mt-4 flex justify-center"><ChildAvatar avatar={child.bug ?? child.avatar} className="size-24" /></div>
+    <div className="mt-4 flex justify-center"><ChildAvatar avatar={child.bug ?? child.avatar} seed={child.id} className="size-24" /></div>
     <h1 className="mt-3 text-3xl">Hi, {child.nickname}!</h1>
     <p className="mt-2 text-muted-foreground">{isPin ? "Tap your 4 secret numbers." : "Tap your 3 secret pictures in order."}</p>
     <div className="my-6 flex justify-center gap-3" aria-live="polite">{Array.from({ length: need }, (_, i) => <span key={i} className={cn("size-5 rounded-full border-2 border-foreground", i < entry.length && "bg-primary")} />)}</div>
