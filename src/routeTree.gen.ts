@@ -36,10 +36,10 @@ import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/p
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/table'
-import { Route as ApiTmpGuardCheckRouteImport } from './routes/api/tmp-guard-check'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 import { Route as AuthenticatedKidsStudioRouteImport } from './routes/_authenticated/kids_.studio'
+import { Route as ApiPublicTmpGuardCheckRouteImport } from './routes/api/public/tmp-guard-check'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -176,11 +176,6 @@ const AuthenticatedTableRoute = AuthenticatedTableRouteImport.update({
   path: '/table',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const ApiTmpGuardCheckRoute = ApiTmpGuardCheckRouteImport.update({
-  id: '/api/tmp-guard-check',
-  path: '/api/tmp-guard-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
   id: '/resources/',
   path: '/resources/',
@@ -195,6 +190,11 @@ const AuthenticatedKidsStudioRoute = AuthenticatedKidsStudioRouteImport.update({
   id: '/kids_/studio',
   path: '/kids/studio',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicTmpGuardCheckRoute = ApiPublicTmpGuardCheckRouteImport.update({
+  id: '/api/public/tmp-guard-check',
+  path: '/api/public/tmp-guard-check',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
@@ -230,10 +230,10 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
-  '/api/tmp-guard-check': typeof ApiTmpGuardCheckRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/kids/studio': typeof AuthenticatedKidsStudioRoute
+  '/api/public/tmp-guard-check': typeof ApiPublicTmpGuardCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -263,10 +263,10 @@ export interface FileRoutesByTo {
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
-  '/api/tmp-guard-check': typeof ApiTmpGuardCheckRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
   '/kids/studio': typeof AuthenticatedKidsStudioRoute
+  '/api/public/tmp-guard-check': typeof ApiPublicTmpGuardCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -298,10 +298,10 @@ export interface FileRoutesById {
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/table': typeof AuthenticatedTableRoute
-  '/api/tmp-guard-check': typeof ApiTmpGuardCheckRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/_authenticated/kids_/studio': typeof AuthenticatedKidsStudioRoute
+  '/api/public/tmp-guard-check': typeof ApiPublicTmpGuardCheckRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -333,10 +333,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/table'
-    | '/api/tmp-guard-check'
     | '/resources/$slug'
     | '/resources/'
     | '/kids/studio'
+    | '/api/public/tmp-guard-check'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -366,10 +366,10 @@ export interface FileRouteTypes {
     | '/settings'
     | '/setup'
     | '/table'
-    | '/api/tmp-guard-check'
     | '/resources/$slug'
     | '/resources'
     | '/kids/studio'
+    | '/api/public/tmp-guard-check'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -400,10 +400,10 @@ export interface FileRouteTypes {
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/table'
-    | '/api/tmp-guard-check'
     | '/resources/$slug'
     | '/resources/'
     | '/_authenticated/kids_/studio'
+    | '/api/public/tmp-guard-check'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -427,9 +427,9 @@ export interface RootRouteChildren {
   StudioRoute: typeof StudioRoute
   StudioPreviewRoute: typeof StudioPreviewRoute
   TermsRoute: typeof TermsRoute
-  ApiTmpGuardCheckRoute: typeof ApiTmpGuardCheckRoute
   ResourcesSlugRoute: typeof ResourcesSlugRoute
   ResourcesIndexRoute: typeof ResourcesIndexRoute
+  ApiPublicTmpGuardCheckRoute: typeof ApiPublicTmpGuardCheckRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -624,13 +624,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTableRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/tmp-guard-check': {
-      id: '/api/tmp-guard-check'
-      path: '/api/tmp-guard-check'
-      fullPath: '/api/tmp-guard-check'
-      preLoaderRoute: typeof ApiTmpGuardCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/resources/': {
       id: '/resources/'
       path: '/resources'
@@ -651,6 +644,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/kids/studio'
       preLoaderRoute: typeof AuthenticatedKidsStudioRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/tmp-guard-check': {
+      id: '/api/public/tmp-guard-check'
+      path: '/api/public/tmp-guard-check'
+      fullPath: '/api/public/tmp-guard-check'
+      preLoaderRoute: typeof ApiPublicTmpGuardCheckRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -709,9 +709,9 @@ const rootRouteChildren: RootRouteChildren = {
   StudioRoute: StudioRoute,
   StudioPreviewRoute: StudioPreviewRoute,
   TermsRoute: TermsRoute,
-  ApiTmpGuardCheckRoute: ApiTmpGuardCheckRoute,
   ResourcesSlugRoute: ResourcesSlugRoute,
   ResourcesIndexRoute: ResourcesIndexRoute,
+  ApiPublicTmpGuardCheckRoute: ApiPublicTmpGuardCheckRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
