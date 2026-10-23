@@ -18,7 +18,7 @@ export function speak(text: string) {
 }
 
 /** Shared Bugley conversation used by the prompt bar and the sidekick panel. */
-export function useBugleyChat(child: SidekickChild, context: string, opening: string, openingChips: string[], storyId?: string) {
+export function useBugleyChat(child: SidekickChild, context: string, opening: string, openingChips: string[], storyId?: string, comicId?: string) {
   const [messages, setMessages] = useState<Msg[]>([{ from: "bugley", text: opening }]);
   const [chips, setChips] = useState(openingChips);
   const [busy, setBusy] = useState(false);
@@ -29,14 +29,14 @@ export function useBugleyChat(child: SidekickChild, context: string, opening: st
     setMessages((m) => [...m, { from: "kid", text: t }]);
     setChips([]); setBusy(true);
     try {
-      const r = await askBugley({ data: { childId: child.id, text: t, source, context, storyId, environment: getStripeEnvironment() } });
+      const r = await askBugley({ data: { childId: child.id, text: t, source, context, storyId, comicId, environment: getStripeEnvironment() } });
       setMessages((m) => [...m, { from: "bugley", text: r.reply }]);
       setChips(r.chips);
       if (readAloud) speak(r.reply);
     } catch {
       setMessages((m) => [...m, { from: "bugley", text: "Hmm, my glow flickered! Let’s try that again." }]);
     } finally { setBusy(false); }
-  }, [busy, child.id, context, readAloud, storyId]);
+  }, [busy, child.id, context, readAloud, storyId, comicId]);
   const say = useCallback((text: string, next?: string[]) => {
     setMessages((m) => [...m, { from: "bugley", text }]);
     if (next) setChips(next);

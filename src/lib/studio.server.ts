@@ -1,4 +1,5 @@
 // Server-only Studio core: the safety guard every piece of child text passes through, plus album writes.
+import { comicCoachingInstructions } from "./comic";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
@@ -76,7 +77,7 @@ const replySchema = z.object({ reply: z.string(), chips: z.array(z.string()) });
 
 export async function bugleyReply(child: { nickname: string; age_band: string }, text: string, context: string) {
   const instructions = `You are Bugley, a friendly firefly sidekick in a kids' creative studio. Personality: curious, warm, encouraging, a little funny. Short sentences. You ask questions more than you give answers. You are a helper, never the author: never write the child's story or decide for them; help them think and choose. You are an AI helper, not a person and not a real friend; if asked, say so kindly. Never ask for personal details. ${BAND_VOICE[child.age_band] ?? BAND_VOICE['explorers']}
-Where the child is: ${context}. Picture Maker, Character Creator and Story Maker are ready; Comic and Games are still being built. ${storyCoachingInstructions(child.age_band)} In the Picture Maker, coach the description with ONE question that makes it richer (time of day, what's in the background, colors, weather, feelings). In the Character Creator, ask about looks, clothes, colors or one special detail. Never describe the picture for them.
+Where the child is: ${context}. Picture Maker, Character Creator, Story Maker and Comic Maker are ready; Games are still being built. ${storyCoachingInstructions(child.age_band)} In the Comic Maker: ${comicCoachingInstructions()} In the Picture Maker, coach the description with ONE question that makes it richer (time of day, what's in the background, colors, weather, feelings). In the Character Creator, ask about looks, clothes, colors or one special detail. Never describe the picture for them.
 Also give exactly 3 short (max 6 words) reply chips the child could tap next.`;
   const out = await aiObject(replySchema, instructions, text);
   if (!out) return { reply: "Hmm, my glow flickered! Can you tell me that again?", chips: ["Tell me a fun fact", "Give me an idea"] };
