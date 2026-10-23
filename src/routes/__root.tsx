@@ -11,6 +11,7 @@ import {
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone } from "@/lib/kid-zone";
+import { scrollToTop } from "@/lib/scroll";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -141,11 +142,27 @@ function RootComponent() {
 function KidZoneShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const router = useRouter();
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   const target = kidZoneRedirect(pathname, locked);
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
-  // Every new page starts at the top (links to a #section still scroll to it).
-  useEffect(() => { if (!window.location.hash) window.scrollTo({ top: 0, left: 0, behavior: "instant" }); }, [pathname]);
+  // Every new page starts at the top once it has finished loading and drawing.
+  // Links to a #section still jump there, and Back/Forward keep their old spot.
+  useEffect(() => {
+    let wentBack = false;
+    const onPop = () => { wentBack = true; };
+    window.addEventListener("popstate", onPop);
+    const toTop = () => {
+      if (wentBack) { wentBack = false; return; }
+      if (window.location.hash) return;
+      scrollToTop();
+      // Pages that finish drawing a moment later (signed-in pages) get a second nudge.
+      requestAnimationFrame(() => { if (!window.location.hash) scrollToTop(); });
+    };
+    const offResolved = router.subscribe("onResolved", toTop);
+    return () => { offResolved(); window.removeEventListener("popstate", onPop); };
+  }, [router]);
+  useEffect(() => { if (!window.location.hash) scrollToTop(); }, [pathname]);
   if (target) return null;
   if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
