@@ -65,27 +65,29 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   }, [dirty]);
   useEffect(() => { if (sprouts && page && !reading) speak(`${STORY_STEPS.indexOf(page.step) === 0 ? "Meet your hero." : HINTS[STORY_STEPS.indexOf(page.step)]} Your words go here.`); }, [index, reading, sprouts, !!story]);
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["album", child.id] }); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); };
-  async function action(kind: "map" | "page" | "add" | "illustrate" | "cover" | "finish") {
-    if (!story || busy) return;
+  async function action(kind: "map" | "page" | "add" | "illustrate" | "cover" | "finish"): Promise<boolean> {
+    if (!story || busy) return false;
     setBusy(true);
     try {
       let current = story;
       if (dirty && kind !== "map" && page) current = await edit({ data: { childId: child.id, id: story.id, environment: getStripeEnvironment(), action: "page", page } });
       const next = kind === "page" && dirty ? current : await edit({ data: { childId: child.id, id: current.id, environment: getStripeEnvironment(), action: kind, map: kind === "map" ? mapDraft : undefined, page: kind === "page" ? page : undefined, pageId: page?.id, description: coverDescription } });
       adopt(next);
-      if (kind === "map") { setMapEditing(false); chat.say("You’ve made a world of your own! What happens first? Your call!"); }
-      if (kind === "add") setIndex(next.data.pages.length - 1);
-      if (kind === "finish") { setReading(true); setIndex(0); chat.say("You kept going and made a whole story! Your choices brought it to life."); }
-      toast.success(kind === "finish" ? "Your story is in your album!" : "Saved!");
+      if (kind === "map") { setMapEditing(false); chat.say("Story Map saved! Back to writing. Your call!"); }
+      if (kind === "add") { setIndex(next.data.pages.length - 1); chat.say("A fresh page! What happens next? Your call!"); }
+      if (kind === "finish") { setReading(true); setIndex(0); chat.say("You kept going and made a whole story! Your choices brought it to life."); toast.success("Your story is in your album!"); }
+      if (kind === "illustrate") chat.say("Here’s your picture! Want to keep writing?");
       if (kind === "page" && page?.text.trim()) {
         try {
           const response = await ask({ data: { childId: child.id, storyId: story.id, pageId: page.id, purpose: "coach", context: "Story Maker", source: "chip", environment: getStripeEnvironment(), text: "Quietly check my saved page for a specific continuity conflict. Stay quiet if it fits." } });
           if (response.reply.trim()) chat.say(response.reply, response.chips);
-        } catch { toast("Your page is saved. Bugley couldn’t check continuity right now."); }
+        } catch { /* page is saved; continuity check is optional */ }
       }
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Your words are still here. Try saving again."); }
+      return true;
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Your words are still here. Try saving again."); return false; }
     finally { setBusy(false); refresh(); }
   }
+  async function turn(to: number) { if (dirty && !(await action("page"))) return; setIndex(to); }
   async function assist(purpose: "coach" | "picture" | "spelling") {
     if (!story || !page || busy || mapEditing) return;
     setBusy(true);
