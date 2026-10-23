@@ -61,7 +61,7 @@ export async function signPaths(paths: string[]) {
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[] }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // a) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -73,6 +73,12 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   ]);
   if (!style) return { ok: false, reply: "Pick a style first!" };
   if (!model?.model) return { ok: false, reply: "My paintbrush isn’t ready yet! A grown-up at Bugley is still setting it up." };
+  if (input.requireReferences && input.characterIds.length) {
+    const settings = (model.settings ?? {}) as { reference_field?: string; reference_single?: boolean };
+    if (!settings.reference_field || (settings.reference_single && input.characterIds.length > 1)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
+    const { data: cast } = await sb.from("studio_creations").select("id,images").eq("parent_id", userId).eq("child_id", child.id).eq("kind", "character").is("deleted_at", null).in("id", input.characterIds);
+    if ((cast ?? []).length !== input.characterIds.length || (cast ?? []).some((c: any) => !c.images?.[0])) return { ok: false, reply: "One of this story’s characters is missing from My Cast. Ask a grown-up to restore it first." };
+  }
   // b) glow
   const kind = input.mode === "final" ? "picture" : "sketch";
   const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Character portrait" : input.mode === "final" ? "Final picture" : "Sketch");

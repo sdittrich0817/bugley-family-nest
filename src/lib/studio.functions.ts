@@ -15,14 +15,17 @@ export const askBugley = createServerFn({ method: "POST" }).middleware([requireS
   .inputValidator((i: unknown) => z.object({
     childId: z.string().uuid(), text: z.string().trim().min(1).max(600),
     source: z.enum(["prompt_bar", "sidekick", "chip"]), context: z.string().max(80), environment: z.enum(["sandbox", "live"]),
+    storyId: z.string().uuid().optional(), pageId: z.string().uuid().optional(), purpose: z.enum(["coach", "picture", "spelling"]).optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { reply: "I’m taking a little nap right now. Ask a grown-up!", chips: [] as string[], blocked: true };
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.text, data.source);
-    if (guard.decision !== "allowed") return { reply: guard.reply!, chips: guard.chips ?? [], blocked: true };
-    const out = await s.bugleyReply(child, data.text, data.context);
+    if (guard.decision !== "allowed") return { reply: guard.reply ?? "Let’s try a safe idea.", chips: guard.chips ?? [], blocked: true };
+    const out = data.storyId
+      ? await (await import("./story.server")).assistStory(context.supabase, context.userId, child, data.storyId, data.text, data.purpose ?? "coach", data.pageId)
+      : await s.bugleyReply(child, data.text, data.context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("studio_events").update({ reply: out.reply }).eq("child_id", child.id).eq("decision", "allowed").is("reply", null).eq("input", data.text.slice(0, 2000));
     return { ...out, blocked: false };
