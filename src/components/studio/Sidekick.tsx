@@ -95,13 +95,12 @@ function Panel({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
   </div>;
 }
 
-/** Bugley the sidekick: a side panel on larger screens, a floating Bugley button on phones. */
-export function Sidekick({ child, chat, className }: { child: SidekickChild; chat: BugleyChat; className?: string }) {
+/** Optional full chat with Bugley: a floating button that opens a sheet. The guide bubble handles everyday coaching. */
+export function Sidekick({ child, chat }: { child: SidekickChild; chat: BugleyChat; className?: string }) {
   const [open, setOpen] = useState(false);
   return <>
-    <aside className={cn("hidden h-[calc(100vh-7rem)] w-80 shrink-0 rounded-3xl border border-border bg-card p-4 shadow-soft lg:sticky lg:top-24 lg:flex lg:flex-col", className)}><Panel child={child} chat={chat} /></aside>
-    <button onClick={() => setOpen(true)} aria-label="Talk to Bugley" className="fixed bottom-5 right-5 z-40 flex size-20 items-center justify-center rounded-full bg-card shadow-glow ring-4 ring-primary/40 transition hover:scale-105 lg:hidden">
-      <BugleyFace child={child} size={64} />
+    <button onClick={() => setOpen(true)} aria-label="Chat with Bugley" className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-card py-2 pl-2 pr-4 font-display shadow-glow ring-4 ring-primary/40 transition hover:scale-105">
+      <BugleyFace child={child} size={48} /><span>Chat</span>
     </button>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side="bottom" className="flex h-[85vh] flex-col rounded-t-3xl">

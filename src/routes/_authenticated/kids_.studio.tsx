@@ -2,7 +2,7 @@ import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Smile, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Mic, Pencil, Sparkles, Trash2, Volume2, Wand2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Smile, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { familyOptions } from "@/lib/family.functions";
 import { getChildGlow } from "@/lib/glow.functions";
@@ -11,7 +11,8 @@ import { listAlbum, updateCreation, CREATION_KINDS, type Creation, type Creation
 import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
-import { Sidekick, speak, useBugleyChat, useVoiceInput, type BugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
+import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
+import { BugleyGuide } from "@/components/studio/Guided";
 import { Bugley } from "@/components/brand/Bugley";
 import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
 import { StoryMaker } from "@/components/studio/StoryMaker";
@@ -19,8 +20,10 @@ import { ComicMaker } from "@/components/studio/ComicMaker";
 import { BookBuilder } from "@/components/studio/BookBuilder";
 import { bookFromOneShot } from "@/lib/book.functions";
 import { Button } from "@/components/ui/button";
-import { BugleyMature } from "@/components/brand/BugleyMature";
 import { cn } from "@/lib/utils";
+import pictureArt from "@/assets/illustrations/studio-picture.jpg";
+import comicArt from "@/assets/illustrations/studio-comic-adventure.jpg";
+import storyArt from "@/assets/illustrations/studio-story.jpg";
 
 export const Route = createFileRoute("/_authenticated/kids_/studio")({
   head: () => ({ meta: [
@@ -49,19 +52,21 @@ function StudioPage() {
   return <Studio child={child as SidekickChild & { age_band: Band }} />;
 }
 
-const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolean }[] = [
-  { key: "picture", label: "Picture", icon: ImageIcon, ready: true },
-  { key: "character", label: "Characters", icon: Smile, ready: true },
-  { key: "story", label: "Story", icon: BookOpen, ready: true },
-  { key: "comic", label: "Comic", icon: LayoutGrid, ready: true },
-  { key: "book", label: "Book", icon: Library, ready: true },
-  { key: "games", label: "Games", icon: Gamepad2, ready: true },
-  { key: "album", label: "My Album", icon: Library, ready: true },
+const DOORS: { key: View; label: string; sub: string; image: string }[] = [
+  { key: "picture", label: "Make a picture", sub: "Pick a style, tell Bugley, done!", image: pictureArt },
+  { key: "comic", label: "Make a comic", sub: "Panels, heroes and POW!", image: comicArt },
+  { key: "story", label: "Write a story", sub: "You write it, Bugley draws it", image: storyArt },
+];
+const EXTRAS: { key: View | "games"; label: string; icon: typeof ImageIcon }[] = [
+  { key: "album", label: "My Album", icon: Library },
+  { key: "character", label: "My Cast", icon: Smile },
+  { key: "book", label: "Books", icon: BookOpen },
+  { key: "games", label: "Games", icon: Gamepad2 },
 ];
 
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
-  const sprouts = band === "sprouts", builders = band === "builders";
+  const sprouts = band === "sprouts";
   const [view, setView] = useState<View>("home"); useScrollTopOn(view);
   const [storyId, setStoryId] = useState<string | null>(null);
   const [storyDirty, setStoryDirty] = useState(false);
@@ -69,15 +74,15 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const [bookId, setBookId] = useState<string | null>(null);
   const [inBook, setInBook] = useState(false);
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
-  const greeting = `Hi ${child.nickname}! What should we make today?`;
-  const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting,
-    sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
+  const greeting = `Hi ${child.nickname}! What do you want to make today?`;
+  const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
-  useEffect(() => { if (sprouts) speak(greeting); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+  useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); if (view === "character") chat.say("Let’s invent a character! First, what kind?", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${band}`)}>
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+      <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
         {view !== "home"
           ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); if (inBook && (view === "story" || view === "comic")) { setView("book"); } else { setInBook(false); setView("home"); } }}><ArrowLeft className="size-5" />{inBook && (view === "story" || view === "comic") ? "My book" : "Studio"}</Button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
@@ -85,9 +90,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}
       </div>
     </header>
-    <div className="mx-auto flex max-w-6xl gap-6 px-4 pb-28 pt-6">
-      <main className="min-w-0 flex-1">
-        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
+    <div className="mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-5">
+      <BugleyGuide child={child} chat={chat} />
+      <main className="min-w-0">
+        {view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
           : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
@@ -103,38 +109,21 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
 type View = "home" | "album" | "picture" | "character" | "story" | "comic" | "book";
 const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker", book: "Book Builder" };
 
-function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; chat: BugleyChat; greeting: string; onOpen: (v: View) => void }) {
-  const sprouts = child.age_band === "sprouts", builders = child.age_band === "builders";
-  const [idea, setIdea] = useState("");
+function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
+  const sprouts = child.age_band === "sprouts";
   const navigate = useNavigate();
-  const voice = useVoiceInput((t) => setIdea(t));
-  const last = [...chat.messages].reverse().find((m) => m.from === "bugley")?.text ?? greeting;
-  const submit = () => { if (idea.trim()) { void chat.send(idea, "prompt_bar"); setIdea(""); } };
   return <div className="space-y-8">
-    <section className="relative overflow-hidden rounded-[2rem] bg-card p-6 shadow-soft sm:p-8">
-      <div aria-hidden className="glow-blob pointer-events-none absolute -right-16 -top-16 size-64 rounded-full opacity-60" />
-      <div className={cn("relative flex items-center gap-5", sprouts && "flex-col text-center")}>
-        {builders ? <BugleyMature variant="headphones" size={88} /> : <Bugley stage={child.bugley_stage} expression={chat.busy ? "thinking" : "happy"} glow size={sprouts ? 150 : 112} />}
-        <div className="min-w-0 flex-1">
-          <h1 className={cn("leading-tight", sprouts ? "text-4xl" : "text-3xl sm:text-4xl")}>Hi {child.nickname}! What should we make today?</h1>
-          <p className="mt-3 text-muted-foreground animate-in fade-in duration-500" key={last} aria-live="polite">{last === greeting ? "Tell me your idea. I’ll ask questions, and you decide everything!" : last}</p>
-          {sprouts && <button onClick={() => speak(last)} className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 font-semibold"><Volume2 className="size-5" />Hear Bugley</button>}
-        </div>
-      </div>
-      <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="relative mt-6 flex items-center gap-2 rounded-full border-2 border-border bg-background p-1.5 shadow-soft transition focus-within:border-primary focus-within:shadow-glow">
-        <Wand2 className="ml-3 size-5 shrink-0 text-muted-foreground" />
-        <input value={idea} onChange={(e) => setIdea(e.target.value)} maxLength={600} placeholder="Tell Bugley your idea..." aria-label="Tell Bugley your idea" className={cn("min-w-0 flex-1 bg-transparent px-1 outline-none", sprouts ? "h-14 text-xl" : "h-12 text-lg")} />
-        {sprouts && voice.supported && <button type="button" onClick={voice.start} aria-label="Say your idea" className={cn("flex size-12 shrink-0 items-center justify-center rounded-full bg-secondary", voice.listening && "animate-pulse bg-primary")}><Mic className="size-6" /></button>}
-        <button type="submit" disabled={chat.busy || !idea.trim()} className={cn("shrink-0 rounded-full bg-primary px-5 font-display text-primary-foreground shadow-glow transition disabled:opacity-50", sprouts ? "h-14 text-xl" : "h-12")}>{chat.busy ? "…" : "Go"}</button>
-      </form>
+    <section className="grid gap-4 sm:grid-cols-3">
+      {DOORS.map((d, i) => <button key={d.key} onClick={() => onOpen(d.key)} style={{ animationDelay: `${i * 80}ms` }}
+        className="group overflow-hidden rounded-[2rem] border-2 border-border bg-card text-left shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+        <img src={d.image} alt="" className="aspect-[4/3] w-full object-cover transition group-hover:scale-105" />
+        <span className="block p-4"><span className={cn("block font-display leading-tight", sprouts ? "text-3xl" : "text-2xl")}>{d.label}</span><span className="mt-1 block text-muted-foreground">{d.sub}</span></span>
+      </button>)}
     </section>
-    <section className={cn("grid gap-4", sprouts ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
-      {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={!ready ? () => toast(`${label} is coming soon!`) : key === "games" ? () => void navigate({ to: "/kids/studio/games" }) : () => onOpen(key as View)}
-        style={{ animationDelay: `${i * 60}ms` }}
-        className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && (sprouts ? "col-span-2" : "col-span-2 sm:col-span-3"))}>
-        <span className={cn("flex items-center justify-center rounded-2xl bg-primary/25 transition group-hover:bg-primary", sprouts ? "size-20" : "size-16")}><Icon className={sprouts ? "size-10" : "size-8"} /></span>
-        <span className={cn("font-display", sprouts ? "text-2xl" : "text-xl")}>{label}</span>
-        {!ready && <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-semibold text-muted-foreground">Coming soon</span>}
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {EXTRAS.map(({ key, label, icon: Icon }) => <button key={key} onClick={key === "games" ? () => void navigate({ to: "/kids/studio/games" }) : () => onOpen(key)}
+        className="flex items-center gap-3 rounded-2xl border-2 border-border bg-card px-4 py-3 font-display shadow-soft transition hover:border-primary">
+        <Icon className="size-6 shrink-0" />{label}
       </button>)}
     </section>
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
