@@ -27,3 +27,4 @@
 - [ ] Verify successful Picture preview and print-resolution upgrade readback (blocked: live test output was rejected by the image safety check; glow refunded).
 - [ ] Connect Lulu sandbox keys and run a test print order end to end (blocked: Shea creates a Lulu developer account).
 - [ ] Confirm Lulu product codes and the 24-page softcover minimum with Lulu (blocked: Lulu account).
+- [ ] Rebuild Tell a Story with Bugley Steps, hidden age-sized beats, child-authored pages, automatic illustrations/cover and chapter continuation; test the guided flow.
