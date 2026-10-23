@@ -28,10 +28,6 @@ export const Route = createFileRoute("/pricing")({
   component: Pricing,
 });
 
-      "One printed Family Story Book per year",
-    ],
-  },
-] as const;
 
 const GLOW_FACTS = [
   { icon: Sparkles, title: "Glow powers pictures", body: "Every picture your child asks Bugley to make spends a little glow." },
