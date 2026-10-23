@@ -139,7 +139,7 @@ function ControlsCard({ child, value }: { child: ChildProfile; value: ChildContr
     try { await saveChildControls({ data: { childId: child.id, ...next } }); void qc.invalidateQueries({ queryKey: ["child-controls"] }); }
     catch { setState(prev); toast.error("We couldn’t save that change."); }
   }
-  const toggles: [keyof ChildControls, string][] = [["studio_stories", "Studio: Stories"], ["studio_games", "Studio: Games"], ["read_aloud", "Bugley reads aloud"]];
+  const toggles: [keyof ChildControls, string][] = [["studio_stories", "Studio: Stories"], ["studio_games", "Studio: Games"], ["read_aloud", "Bugley reads aloud"], ["spelling_help", "Story spelling help"]];
   return <div className={card}>
     <div className="flex items-center gap-3"><ChildAvatar avatar={child.bug ?? child.avatar} seed={child.id} className="size-10" /><h3 className="text-lg">{child.nickname}</h3></div>
     <label className="mt-4 flex items-center justify-between gap-3 text-sm"><span className="flex items-center gap-2"><Clock className="size-4" />Daily time limit</span>

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { storySchema, storyCoachingInstructions, type Story } from "./story";
+import { storySchema, storyCoachingInstructions, cleanSparks, beatQuestion, storyBeats, type Story } from "./story";
 import { z } from "zod";
 import { aiObject } from "./studio-ai.server";
 import { signPaths } from "./images.server";
@@ -21,16 +21,18 @@ export async function persistStory(userId: string, childId: string, story: Story
   if (error || !data) throw new Error("Your story changed in another window. Reopen it before saving again.");
 }
 
-export async function assistStory(sb: SupabaseClient<any>, userId: string, child: { id: string; age_band: string }, id: string, text: string, purpose: "coach" | "picture" | "spelling", pageId?: string) {
+export async function assistStory(sb: SupabaseClient<any>, userId: string, child: { id: string; age_band: string }, id: string, text: string, purpose: "coach" | "picture" | "spelling" | "step" | "titles", pageId?: string) {
   const story = await loadStory(sb, userId, child.id, id);
   const storyBible = await (await import("./book.server")).bibleContext(sb, userId, child.id, story.data.bookId);
   const BIBLE = storyBible ? " This is one chapter of a multi-chapter book. Read the Story Bible first: keep names, looks, places and past events consistent, gently ask about conflicts, and keep track of the big story and open mysteries. The chapter has its own mini story spine." : "";
   const page = story.data.pages.find((p) => p.id === pageId);
   const task = purpose === "picture"
-    ? "Draft ONLY an illustration description from the child's saved page, under 600 characters. This is not story prose. No new plot events. Return it in description for the child to edit."
+    ? "Draft ONLY an illustration description from the child's saved page, under 600 characters. Include lighting, composition, mood and the saved setting without inventing new plot events. Preserve the hero’s Character DNA. Never put words, letters, captions or speech bubbles in the image. This is hidden rendering instructions, not story prose. Return it in description; reply and chips empty."
     : purpose === "spelling" ? "Give optional spelling help for at most three words in the saved page. Never rewrite any sentence. Return description as empty."
-    : "Coach the child's question. Only ask one question if needed. If the question requests a quiet continuity check, return an empty reply and empty chips unless there is a specific conflict with the map or earlier pages. Return description as empty.";
-  const out = await aiObject(z.object({ reply: z.string(), chips: z.array(z.string()), description: z.string() }), `${storyCoachingInstructions(child.age_band)} ${task} Return a brief reply and 2–3 idea sparks (maximum 6 words each). End the reply with Your call!${BIBLE}`, JSON.stringify({ storyBible, question: text, genre: story.data.genre, map: story.data.map, pages: story.data.pages.map((p) => ({ step: p.step, text: p.text, chapter: p.chapter })), currentPage: page?.text ?? "" }));
+    : purpose === "titles" ? "Offer exactly 3 short, original title ideas based ONLY on the saved story, as chips. Do not write any story text. Return description empty."
+    : purpose === "step" ? "Ask exactly one question for the current hidden beat. Refer to the child's saved choices and previous pages; don't invent events. Return 3 sparks of 2–5 words each, never complete sentences. Return description empty."
+    : "Coach the child's question. Only ask one question if needed. If the question requests a check of the saved line or a quiet continuity check, return an empty reply and empty chips unless the current line is too vague to illustrate or has a specific conflict with earlier pages. The setup problem is a future plan, not a conflict. Ask once, never require a change. Return description as empty.";
+  const out = await aiObject(z.object({ reply: z.string(), chips: z.array(z.string()), description: z.string() }), `${storyCoachingInstructions(child.age_band)} ${task} Return a brief reply and 2–3 idea sparks (2–5 words each). End the reply with Your call!${BIBLE}`, JSON.stringify({ storyBible, question: text, genre: story.data.genre, map: story.data.map, pages: story.data.pages.map((p) => ({ step: p.step, text: p.text, chapter: p.chapter })), currentPage: page?.text ?? "", hiddenBeat: story.data.guidedBand ? storyBeats(story.data.guidedBand)[story.data.pages.findIndex((p) => p.id === pageId)] : undefined, defaultQuestion: story.data.guidedBand ? beatQuestion(story.data.guidedBand, story.data.pages.findIndex((p) => p.id === pageId), story.data.map) : undefined }));
   if (!out) throw new Error("Bugley couldn’t check your story right now. Your words are still saved.");
-  return { reply: !out.reply.trim() ? "" : out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: out.chips.slice(0, 3).map((c) => c.replace(/\s*Your call!$/i, "").trim().split(/\s+/).slice(0, 6).join(" ")), description: purpose === "picture" ? out.description.slice(0, 600) : "" };
+  return { reply: !out.reply.trim() ? "" : out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: purpose === "titles" ? out.chips.map((c) => c.trim().slice(0, 80)).filter(Boolean).slice(0, 3) : cleanSparks(out.chips), description: purpose === "picture" ? out.description.slice(0, 600) : "" };
 }

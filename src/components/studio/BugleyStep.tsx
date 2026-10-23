@@ -14,9 +14,9 @@ export type BugleyMood = "flying" | "cheering" | "painting" | "celebrating";
 
 const PAINT_LINES = ["Mixing the colors...", "Dipping my brush...", "Adding sparkle...", "Almost there..."];
 
-export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false }: {
+export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false, longAnswer = false, initialAnswer = "", hideHeading = false }: {
   child: SidekickChild; question: string; choices: StepChoice[]; onChoose: (c: StepChoice) => void;
-  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean;
+  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean; longAnswer?: boolean; initialAnswer?: string; hideHeading?: boolean;
 }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
@@ -34,7 +34,8 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
   const shown = choices.slice((page % pages) * size, (page % pages) * size + size);
   useEffect(() => setPage(0), [question]);
 
-  useEffect(() => { if (sprouts) speak(question); setTyping(false); setText(""); }, [question, sprouts]);
+  useEffect(() => { if (sprouts && !bare) speak(question); }, [question, sprouts, bare]);
+  useEffect(() => { setTyping(longAnswer || !!initialAnswer); setText(initialAnswer); }, [longAnswer, initialAnswer]);
   useEffect(() => {
     if (mood !== "painting") return;
     const t = setInterval(() => setPaintLine((n) => (n + 1) % PAINT_LINES.length), 1800);
@@ -62,7 +63,7 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
         {mood !== "painting" && <Button variant="ghost" onClick={() => speak(question)} aria-label="Hear Bugley" className="ml-3 inline-flex size-10 items-center justify-center rounded-full bg-secondary align-middle"><Volume2 className="size-5" /></Button>}
       </div>
     </div>}
-    {bare && <h2 className={cn("text-center", sprouts ? "text-4xl" : "text-3xl")}>{line}</h2>}
+    {bare && <h2 className={cn(hideHeading ? "sr-only" : "text-center", sprouts ? "text-4xl" : "text-3xl")}>{line}</h2>}
 
     {mood === "painting" ? <div className="mx-auto mt-6 h-4 w-full max-w-md overflow-hidden rounded-full bg-muted"><div className="studio-paint-bar h-full rounded-full bg-primary" /></div>
       : <div className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2")}>
@@ -75,9 +76,10 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
         {paged && <Button variant="ghost" onClick={() => setPage(page + 1)} className="flex h-auto flex-col whitespace-normal items-center justify-center gap-2 rounded-[2rem] border-2 border-border bg-card p-5 font-display text-2xl shadow-soft transition hover:border-primary"><span className="text-5xl" aria-hidden>👀</span>More!</Button>}
         {own && onOwnIdea && <div className={cn(ownIdeaBelow && "col-span-full", "flex flex-col items-center justify-center gap-3 rounded-[2rem] border-2 border-dashed border-primary bg-card p-5 text-center shadow-soft")}>
           <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>My own idea!</span>
-          {typing ? <form className="flex w-full gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) onOwnIdea(text.trim()); }}>
-              <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={600} aria-label="Type your idea" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" />
+          {typing ? <form className={cn("flex w-full gap-2", longAnswer && "flex-col")} onSubmit={(e) => { e.preventDefault(); if (text.trim()) onOwnIdea(longAnswer ? text : text.trim()); }}>
+              {longAnswer ? <textarea rows={sprouts ? 3 : 5} value={text} onChange={(e) => setText(e.target.value)} maxLength={20000} aria-label="Your story words" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" /> : <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={600} aria-label="Type your idea" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" />}
               <Button variant="ghost" type="submit" className="rounded-2xl bg-primary px-4 font-display text-primary-foreground">Go</Button>
+              {longAnswer && voice.supported && <Button variant="secondary" type="button" onClick={voice.start} aria-label="Say your story words" className={cn("self-center", voice.listening && "animate-pulse")}><Mic />{voice.listening ? "Listening…" : "Say my words"}</Button>}
             </form>
             : <div className="flex items-center gap-4">
               {voice.supported && <Button variant="ghost" onClick={voice.start} aria-label="Say your idea" className={cn("flex size-20 p-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow transition [&_svg]:size-10", voice.listening && "animate-pulse")}><Mic /></Button>}
