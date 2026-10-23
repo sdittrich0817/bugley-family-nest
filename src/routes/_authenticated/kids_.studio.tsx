@@ -196,6 +196,7 @@ function CreationCard({ c, onUpdate, onStory, onComic, onBook, childId }: { chil
     <div className="p-3">
       {c.kind === "story" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onStory(c.id)}><BookOpen />Open story</Button>}
       {c.kind === "comic" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onComic(c.id)}><LayoutGrid />Open comic</Button>}
+      {c.kind === "game" && <Link to="/kids/studio/games" search={{ game: c.id }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground"><Gamepad2 className="size-4" />Open game</Link>}
       {c.kind === "book" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onBook(c.id)}><Library />Open book</Button>}
       {(c.kind === "story" || c.kind === "comic") && !c.project && <Button variant="ghost" size="sm" className="mb-2 h-auto w-full whitespace-normal" onClick={async () => { try { const b = await bookFromOneShot({ data: { childId, creationId: c.id, environment: getStripeEnvironment() } }); toast.success("Your book is ready! This is Chapter 1."); onBook(b.id); } catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); } }}><Library />Make it Chapter 1 of a Book</Button>}
       {editing ? <form onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
