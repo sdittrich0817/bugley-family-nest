@@ -1,4 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { StudioActivity } from "@/components/site/StudioActivity";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { giftGlow, setFamilyTimezone } from "@/lib/glow.functions";
