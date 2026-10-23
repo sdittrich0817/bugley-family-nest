@@ -33,7 +33,12 @@ export const listAlbum = createServerFn({ method: "POST" }).middleware([requireS
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.from("studio_creations").select(COLS).eq("child_id", data.childId).eq("parent_id", context.userId).is("deleted_at", null).order("created_at", { ascending: false });
     if (error) throw new Error("We couldn’t open the album.");
-    return (rows ?? []) as Creation[];
+    const list = (rows ?? []) as Creation[];
+    const paths = list.flatMap((c) => c.images).filter((p) => !p.startsWith("http"));
+    const { signPaths } = await import("@/lib/images.server");
+    const urls = await signPaths(paths);
+    const map = new Map(paths.map((p, i) => [p, urls[i] ?? ""]));
+    return list.map((c) => ({ ...c, images: c.images.map((p) => map.get(p) ?? p) }));
   });
 
 export const updateCreation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
