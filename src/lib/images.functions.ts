@@ -64,7 +64,7 @@ export const makeCharacterPortrait = createServerFn({ method: "POST" }).middlewa
 export const saveCharacter = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({
     childId: z.string().uuid(), path: z.string().max(200), name: z.string().trim().min(1).max(40), styleKey: z.string().max(40),
-    type: z.string().max(20), personality: z.string().max(20), summary: z.string().max(600),
+    type: z.string().max(40), personality: z.string().max(40), summary: z.string().max(600),
   }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
@@ -72,6 +72,8 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
     if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    const looks = await s.guardChildText(context.supabase, context.userId, child, `${data.type}; ${data.personality}; ${data.summary}`, "character_details");
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
     const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: data.summary, images: [data.path] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary } }).eq("id", id);
