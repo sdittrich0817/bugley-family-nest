@@ -93,7 +93,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireS
     const oldPanels = new Map(old.panels.map((p) => [p.id, p]));
     const oldTexts = new Set(old.panels.flatMap((p) => [p.description, ...p.layers.map((l) => l.text)]));
     for (const panel of incoming.panels) for (const t of [panel.description, ...panel.layers.map((l) => l.text)]) if (!oldTexts.has(t)) await check(t);
-    comic.data.pages[i] = { id: old.id, layout: incoming.layout, panels: incoming.panels.map((p) => { const prev = oldPanels.get(p.id); const same = prev && prev.description === p.description && prev.angle === p.angle; return { ...p, sketch: same ? prev.sketch : prev?.sketch ?? null, image: same ? prev.image : null }; }) };
+    comic.data.pages[i] = { id: old.id, layout: incoming.layout, widePanelId: old.widePanelId, panels: incoming.panels.map((p) => { const prev = oldPanels.get(p.id); const same = prev && prev.description === p.description && prev.angle === p.angle; return { ...p, dialogueDone: prev?.dialogueDone, bubblePlacement: prev?.bubblePlacement, sketch: same ? prev.sketch : prev?.sketch ?? null, image: same ? prev.image : null }; }) };
   } else if (data.action === "add") {
     if (Object.values(comic.data.map).some((v) => !v.trim())) throw new Error("Finish your Story Map first.");
     if (comic.data.guidedBand) throw new Error("Start the next issue for another adventure.");
