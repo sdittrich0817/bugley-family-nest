@@ -83,6 +83,7 @@ export function comicPanelAspect(page: ComicPage, index: number) { const cell = 
 export function dialogueLayers(panel: Panel, text: string, sfx?: string): Layer[] {
   const keep = panel.layers.filter((l) => l.type !== "speech" && l.type !== "sfx");
   if (text.trim()) keep.push({ ...newLayer("speech"), ...(panel.bubblePlacement ?? {}), text });
-  if (sfx) keep.push({ ...newLayer("sfx"), x: 5, y: 76, w: 65, h: 20, text: sfx });
+  const sound = sfx ?? panel.layers.find((l) => l.type === "sfx")?.text;
+  if (sound) keep.push({ ...newLayer("sfx"), x: 5, y: 76, w: 65, h: 20, text: sound });
   return keep;
 }

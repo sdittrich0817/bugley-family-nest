@@ -49,6 +49,7 @@ describe("comic maker rules", () => {
     panel.layers = dialogueLayers(panel, "  Let's go!  ", "WHOOSH!");
     expect(panel.layers[0]?.text).toBe("  Let's go!  "); expect(panel.layers[0]?.tx).toBe(68); expect(panel.layers[1]?.text).toBe("WHOOSH!");
     panel.layers = dialogueLayers(panel, "We did it!", "POW!"); expect(panel.image).toBe("saved-final.png"); expect(panel.layers[0]?.text).toBe("We did it!");
-    expect(dialogueLayers(panel, "")).toHaveLength(0);
+    expect(dialogueLayers(panel, "").some((l) => l.type === "speech")).toBe(false);
+    expect(dialogueLayers(panel, "")[0]?.text).toBe("WHOOSH!");
   });
 });

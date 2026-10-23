@@ -14,9 +14,9 @@ export type BugleyMood = "flying" | "cheering" | "painting" | "celebrating";
 
 const PAINT_LINES = ["Mixing the colors...", "Dipping my brush...", "Adding sparkle...", "Almost there..."];
 
-export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false, longAnswer = false, initialAnswer = "", hideHeading = false }: {
+export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false, longAnswer = false, initialAnswer = "", hideHeading = false, maxAnswer = 20000 }: {
   child: SidekickChild; question: string; choices: StepChoice[]; onChoose: (c: StepChoice) => void;
-  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean; longAnswer?: boolean; initialAnswer?: string; hideHeading?: boolean;
+  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean; longAnswer?: boolean; initialAnswer?: string; hideHeading?: boolean; maxAnswer?: number;
 }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
@@ -77,7 +77,7 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
         {own && onOwnIdea && <div className={cn(ownIdeaBelow && "col-span-full", "flex flex-col items-center justify-center gap-3 rounded-[2rem] border-2 border-dashed border-primary bg-card p-5 text-center shadow-soft")}>
           <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>My own idea!</span>
           {typing ? <form className={cn("flex w-full gap-2", longAnswer && "flex-col")} onSubmit={(e) => { e.preventDefault(); if (text.trim()) onOwnIdea(longAnswer ? text : text.trim()); }}>
-              {longAnswer ? <textarea rows={sprouts ? 3 : 5} value={text} onChange={(e) => setText(e.target.value)} maxLength={20000} aria-label="Your story words" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" /> : <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={600} aria-label="Type your idea" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" />}
+              {longAnswer ? <textarea rows={sprouts ? 3 : 5} value={text} onChange={(e) => setText(e.target.value)} maxLength={maxAnswer} aria-label="Your story words" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" /> : <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={600} aria-label="Type your idea" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" />}
               <Button variant="ghost" type="submit" className="rounded-2xl bg-primary px-4 font-display text-primary-foreground">Go</Button>
               {longAnswer && voice.supported && <Button variant="secondary" type="button" onClick={voice.start} aria-label="Say your story words" className={cn("self-center", voice.listening && "animate-pulse")}><Mic />{voice.listening ? "Listening…" : "Say my words"}</Button>}
             </form>
