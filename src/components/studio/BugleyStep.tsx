@@ -25,9 +25,12 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
   const [paintLine, setPaintLine] = useState(0);
   const voice = useVoiceInput((t) => onOwnIdea?.(t));
   const [page, setPage] = useState(0);
-  const paged = choices.length > 4;
-  const pages = paged ? Math.ceil(choices.length / 3) : 1;
-  const shown = paged ? choices.slice((page % pages) * 3, (page % pages) * 3 + 3) : choices;
+  const own = allowOwnIdea && !!onOwnIdea;
+  const room = own ? 3 : 4; // never more than 4 cards on screen
+  const paged = choices.length > room;
+  const size = paged ? room - 1 : room;
+  const pages = Math.ceil(choices.length / size);
+  const shown = choices.slice((page % pages) * size, (page % pages) * size + size);
   useEffect(() => setPage(0), [question]);
 
   useEffect(() => { if (sprouts) speak(question); setTyping(false); setText(""); }, [question, sprouts]);
@@ -69,7 +72,7 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
           <span className={cn("block px-4 py-3 font-display leading-tight", sprouts ? "text-3xl" : "text-2xl")}>{c.label}</span>
         </button>)}
         {paged && <button onClick={() => setPage(page + 1)} className="flex flex-col items-center justify-center gap-2 rounded-[2rem] border-2 border-border bg-card p-5 font-display text-2xl shadow-soft transition hover:border-primary"><span className="text-5xl" aria-hidden>👀</span>More!</button>}
-        {allowOwnIdea && onOwnIdea && <div className="flex flex-col items-center justify-center gap-3 rounded-[2rem] border-2 border-dashed border-primary bg-card p-5 text-center shadow-soft">
+        {own && onOwnIdea && <div className="flex flex-col items-center justify-center gap-3 rounded-[2rem] border-2 border-dashed border-primary bg-card p-5 text-center shadow-soft">
           <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>My own idea!</span>
           {typing ? <form className="flex w-full gap-2" onSubmit={(e) => { e.preventDefault(); if (text.trim()) onOwnIdea(text.trim()); }}>
               <input autoFocus value={text} onChange={(e) => setText(e.target.value)} maxLength={200} aria-label="Type your idea" className="min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 py-3 text-lg outline-none focus:border-primary" />
