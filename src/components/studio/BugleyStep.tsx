@@ -14,9 +14,9 @@ export type BugleyMood = "flying" | "cheering" | "painting" | "celebrating";
 
 const PAINT_LINES = ["Mixing the colors...", "Dipping my brush...", "Adding sparkle...", "Almost there..."];
 
-export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false, longAnswer = false, initialAnswer = "" }: {
+export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBack, step, steps, mood = "flying", allowOwnIdea = true, bare = false, ownIdeaBelow = false, longAnswer = false, initialAnswer = "", hideHeading = false }: {
   child: SidekickChild; question: string; choices: StepChoice[]; onChoose: (c: StepChoice) => void;
-  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean; longAnswer?: boolean; initialAnswer?: string;
+  onOwnIdea?: ((text: string) => void) | undefined; onBack?: (() => void) | undefined; step?: number; steps?: number; mood?: BugleyMood; allowOwnIdea?: boolean; /** Hide Bugley here when a BugleyGuide above already speaks the line. */ bare?: boolean; /** Show all four idea cards above the voice/type controls. */ ownIdeaBelow?: boolean; longAnswer?: boolean; initialAnswer?: string; hideHeading?: boolean;
 }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
@@ -63,7 +63,7 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
         {mood !== "painting" && <Button variant="ghost" onClick={() => speak(question)} aria-label="Hear Bugley" className="ml-3 inline-flex size-10 items-center justify-center rounded-full bg-secondary align-middle"><Volume2 className="size-5" /></Button>}
       </div>
     </div>}
-    {bare && <h2 className={cn("text-center", sprouts ? "text-4xl" : "text-3xl")}>{line}</h2>}
+    {bare && <h2 className={cn(hideHeading ? "sr-only" : "text-center", sprouts ? "text-4xl" : "text-3xl")}>{line}</h2>}
 
     {mood === "painting" ? <div className="mx-auto mt-6 h-4 w-full max-w-md overflow-hidden rounded-full bg-muted"><div className="studio-paint-bar h-full rounded-full bg-primary" /></div>
       : <div className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2")}>

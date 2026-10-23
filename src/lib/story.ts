@@ -33,6 +33,7 @@ export function storyBeats(band: string): StoryBeat[] {
     { step: "Ending", cue: "What did {hero} learn from this adventure?", sparks: ["Trust your friends", "Keep trying", "Listen to others"] }, END];
 }
 export function guidedPages(band: string) { return storyBeats(band).map((beat) => newStoryPage(beat.step)); }
+export function needsStoryFollowup(story: StoryData, pageId: string) { return !(story.followups ?? []).includes(pageId); }
 export function beatQuestion(band: string, index: number, map: StoryData["map"]) {
   return (storyBeats(band)[index]?.cue ?? "What happens next?").replaceAll("{hero}", map.hero || "your hero").replaceAll("{problem}", map.problem || "Something goes wrong");
 }

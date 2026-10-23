@@ -67,7 +67,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     if (!ending || !story || story.data.finished) return;
     let active = true;
     chat.say("You made a whole adventure! What should we call it?", []);
-    void ask({ data: { childId: child.id, storyId: story.id, purpose: "titles", context: "Story Maker", source: "chip", environment: env, text: "Offer three title ideas for my saved story, not story sentences." } }).then((r) => { if (active && !r.blocked) setTitles(r.chips); }).catch(() => setTitles(["A Brave Adventure", "The Unexpected Journey", "A Wonderful Surprise"]));
+    void ask({ data: { childId: child.id, storyId: story.id, purpose: "titles", context: "Story Maker", source: "chip", environment: env, text: "Offer three title ideas for my saved story, not story sentences." } }).then((r) => { if (active && !r.blocked) setTitles(r.chips.length === 3 ? r.chips : ["A Brave Adventure", "The Unexpected Journey", "A Wonderful Surprise"]); }).catch(() => setTitles(["A Brave Adventure", "The Unexpected Journey", "A Wonderful Surprise"]));
     return () => { active = false; };
   }, [ending, story?.id]);
   async function run(task: () => Promise<void>) {
@@ -128,7 +128,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     setStory(next); setIndex(0); onStory(next.id); refresh();
   }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your adventure…" choices={[]} mood="painting" allowOwnIdea={false} onChoose={() => {}} />;
-  if (story.data.finished) return <div className="space-y-6"><StoryReader story={story} child={child} /><div className="studio-bugley-cheer flex flex-wrap justify-center gap-3"><Button size="lg" onClick={() => void continueChapter()}><BookOpen />Want to write Chapter 2?</Button></div></div>;
+  if (story.data.finished) return <div className="space-y-6"><StoryReader story={story} child={child} /><div className="studio-bugley-cheer flex flex-wrap justify-center gap-3"><Button size="lg" onClick={() => void continueChapter()}><BookOpen />{story.data.bookId ? "Write the next chapter?" : "Want to write Chapter 2?"}</Button></div></div>;
   if (ending) return <div className="space-y-4"><BugleyStep child={child} bare question="What’s your story called?" choices={titles.map((t, i) => ({ key: `${i}`, label: t, emoji: "📖" }))} onBack={() => setIndex(story.data.pages.length - 1)} onChoose={(c) => void finish(c.label)} onOwnIdea={(t) => void finish(t)} />{pendingTitle && <Button onClick={() => void finish(pendingTitle)}>Try my cover again · 3 glow</Button>}</div>;
   if (!page) return null;
   const back = index > 0 ? () => setIndex(index - 1) : undefined;
@@ -140,7 +140,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     <div className="flex justify-between gap-3"><Button variant="ghost" disabled={!index} onClick={back}><ArrowLeft />Back</Button><Button onClick={() => setIndex(index + 1)}>{index + 1 === story.data.pages.length ? "The end!" : "Next page"}<ArrowRight /></Button></div>
   </div>;
   return <div className="space-y-4">
-    <BugleyStep child={child} bare question={`Page ${index + 1}! ${question || beatQuestion(band, index, story.data.map)}`} choices={sparks.map((s, i) => ({ key: `${i}`, label: s, emoji: ["💡", "✨", "🌟"][i] }))} longAnswer initialAnswer={answer || (editing ? page.text : "")} step={index} steps={story.data.pages.length} onBack={back} onChoose={(c) => { setAnswer(page.text); setQuestion(`${c.label}! What happens, in your words?`); setEditing(true); }} onOwnIdea={(t) => void saveWords(t)} />
+    <BugleyStep child={child} bare hideHeading question={`Page ${index + 1}! ${question || beatQuestion(band, index, story.data.map)}`} choices={sparks.map((s, i) => ({ key: `${i}`, label: s, emoji: ["💡", "✨", "🌟"][i] }))} longAnswer initialAnswer={answer || (editing ? page.text : "")} step={index} steps={story.data.pages.length} onBack={back} onChoose={(c) => { setAnswer(page.text); const q = `${c.label}! What happens, in your words?`; setQuestion(q); chat.say(q, []); setEditing(true); }} onOwnIdea={(t) => void saveWords(t)} />
     {page.text && !page.image && <div className="space-y-2"><p className="whitespace-pre-wrap break-words text-lg">{page.text}</p><Button onClick={() => void run(() => paint(story))}>Paint my saved words · 3 glow</Button></div>}
     {controls?.[child.id]?.spelling_help && page.text && <Button variant="ghost" onClick={() => void run(async () => {
       const r = await ask({ data: { childId: child.id, storyId: story.id, pageId: page.id, purpose: "spelling", context: "Story Maker", source: "chip", environment: env, text: "Check up to three spellings in my saved words without rewriting any sentence." } }); setSpelling(r.reply); chat.say(r.reply, []);

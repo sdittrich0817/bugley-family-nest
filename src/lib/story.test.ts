@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { EMPTY_MAP, GENRES, newStoryPage, readyToFinish, STORY_STEPS, storySchema, guidedPages, storyBeats, cleanSparks, type StoryData } from "./story";
+import { EMPTY_MAP, GENRES, newStoryPage, readyToFinish, STORY_STEPS, storySchema, guidedPages, storyBeats, cleanSparks, needsStoryFollowup, type StoryData } from "./story";
+import { controlsSchema, DEFAULT_CONTROLS } from "./hub";
 
 function draft(): StoryData { return { genre: "Adventure", styleKey: "watercolor", characterIds: [], map: { ...EMPTY_MAP }, pages: STORY_STEPS.map((step) => ({ ...newStoryPage(step), text: "The hero took a brave step.", image: "family/child/image.png" })), cover: "family/child/cover.png", finished: false }; }
 describe("Story Maker rules", () => {
@@ -15,5 +16,6 @@ describe("Story Maker rules", () => {
   it("never inserts sparks into the child's story text", () => { expect(guidedPages("explorers").every((p) => p.text === "")).toBe(true); });
   it("preserves child words exactly including whitespace and spelling", () => { const page = { ...newStoryPage(), text: "  Pip wos brave.\nShe helpt!  " }; expect(storySchema.parse({ ...draft(), pages: [page] }).pages[0]?.text).toBe("  Pip wos brave.\nShe helpt!  "); });
   it("keeps sparks within 2–5 words, never accepts full-sentence length", () => { expect(cleanSparks(["Brave", "A clever plan", "This long sentence would write the story", "A secret door!"])).toEqual(["A clever plan", "A secret door"]); });
-  it("records one follow-up per saved page", () => { const s = storySchema.parse({ ...draft(), followups: ["page-one"] }); expect(s.followups?.includes("page-one")).toBe(true); expect(s.followups?.includes("page-two")).toBe(false); });
+  it("allows one follow-up then leaves the decision to the child", () => { const s = draft(); expect(needsStoryFollowup(s, "page-one")).toBe(true); s.followups = ["page-one"]; expect(needsStoryFollowup(s, "page-one")).toBe(false); expect(needsStoryFollowup(s, "page-two")).toBe(true); });
+  it("lets parents turn spelling help off and on, with no automatic rewriting", () => { const base = { ...DEFAULT_CONTROLS, childId: crypto.randomUUID() }; expect(controlsSchema.parse(base).spelling_help).toBe(false); expect(controlsSchema.parse({ ...base, spelling_help: true }).spelling_help).toBe(true); });
 });

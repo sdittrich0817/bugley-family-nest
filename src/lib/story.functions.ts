@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "./billing.functions";
-import { GENRES, storyMapSchema, pageSchema, EMPTY_MAP, newStoryPage, readyToFinish, type StoryData, guidedPages, storyBeats } from "./story";
+import { GENRES, storyMapSchema, pageSchema, EMPTY_MAP, newStoryPage, readyToFinish, type StoryData, guidedPages, storyBeats, needsStoryFollowup } from "./story";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), heroId: z.string().uuid(), place: z.string().trim().min(1).max(600), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
@@ -74,7 +74,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireS
   } else if (data.action === "review") {
     const page = story.data.pages.find((p) => p.id === data.pageId);
     if (!page || !page.text.trim()) throw new Error("Write your words first.");
-    if (!(story.data.followups ?? []).includes(page.id)) {
+    if (needsStoryFollowup(story.data, page.id)) {
       story.data.followups = [...(story.data.followups ?? []), page.id];
       await persistStory(context.userId, child.id, story);
       const { assistStory } = await import("./story.server");
