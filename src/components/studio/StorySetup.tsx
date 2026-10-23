@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -32,6 +32,10 @@ export function StorySetup({ child, chat, onCreate }: { child: SidekickChild; ch
   const { data: cast = [], refetch } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const ideas = useServerFn(storySetupIdeas);
   useScrollTopOn(`${step}-${making}-${picking}`);
+  useEffect(() => {
+    if (making) return;
+    chat.say(busy ? "Thinking about your adventure…" : step === 0 ? "Pick your story’s look!" : step === 1 ? "Who’s your hero?" : step === 2 ? `Where does ${hero?.name ?? "your hero"} live?` : "Uh-oh! What goes wrong?", []);
+  }, [step, making, busy]);
   async function choosePlace(text: string) {
     if (!hero || busy) return;
     setBusy(true);
