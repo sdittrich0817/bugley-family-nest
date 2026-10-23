@@ -121,86 +121,99 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
     changePage(setLayout(page, l)); setPanelIndex(0); setLayerId(null);
     if (l === "one") chat.say("A full-page panel! Perfect for a big moment. Your call!");
   }
-  function selectPanel(i: number) {
+  function selectPanel(i: number, p = index) {
     setPanelIndex(i); setLayerId(null);
-    if (comic && page && index === comic.data.pages.length - 1 && i === page.panels.length - 1) chat.say("Last panel! What’s the payoff or punchline? Your call!");
-    else if (index === 0 && i === 0) chat.say("Your opening panel! What do readers need to see first? Your call!");
+    const pg = comic?.data.pages[p];
+    if (comic && pg && p === comic.data.pages.length - 1 && i === pg.panels.length - 1 && pg.panels.length > 1) chat.say("Last panel! What’s the payoff or punchline? Your call!");
+    else if (p === 0 && i === 0) chat.say("Your opening panel! What do readers need to see first? Your call!");
+    else chat.say(`Panel ${i + 1}! What happens here? Close up on a face, or far away so we see everything?`);
   }
 
-  if (makingCharacter) return <div className="space-y-4"><Button variant="ghost" onClick={() => setMakingCharacter(false)}><ArrowLeft />Comic Maker</Button><CharacterCreator child={child} chat={chat} onDone={() => setMakingCharacter(false)} /></div>;
   if (comicId && !comic) return <div className="flex min-h-64 flex-col items-center justify-center gap-4"><Bugley expression="thinking" stage={child.bugley_stage} size={100} /><p>Opening your comic…</p></div>;
-  if (!comic) return <div className="space-y-6">
-    <h1 className="text-3xl">Comic Maker</h1>
-    <label className="block space-y-2 font-semibold"><span>Your comic’s title</span><input className={field} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} placeholder="Give it a made-up name" /></label>
-    <section className="space-y-3"><h2 className="text-xl">What kind of comic?</h2><div className="flex flex-wrap gap-2">{GENRES.map((g) => <Button key={g} variant={genre === g ? "primary" : "outline"} size="sm" aria-pressed={genre === g} onClick={() => setGenre(g)}>{g}</Button>)}</div></section>
-    <section className="space-y-3"><h2 className="text-xl">Who’s in it?</h2><div className="flex flex-wrap gap-3">{cast.map((c) => <Button key={c.id} variant={picked.includes(c.id) ? "primary" : "outline"} aria-pressed={picked.includes(c.id)} className="h-auto max-w-32 flex-col whitespace-normal p-2" onClick={() => setPicked(picked.includes(c.id) ? picked.filter((id) => id !== c.id) : [...picked, c.id])}><img src={c.url} alt="" className="size-20 rounded-lg object-cover" /><span className="break-words">{c.title}</span></Button>)}<Button variant="outline" onClick={() => setMakingCharacter(true)}><Plus />Create a character</Button></div></section>
-    <section className="space-y-3"><h2 className="text-xl">Art style <span className="text-sm font-normal text-muted-foreground">· stays the same for the whole comic</span></h2><StylePicker value={style} onChange={setStyle} /></section>
-    <Button disabled={busy || !title.trim()} onClick={async () => { setBusy(true); try { const next = await create({ data: { childId: child.id, title, genre, styleKey: style, characterIds: picked, environment: env } }); adopt(next); onComic(next.id); chat.say("Who’s your hero, and what do they want? Your call!"); } catch (e) { toast.error(e instanceof Error ? e.message : "We couldn’t start your comic."); } finally { setBusy(false); refresh(); } }}><Sparkles />{busy ? "Starting…" : "Start my comic"}</Button>
-  </div>;
+  if (!comic) return <MakerSetup child={child} chat={chat} kind="comic" mapLabels={MAP_LABELS} defaultStyle="classic_comic" onCreate={async (r) => {
+    try {
+      const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, environment: env } });
+      const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
+      adopt(next); onComic(next.id); setIndex(0); setPanelIndex(0);
+      chat.say("Your first page! How many panels should it have? Then tell me what happens in panel 1.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "We couldn’t start your comic."); } finally { refresh(); }
+  }} />;
   if (reading) return <ComicReader comic={comic} child={child} onBack={!comic.data.finished ? () => setReading(false) : undefined} />;
 
-  return <div className="space-y-6" aria-busy={busy}>
-    <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="break-words text-3xl">{comic.title}</h1><span className="text-sm text-muted-foreground" role="status">{busy ? "Working…" : dirty ? "Unsaved changes" : "Saved"}</span></div>
-    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><span>{comic.data.genre}</span><span>· {comic.data.styleKey.replaceAll("_", " ")}</span><span>· {comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"}</span><Button variant="ghost" size="sm" disabled={dirty || busy} onClick={() => setReading(true)}><BookOpen />Read</Button></div>
-    <section className="space-y-3 border-y border-border py-4"><div className="flex items-center justify-between gap-2"><h2 className="text-xl">My Story Map</h2><Button variant="ghost" size="sm" disabled={busy || dirty} onClick={() => { setMapEditing(!mapEditing); setMapDraft(comic.data.map); }}>{mapEditing ? "Close" : "Edit"}</Button></div>
-      {mapEditing ? <><div className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([k, label]) => <label key={k} className="space-y-1 text-sm font-semibold"><span>{label}</span><textarea rows={2} maxLength={600} disabled={busy} className={field} value={mapDraft[k as keyof typeof mapDraft]} onChange={(e) => { setMapDraft({ ...mapDraft, [k]: e.target.value }); setDirty(true); }} /></label>)}</div>
-        <div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(mapDraft).some((v) => !v.trim())} onClick={() => void action("map")}><Save />Save Story Map</Button><Button variant="ghost" onClick={() => speak(Object.values(MAP_LABELS).join(" "))}><Volume2 />Hear questions</Button></div></>
-      : <dl className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([k, label]) => <div key={k}><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words font-semibold">{comic.data.map[k as keyof typeof mapDraft]}</dd></div>)}</dl>}
-    </section>
+  const mapForm = <div className="space-y-3"><div className="grid gap-3 sm:grid-cols-2">{Object.entries(MAP_LABELS).map(([k, label]) => <label key={k} className="space-y-1 text-sm font-semibold"><span>{label}</span><textarea rows={2} maxLength={600} disabled={busy} className={field} value={mapDraft[k as keyof typeof mapDraft]} onChange={(e) => { setMapDraft({ ...mapDraft, [k]: e.target.value }); setDirty(true); }} /></label>)}</div>
+    <Button disabled={busy || Object.values(mapDraft).some((v) => !v.trim())} onClick={() => void action("map")}><Save />Save Story Map</Button></div>;
+  if (Object.values(comic.data.map).some((v) => !v.trim())) return <div className="space-y-5"><h1 className="text-center text-3xl">Finish your Story Map</h1>{mapForm}</div>;
 
-    {!mapEditing && page && panel && <>
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-2xl">Page {index + 1} <span className="text-base font-normal text-muted-foreground">of {comic.data.pages.length}</span></h2>
-          <div className="flex flex-wrap gap-1">
-            <Button variant="ghost" size="icon" aria-label="Previous page" disabled={!index || dirty || busy} onClick={() => { setIndex(index - 1); setPanelIndex(0); setLayerId(null); }}><ArrowLeft /></Button>
-            <Button variant="ghost" size="icon" aria-label="Next page" disabled={index >= comic.data.pages.length - 1 || dirty || busy} onClick={() => { setIndex(index + 1); setPanelIndex(0); setLayerId(null); }}><ArrowRight /></Button>
-            <Button variant="ghost" size="icon" aria-label="Move page earlier" disabled={!index || busy} onClick={() => void action("move", index - 1)}><ArrowUp /></Button>
-            <Button variant="ghost" size="icon" aria-label="Move page later" disabled={index >= comic.data.pages.length - 1 || busy} onClick={() => void action("move", index + 1)}><ArrowDown /></Button>
-            <Button variant="ghost" size="icon" aria-label="Remove page" disabled={comic.data.pages.length === 1 || busy} onClick={() => { if (window.confirm("Remove this page?")) void action("remove"); }}><Trash2 /></Button>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Page layout">{(Object.keys(LAYOUTS) as Layout[]).map((l) => <Button key={l} size="sm" variant={page.layout === l ? "primary" : "outline"} aria-pressed={page.layout === l} disabled={busy} onClick={() => pickLayout(l)}><LayoutIcon layout={l} />{LAYOUT_LABEL[l]}</Button>)}</div>
-        <div className="mx-auto w-full max-w-xs"><PageGrid page={page} urls={comic.urls} selected={panelIndex} onSelect={selectPanel} /></div>
-      </section>
+  if (finishing) return <div className="space-y-5" aria-busy={busy}>
+    <h1 className="text-center text-3xl sm:text-4xl">{comic.data.bookId ? "Finish this chapter" : "Make your cover"}</h1>
+    {!comic.data.bookId && <>
+      {comic.data.cover && <div className="mx-auto max-w-xs"><ComicCover comic={comic} cast={cast} /></div>}
+      <textarea rows={2} maxLength={600} className={field} disabled={busy} value={coverDescription} onChange={(e) => setCoverDescription(e.target.value)} placeholder="What’s on the cover?" aria-label="Describe the cover picture" />
+      <Button variant="secondary" size="lg" disabled={busy || coverDescription.trim().length < 3} onClick={() => void action("cover")}>{busy ? "Drawing…" : comic.data.cover ? "Draw cover again · 3 glow" : "Draw cover · 3 glow"}</Button>
+    </>}
+    {!readyToFinishComic(comic.data) && <p className="rounded-2xl bg-muted p-4 font-medium">Almost there! Every panel needs a final picture{comic.data.bookId ? "." : ", and your comic needs a cover."}</p>}
+    <p className="text-center text-sm text-muted-foreground">{comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"} toward a printed book</p>
+    <StepNav onBack={() => setFinishing(false)} busy={busy} canNext={readyToFinishComic(comic.data) && !dirty} nextLabel={<><Check />Finish my comic</>} onNext={() => void action("finish")} />
+  </div>;
 
-      <section className="space-y-4 rounded-3xl bg-card p-4 shadow-soft sm:p-6">
-        <h3 className="text-xl">Panel {panelIndex + 1}</h3>
-        <label className="block space-y-2"><span className="font-semibold">What happens in this panel?</span><textarea rows={3} maxLength={600} disabled={busy} className={cn(field, sprouts && "text-xl")} value={panel.description} placeholder="Zara flies over the city, looking worried" onChange={(e) => changePanel({ description: e.target.value })} /></label>
+  if (!page || !panel) return null;
+  const emptyPage = page.panels.every((p) => !p.description.trim() && !p.sketch && !p.layers.length);
+  const lastPanel = index === comic.data.pages.length - 1 && panelIndex === page.panels.length - 1;
+  const layoutPicker = <div className="flex flex-wrap gap-2" role="group" aria-label="Page layout">{(Object.keys(LAYOUTS) as Layout[]).map((l) => <Button key={l} size="sm" variant={page.layout === l ? "primary" : "outline"} aria-pressed={page.layout === l} disabled={busy} onClick={() => pickLayout(l)}><LayoutIcon layout={l} />{LAYOUT_LABEL[l]}</Button>)}</div>;
+
+  return <div className="space-y-5" aria-busy={busy}>
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0"><h1 className="truncate text-2xl sm:text-3xl">{comic.title}</h1><p className="text-sm text-muted-foreground" role="status">Page {index + 1} of {comic.data.pages.length} · Panel {panelIndex + 1} of {page.panels.length} · {busy ? "Working…" : dirty ? "Not saved yet" : "Saved"}</p></div>
+      <div className="flex shrink-0 gap-1"><Button variant="ghost" size="sm" disabled={busy} onClick={async () => { if (dirty && !(await action("page"))) return; setReading(true); }}><BookOpen />Read</Button>
+        <Button variant="ghost" size="sm" onClick={() => setShowMore(!showMore)} aria-expanded={showMore}><MoreHorizontal />More</Button></div>
+    </div>
+    {showMore && <section className="space-y-4 rounded-3xl bg-card p-4 shadow-soft animate-in fade-in">
+      {!emptyPage && <div><p className="mb-2 text-sm font-semibold">Panels on this page</p>{layoutPicker}</div>}
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" disabled={!index || busy} onClick={() => void action("move", index - 1)}><ArrowUp />Move page earlier</Button>
+        <Button variant="outline" size="sm" disabled={index >= comic.data.pages.length - 1 || busy} onClick={() => void action("move", index + 1)}><ArrowDown />Move page later</Button>
+        <Button variant="outline" size="sm" disabled={comic.data.pages.length === 1 || busy} onClick={() => { if (window.confirm("Remove this page?")) void action("remove"); }}><Trash2 />Remove page</Button>
+        <Button variant="ghost" size="sm" disabled={busy} onClick={() => void coach("Look at my comic's beats and pacing. What's one question you'd ask me?")}><Sparkles />How’s my pacing?</Button>
+      </div>
+      <details><summary className="cursor-pointer font-semibold">My Story Map</summary><div className="mt-3">{mapForm}</div></details>
+    </section>}
+
+    {emptyPage && <section className="space-y-2 rounded-3xl bg-card p-4 shadow-soft"><p className="font-display text-lg">How many panels on this page?</p>{layoutPicker}</section>}
+
+    <div className="grid gap-5 sm:grid-cols-[9rem_1fr]">
+      <div className="mx-auto w-32 sm:w-36"><PageGrid page={page} urls={comic.urls} selected={panelIndex} onSelect={(i) => selectPanel(i)} /></div>
+      <section className="space-y-4">
+        <div className="relative"><textarea rows={3} maxLength={600} disabled={busy} aria-label={`What happens in panel ${panelIndex + 1}?`} className={cn(field, "bg-card pr-16 shadow-soft", sprouts && "text-xl")} value={panel.description} placeholder="Zara flies over the city, looking worried" onChange={(e) => changePanel({ description: e.target.value })} />
+          {voice.supported && <button type="button" onClick={voice.start} aria-label="Say it" className={cn("absolute bottom-3 right-3 flex size-12 items-center justify-center rounded-full bg-secondary", voice.listening && "animate-pulse bg-primary")}><Mic className="size-6" /></button>}</div>
         <div className="space-y-2"><span className="flex items-center gap-2 text-sm font-semibold"><Camera className="size-4" />Where’s the camera?</span><div className="flex flex-wrap gap-2">{ANGLES.map((a) => <Button key={a || "auto"} size="sm" variant={panel.angle === a ? "primary" : "outline"} aria-pressed={panel.angle === a} disabled={busy} onClick={() => changePanel({ angle: a })}>{ANGLE_LABEL[a]}</Button>)}</div></div>
         <div className="flex flex-wrap gap-2">
-          {sprouts && voice.supported && <Button variant="secondary" disabled={busy} onClick={voice.start}><Mic />{voice.listening ? "Listening…" : "Say it"}</Button>}
-          <Button variant="ghost" disabled={busy} onClick={() => void coach(`Help me with panel ${panelIndex + 1} on page ${index + 1}. Ask me about the camera: close up or far away?`)}><Sparkles />Ask Bugley</Button>
-          <Button variant="secondary" disabled={busy || panel.description.trim().length < 3} onClick={() => void action("sketch")}>{panel.sketch ? "Sketch again · 1 glow" : "Sketch it · 1 glow"}</Button>
-          <Button disabled={busy || !panel.sketch || dirty} onClick={() => void action("final")}>{panel.image ? "Final again · 3 glow" : "Make it final · 3 glow"}</Button>
+          <Button variant={panel.sketch ? "outline" : "primary"} disabled={busy || panel.description.trim().length < 3} onClick={() => void action("sketch")}>✏️ {panel.sketch ? "Sketch again" : "Sketch it"} · 1 glow</Button>
+          {panel.sketch && <Button variant="primary" disabled={busy} onClick={() => void action("final")}>✨ {panel.image ? "Final again" : "Make it final"} · 3 glow</Button>}
         </div>
-        {!panel.sketch && <p className="text-sm text-muted-foreground">Sketch first. When you like it, make it final.</p>}
-        {panel.sketch && !panel.image && dirty && <p className="text-sm text-muted-foreground">Save your page before making it final.</p>}
-
-        <div className="space-y-2"><span className="text-sm font-semibold">Add words on top (never inside the picture)</span><div className="flex flex-wrap gap-2">{LAYER_BUTTONS.map(({ type, label, icon: Icon }) => <Button key={type} size="sm" variant="outline" disabled={busy || panel.layers.length >= 12} onClick={() => { const l = newLayer(type); changeLayers([...panel.layers, l]); setLayerId(l.id); }}><Icon />{label}</Button>)}</div></div>
-        <div className="mx-auto w-full max-w-lg">
-          <PanelCanvas panel={panel} url={comic.urls[panel.image ?? panel.sketch ?? ""]} aspect={panelAspect(page.layout, panelIndex)} editable selected={layerId} onSelect={setLayerId} onLayers={changeLayers} />
-          {panel.sketch && !panel.image && <p className="mt-1 text-center text-xs text-muted-foreground">Sketch</p>}
-        </div>
-        {layer && <div className="flex flex-wrap items-end gap-2">
-          <label className="min-w-0 flex-1 space-y-1"><span className="text-sm font-semibold">{LAYER_BUTTONS.find((b) => b.type === layer.type)?.label} words</span><input autoFocus className={cn(field, layer.type === "sfx" ? "font-sfx text-xl" : "font-comic")} maxLength={200} value={layer.text} placeholder={layer.type === "sfx" ? "POW!" : "Your words"} onChange={(e) => changeLayers(panel.layers.map((l) => l.id === layer.id ? { ...l, text: e.target.value } : l))} /></label>
-          <Button variant="ghost" aria-label="Remove words" onClick={() => { changeLayers(panel.layers.filter((l) => l.id !== layer.id)); setLayerId(null); }}><Trash2 />Remove</Button>
-        </div>}
-        <p className="text-xs text-muted-foreground">Drag words to move them. Drag the corner to resize. Drag the dot to point the bubble’s tail.</p>
-        <div className="flex flex-wrap gap-2"><Button disabled={busy || !dirty} onClick={() => void action("page")}><Save />Save page</Button><Button variant="outline" disabled={busy} onClick={() => void action("add")}><Plus />Add a page</Button><Button variant="ghost" disabled={busy} onClick={() => void coach("Look at my comic's beats and pacing. What's one question you'd ask me?")}><Sparkles />How’s my pacing?</Button></div>
       </section>
+    </div>
 
-      <section className="space-y-3 border-t border-border pt-6">
-        {!comic.data.bookId ? <>
-        <h2 className="text-2xl">The cover</h2>
-        <label className="block space-y-2"><span className="text-sm font-semibold">Describe the cover picture</span><textarea rows={2} maxLength={600} className={field} disabled={busy} value={coverDescription} onChange={(e) => setCoverDescription(e.target.value)} /></label>
-        <Button variant="secondary" disabled={busy || coverDescription.trim().length < 3} onClick={() => void action("cover")}>Draw cover · 3 glow</Button>
-        {comic.data.cover && <div className="mx-auto max-w-xs"><ComicCover comic={comic} cast={cast} /></div>}
-        </> : <h2 className="text-2xl">Finish this chapter</h2>}
-        <div><Button disabled={busy || dirty || !readyToFinishComic(comic.data)} onClick={() => void action("finish")}><Check />Finish my comic</Button></div>
-        <p className="text-sm text-muted-foreground">{comic.data.bookId ? "To finish, make every panel final." : "To finish, make every panel final and draw a cover."} {comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"} toward a printed book · Printing comes later.</p>
-      </section>
-    </>}
+    {(panel.sketch || panel.image) && <section className="space-y-3">
+      <div className="mx-auto w-full max-w-lg">
+        <PanelCanvas panel={panel} url={comic.urls[panel.image ?? panel.sketch ?? ""]} aspect={panelAspect(page.layout, panelIndex)} editable selected={layerId} onSelect={setLayerId} onLayers={changeLayers} />
+        {!panel.image && <p className="mt-1 text-center text-xs text-muted-foreground">Sketch</p>}
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">{LAYER_BUTTONS.map(({ type, label, icon: Icon }) => <Button key={type} size="sm" variant="outline" disabled={busy || panel.layers.length >= 12} onClick={() => { const l = newLayer(type); changeLayers([...panel.layers, l]); setLayerId(l.id); }}><Icon />{label}</Button>)}</div>
+      {layer && <div className="flex flex-wrap items-end gap-2">
+        <label className="min-w-0 flex-1 space-y-1"><span className="text-sm font-semibold">{LAYER_BUTTONS.find((b) => b.type === layer.type)?.label} words</span><input autoFocus className={cn(field, layer.type === "sfx" ? "font-sfx text-xl" : "font-comic")} maxLength={200} value={layer.text} placeholder={layer.type === "sfx" ? "POW!" : "Your words"} onChange={(e) => changeLayers(panel.layers.map((l) => l.id === layer.id ? { ...l, text: e.target.value } : l))} /></label>
+        <Button variant="ghost" aria-label="Remove words" onClick={() => { changeLayers(panel.layers.filter((l) => l.id !== layer.id)); setLayerId(null); }}><Trash2 />Remove</Button>
+      </div>}
+      {panel.layers.length > 0 && <p className="text-center text-xs text-muted-foreground">Drag words to move them. Drag the corner to resize. Drag the dot to point the tail.</p>}
+    </section>}
+
+    <div className="flex items-center justify-between gap-2 pt-2">
+      <Button variant="ghost" size="lg" disabled={busy || (index === 0 && panelIndex === 0)} onClick={() => void (panelIndex > 0 ? goTo(index, panelIndex - 1) : goTo(index - 1, (comic.data.pages[index - 1]?.panels.length ?? 1) - 1))}><ArrowLeft />Back</Button>
+      <div className="flex gap-2">
+        <Button variant="outline" size="lg" disabled={busy} onClick={async () => { if (dirty && !(await action("page"))) return; setFinishing(true); }}><Check />I’m done</Button>
+        {lastPanel ? <Button variant="primary" size="lg" disabled={busy} onClick={() => void action("add")}><Plus />New page</Button>
+          : <Button variant="primary" size="lg" disabled={busy} onClick={() => void (panelIndex < page.panels.length - 1 ? goTo(index, panelIndex + 1) : goTo(index + 1, 0))}>Next panel<ArrowRight /></Button>}
+      </div>
+    </div>
   </div>;
 }
 
