@@ -32,20 +32,18 @@ const LAYER_BUTTONS: { type: Layer["type"]; label: string; icon: typeof MessageC
 
 export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: SidekickChild; chat: BugleyChat; comicId: string | null; onComic: (id: string) => void; onDirty: (d: boolean) => void }) {
   const [comic, setComic] = useState<Comic | null>(null);
-  const [title, setTitle] = useState("");
-  const [genre, setGenre] = useState<ComicData["genre"]>("Superhero");
-  const [style, setStyle] = useState("classic_comic");
-  const [picked, setPicked] = useState<string[]>([]);
-  const [makingCharacter, setMakingCharacter] = useState(false);
   const [index, setIndex] = useState(0);
   const [panelIndex, setPanelIndex] = useState(0);
   const [layerId, setLayerId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [reading, setReading] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [coverDescription, setCoverDescription] = useState("");
   const [mapDraft, setMapDraft] = useState({ ...EMPTY_MAP });
-  const [mapEditing, setMapEditing] = useState(true);
+  const [, setMapEditing] = useState(true);
+  useScrollTopOn(`${index}-${finishing}-${reading}`);
   useEffect(() => { onDirty(dirty); }, [dirty, onDirty]);
   const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley);
   const qc = useQueryClient();
@@ -82,8 +80,8 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   }, [dirty]);
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["album", child.id] }); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); };
 
-  async function action(kind: "map" | "page" | "add" | "remove" | "move" | "sketch" | "final" | "cover" | "finish", to?: number) {
-    if (!comic || busy) return;
+  async function action(kind: "map" | "page" | "add" | "remove" | "move" | "sketch" | "final" | "cover" | "finish", to?: number): Promise<boolean> {
+    if (!comic || busy) return false;
     setBusy(true);
     try {
       let current = comic;
@@ -91,15 +89,21 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
       if (dirty && kind !== "map" && page) current = await edit({ data: { childId: child.id, id: comic.id, environment: env, action: "page", page: strip(page) } });
       const next = kind === "page" ? current : await edit({ data: { childId: child.id, id: current.id, environment: env, action: kind, map: kind === "map" ? mapDraft : undefined, pageId: page?.id, panelId: panel?.id, to, description: coverDescription } });
       adopt(next);
-      if (kind === "map") { setMapEditing(false); chat.say("Great map! Start strong: what’s the very first panel readers see? Your call!"); }
-      if (kind === "add") { setIndex(next.data.pages.length - 1); setPanelIndex(0); }
+      if (kind === "map") { setMapEditing(false); chat.say("Story Map saved! Your call what happens next."); }
+      if (kind === "add") { setIndex(next.data.pages.length - 1); setPanelIndex(0); chat.say("New page! How many panels should it have?"); }
       if (kind === "remove") { setIndex(Math.max(0, index - 1)); setPanelIndex(0); }
       if (kind === "move" && to !== undefined) setIndex(to);
-      if (kind === "finish") { setReading(true); chat.say("You made a whole comic! Every panel was your choice."); }
+      if (kind === "sketch") chat.say("Here’s the sketch! Like it? Make it final, or change your words and sketch again.");
+      if (kind === "final") chat.say("Looking great! Want to add a speech bubble or a sound effect?");
+      if (kind === "finish") { setReading(true); chat.say("You made a whole comic! Every panel was your choice."); toast.success("Your comic is in your album!"); }
       if (kind === "page" && page && page.panels.some((p) => p.layers.filter((l) => l.type === "speech").length > 1)) chat.say("Can readers tell who’s talking here? Point each bubble’s tail at the speaker. Your call!");
-      toast.success(kind === "finish" ? "Your comic is in your album!" : "Saved!");
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Your work is still here. Try saving again."); }
+      return true;
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Your work is still here. Try saving again."); return false; }
     finally { setBusy(false); refresh(); }
+  }
+  async function goTo(p: number, q: number) {
+    if (p !== index && dirty && !(await action("page"))) return;
+    setIndex(p); selectPanel(q, p);
   }
   async function coach(text: string) {
     if (!comic || busy) return;
