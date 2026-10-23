@@ -87,7 +87,8 @@ export function StoryMaker({ child, chat, storyId, onStory }: { child: SidekickC
       const r = await ask({ data: { childId: child.id, storyId: story.id, pageId: page.id, purpose, context: "Story Maker", source: "chip", environment: getStripeEnvironment(), text: purpose === "picture" ? "Suggest a picture from my saved page." : purpose === "spelling" ? "Please check a few spellings, without rewriting my words." : `Help me think about my ${page.step.toLowerCase()}.` } });
       chat.say(r.reply, r.chips);
       if ("description" in r && typeof r.description === "string" && r.description) {
-        setStory((current) => current ? { ...current, data: { ...current.data, pages: current.data.pages.map((p) => p.id === page.id ? { ...p, description: r.description } : p) } } : current); setDirty(true);
+        const description = r.description;
+        setStory((current) => current ? { ...current, data: { ...current.data, pages: current.data.pages.map((p) => p.id === page.id ? { ...p, description } : p) } } : current); setDirty(true);
       }
     } catch (e) { toast.error(e instanceof Error ? e.message : "Bugley couldn’t check that right now."); }
     finally { setBusy(false); }
@@ -116,7 +117,7 @@ export function StoryMaker({ child, chat, storyId, onStory }: { child: SidekickC
         <div className="flex items-center justify-between gap-2"><h2 className="text-2xl">Page {index + 1}</h2><div className="flex gap-1"><Button variant="ghost" size="icon" aria-label="Previous writing page" disabled={!index || dirty || busy} onClick={() => setIndex(index - 1)}><ArrowLeft /></Button><Button variant="ghost" size="icon" aria-label="Next writing page" disabled={index >= story.data.pages.length - 1 || dirty || busy} onClick={() => setIndex(index + 1)}><ArrowRight /></Button></div></div>
         {child.age_band === "builders" && <label className="block space-y-1"><span className="text-sm font-semibold">Chapter (optional)</span><input className={field} value={page.chapter} disabled={busy} maxLength={120} onChange={(e) => changePage({ chapter: e.target.value })} /></label>}
         <label className="block space-y-2"><span className="font-semibold">{HINTS[STORY_STEPS.indexOf(page.step)]}</span><textarea className={cn(field, "min-h-48", sprouts && "text-xl")} rows={sprouts ? 4 : 8} value={page.text} disabled={busy} maxLength={20000} placeholder={sprouts ? "Your one or two sentences…" : child.age_band === "builders" ? "Your next page…" : "Your short paragraph…"} onChange={(e) => changePage({ text: e.target.value })} /></label>
-        <div className="flex flex-wrap gap-2"><Button disabled={busy || !dirty} onClick={() => void action("page")}><Save />Save page</Button>{sprouts && voice.supported && <Button variant="secondary" disabled={busy} aria-label="Dictate story page" onClick={voice.start}><Mic />{voice.listening ? "Listening…" : "Say my words"}</Button>}<Button variant="ghost" onClick={() => speak(page.text || HINTS[STORY_STEPS.indexOf(page.step)])}><Volume2 />Hear page</Button><Button variant="ghost" disabled={busy} onClick={() => void assist("coach")}><Sparkles />Ask Bugley</Button><Button variant="ghost" disabled={busy || !page.text.trim()} onClick={() => void assist("spelling")}>Spelling help</Button></div>
+        <div className="flex flex-wrap gap-2"><Button disabled={busy || !dirty} onClick={() => void action("page")}><Save />Save page</Button>{sprouts && voice.supported && <Button variant="secondary" disabled={busy} aria-label="Dictate story page" onClick={voice.start}><Mic />{voice.listening ? "Listening…" : "Say my words"}</Button>}<Button variant="ghost" onClick={() => speak(page.text || HINTS[STORY_STEPS.indexOf(page.step)] || "Your words go here.")}><Volume2 />Hear page</Button><Button variant="ghost" disabled={busy} onClick={() => void assist("coach")}><Sparkles />Ask Bugley</Button><Button variant="ghost" disabled={busy || !page.text.trim()} onClick={() => void assist("spelling")}>Spelling help</Button></div>
         <label className="block space-y-2"><span className="font-semibold">What should the picture show?</span><textarea rows={3} maxLength={600} className={field} disabled={busy} value={page.description} onChange={(e) => changePage({ description: e.target.value })} /></label>
         <div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={busy || !page.text.trim()} className="h-auto min-h-11 whitespace-normal py-2" onClick={() => void assist("picture")}><Sparkles />Bugley, suggest a picture from my words</Button><Button disabled={busy || !page.text.trim() || page.description.trim().length < 3} onClick={() => void action("illustrate")}>{busy ? "Working…" : page.image ? "Draw again · 3 glow" : "Illustrate · 3 glow"}</Button></div>
         {page.image && story.urls[page.image] && <img src={story.urls[page.image]} alt={page.description} className="aspect-square w-full rounded-lg object-contain bg-muted" />}
@@ -127,7 +128,7 @@ export function StoryMaker({ child, chat, storyId, onStory }: { child: SidekickC
   </div>;
 }
 
-export function StoryReader({ story, child, onBack }: { story: Story; child: SidekickChild; onBack?: () => void }) {
+export function StoryReader({ story, child, onBack }: { story: Story; child: SidekickChild; onBack?: (() => void) | undefined }) {
   const [page, setPage] = useState(-1);
   const current = story.data.pages[page];
   const picture = page < 0 ? story.data.cover : current?.image;
