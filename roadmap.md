@@ -12,4 +12,5 @@
 - [x] Add a "How they learn" page to the main menu (method, strands by age, seasons, end goals).
 - [x] Reshape How it Works into the whole Bugley picture: learning + studio + parent side, linking to both.
 - [x] Stripe billing: Family/Family Plus with 14-day trials, plan picker, Hub billing, Kid Zone pause.
+- [x] Studio foundation: home, sidekick, safety guard, album, Hub feed.
 - [ ] Go live with real payments (blocked: Shea claims the payments account and verifies the business in the Payments tab).

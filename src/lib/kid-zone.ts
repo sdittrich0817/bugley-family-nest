@@ -29,3 +29,7 @@ export const BAND_COPY = {
   builders: { task: "Today’s project", mission: "Today’s project", studio: "Bugley’s Studio", badges: "Badges", shelf: "My shelf", greeting: (n: string) => `Hey ${n}. Got a new project lined up for you.` },
 } as const;
 export type Band = keyof typeof BAND_COPY;
+// The child currently playing on this device (per browser tab session). Server functions still check family ownership.
+const PLAYER_KEY = "bugley-kid-player";
+export function getActivePlayer() { return typeof window === "undefined" ? null : window.sessionStorage.getItem(PLAYER_KEY); }
+export function setActivePlayer(id: string | null) { if (id) window.sessionStorage.setItem(PLAYER_KEY, id); else window.sessionStorage.removeItem(PLAYER_KEY); }

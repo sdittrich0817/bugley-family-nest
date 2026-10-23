@@ -501,6 +501,44 @@ export type Database = {
           },
         ]
       }
+      parent_notifications: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          parent_id: string
+          read: boolean
+          starter: string
+          typed: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          read?: boolean
+          starter: string
+          typed: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          read?: boolean
+          starter?: string
+          typed?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "parent_notifications_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parental_consents: {
         Row: {
           adult_attested: boolean
@@ -653,6 +691,103 @@ export type Database = {
             columns: ["unit_id"]
             isOneToOne: false
             referencedRelation: "units"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_creations: {
+        Row: {
+          body: string | null
+          child_id: string
+          created_at: string
+          deleted_at: string | null
+          favorite: boolean
+          id: string
+          images: string[]
+          kind: string
+          parent_id: string
+          position: number
+          project: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          child_id: string
+          created_at?: string
+          deleted_at?: string | null
+          favorite?: boolean
+          id?: string
+          images?: string[]
+          kind: string
+          parent_id: string
+          position?: number
+          project?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          child_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          favorite?: boolean
+          id?: string
+          images?: string[]
+          kind?: string
+          parent_id?: string
+          position?: number
+          project?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_creations_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      studio_events: {
+        Row: {
+          child_id: string
+          created_at: string
+          decision: string
+          id: string
+          input: string
+          parent_id: string
+          reply: string | null
+          source: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          decision: string
+          id?: string
+          input: string
+          parent_id: string
+          reply?: string | null
+          source: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          decision?: string
+          id?: string
+          input?: string
+          parent_id?: string
+          reply?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
             referencedColumns: ["id"]
           },
         ]

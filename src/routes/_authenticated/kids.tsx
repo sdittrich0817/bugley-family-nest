@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Award, BookOpen, Delete, Lock, Sparkles, Users, Volume2 } from "lucide-react";
@@ -6,11 +6,11 @@ import { familyOptions } from "@/lib/family.functions";
 import { verifyChildLogin } from "@/lib/kid.functions";
 import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
 import { getChildGlow } from "@/lib/glow.functions";
-import { isGlowLow } from "@/lib/glow";
+import { GlowMeter } from "@/components/studio/GlowMeter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
-import { BAND_COPY, setKidZoneLocked, type Band } from "@/lib/kid-zone";
+import { BAND_COPY, getActivePlayer, setActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
 import { PICTURES, type ChildProfile } from "@/lib/family";
 import { ChildAvatar, PictureIcon } from "@/components/site/ChildAvatar";
 import { Bugley } from "@/components/brand/Bugley";
@@ -39,7 +39,7 @@ function KidZone() {
   const [picking, setPicking] = useState<ChildProfile | null>(null);
   const [player, setPlayer] = useState<ChildProfile | null>(null);
   const [exitOpen, setExitOpen] = useState(false);
-  useEffect(() => { setKidZoneLocked(true); }, []);
+  useEffect(() => { setKidZoneLocked(true); const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   if (billing && !billing.active) return <div className="min-h-screen bg-background text-foreground">
@@ -53,10 +53,10 @@ function KidZone() {
   </div>;
   return <div className={cn("min-h-screen bg-background text-foreground", player && `skin-${band}`)}>
     <header className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-      {player ? <Button variant="secondary" onClick={() => { window.speechSynthesis?.cancel(); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Kid Zone</span>}
+      {player ? <Button variant="secondary" onClick={() => { window.speechSynthesis?.cancel(); setActivePlayer(null); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Kid Zone</span>}
       <Button variant="ghost" size="sm" onClick={() => setExitOpen(true)}><Lock />Exit to Parent Hub</Button>
     </header>
-    {player ? <KidHome child={player} /> : picking ? <ChildLogin child={picking} onBack={() => setPicking(null)} onSuccess={() => { setPlayer(picking); setPicking(null); }} /> : <WhosPlaying children={data.children} onPick={setPicking} />}
+    {player ? <KidHome child={player} /> : picking ? <ChildLogin child={picking} onBack={() => setPicking(null)} onSuccess={() => { setActivePlayer(picking.id); setPlayer(picking); setPicking(null); }} /> : <WhosPlaying children={data.children} onPick={setPicking} />}
     <ExitDialog open={exitOpen} onOpenChange={setExitOpen} />
   </div>;
 }
@@ -147,11 +147,11 @@ function KidHome({ child }: { child: ChildProfile }) {
           {m.mission.storyPrompt && <p className="mt-4 text-sm text-muted-foreground">Story idea: {m.mission.storyPrompt}</p>}
         </>}
       </div>
-      <button disabled className={cn("flex flex-col items-start justify-center gap-2 rounded-3xl bg-primary p-6 text-left text-primary-foreground shadow-glow", sprouts && "min-h-44 items-center text-center")}>
+      <Link to="/kids/studio" className={cn("flex flex-col items-start justify-center gap-2 rounded-3xl bg-primary p-6 text-left text-primary-foreground shadow-glow transition hover:-translate-y-1", sprouts && "min-h-44 items-center text-center")}>
         <Sparkles className={sprouts ? "size-12" : "size-8"} />
         <span className={cn("font-display", sprouts ? "text-4xl" : "text-3xl")}>{copy.studio}</span>
-        <span className="rounded-full bg-background/70 px-3 py-1 text-sm font-semibold text-foreground">Coming soon</span>
-      </button>
+        <span className="rounded-full bg-background/70 px-3 py-1 text-sm font-semibold text-foreground">{sprouts ? "Let’s make!" : "Open the Studio"}</span>
+      </Link>
     </div>
     <div className="mt-6 grid gap-5 md:grid-cols-2">
       <div className="rounded-3xl bg-card p-6 shadow-soft">
@@ -197,17 +197,4 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
       </form>
     </DialogContent>
   </Dialog>;
-}
-
-function GlowMeter({ total, allowance, stage, big }: { total: number; allowance: number; stage: ChildProfile["bugley_stage"]; big: boolean }) {
-  const pct = Math.min(100, Math.round((total / Math.max(allowance, 1)) * 100));
-  const low = isGlowLow(total);
-  return <div className="mt-6 flex items-center gap-4 rounded-3xl bg-card p-5 shadow-soft" role="meter" aria-valuemin={0} aria-valuemax={allowance} aria-valuenow={total} aria-label="Glow">
-    <Bugley stage={stage} expression={low ? "sleepy" : "happy"} glow={!low} size={big ? 84 : 64} className="shrink-0" />
-    <div className="min-w-0 flex-1">
-      <div className="flex items-baseline justify-between gap-2"><p className={cn("font-display", big ? "text-2xl" : "text-lg")}>Glow</p><p className="font-display text-lg">{total}</p></div>
-      <div className="mt-2 h-4 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary shadow-glow transition-all" style={{ width: `${pct}%` }} /></div>
-      {low && <p className="mt-2 text-sm font-medium">I’m almost out of glow! Let’s write the next page and I’ll draw it tomorrow.</p>}
-    </div>
-  </div>;
 }
