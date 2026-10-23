@@ -1,22 +1,22 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Camera, Check, Cloud, MessageCircle, Mic, Plus, Save, Sparkles, Square, Trash2, Volume2, Zap } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Camera, Check, Cloud, MessageCircle, Mic, MoreHorizontal, Plus, Save, Sparkles, Square, Trash2, Volume2, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
-import { CharacterCreator, StylePicker } from "./Makers";
+import { MakerSetup } from "./MakerSetup";
+import { StepNav, field } from "./Guided";
 import { speak, useVoiceInput, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { askBugley } from "@/lib/studio.functions";
 import { createComic, editComic, getComic } from "@/lib/comic.functions";
-import { GENRES } from "@/lib/story";
-import { ANGLES, ANGLE_LABEL, EMPTY_MAP, LAYOUTS, LAYOUT_LABEL, newLayer, readyToFinishComic, setLayout, trimmedPanelsHaveWork, type Comic, type ComicData, type ComicPage, type Layer, type Layout, type Panel } from "@/lib/comic";
+import { ANGLES, ANGLE_LABEL, EMPTY_MAP, LAYOUTS, LAYOUT_LABEL, newLayer, readyToFinishComic, setLayout, trimmedPanelsHaveWork, type Comic, type ComicPage, type Layer, type Layout, type Panel } from "@/lib/comic";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { useScrollTopOn } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
 const MAP_LABELS = { hero: "Who is the hero?", want: "What do they want most?", place: "Where does it happen?", problem: "What’s the problem?", ending: "What’s the payoff or punchline?" };
-const field = "w-full rounded-lg border-2 border-border bg-background p-3 text-foreground outline-none focus:border-primary";
 const GRID: Record<Layout, string> = { one: "grid-cols-1 grid-rows-1", two: "grid-cols-1 grid-rows-2", three: "grid-cols-2 grid-rows-2", four: "grid-cols-2 grid-rows-2", six: "grid-cols-2 grid-rows-3" };
 /** Panel width/height on a 3:4 page, so the big editor matches the page cell exactly. */
 export function panelAspect(layout: Layout, i: number) {
