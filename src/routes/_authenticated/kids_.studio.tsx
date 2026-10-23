@@ -11,7 +11,7 @@ import { listAlbum, updateCreation, CREATION_KINDS, type Creation, type Creation
 import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
-import { Sidekick, speak, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
+import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { BugleyGuide } from "@/components/studio/Guided";
 import { Bugley } from "@/components/brand/Bugley";
 import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
@@ -77,7 +77,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const greeting = `Hi ${child.nickname}! What do you want to make today?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
-  useEffect(() => { if (sprouts) speak(greeting); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
   useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); if (view === "character") chat.say("Let’s invent a character! First, what kind?", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${band}`)}>
