@@ -86,7 +86,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   }
   async function turn(to: number) { if (dirty && !(await action("page"))) return; setIndex(to); }
   async function assist(purpose: "coach" | "picture" | "spelling") {
-    if (!story || !page || busy || mapEditing) return;
+    if (!story || !page || busy) return;
     setBusy(true);
     try {
       if (dirty) adopt(await edit({ data: { childId: child.id, id: story.id, environment: getStripeEnvironment(), action: "page", page } }));
