@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { storySchema, type Story } from "./story";
+import { storySchema, storyCoachingInstructions, type Story } from "./story";
+import { z } from "zod";
+import { aiObject } from "./studio-ai.server";
 import { signPaths } from "./images.server";
 
 export async function loadStory(sb: SupabaseClient<any>, userId: string, childId: string, id: string): Promise<Story> {
@@ -17,4 +19,16 @@ export async function persistStory(userId: string, childId: string, story: Story
   const images = [story.data.cover, ...story.data.pages.map((p) => p.image)].filter((p): p is string => !!p);
   const { data, error } = await supabaseAdmin.from("studio_creations").update({ title: story.title, details: story.data as never, style_key: story.data.styleKey, images, body: story.data.pages.map((p) => p.text).join("\n\n"), updated_at: new Date().toISOString() }).eq("id", story.id).eq("parent_id", userId).eq("child_id", childId).is("deleted_at", null).eq("updated_at", story.updatedAt).select("id").maybeSingle();
   if (error || !data) throw new Error("Your story changed in another window. Reopen it before saving again.");
+}
+
+export async function assistStory(sb: SupabaseClient<any>, userId: string, child: { id: string; age_band: string }, id: string, text: string, purpose: "coach" | "picture" | "spelling", pageId?: string) {
+  const story = await loadStory(sb, userId, child.id, id);
+  const page = story.data.pages.find((p) => p.id === pageId);
+  const task = purpose === "picture"
+    ? "Draft ONLY an illustration description from the child's saved page, under 600 characters. This is not story prose. No new plot events. Return it in description for the child to edit."
+    : purpose === "spelling" ? "Give optional spelling help for at most three words in the saved page. Never rewrite any sentence. Return description as empty."
+    : "Coach the child's question. Only ask one question if needed. Return description as empty.";
+  const out = await aiObject(z.object({ reply: z.string(), chips: z.array(z.string()), description: z.string() }), `${storyCoachingInstructions(child.age_band)} ${task} Return a brief reply and 2–3 idea sparks (maximum 6 words each). End the reply with Your call!`, JSON.stringify({ question: text, genre: story.data.genre, map: story.data.map, pages: story.data.pages.map((p) => ({ step: p.step, text: p.text, chapter: p.chapter })), currentPage: page?.text ?? "" }));
+  if (!out) throw new Error("Bugley couldn’t check your story right now. Your words are still saved.");
+  return { reply: out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: out.chips.slice(0, 3).map((c) => c.slice(0, 50)), description: purpose === "picture" ? out.description.slice(0, 600) : "" };
 }
