@@ -1,7 +1,7 @@
 // Server-only glow helpers. Balances change only through these privileged database functions.
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const GLOW_COST = { sketch: 1, picture: 3 } as const;
+export const GLOW_COST = { sketch: 1, picture: 3, picture_upgrade: 2 } as const;
 export type GlowKind = keyof typeof GLOW_COST;
 
 async function assertOwnsChild(sb: SupabaseClient<any>, userId: string, childId: string) {
