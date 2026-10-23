@@ -187,12 +187,14 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
       </section>
 
       <section className="space-y-3 border-t border-border pt-6">
+        {!comic.data.bookId ? <>
         <h2 className="text-2xl">The cover</h2>
         <label className="block space-y-2"><span className="text-sm font-semibold">Describe the cover picture</span><textarea rows={2} maxLength={600} className={field} disabled={busy} value={coverDescription} onChange={(e) => setCoverDescription(e.target.value)} /></label>
         <Button variant="secondary" disabled={busy || coverDescription.trim().length < 3} onClick={() => void action("cover")}>Draw cover · 3 glow</Button>
         {comic.data.cover && <div className="mx-auto max-w-xs"><ComicCover comic={comic} cast={cast} /></div>}
+        </> : <h2 className="text-2xl">Finish this chapter</h2>}
         <div><Button disabled={busy || dirty || !readyToFinishComic(comic.data)} onClick={() => void action("finish")}><Check />Finish my comic</Button></div>
-        <p className="text-sm text-muted-foreground">To finish, make every panel final and draw a cover. {comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"} toward a printed book · Printing comes later.</p>
+        <p className="text-sm text-muted-foreground">{comic.data.bookId ? "To finish, make every panel final." : "To finish, make every panel final and draw a cover."} {comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"} toward a printed book · Printing comes later.</p>
       </section>
     </>}
   </div>;

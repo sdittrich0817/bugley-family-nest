@@ -19,3 +19,4 @@
 - [ ] Verify Story Maker save/reopen/illustrate/finish end to end (blocked: no parent account; image models still need admin configuration).
 - [ ] Pick Replicate models for sketch, final and character in /admin, then test a real picture end to end (blocked: Shea chooses models).
 - [x] Comic Maker (one-shot comics, layouts, panels, text layers, cover, flipbook)
+- [x] Multi-chapter Books (Story Bible, chapters, Book Builder, print counter, Hub view)

@@ -25,10 +25,12 @@ export async function persistComic(userId: string, childId: string, comic: Comic
 
 export async function assistComic(sb: SupabaseClient<any>, userId: string, child: { id: string; age_band: string }, id: string, text: string, pageId?: string) {
   const comic = await loadComic(sb, userId, child.id, id);
+  const storyBible = await (await import("./book.server")).bibleContext(sb, userId, child.id, comic.data.bookId);
+  const BIBLE = storyBible ? " This is one chapter of a multi-chapter book. Read the Story Bible first: keep names, looks, places and past events consistent, gently ask about conflicts, and keep track of the big story and open mysteries. The chapter has its own mini story spine." : "";
   const index = comic.data.pages.findIndex((p) => p.id === pageId);
   const out = await aiObject(z.object({ reply: z.string(), chips: z.array(z.string()) }),
-    `${storyCoachingInstructions(child.age_band)} ${comicCoachingInstructions()} Coach the child's question with one question. Return a brief reply and 2–3 idea sparks (maximum 6 words each). End the reply with Your call!`,
-    JSON.stringify({ question: text, genre: comic.data.genre, map: comic.data.map, pageCount: comic.data.pages.length, currentPage: index + 1, pages: comic.data.pages.map((p, i) => ({ page: i + 1, layout: p.layout, panels: p.panels.map((x) => ({ shows: x.description, angle: x.angle, text: x.layers.map((l) => `${l.type}: ${l.text}`) })) })) }));
+    `${storyCoachingInstructions(child.age_band)} ${comicCoachingInstructions()} Coach the child's question with one question. Return a brief reply and 2–3 idea sparks (maximum 6 words each). End the reply with Your call!${BIBLE}`,
+    JSON.stringify({ storyBible, question: text, genre: comic.data.genre, map: comic.data.map, pageCount: comic.data.pages.length, currentPage: index + 1, pages: comic.data.pages.map((p, i) => ({ page: i + 1, layout: p.layout, panels: p.panels.map((x) => ({ shows: x.description, angle: x.angle, text: x.layers.map((l) => `${l.type}: ${l.text}`) })) })) }));
   if (!out) throw new Error("Bugley couldn’t check your comic right now. Your work is still saved.");
   return { reply: out.reply.endsWith("Your call!") ? out.reply : `${out.reply} Your call!`, chips: out.chips.slice(0, 3).map((c) => c.replace(/\s*Your call!$/i, "").trim().split(/\s+/).slice(0, 6).join(" ")) };
 }
