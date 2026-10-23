@@ -1,0 +1,19 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { manageStickers } from '@/lib/play.functions';
+import { familyOptions } from '@/lib/family.functions';
+import { STARTER_CREATURES, STARTER_STICKERS } from '@/lib/stickers';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+export function StickerAdmin(){
+ const qc=useQueryClient(),{data:rows=[]}=useQuery({queryKey:['admin-stickers'],queryFn:()=>manageStickers({data:{action:'list'}})}),{data:family}=useQuery(familyOptions);
+ const [words,setWords]=useState(''),[player,setPlayer]=useState(''),[busy,setBusy]=useState(false);
+ async function generate(){setBusy(true);try{await manageStickers({data:{action:'generate',childId:player,words:words.split('\n').map(w=>w.trim()).filter(Boolean).slice(0,10)}});await qc.invalidateQueries({queryKey:['admin-stickers']});setWords('');toast.success('Sticker batch saved.');}catch(e){toast.error(e instanceof Error?e.message:'Couldn’t draw the batch.');await qc.invalidateQueries({queryKey:['admin-stickers']});}finally{setBusy(false);}}
+ return <section className="mt-10 space-y-4"><h2 className="text-2xl">PLAY sticker library</h2><p className="text-sm text-muted-foreground">{STARTER_STICKERS.length+STARTER_CREATURES.length} starter stickers · {rows.length} library stickers. New objects cost 1 glow each. Existing names and synonyms are reused.</p>
+ <div className="flex flex-wrap gap-4"><label className="min-w-56 flex-1 text-sm">Batch names (one per line, up to 10)<Textarea value={words} onChange={e=>setWords(e.target.value)} rows={4}/></label><div className="space-y-3"><label className="block text-sm">Charge this family player’s glow<select aria-label="Sticker batch player" value={player} onChange={e=>setPlayer(e.target.value)} className="mt-1 block rounded-lg border border-input bg-background p-2"><option value="">Choose player</option>{family?.children.map(c=><option key={c.id} value={c.id}>{c.nickname}</option>)}</select></label><Button disabled={busy||!words.trim()||!player} onClick={()=>void generate()}><Sparkles/>{busy?'Drawing batch…':'Generate batch'}</Button></div></div>
+ <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">{[...STARTER_STICKERS,...STARTER_CREATURES].map(s=><article key={s.key} className="rounded-lg border border-border bg-card p-2"><img src={s.url} width={384} height={384} loading="lazy" alt={s.name} className="aspect-square w-full object-contain"/><p className="text-sm font-semibold capitalize">{s.name}</p><p className="text-xs text-muted-foreground">{s.synonyms.join(', ')||'Starter'}</p></article>)}{rows.map(s=><article key={s.id} className="rounded-lg border border-border bg-card p-2"><img src={s.url} width={384} height={384} loading="lazy" alt={s.name} className="aspect-square w-full object-contain"/><p className="text-sm font-semibold">{s.name}</p><Input aria-label={`Synonyms for ${s.name}`} key={s.synonyms.join(',')} defaultValue={s.synonyms.join(', ')} placeholder="Synonyms, comma separated" className="mt-2 text-xs" onBlur={e=>void manageStickers({data:{action:'tag',key:s.key,synonyms:e.target.value.split(',').map(w=>w.trim()).filter(Boolean)}}).then(()=>qc.invalidateQueries({queryKey:['admin-stickers']})).catch(()=>toast.error('Couldn’t save tags.'))}/><label className="mt-2 flex items-center gap-2 text-xs"><Switch checked={s.active} onCheckedChange={active=>void manageStickers({data:{action:'toggle',key:s.key,active}}).then(()=>qc.invalidateQueries({queryKey:['admin-stickers']})).catch(()=>toast.error('Couldn’t save.'))}/>Available</label></article>)}</div></section>;
+}

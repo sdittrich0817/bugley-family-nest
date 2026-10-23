@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ImageAdmin } from "@/components/site/ImageAdmin";
 import { GameAdmin } from "@/components/site/GameAdmin";
+import { StickerAdmin } from "@/components/site/StickerAdmin";
 import { PrintAdmin } from "@/components/site/PrintAdmin";
 import { Badge } from "@/components/ui/badge";
 
@@ -74,6 +75,7 @@ function AdminArea() {
     <GlowAdmin />
     <ImageAdmin />
     <GameAdmin />
+    <StickerAdmin />
     <PrintAdmin />
   </section>;
 }

@@ -30,3 +30,5 @@
 - [x] Rebuild Tell a Story with Bugley Steps, hidden age-sized beats, child-authored pages, automatic illustrations/cover and chapter continuation; live first-page save/image/reopen and three screen widths checked.
 - [x] Rebuild Build a Comic with guided panels, genre-aware setup, automatic layouts/camera/bubbles, editable speech/sound effects, covers and Issue 2; live panel save/image/reopen and no-glow speech/sound changes verified.
 - [ ] Verify complete comic cover, Issue 2 and multi-issue print preview live (first panel and speech verified; finishing the test comic needs more daily glow).
+- [x] Rebuild PLAY with four launch games, illustrated previews, bounded rounds, family scores/rewards, Bugdex, safe doodle vision and shared admin sticker library; all four games, new one-glow sticker, saved collection/results and three screen sizes verified live; 117 tests passed.
+- [ ] Verify sibling pass-and-play with a second family child (blocked: only one child exists); test bulk admin generation at scale before growing the starter library to thousands.

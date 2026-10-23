@@ -152,6 +152,35 @@ export type Database = {
         }
         Relationships: []
       }
+      bugdex: {
+        Row: {
+          child_id: string
+          discovered_at: string
+          parent_id: string
+          sticker_key: string
+        }
+        Insert: {
+          child_id: string
+          discovered_at?: string
+          parent_id: string
+          sticker_key: string
+        }
+        Update: {
+          child_id?: string
+          discovered_at?: string
+          parent_id?: string
+          sticker_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bugdex_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_activity_progress: {
         Row: {
           activity_id: string
@@ -690,6 +719,45 @@ export type Database = {
           },
         ]
       }
+      game_stickers: {
+        Row: {
+          active: boolean
+          created_at: string
+          creature: boolean
+          id: string
+          image_path: string
+          key: string
+          name: string
+          power: string
+          rare: boolean
+          synonyms: string[]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          creature?: boolean
+          id?: string
+          image_path: string
+          key: string
+          name: string
+          power?: string
+          rare?: boolean
+          synonyms?: string[]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          creature?: boolean
+          id?: string
+          image_path?: string
+          key?: string
+          name?: string
+          power?: string
+          rare?: boolean
+          synonyms?: string[]
+        }
+        Relationships: []
+      }
       glow_ledger: {
         Row: {
           amount: number
@@ -831,6 +899,56 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      play_sessions: {
+        Row: {
+          bonus: number
+          busy: boolean
+          child_id: string
+          finished_at: string | null
+          game: string
+          id: string
+          parent_id: string
+          score: number
+          started_at: string
+          state: Json
+          version: number
+        }
+        Insert: {
+          bonus?: number
+          busy?: boolean
+          child_id: string
+          finished_at?: string | null
+          game: string
+          id?: string
+          parent_id: string
+          score?: number
+          started_at?: string
+          state?: Json
+          version?: number
+        }
+        Update: {
+          bonus?: number
+          busy?: boolean
+          child_id?: string
+          finished_at?: string | null
+          game?: string
+          id?: string
+          parent_id?: string
+          score?: number
+          started_at?: string
+          state?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "play_sessions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
             referencedColumns: ["id"]
           },
         ]
@@ -1399,6 +1517,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      finish_play_session: {
+        Args: { _parent: string; _session: string }
+        Returns: Json
+      }
       glow_gift: {
         Args: { _amount: number; _child: string; _reason: string }
         Returns: Json
