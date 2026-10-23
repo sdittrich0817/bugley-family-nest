@@ -8,7 +8,7 @@ import { BugleyCard } from "@/components/brand/BugleyCard";
 import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
-import { useWaitlist } from "@/components/site/WaitlistModal";
+import { PLANS } from "@/lib/plans";
 
 const TITLE = "Pricing — Bugley";
 const DESC =
@@ -29,35 +29,6 @@ export const Route = createFileRoute("/pricing")({
 });
 
 type Billing = "monthly" | "annual";
-
-const PLANS = [
-  {
-    name: "Family",
-    monthly: 19,
-    annual: 179,
-    popular: false,
-    blurb: "Everything a family needs to learn AI together.",
-    features: [
-      "Up to 5 kids",
-      "Every Season, included",
-      "The Parent Hub",
-      "Bugley's Studio — stories and games, 10 glow per child per day",
-    ],
-  },
-  {
-    name: "Family Plus",
-    monthly: 29,
-    annual: 249,
-    popular: true,
-    blurb: "For families who want more room to make.",
-    features: [
-      "Everything in Family",
-      "20 glow per child per day",
-      "Builders tools for older kids (10–12), like app building",
-      "One printed Family Story Book per year",
-    ],
-  },
-] as const;
 
 const GLOW_FACTS = [
   { icon: Sparkles, title: "Glow powers pictures", body: "Every picture your child asks Bugley to make spends a little glow." },
@@ -91,7 +62,6 @@ const FAQS = [
 ];
 
 function Pricing() {
-  const { open } = useWaitlist();
   const [billing, setBilling] = useState<Billing>("monthly");
 
   return (
@@ -168,8 +138,8 @@ function Pricing() {
                     </li>
                   ))}
                 </ul>
-                <Button size="lg" variant={plan.popular ? "default" : "secondary"} className="mt-auto" onClick={() => open("start_free")}>
-                  Start free <ArrowRight className="size-4" />
+                <Button size="lg" variant={plan.popular ? "default" : "secondary"} className="mt-auto" asChild><Link to="/signup">
+                  Start free <ArrowRight className="size-4" /></Link>
                 </Button>
               </BugleyCard>
             );
@@ -281,8 +251,8 @@ function Pricing() {
           <h2 className="max-w-xl text-3xl text-background sm:text-4xl">
             Try it free for 14 days. If your kids love it, stay.
           </h2>
-          <Button size="lg" onClick={() => open("start_free")}>
-            Start free <ArrowRight className="size-4" />
+          <Button size="lg" asChild><Link to="/signup">
+            Start free <ArrowRight className="size-4" /></Link>
           </Button>
         </div>
       </section>

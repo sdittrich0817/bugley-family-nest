@@ -18,6 +18,9 @@ import { Bugley } from "@/components/brand/Bugley";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { billingOptions, createPortalSession } from "@/lib/billing.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 
 export const Route = createFileRoute("/_authenticated/hub")({
   head: () => accountHead("Parent Hub", "Your family’s home base: this week’s session, your kids’ progress, and controls."),
@@ -45,6 +48,7 @@ function Hub() {
         <div className="flex flex-wrap gap-2">{isAdmin && <Button asChild variant="secondary"><Link to="/admin">Curriculum admin</Link></Button>}<Button asChild size="lg"><Link to="/kids"><Users />Go to Kid Zone</Link></Button></div>
       </div>
 
+      <PlanNotice />
       <ThisWeek current={cur.current} />
 
       <Section title="My kids">
@@ -74,7 +78,7 @@ function Hub() {
             <SettingRow to="/settings" icon={<Users />} label="Manage children" hint="Names, avatars, logins" />
             <SettingRow to="/account" icon={<UserRound />} label="Account" hint="Your parent profile" />
             <SettingRow to="/account" icon={<ShieldCheck />} label="Consent" hint="Your recorded agreement" />
-            <li className="flex items-center gap-3 px-5 py-4 text-muted-foreground"><CreditCard className="size-5" /><span className="flex-1">Billing</span><Badge variant="secondary">Coming soon</Badge></li>
+            <BillingRow />
           </ul>
         </Section>
       </div>
@@ -164,4 +168,38 @@ function GiftGlow({ child }: { child: ChildProfile }) {
       </form>
     </DialogContent></Dialog>
   </>;
+}
+
+function useBilling() { const env = getStripeEnvironment(); return { env, ...useQuery(billingOptions(env)) }; }
+
+function PlanNotice() {
+  const { data } = useBilling();
+  if (!data || (data.active && data.status !== "past_due")) return null;
+  const pastDue = data.status === "past_due";
+  return <div role="status" className={`${card} flex flex-wrap items-center gap-4 border-primary`}>
+    <Bugley stage="scout" expression={pastDue ? "oops" : "sleepy"} size={56} />
+    <div className="min-w-0 flex-1"><h2 className="text-lg">{pastDue ? "Your last payment didn’t go through" : data.status ? "The Kid Zone is paused" : "Start your free trial"}</h2>
+      <p className="text-sm text-muted-foreground">{pastDue ? "Please update your payment method to keep the Kid Zone open." : data.status ? "Your family’s work and creations are safe. Restart a plan to open the Kid Zone again." : "Pick a plan to open the Kid Zone. Every plan starts with 14 days free."}</p></div>
+    {pastDue ? <PortalButton label="Update payment" /> : <Button asChild><Link to="/plan">Choose a plan</Link></Button>}
+  </div>;
+}
+
+function PortalButton({ label, variant }: { label: string; variant?: "secondary" }) {
+  const { env } = useBilling(); const [busy, setBusy] = useState(false);
+  async function go() {
+    setBusy(true);
+    try { const r = await createPortalSession({ data: { environment: env, returnUrl: `${window.location.origin}/hub` } }); if ("error" in r) throw new Error(r.error); window.open(r.url, "_blank"); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Couldn’t open billing."); } finally { setBusy(false); }
+  }
+  return <Button variant={variant} disabled={busy} onClick={() => void go()}>{busy ? "Opening…" : label}</Button>;
+}
+
+function BillingRow() {
+  const { data } = useBilling();
+  const planName = data?.plan === "family_plus" ? "Family Plus" : data?.plan === "family" ? "Family" : null;
+  const yearly = data?.priceId?.endsWith("yearly");
+  const end = data?.periodEnd ? new Date(data.periodEnd).toLocaleDateString() : null;
+  const hint = !data ? "Loading…" : !data.status ? "No plan yet" : `${planName ?? "Plan"}${yearly ? " (yearly)" : " (monthly)"} · ${data.status === "trialing" ? `free trial until ${end}` : data.cancelAtPeriodEnd ? `ends ${end}` : data.active ? `renews ${end}` : "paused"}`;
+  return <li className="flex flex-wrap items-center gap-3 px-5 py-4"><CreditCard className="size-5" /><span className="flex-1"><span className="block font-medium">Billing</span><span className="text-sm text-muted-foreground">{hint}</span></span>
+    {data?.hasCustomer ? <PortalButton label="Manage billing" variant="secondary" /> : <Button asChild variant="secondary" size="sm"><Link to="/plan">Choose a plan</Link></Button>}</li>;
 }
