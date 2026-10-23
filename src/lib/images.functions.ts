@@ -80,6 +80,35 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
     return { ok: true as const, id };
   });
 
+/** Hero Builder: three hero options for one glow. */
+export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
+  .handler(async ({ data, context }) => {
+    if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
+    const { generateHeroOptions } = await import("@/lib/images.server");
+    return generateHeroOptions(context.supabase, context.userId, { childId: data.childId, styleKey: data.styleKey, description: `${data.name}, a ${data.kind}, mostly ${data.color}, with one bold signature detail: ${data.special}` });
+  });
+
+/** "That's my hero!": guards the words, runs Character Lock (reference sheet + DNA), saves to My Heroes. */
+export const saveHero = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
+  .handler(async ({ data, context }) => {
+    if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
+    const s = await import("@/lib/studio.server");
+    const child = await s.loadChild(context.supabase, context.userId, data.childId);
+    const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
+    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    const hint = `a ${data.kind}, mostly ${data.color}, special thing: ${data.special}`;
+    const looks = await s.guardChildText(context.supabase, context.userId, child, hint, "character_details");
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
+    const { lockCharacter } = await import("@/lib/images.server");
+    const lock = await lockCharacter(context.userId, data.childId, { path: data.path, styleKey: data.styleKey, hint: `${data.name}, ${hint}` });
+    const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path, ...lock.refs] });
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.kind, color: data.color, special: data.special, summary: hint, dna: lock.dna, refs: lock.refs, model: lock.model } }).eq("id", id);
+    return { ok: true as const, id };
+  });
+
 /** Signs stored image paths for the album. */
 export const signImages = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ paths: z.array(z.string().max(200)).max(200) }).parse(i))
@@ -94,17 +123,17 @@ export const signImages = createServerFn({ method: "POST" }).middleware([require
 export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   await assertAdmin(context);
   const [m, s] = await Promise.all([
-    context.supabase.from("image_models").select("mode,model,version,settings").order("mode"),
+    context.supabase.from("image_models").select("mode,model,version,settings,supports_reference").order("mode"),
     context.supabase.from("art_styles").select("key,name,description,recipe,position,active").order("position"),
   ]);
-  return { models: (m.data ?? []).map((r: any) => ({ mode: r.mode as string, model: r.model as string, version: r.version as string, settings: JSON.stringify(r.settings ?? {}, null, 2) })), styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
+  return { models: (m.data ?? []).map((r: any) => ({ mode: r.mode as string, model: r.model as string, version: r.version as string, settings: JSON.stringify(r.settings ?? {}, null, 2), supportsReference: !!r.supports_reference })), styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
 });
 
 export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ mode: z.enum(["sketch", "final", "character"]), model: z.string().trim().max(120).regex(/^$|^[\w.-]+\/[\w.-]+$/, "Use owner/name"), version: z.string().trim().max(100), settings: z.record(z.string(), z.unknown()) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ mode: z.enum(["sketch", "final", "character", "hero", "sheet", "scene_chars", "scene"]), supportsReference: z.boolean().default(false), model: z.string().trim().max(120).regex(/^$|^[\w.-]+\/[\w.-]+$/, "Use owner/name"), version: z.string().trim().max(100), settings: z.record(z.string(), z.unknown()) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase.from("image_models").update({ model: data.model, version: data.version, settings: data.settings as never, updated_at: new Date().toISOString() }).eq("mode", data.mode);
+    const { error } = await context.supabase.from("image_models").update({ model: data.model, version: data.version, settings: data.settings as never, supports_reference: data.supportsReference, updated_at: new Date().toISOString() }).eq("mode", data.mode);
     if (error) throw new Error("Couldn’t save.");
     return { ok: true };
   });
@@ -117,3 +146,16 @@ export const saveStyle = createServerFn({ method: "POST" }).middleware([requireS
     if (error) throw new Error("Couldn’t save.");
     return { ok: true };
   });
+
+/** Drift Report: drift-check failure rates by model and style. */
+export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  await assertAdmin(context);
+  const { data } = await context.supabase.from("drift_checks").select("model,style_key,passed,score,notes,created_at").order("created_at", { ascending: false }).limit(2000);
+  const groups = new Map<string, { model: string; style: string; checks: number; fails: number; scoreSum: number }>();
+  for (const r of (data ?? []) as any[]) {
+    const k = `${r.model}|${r.style_key}`;
+    const g = groups.get(k) ?? { model: r.model, style: r.style_key, checks: 0, fails: 0, scoreSum: 0 };
+    g.checks++; if (!r.passed) g.fails++; g.scoreSum += r.score; groups.set(k, g);
+  }
+  return { rows: [...groups.values()].map((g) => ({ model: g.model, style: g.style, checks: g.checks, failRate: g.checks ? Math.round((g.fails / g.checks) * 100) : 0, avgScore: g.checks ? Math.round(g.scoreSum / g.checks) : 0 })), recent: ((data ?? []) as any[]).filter((r) => !r.passed).slice(0, 20).map((r) => ({ model: r.model as string, style: r.style_key as string, score: r.score as number, notes: r.notes as string, at: r.created_at as string })) };
+});

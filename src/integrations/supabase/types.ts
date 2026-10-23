@@ -454,6 +454,45 @@ export type Database = {
         }
         Relationships: []
       }
+      drift_checks: {
+        Row: {
+          attempt: number
+          child_id: string
+          created_at: string
+          id: string
+          model: string
+          notes: string
+          parent_id: string
+          passed: boolean
+          score: number
+          style_key: string
+        }
+        Insert: {
+          attempt: number
+          child_id: string
+          created_at?: string
+          id?: string
+          model: string
+          notes?: string
+          parent_id: string
+          passed: boolean
+          score?: number
+          style_key: string
+        }
+        Update: {
+          attempt?: number
+          child_id?: string
+          created_at?: string
+          id?: string
+          model?: string
+          notes?: string
+          parent_id?: string
+          passed?: boolean
+          score?: number
+          style_key?: string
+        }
+        Relationships: []
+      }
       family_glow_settings: {
         Row: {
           alerted_month: string | null
@@ -698,6 +737,7 @@ export type Database = {
           mode: string
           model: string
           settings: Json
+          supports_reference: boolean
           updated_at: string
           version: string
         }
@@ -705,6 +745,7 @@ export type Database = {
           mode: string
           model?: string
           settings?: Json
+          supports_reference?: boolean
           updated_at?: string
           version?: string
         }
@@ -712,6 +753,7 @@ export type Database = {
           mode?: string
           model?: string
           settings?: Json
+          supports_reference?: boolean
           updated_at?: string
           version?: string
         }

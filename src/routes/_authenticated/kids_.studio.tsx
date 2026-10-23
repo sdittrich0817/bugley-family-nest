@@ -124,7 +124,7 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
   </div>;
 }
 
-const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Characters", game: "Games" };
+const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Heroes", game: "Games" };
 
 function Album({ child, onStory, onComic, onBook }: { child: SidekickChild; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const qc = useQueryClient();

@@ -1,9 +1,10 @@
 // One-question-per-screen setup shared by the Story Maker and Comic Maker.
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Mic, Plus, Sparkles } from "lucide-react";
+import { Mic, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CharacterCreator } from "./Makers";
+import { HeroBuilder, type HeroRole } from "./HeroBuilder";
+import { BugleyStep, type StepChoice } from "./BugleyStep";
 import { ChoiceTile, GENRE_EMOJI, StepDots, StepNav, field } from "./Guided";
 import { useVoiceInput, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast, stylesOptions } from "@/lib/images.functions";
@@ -14,6 +15,17 @@ import { cn } from "@/lib/utils";
 
 type MapKey = keyof typeof EMPTY_MAP;
 export type SetupResult = { title: string; genre: (typeof GENRES)[number]; styleKey: string; characterIds: string[]; map: typeof EMPTY_MAP };
+
+const STYLE_ORDER = ["cartoon", "storybook", "classic_comic", "watercolor", "crayon", "clay", "pixel_art", "paper_cutout"];
+function castChoices(count: number, canPick: boolean): StepChoice[] {
+  if (count >= 3) return [{ key: "ready", label: "We’re ready!", emoji: "🚀" }];
+  const out: StepChoice[] = count === 0
+    ? [{ key: "hero", label: "Build a new hero", emoji: "✨" }]
+    : [{ key: "sidekick", label: "Add a sidekick", emoji: "🤝" }, { key: "villain", label: "Add a villain", emoji: "😈" }];
+  if (canPick) out.push({ key: "pick", label: "Use a hero I made", emoji: "📚" });
+  out.push({ key: "ready", label: count ? "We’re ready!" : "No hero today", emoji: count ? "🚀" : "➡️" });
+  return out;
+}
 
 export function MakerSetup({ child, chat, kind, mapLabels, defaultStyle, onCreate }: {
   child: SidekickChild; chat: BugleyChat; kind: "story" | "comic"; mapLabels: Record<MapKey, string>; defaultStyle: string;
@@ -27,14 +39,15 @@ export function MakerSetup({ child, chat, kind, mapLabels, defaultStyle, onCreat
   const [picked, setPicked] = useState<string[]>([]);
   const [title, setTitle] = useState("");
   const [map, setMap] = useState({ ...EMPTY_MAP });
-  const [making, setMaking] = useState(false);
+  const [making, setMaking] = useState<HeroRole | null>(null);
+  const [castMode, setCastMode] = useState<"menu" | "pick">("menu");
   const [busy, setBusy] = useState(false);
   const { data: styles = [] } = useQuery(stylesOptions);
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const total = 4 + mapKeys.length;
   const mapKey = step >= 4 ? mapKeys[step - 4] : undefined;
   const voice = useVoiceInput((t) => { if (mapKey) setMap((m) => ({ ...m, [mapKey]: `${m[mapKey]} ${t}`.trim() })); else if (step === 3) setTitle(t.slice(0, 80)); });
-  useScrollTopOn(`${step}-${making}`);
+  useScrollTopOn(`${step}-${making}-${castMode}`);
 
   const lines = [
     kind === "story" ? "Let’s write a story! What kind of story is it?" : "Let’s make a comic! What kind of comic is it?",
@@ -44,23 +57,25 @@ export function MakerSetup({ child, chat, kind, mapLabels, defaultStyle, onCreat
   ];
   useEffect(() => { if (!making) chat.say(mapKey ? `${mapLabels[mapKey]} Your call!` : lines[step] ?? ""); }, [step, making]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (making) return <div className="space-y-4"><Button variant="ghost" onClick={() => setMaking(false)}>← Back to my {noun}</Button><CharacterCreator child={child} chat={chat} onDone={() => setMaking(false)} /></div>;
+  if (making) return <HeroBuilder child={child} chat={chat} styleKey={styleKey} role={making} onBack={() => setMaking(null)} onDone={(id) => { setPicked((p) => [...p, id].slice(0, 3)); setMaking(null); setCastMode("menu"); }} />;
   const next = () => setStep(step + 1), back = step > 0 ? () => setStep(step - 1) : undefined;
 
   return <div className="space-y-5">
     <StepDots count={total} at={step} />
     {step === 0 && <><h1 className="text-center text-3xl sm:text-4xl">What kind of {noun}?</h1>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{GENRES.map((g) => <ChoiceTile key={g} emoji={GENRE_EMOJI[g]} label={g} selected={genre === g} onClick={() => { setGenre(g); next(); }} />)}</div></>}
-    {step === 1 && <><h1 className="text-center text-3xl sm:text-4xl">{kind === "story" ? "What kind of pictures?" : "Pick a comic style"}</h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{styles.map((s) => <ChoiceTile key={s.key} image={STYLE_THUMBS[s.key]} label={s.name} selected={styleKey === s.key} onClick={() => { setStyle(s.key); next(); }} />)}</div>
-      <StepNav onBack={back} /></>}
-    {step === 2 && <><h1 className="text-center text-3xl sm:text-4xl">Who’s in it?</h1>
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-        {cast.map((c) => { const on = picked.includes(c.id); return <button key={c.id} onClick={() => setPicked(on ? picked.filter((x) => x !== c.id) : [...picked, c.id])} aria-pressed={on} className={cn("relative overflow-hidden rounded-3xl border-2 bg-card shadow-soft", on ? "border-primary shadow-glow" : "border-border")}>
-          <img src={c.url} alt="" className="aspect-square w-full object-cover" /><span className="block truncate px-2 py-1.5 font-semibold">{c.title}</span>{on && <Check className="absolute right-2 top-2 size-7 rounded-full bg-primary p-1" />}</button>; })}
-        <button onClick={() => setMaking(true)} className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-3xl border-2 border-dashed border-primary bg-card font-display"><Plus className="size-8" />Make a new one</button>
-      </div>
-      <StepNav onBack={back} onNext={next} nextLabel={picked.length ? "Next" : "Skip for now"} /></>}
+    {step === 1 && <BugleyStep child={child} bare question={kind === "story" ? "How should our book look?" : "How should our comic look?"} allowOwnIdea={false} onBack={back}
+      choices={STYLE_ORDER.map((k) => styles.find((x) => x.key === k)).filter((x): x is NonNullable<typeof x> => !!x).concat(styles.filter((x) => !STYLE_ORDER.includes(x.key))).map((x) => ({ key: x.key, label: x.key === "classic_comic" ? "Comic" : x.name, image: STYLE_THUMBS[x.key] }))}
+      onChoose={(c) => { setStyle(c.key); next(); }} />}
+    {step === 2 && castMode === "pick" && <BugleyStep child={child} bare question="Which hero should join?" allowOwnIdea={false} onBack={() => setCastMode("menu")}
+      choices={cast.filter((c) => !picked.includes(c.id)).map((c) => ({ key: c.id, label: c.title, image: c.url }))}
+      onChoose={(c) => { setPicked((p) => [...p, c.key].slice(0, 3)); setCastMode("menu"); }} />}
+    {step === 2 && castMode === "menu" && <>
+      {picked.length > 0 && <div className="flex flex-wrap justify-center gap-3">{picked.map((id) => { const c = cast.find((x) => x.id === id); return c ? <button key={id} onClick={() => setPicked(picked.filter((x) => x !== id))} className="w-24 overflow-hidden rounded-2xl border-2 border-primary bg-card text-center shadow-glow" aria-label={`Remove ${c.title}`}><img src={c.url} alt="" className="aspect-square w-full object-cover" /><span className="block truncate px-1 py-1 text-sm font-semibold">{c.title}</span></button> : null; })}</div>}
+      <BugleyStep child={child} bare allowOwnIdea={false} onBack={back} question={picked.length ? (picked.length >= 3 ? "Your cast is full! Ready?" : "Add a sidekick or villain?") : "Who’s our hero?"}
+        choices={castChoices(picked.length, cast.length > picked.length)}
+        onChoose={(c) => { if (c.key === "ready") next(); else if (c.key === "pick") setCastMode("pick"); else setMaking(c.key as HeroRole); }} />
+    </>}
     {step === 3 && <><h1 className="text-center text-3xl sm:text-4xl">What’s it called?</h1>
       <input autoFocus className={cn(field, "text-center text-2xl")} value={title} maxLength={80} onChange={(e) => setTitle(e.target.value)} onKeyDown={(e) => e.key === "Enter" && title.trim() && next()} placeholder="The Great Pancake Rescue" aria-label={`Title of your ${noun}`} />
       <StepNav onBack={back} onNext={next} canNext={!!title.trim()} /></>}

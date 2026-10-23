@@ -14,7 +14,7 @@ export const getComic = createServerFn({ method: "POST" }).middleware([requireSu
   return loadComic(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createComic = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createComic = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), environment: env }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -83,8 +83,9 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireS
     const description = data.action === "cover" ? data.description : `${ANGLE_PROMPT[panel!.angle]}${panel!.description}`;
     if (!description || description.length < 3) throw new Error("Describe what happens first.");
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id });
     if (!r.ok) throw new Error(r.reply);
+    if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;
     else if (data.action === "sketch") { panel!.sketch = r.path; panel!.image = null; }
     else panel!.image = r.path;

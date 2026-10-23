@@ -6,7 +6,7 @@ export type BookFormat = (typeof BOOK_FORMATS)[number];
 const list = z.array(z.string().max(300)).max(60);
 export const bibleSchema = z.object({ cast: z.array(z.object({ id: z.string().uuid(), note: z.string().max(300) })).max(40), places: list, events: list, mysteries: list });
 export const bookSchema = z.object({
-  format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()),
+  format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(),
   bible: bibleSchema, absorbed: z.array(z.string().uuid()), chapterIds: z.array(z.string().uuid()),
   author: z.string().max(40), authorStatus: z.enum(["approved", "pending", "declined"]), dedication: z.string().max(300), cover: z.string().nullable(),
 });
