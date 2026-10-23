@@ -2,14 +2,13 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { familyHasAccess } from './billing.functions';
-import { BLANKS, comboKey, DOODLES, DOODLE_CLUES, initialPlayState, normalizeWord, PLAY_KEYS, PLAY_SECONDS, playAllowed, PUZZLES, type PlayState } from './play';
+import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, PLAY_SECONDS, playAllowed, PUZZLES, type PlayState } from './play';
 import { STARTER_CREATURES, STARTER_STICKERS } from './stickers';
 const id = z.string().uuid();
 const environment = z.enum(['sandbox','live']);
 const admin = async () => (await import('@/integrations/supabase/client.server')).supabaseAdmin;
 async function child(ctx: any, childId: string, env: 'sandbox'|'live') { if(!(await familyHasAccess(ctx.supabase,ctx.userId,env))) throw new Error('Ask a grown-up to wake Bugley up.'); const { loadChild } = await import('./studio.server'); return loadChild(ctx.supabase,ctx.userId,childId); }
 async function safe(ctx:any,kid:any,text:string) { const { guardChildText } = await import('./studio.server'); const result=await guardChildText(ctx.supabase,ctx.userId,kid,text,'play');if(result.decision!=='allowed')throw new Error(result.reply??'Let’s use a different idea.'); }
-async function stickerRow(key:string) { return (await (await admin()).from('game_stickers').select('*').eq('key',key).eq('active',true).maybeSingle()).data; }
 async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=false) {
   const base=[...STARTER_STICKERS,...STARTER_CREATURES].find(s=>s.key===word||s.key===normalizeWord(word)||s.synonyms.includes(normalizeWord(word)));
   if(base)return {key:base.key,name:base.name,power:base.power??'',rare:base.rare??false};
@@ -67,7 +66,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
         const {aiObject}=await import('./studio-ai.server');
         const verdict=await aiObject(z.object({works:z.boolean(),creative:z.boolean(),object:z.string().max(60),animation:z.enum(['bounce','fly','climb','float']),reply:z.string().max(140)}),'Judge a silly child puzzle generously: any reasonable imaginative solution works. Extract only the object concept, never personal information. Reply one playful child-friendly sentence; no instructions outside the puzzle.',JSON.stringify({puzzle:puzzle.task,idea:data.text}));if(!verdict)throw new Error('Bugley needs a moment.');
         await safe(context,kid,verdict.object);
-        if(!verdict.works)state={...state,feedback:verdict.reply,solved:false};else {const s=await stickerFor(context,kid,verdict.object,data.make);state={...state,feedback:verdict.reply,solved:true,stickerKey:s.key};score+=verdict.creative?3:2;}
+        if(!verdict.works)state={...state,feedback:verdict.reply,solved:false};else {const s=await stickerFor(context,kid,verdict.object,data.make);state={...state,feedback:verdict.reply,solved:true,stickerKey:s.key,animation:verdict.animation};score+=verdict.creative?3:2;}
       }else if(r.game==='creature_lab') {
         if(!data.second)throw new Error('Pick two things!');
         const canonical=(w:string)=>STARTER_STICKERS.find(s=>s.key===normalizeWord(w)||s.synonyms.includes(normalizeWord(w)))?.key??normalizeWord(w);
@@ -86,9 +85,10 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
 export const finishPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment}).parse(i)).handler(async({data,context})=>{
   await child(context,data.childId,data.environment);const a=await admin();const {data:r}=await a.from('play_sessions').select('id').eq('id',data.sessionId).eq('child_id',data.childId).eq('parent_id',context.userId).maybeSingle();if(!r)throw new Error('Game not found.');const {data:result,error}=await a.rpc('finish_play_session',{_session:r.id,_parent:context.userId});if(error)throw new Error('Your results couldn’t save yet.');return result as {score:number;bonus:number};
 });
-export const manageStickers=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','toggle','generate']),key:z.string().max(100).optional(),active:z.boolean().optional(),childId:id.optional(),words:z.array(z.string().trim().min(1).max(60)).max(10).optional()}).parse(i)).handler(async({data,context})=>{
+export const manageStickers=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','toggle','generate','tag']),key:z.string().max(100).optional(),active:z.boolean().optional(),synonyms:z.array(z.string().trim().min(1).max(60)).max(30).optional(),childId:id.optional(),words:z.array(z.string().trim().min(1).max(60)).max(10).optional()}).parse(i)).handler(async({data,context})=>{
   const {data:ok}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});if(!ok)throw new Error('Admins only.');
   if(data.action==='toggle'&&data.key){const {error}=await context.supabase.from('game_stickers').update({active:data.active??false}).eq('key',data.key);if(error)throw new Error('Couldn’t save.');}
+  if(data.action==='tag'&&data.key){const {error}=await context.supabase.from('game_stickers').update({synonyms:(data.synonyms??[]).map(normalizeWord)}).eq('key',data.key);if(error)throw new Error('Couldn’t save tags.');}
   if(data.action==='generate'){if(!data.childId)throw new Error('Select a family player to use glow for the batch.');const {loadChild}=await import('./studio.server');const kid=await loadChild(context.supabase,context.userId,data.childId);for(const word of data.words??[]){await safe(context,kid,word);await stickerFor(context,kid,word,true);}}
   const {data:rows,error}=await context.supabase.from('game_stickers').select('*').order('created_at',{ascending:false}).limit(2000);if(error)throw new Error('Couldn’t load stickers.');const {signPaths}=await import('./images.server');const urls=await signPaths((rows??[]).map(s=>s.image_path));return (rows??[]).map((s,i)=>({...s,url:urls[i]??''}));
 });
