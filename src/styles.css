@@ -310,7 +310,15 @@
   75% { transform: translate(4px, 5px) rotate(3deg); }
 }
 .studio-guide-fly { animation: studio-guide-swoop 0.7s ease-out both, studio-guide-hover 4s ease-in-out 0.7s infinite; }
-@media (prefers-reduced-motion: reduce) { .studio-guide-fly { animation: none; } }
+@keyframes studio-cheer { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-22px) scale(1.12) rotate(-8deg); } 70% { transform: translateY(-6px) rotate(6deg); } }
+@keyframes studio-paint { 0%,100% { transform: rotate(-10deg) translateX(-6px); } 50% { transform: rotate(10deg) translateX(6px); } }
+@keyframes studio-paint-fill { from { width: 5%; } to { width: 95%; } }
+@keyframes studio-door-glow { 0%,100% { box-shadow: 0 0 24px 2px hsl(from var(--primary) h s l / 0.35); } 50% { box-shadow: 0 0 48px 10px hsl(from var(--primary) h s l / 0.6); } }
+.studio-bugley-cheer { animation: studio-cheer 0.7s ease-out infinite; }
+.studio-bugley-paint { animation: studio-paint 0.9s ease-in-out infinite; }
+.studio-paint-bar { animation: studio-paint-fill 12s ease-out forwards; }
+.studio-door-glow { animation: studio-door-glow 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .studio-guide-fly, .studio-bugley-cheer, .studio-bugley-paint, .studio-door-glow { animation: none; } }
 .home-hero-copy { justify-content: flex-end; padding-bottom: 24px; }
 .home-hero-words { gap: 14px; }
 .home-hero-actions { flex-wrap: wrap; }
