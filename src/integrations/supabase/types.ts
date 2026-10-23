@@ -787,6 +787,192 @@ export type Database = {
           },
         ]
       }
+      print_formats: {
+        Row: {
+          active: boolean
+          book_format: string
+          cover_type: string
+          key: string
+          label: string
+          markup_percent: number
+          max_pages: number
+          min_pages: number
+          page_multiple: number
+          pod_package_id: string
+          trim_height_in: number
+          trim_width_in: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          book_format: string
+          cover_type: string
+          key: string
+          label: string
+          markup_percent?: number
+          max_pages: number
+          min_pages: number
+          page_multiple?: number
+          pod_package_id: string
+          trim_height_in: number
+          trim_width_in: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          book_format?: string
+          cover_type?: string
+          key?: string
+          label?: string
+          markup_percent?: number
+          max_pages?: number
+          min_pages?: number
+          page_multiple?: number
+          pod_package_id?: string
+          trim_height_in?: number
+          trim_width_in?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      print_orders: {
+        Row: {
+          book_id: string
+          child_id: string
+          cover_path: string | null
+          cover_validation_id: string | null
+          created_at: string
+          credit_used: boolean
+          environment: string
+          format_key: string
+          id: string
+          interior_path: string | null
+          interior_validation_id: string | null
+          lulu_env: string
+          lulu_job_id: string | null
+          page_count: number
+          parent_id: string
+          quantity: number
+          quote: Json
+          request_id: string | null
+          shipping_address: Json
+          shipping_level: string
+          status: string
+          status_detail: string | null
+          stripe_session_id: string | null
+          total_cents: number
+          tracking: Json
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          child_id: string
+          cover_path?: string | null
+          cover_validation_id?: string | null
+          created_at?: string
+          credit_used?: boolean
+          environment: string
+          format_key: string
+          id?: string
+          interior_path?: string | null
+          interior_validation_id?: string | null
+          lulu_env: string
+          lulu_job_id?: string | null
+          page_count: number
+          parent_id: string
+          quantity: number
+          quote?: Json
+          request_id?: string | null
+          shipping_address: Json
+          shipping_level: string
+          status?: string
+          status_detail?: string | null
+          stripe_session_id?: string | null
+          total_cents: number
+          tracking?: Json
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          child_id?: string
+          cover_path?: string | null
+          cover_validation_id?: string | null
+          created_at?: string
+          credit_used?: boolean
+          environment?: string
+          format_key?: string
+          id?: string
+          interior_path?: string | null
+          interior_validation_id?: string | null
+          lulu_env?: string
+          lulu_job_id?: string | null
+          page_count?: number
+          parent_id?: string
+          quantity?: number
+          quote?: Json
+          request_id?: string | null
+          shipping_address?: Json
+          shipping_level?: string
+          status?: string
+          status_detail?: string | null
+          stripe_session_id?: string | null
+          total_cents?: number
+          tracking?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      print_requests: {
+        Row: {
+          book_id: string
+          child_id: string
+          created_at: string
+          id: string
+          parent_id: string
+          status: string
+        }
+        Insert: {
+          book_id: string
+          child_id: string
+          created_at?: string
+          id?: string
+          parent_id: string
+          status?: string
+        }
+        Update: {
+          book_id?: string
+          child_id?: string
+          created_at?: string
+          id?: string
+          parent_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      print_settings: {
+        Row: {
+          brand_name: string
+          contact_email: string
+          id: number
+          lulu_env: string
+          updated_at: string
+        }
+        Insert: {
+          brand_name?: string
+          contact_email?: string
+          id?: number
+          lulu_env?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string
+          contact_email?: string
+          id?: number
+          lulu_env?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       printables: {
         Row: {
           created_at: string
