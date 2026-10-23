@@ -50,7 +50,7 @@ export async function planComicPicture(sb: SupabaseClient<any>, userId: string, 
 
 export async function placeComicBubble(path: string, hero: string, page: ComicPage, index: number) {
   const url = (await signPaths([path]))[0];
-  if (!url) throw new Error("Your panel is saved. Reopen it to add words.");
+  if (!url) return { x: 4, y: 4, w: 44, h: 25, tx: 50, ty: 55 };
   const aspect = comicPanelAspect(page, index);
   const pct = z.number().min(0).max(100);
   const out = await aiObject(z.object({ x: pct, y: pct, w: z.number().min(25).max(55), h: z.number().min(18).max(35), tx: pct, ty: pct }),
