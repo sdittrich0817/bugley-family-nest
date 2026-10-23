@@ -1,6 +1,5 @@
 // Plan cards shared by /pricing and the post-setup plan picker.
 export const PLANS = [
-const PLANS = [
   {
     id: "family",
     name: "Family",
@@ -26,3 +25,5 @@ const PLANS = [
       "Everything in Family",
       "20 glow per child per day",
       "Builders tools for older kids (10–12), like app building",
+  },
+] as const;
