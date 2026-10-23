@@ -42,7 +42,7 @@ export const makePicture = createServerFn({ method: "POST" }).middleware([requir
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
     const { generateImage } = await import("@/lib/images.server");
-    const r = await generateImage(context.supabase, context.userId, { ...data, pictureFlow: true });
+    const r = await generateImage(context.supabase, context.userId, { ...data, characterIds: data.characterIds.slice(0, 1), pictureFlow: true });
     if (!r.ok) return r;
     const { saveCreation } = await import("@/lib/studio.server");
     const title = data.description.length > 40 ? `${data.description.slice(0, 38).trim()}…` : data.description;
@@ -64,14 +64,20 @@ export const upgradePicture = createServerFn({ method: "POST" }).middleware([req
     const details = row.details as { characters: string[]; mode: string; pictureFlow: boolean; upgradeState: string };
     const { data: claimed, error } = await a.from("studio_creations").update({ details: { ...details, upgradeState: "painting" } }).eq("id", row.id).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).contains("details", { mode: "sketch", pictureFlow: true, upgradeState: "ready" }).select("id").maybeSingle();
     if (error || !claimed) return { ok: false as const, reply: "That picture is already being painted. Your preview is safe!" };
+    let painted = false;
     try {
       const { generateImage } = await import("./images.server");
       const r = await generateImage(context.supabase, context.userId, { childId: data.childId, description: row.body, styleKey: row.style_key, mode: "final", characterIds: details.characters ?? [], pictureFlow: true, previewPath: row.images[0] });
       if (!r.ok) { await a.from("studio_creations").update({ details }).eq("id", row.id); return r; }
+      painted = true;
       const { error: saveError } = await a.from("studio_creations").update({ images: [r.path, ...row.images], details: { ...details, mode: "final", upgradeState: "done" } }).eq("id", row.id);
       if (saveError) throw new Error("Your preview is saved, but the finished picture couldn’t be saved. Ask a grown-up.");
       return { ok: true as const, id: row.id, url: r.url };
     } catch (e) {
+      if (painted) {
+        const { giftGlowServer } = await import("./glow.server");
+        await giftGlowServer(context.supabase, context.userId, data.childId, 2, "Refund: finished picture couldn’t save");
+      }
       await a.from("studio_creations").update({ details }).eq("id", row.id);
       throw e;
     }

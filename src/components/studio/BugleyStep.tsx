@@ -65,7 +65,7 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
     {bare && <h2 className={cn("text-center", sprouts ? "text-4xl" : "text-3xl")}>{line}</h2>}
 
     {mood === "painting" ? <div className="mx-auto mt-6 h-4 w-full max-w-md overflow-hidden rounded-full bg-muted"><div className="studio-paint-bar h-full rounded-full bg-primary" /></div>
-      : <div className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2", shown.length + (allowOwnIdea ? 1 : 0) + (paged ? 1 : 0) > 4 && !sprouts && "lg:grid-cols-3")}>
+      : <div className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-2")}>
         {shown.map((c, i) => <Button variant="ghost" key={c.key} onClick={() => pick(c)} style={{ animationDelay: `${i * 70}ms` }}
           className="group h-auto flex-col gap-0 whitespace-normal p-0 items-stretch overflow-hidden rounded-[2rem] border-2 border-border bg-card text-left shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
           {c.image ? <img src={c.image} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover" />
@@ -80,8 +80,8 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
               <Button variant="ghost" type="submit" className="rounded-2xl bg-primary px-4 font-display text-primary-foreground">Go</Button>
             </form>
             : <div className="flex items-center gap-4">
-              {voice.supported && <Button variant="ghost" onClick={voice.start} aria-label="Say your idea" className={cn("flex size-20 p-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow transition", voice.listening && "animate-pulse")}><Mic className="size-10" /></Button>}
-              <Button variant="ghost" onClick={() => setTyping(true)} aria-label="Type your idea" className="flex size-14 p-0 items-center justify-center rounded-full border-2 border-border bg-background"><Keyboard className="size-7" /></Button>
+              {voice.supported && <Button variant="ghost" onClick={voice.start} aria-label="Say your idea" className={cn("flex size-20 p-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow transition [&_svg]:size-10", voice.listening && "animate-pulse")}><Mic /></Button>}
+              <Button variant="ghost" onClick={() => setTyping(true)} aria-label="Type your idea" className="flex size-14 p-0 items-center justify-center rounded-full border-2 border-border bg-background [&_svg]:size-7"><Keyboard /></Button>
             </div>}
         </div>}
       </div>}
