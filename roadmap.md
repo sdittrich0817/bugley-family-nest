@@ -21,3 +21,4 @@
 - [x] Comic Maker (one-shot comics, layouts, panels, text layers, cover, flipbook)
 - [x] Multi-chapter Books (Story Bible, chapters, Book Builder, print counter, Hub view)
 - [x] Game Studio home + Arcade (4 games, pass and play, admin content)
+- [x] Game Builder (6 templates, interview, editors, playtest coach, Family Arcade)

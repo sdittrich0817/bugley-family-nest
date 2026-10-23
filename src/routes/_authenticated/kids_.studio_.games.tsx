@@ -7,6 +7,9 @@ import { getActivePlayer, setKidZoneLocked } from "@/lib/kid-zone";
 import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { Arcade } from "@/components/games/Arcade";
+import { GameBuilder } from "@/components/games/GameBuilder";
+import { MyGames } from "@/components/games/MyGames";
+import { z } from "zod";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/kids_/studio_/games")({
@@ -15,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/kids_/studio_/games")({
     { property: "og:title", content: "Game Studio · Bugley’s Arcade" }, { property: "og:description", content: "Play Real or Robot?, Robot Chef, Train Bugley and Fact or Fib." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
+  validateSearch: z.object({ game: z.string().uuid().optional() }),
   loader: ({ context }) => context.queryClient.ensureQueryData(familyOptions),
   component: GamesPage,
 });
@@ -23,6 +27,8 @@ function GamesPage() {
   const { data } = useSuspenseQuery(familyOptions);
   const navigate = useNavigate();
   const [childId, setChildId] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const [editing, setEditing] = useState<string | null | undefined>(search.game);
   useEffect(() => {
     setKidZoneLocked(true);
     const id = getActivePlayer();
@@ -35,6 +41,6 @@ function GamesPage() {
   if (!child) return null;
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${child.age_band}`)}>
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur"><div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3"><Link to="/kids/studio" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />Studio</Link><span className="font-display text-lg">Game Studio</span></div></header>
-    <main className="mx-auto max-w-5xl px-4 pb-24 pt-6"><Arcade child={child as any} family={data.children as any} /></main>
+    <main className="mx-auto max-w-5xl px-4 pb-24 pt-6">{editing !== undefined ? <GameBuilder key={editing ?? "new"} child={child as any} gameId={editing} onClose={() => { setEditing(undefined); void navigate({ to: "/kids/studio/games", search: {}, replace: true }); }} /> : <Arcade child={child as any} family={data.children as any} builder={<MyGames childId={child.id} onEdit={setEditing} />} />}</main>
   </div>;
 }

@@ -19,7 +19,7 @@ type Player = { kid: Kid; round: Round; idx: number };
 type Result = Awaited<ReturnType<typeof finishRound>> & { kid: Kid };
 const SPARKS_PER_STAGE = 50;
 
-export function Arcade({ child, family }: { child: Kid; family: Kid[] }) {
+export function Arcade({ child, family, builder }: { child: Kid; family: Kid[]; builder?: React.ReactNode }) {
   const qc = useQueryClient();
   const key = ["arcade", child.id];
   const { data } = useQuery({ queryKey: key, queryFn: () => getArcade({ data: { childId: child.id } }) });
@@ -58,11 +58,7 @@ export function Arcade({ child, family }: { child: Kid; family: Kid[] }) {
         </button>;
       })}</div>
     </section>
-    <section className="space-y-3 rounded-3xl border-2 border-dashed border-border p-6 text-center">
-      <h2 className="text-2xl">Game Builder</h2>
-      <p className="text-muted-foreground">Make your own games for your family to play.</p>
-      <span className="inline-block rounded-full bg-muted px-3 py-1 text-sm font-semibold text-muted-foreground">Coming soon</span>
-    </section>
+    {builder}
     <p className="text-center text-sm text-muted-foreground">Only your family sees scores. No ads, no prizes to buy.</p>
   </div>;
 }
