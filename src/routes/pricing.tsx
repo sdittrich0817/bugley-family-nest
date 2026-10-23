@@ -9,6 +9,7 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
+import { PLANS } from "@/lib/plans";
 
 const TITLE = "Pricing — Bugley";
 const DESC =
@@ -28,32 +29,6 @@ export const Route = createFileRoute("/pricing")({
   component: Pricing,
 });
 
-type Billing = "monthly" | "annual";
-
-const PLANS = [
-  {
-    name: "Family",
-    monthly: 19,
-    annual: 179,
-    popular: false,
-    blurb: "Everything a family needs to learn AI together.",
-    features: [
-      "Up to 5 kids",
-      "Every Season, included",
-      "The Parent Hub",
-      "Bugley's Studio — stories and games, 10 glow per child per day",
-    ],
-  },
-  {
-    name: "Family Plus",
-    monthly: 29,
-    annual: 249,
-    popular: true,
-    blurb: "For families who want more room to make.",
-    features: [
-      "Everything in Family",
-      "20 glow per child per day",
-      "Builders tools for older kids (10–12), like app building",
       "One printed Family Story Book per year",
     ],
   },
