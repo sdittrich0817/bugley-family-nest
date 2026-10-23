@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { ImageAdmin } from "@/components/site/ImageAdmin";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -69,6 +70,7 @@ function AdminArea() {
       <div>{sel ? <Editor key={`${sel.table}-${sel.id ?? "new"}-${sel.parentId ?? ""}`} sel={sel} row={find(sel)} onSaved={(id) => setSel({ ...sel, id })} onDeleted={() => setSel(null)} /> : <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">Pick something on the left to edit, or add a new Season.</p>}</div>
     </div>
     <GlowAdmin />
+    <ImageAdmin />
   </section>;
 }
 

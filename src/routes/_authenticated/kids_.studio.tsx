@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Mic, Pencil, Sparkles, Trash2, Volume2, Wand2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Smile, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Mic, Pencil, Sparkles, Trash2, Volume2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { familyOptions } from "@/lib/family.functions";
 import { getChildGlow } from "@/lib/glow.functions";
@@ -12,6 +12,7 @@ import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
 import { Sidekick, speak, useBugleyChat, useVoiceInput, type BugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { Bugley } from "@/components/brand/Bugley";
+import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
 import { BugleyMature } from "@/components/brand/BugleyMature";
 import { cn } from "@/lib/utils";
 
@@ -43,7 +44,8 @@ function StudioPage() {
 }
 
 const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolean }[] = [
-  { key: "picture", label: "Picture", icon: ImageIcon, ready: false },
+  { key: "picture", label: "Picture", icon: ImageIcon, ready: true },
+  { key: "character", label: "Characters", icon: Smile, ready: true },
   { key: "story", label: "Story", icon: BookOpen, ready: false },
   { key: "comic", label: "Comic", icon: LayoutGrid, ready: false },
   { key: "games", label: "Games", icon: Gamepad2, ready: false },
@@ -53,9 +55,9 @@ const TILES: { key: string; label: string; icon: typeof ImageIcon; ready: boolea
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts", builders = band === "builders";
-  const [view, setView] = useState<"home" | "album">("home");
+  const [view, setView] = useState<View>("home");
   const greeting = `Hi ${child.nickname}! What should we make today?`;
-  const chat = useBugleyChat(child, view === "album" ? "My Album" : "Studio home", greeting,
+  const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting,
     sprouts ? ["A silly dragon", "A rainbow castle"] : builders ? ["Help me pick a project", "Invent a world"] : ["A space mystery", "A brave little robot"]);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => { if (sprouts) speak(greeting); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -63,7 +65,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${band}`)}>
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        {view === "album"
+        {view !== "home"
           ? <button onClick={() => setView("home")} className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />Studio</button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
         <span className="hidden font-display text-lg sm:block">Bugley’s Studio</span>
@@ -72,14 +74,20 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     </header>
     <div className="mx-auto flex max-w-6xl gap-6 px-4 pb-28 pt-6">
       <main className="min-w-0 flex-1">
-        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onAlbum={() => setView("album")} /> : <Album child={child} />}
+        {view === "home" ? <StudioHome child={child} chat={chat} greeting={greeting} onOpen={setView} />
+          : view === "picture" ? <PictureMaker child={child} chat={chat} />
+          : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
+          : <Album child={child} />}
       </main>
       <Sidekick child={child} chat={chat} />
     </div>
   </div>;
 }
 
-function StudioHome({ child, chat, greeting, onAlbum }: { child: SidekickChild; chat: BugleyChat; greeting: string; onAlbum: () => void }) {
+type View = "home" | "album" | "picture" | "character";
+const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", album: "My Album", picture: "Picture Maker", character: "Character Creator" };
+
+function StudioHome({ child, chat, greeting, onOpen }: { child: SidekickChild; chat: BugleyChat; greeting: string; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts", builders = child.age_band === "builders";
   const [idea, setIdea] = useState("");
   const voice = useVoiceInput((t) => setIdea(t));
@@ -104,9 +112,9 @@ function StudioHome({ child, chat, greeting, onAlbum }: { child: SidekickChild; 
       </form>
     </section>
     <section className={cn("grid gap-4", sprouts ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
-      {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={ready ? onAlbum : () => toast(`${label} is coming soon!`)}
+      {TILES.map(({ key, label, icon: Icon, ready }, i) => <button key={key} onClick={ready ? () => onOpen(key as View) : () => toast(`${label} is coming soon!`)}
         style={{ animationDelay: `${i * 60}ms` }}
-        className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && sprouts && "col-span-2")}>
+        className={cn("group relative flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-border bg-card p-5 shadow-soft transition duration-200 animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-44" : "min-h-36", key === "album" && (sprouts ? "col-span-2" : "col-span-2 sm:col-span-3"))}>
         <span className={cn("flex items-center justify-center rounded-2xl bg-primary/25 transition group-hover:bg-primary", sprouts ? "size-20" : "size-16")}><Icon className={sprouts ? "size-10" : "size-8"} /></span>
         <span className={cn("font-display", sprouts ? "text-2xl" : "text-xl")}>{label}</span>
         {!ready && <span className="rounded-full bg-muted px-3 py-0.5 text-xs font-semibold text-muted-foreground">Coming soon</span>}

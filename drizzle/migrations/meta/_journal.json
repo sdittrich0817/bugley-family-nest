@@ -71,6 +71,13 @@
       "when": 1792763494658,
       "tag": "0009_studio_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792764064959,
+      "tag": "0010_image_system",
+      "breakpoints": true
     }
   ]
 }
