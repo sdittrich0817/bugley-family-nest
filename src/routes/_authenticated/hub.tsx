@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { StudioActivity } from "@/components/site/StudioActivity";
 import { ParentBooks } from "@/components/site/ParentBooks";
+import { ParentPrints } from "@/components/site/ParentPrints";
 import { ParentGames } from "@/components/site/ParentGames";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -60,6 +61,7 @@ function Hub() {
 
       <Section title="Activity">
         <StudioActivity kids={family.children} />
+        <ParentPrints kids={family.children} />
         <ParentBooks kids={family.children} />
         <ParentGames />
       </Section>

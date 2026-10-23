@@ -43,6 +43,16 @@ async function handle(req: Request, env: StripeEnv) {
       await sb.from("subscriptions").update({ status: "canceled", updated_at: new Date().toISOString() }).eq("stripe_subscription_id", event.data.object.id).eq("environment", env);
       break;
     }
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const orderId = session.metadata?.printOrderId;
+      if (!orderId || session.payment_status !== "paid") break;
+      const sb = await db();
+      const { data: o } = await sb.from("print_orders").update({ status: "paid", updated_at: new Date().toISOString() }).eq("id", orderId).eq("stripe_session_id", session.id).eq("status", "awaiting_payment").select("id,request_id").maybeSingle();
+      if (o?.request_id) await sb.from("print_requests").update({ status: "ordered" }).eq("id", o.request_id);
+      if (o) { const { advanceOrder } = await import("@/lib/print.server"); await advanceOrder(o.id); }
+      break;
+    }
     default: console.log("Unhandled event:", event.type);
   }
 }

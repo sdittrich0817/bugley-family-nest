@@ -85,6 +85,13 @@
       "when": 1792769545704,
       "tag": "0011_game_arcade",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792771102801,
+      "tag": "0012_printed_books",
+      "breakpoints": true
     }
   ]
 }

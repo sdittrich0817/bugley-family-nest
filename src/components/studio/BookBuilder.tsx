@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, Library, Plus, RefreshCw, Save, Trash2, Volume2 } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BookOpen, Check, Library, Plus, Printer, RefreshCw, Save, Trash2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
@@ -9,6 +9,7 @@ import { StylePicker } from "./Makers";
 import { PageGrid } from "./ComicMaker";
 import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast } from "@/lib/images.functions";
+import { requestPrint } from "@/lib/print.functions";
 import { createBook, editBook, getBook, startChapter } from "@/lib/book.functions";
 import type { Book, BookChapter } from "@/lib/book.server";
 import { printMessage, printedPages, pagesUntilPrintable, PRINT_RULES, type Bible, type BookFormat } from "@/lib/book";
@@ -84,7 +85,8 @@ export function BookBuilder({ child, chat, bookId, onBook, onOpenChapter }: { ch
       <div className="rounded-2xl bg-card p-4 shadow-soft">
         <p className="font-display text-lg">{printMessage(book.data.format, pages)}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(100, (pages / (pages + left || 1)) * 100)}%` }} /></div>
-        <p className="mt-1 text-xs text-muted-foreground">{pages} pages, counting the title page and “The End.” {book.data.format === "comic" ? `Comics print at ${rule.min}+ pages, in groups of ${rule.multiple}.` : `Story books print at ${rule.min}+ pages.`} Printing comes later.</p>
+        <p className="mt-1 text-xs text-muted-foreground">{pages} pages, counting the title page and “The End.” {book.data.format === "comic" ? `Comics print at ${rule.min}+ pages; blank pages fill it to a group of ${rule.multiple}.` : `Story books print at ${rule.min}+ pages.`}</p>
+        {left === 0 && <AskToPrint childId={child.id} bookId={book.id} onAsked={() => chat.say("I sent it to your grown-up! Fingers crossed!")} />}
       </div>
       <Button variant="secondary" disabled={busy} onClick={() => setReading(true)}><BookOpen />Preview the whole book</Button>
     </div>
@@ -186,3 +188,10 @@ export function BookReader({ book, readAloud, onBack, nickname }: { book: Book; 
   </div>;
 }
 const Paper = ({ children }: { children: React.ReactNode }) => <div className="flex aspect-[3/4] flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center shadow-soft">{children}</div>;
+
+function AskToPrint({ childId, bookId, onAsked }: { childId: string; bookId: string; onAsked: () => void }) {
+  const ask = useServerFn(requestPrint);
+  const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
+  if (state === "sent") return <p className="mt-3 rounded-xl bg-muted p-3 font-semibold">I sent it to your grown-up! Fingers crossed!</p>;
+  return <Button className="mt-3" disabled={state === "busy"} onClick={() => { setState("busy"); ask({ data: { childId, bookId } }).then(() => { setState("sent"); onAsked(); }).catch((e: unknown) => { setState("idle"); toast.error(e instanceof Error ? e.message : "Let’s try again."); }); }}><Printer />Ask to print</Button>;
+}

@@ -20,8 +20,9 @@ export const PRINT_RULES = { comic: { min: 8, multiple: 4 }, story: { min: 24, m
 export function printedPages(chapterPages: number, hasDedication: boolean) { return chapterPages + 2 + (hasDedication ? 1 : 0); }
 export function pagesUntilPrintable(format: BookFormat, pages: number) {
   const r = PRINT_RULES[format];
-  const target = Math.max(r.min, Math.ceil(pages / r.multiple) * r.multiple);
-  return target - pages;
+  // Blank pages are added automatically to reach the next multiple, so only the minimum matters here.
+  void r.multiple;
+  return Math.max(0, r.min - pages);
 }
 export function printMessage(format: BookFormat, pages: number) {
   const left = pagesUntilPrintable(format, pages);
