@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowLeft, ArrowUp, Lock, Play, RotateCcw, Sparkles, Trophy, Users, Volume2, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, Lock, Play as PlayIcon, RotateCcw, Sparkles, Trophy, Users, Volume2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
@@ -96,7 +96,7 @@ function Setup({ child, family, game, info, onBack, onStart }: { child: Kid; fam
       {pass && <div className="flex flex-wrap gap-2">{eligible.map((k) => <Button key={k.id} variant={picked.includes(k.id) ? "primary" : "outline"} className="h-auto py-2" disabled={k.id === child.id} onClick={() => setPicked(picked.includes(k.id) ? picked.filter((x) => x !== k.id) : [...picked, k.id])}><ChildAvatar avatar={k.avatar} className="size-8" />{k.nickname}</Button>)}</div>}
       {pass && <p className="text-sm text-muted-foreground">Take turns on this device. Each player gets their own questions.</p>}
     </section>
-    <Button size="lg" disabled={busy || (pass && picked.length < 2)} onClick={() => void go()}><Play />{busy ? "Getting ready…" : "Start"}</Button>
+    <Button size="lg" disabled={busy || (pass && picked.length < 2)} onClick={() => void go()}><PlayIcon />{busy ? "Getting ready…" : "Start"}</Button>
   </div>;
 }
 
@@ -218,7 +218,7 @@ function RobotChef({ item, feedback, onRun, onRetry, big }: { item: { task: stri
         <ol className="space-y-2">{plan.map((id, i) => <li key={id} className={cn("flex items-center gap-1 rounded-xl border-2 bg-card p-2", feedback && !feedback.ok && feedback.at === i ? "border-destructive" : "border-border")}><span className="w-6 text-center font-display">{i + 1}</span><span className="flex-1">{text(id)}</span>
           <Button size="icon" variant="ghost" aria-label="Move up" disabled={locked || !i} onClick={() => move(i, i - 1)}><ArrowUp /></Button><Button size="icon" variant="ghost" aria-label="Move down" disabled={locked || i === plan.length - 1} onClick={() => move(i, i + 1)}><ArrowDown /></Button><Button size="icon" variant="ghost" aria-label="Remove step" disabled={locked} onClick={() => setPlan(plan.filter((x) => x !== id))}><X /></Button></li>)}</ol></section>
     </div>
-    {!feedback ? <div className="flex justify-center"><Button size="lg" disabled={!plan.length} onClick={() => onRun(plan)}><Play />Run Chef Bolt</Button></div>
+    {!feedback ? <div className="flex justify-center"><Button size="lg" disabled={!plan.length} onClick={() => onRun(plan)}><PlayIcon />Run Chef Bolt</Button></div>
       : <Clue ok={feedback.ok}><p className="font-semibold">{feedback.result}</p>{!feedback.ok && !feedback.done && <><p className="text-sm">Fix the order or add a step. {feedback.triesLeft} tries left.</p><Button className="mt-2" variant="secondary" onClick={onRetry}><RotateCcw />Fix my steps</Button></>}{!feedback.ok && feedback.done && <p className="text-sm">Good try! Robots need every single step.</p>}</Clue>}
   </div>;
 }
