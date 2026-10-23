@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Dices, Play, Plus, Save, Share2, Sparkles, Trash2, Wand2 } from "lucide-react";
@@ -27,7 +28,7 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   const [title, setTitle] = useState("");
   const [file, setFile] = useState<GameFile | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
-  const [step, setStep] = useState<"pick" | "interview" | "edit">(gameId ? "edit" : "pick");
+  const [step, setStep] = useState<"pick" | "interview" | "edit">(gameId ? "edit" : "pick"); useScrollTopOn(step);
   const [answers, setAnswers] = useState({ hero: "", goal: "", obstacle: "", win: "" });
   const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false);
   const [testing, setTesting] = useState(false);

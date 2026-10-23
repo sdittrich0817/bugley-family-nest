@@ -1,3 +1,4 @@
+import { useScrollTopOn } from "@/lib/scroll";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +26,7 @@ export function Arcade({ child, family, builder }: { child: Kid; family: Kid[]; 
   const { data } = useQuery({ queryKey: key, queryFn: () => getArcade({ data: { childId: child.id } }) });
   const [game, setGame] = useState<GameKey | null>(null);
   const [players, setPlayers] = useState<Player[] | null>(null);
-  const [results, setResults] = useState<Result[] | null>(null);
+  const [results, setResults] = useState<Result[] | null>(null); useScrollTopOn(`${game}|${!!players}|${!!results}`);
   const sprouts = child.age_band === "sprouts";
   const reset = () => { setPlayers(null); setResults(null); void qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); };
 
