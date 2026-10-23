@@ -11,7 +11,7 @@ export const credentialSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("pictures"), pictures: z.array(z.enum(PICTURES)).length(3, "Choose 3 pictures in order.") }),
 ]);
 export const childDetailsSchema = z.object({
-  nickname: z.string().trim().replace(/\s+/g, " ").min(1, "Enter a first name or nickname.").max(40).regex(/^\S+( \S+)?$/, "Use a first name or nickname of up to two words, like “Mary Kate”. No last names, please."),
+  nickname: z.string().trim().min(1, "Enter a first name or nickname.").max(40).regex(/^\S+( \S+)?$/, "Use a first name or nickname of up to two words, like “Mary Kate”. No last names, please."),
   age: z.number().int().min(5).max(12),
   avatar: z.enum(AVATARS),
 });
