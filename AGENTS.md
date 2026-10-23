@@ -31,4 +31,4 @@
 - Every Studio image goes through `generateImage` in `src/lib/images.server.ts` (guard, glow charge with refund on failure, server-built prompt from admin style recipe + no-text safety suffix, admin-chosen Replicate model per mode, AI image check that fails closed, private `studio-images` storage served by signed URLs). Models and recipes live in database tables edited in /admin, never in code. Why: one audited path, swappable models, no unchecked images.
 
 - Subdirectories may have their own `AGENTS.md` (see `src/lib/AGENTS.md` for Studio makers and books); read it before changing files there.
-- Scroll-to-top on navigation is handled once in the root shell (after a page resolves; Back keeps its spot only via browser); screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
+- Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
