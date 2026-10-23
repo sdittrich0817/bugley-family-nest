@@ -76,7 +76,7 @@ export async function advanceOrder(orderId: string): Promise<void> {
       const job = await lulu(env, "POST", "/print-jobs/", {
         contact_email: s.contact_email || user.user?.email,
         external_id: o.id,
-        line_items: [{ external_id: o.book_id, title: (book?.title ?? "Bugley book").slice(0, 120), quantity: o.quantity, printable_normalization: { pod_package_id: fmt.pod_package_id, cover: { source_url: await signed(o.cover_path) }, interior: { source_url: await signed(o.interior_path) } } }],
+        line_items: [{ external_id: o.book_id, title: (book?.title ?? "Bugley book").slice(0, 120), quantity: o.quantity, printable_normalization: { pod_package_id: fmt.pod_package_id, cover: { source_url: await signed(o.cover_path as string) }, interior: { source_url: await signed(o.interior_path as string) } } }],
         shipping_address: { ...addr, email: user.user?.email },
         shipping_level: o.shipping_level,
       });

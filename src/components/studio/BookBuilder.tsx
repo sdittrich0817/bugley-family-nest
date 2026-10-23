@@ -188,3 +188,10 @@ export function BookReader({ book, readAloud, onBack, nickname }: { book: Book; 
   </div>;
 }
 const Paper = ({ children }: { children: React.ReactNode }) => <div className="flex aspect-[3/4] flex-col items-center justify-center rounded-lg border border-border bg-card p-8 text-center shadow-soft">{children}</div>;
+
+function AskToPrint({ childId, bookId, onAsked }: { childId: string; bookId: string; onAsked: () => void }) {
+  const ask = useServerFn(requestPrint);
+  const [state, setState] = useState<"idle" | "busy" | "sent">("idle");
+  if (state === "sent") return <p className="mt-3 rounded-xl bg-muted p-3 font-semibold">I sent it to your grown-up! Fingers crossed!</p>;
+  return <Button className="mt-3" disabled={state === "busy"} onClick={() => { setState("busy"); ask({ data: { childId, bookId } }).then(() => { setState("sent"); onAsked(); }).catch((e: unknown) => { setState("idle"); toast.error(e instanceof Error ? e.message : "Let’s try again."); }); }}><Printer />Ask to print</Button>;
+}
