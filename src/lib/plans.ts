@@ -1,6 +1,5 @@
 // Plan cards shared by /pricing and the post-setup plan picker.
 export const PLANS = [
-
 const PLANS = [
   {
     id: "family",
