@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveOrCreateCustomer } from "./billing.functions";
 import { addressSchema, canPrint, freeCreditAvailable, paddedPageCount, priceOrder, SHIPPING_LEVELS, type PrintFormat } from "./print";
 
 const env = z.enum(["sandbox", "live"]);
@@ -94,7 +95,6 @@ export const startPrintCheckout = createServerFn({ method: "POST" }).middleware(
       }).select("id").single();
       if (error || !order) return { error: "We couldn’t start that order." };
       const { createStripeClient } = await import("./stripe.server");
-      const { resolveOrCreateCustomer } = await import("./billing.functions");
       const stripe = createStripeClient(data.environment);
       const { data: { user } } = await context.supabase.auth.getUser();
       const customer = await resolveOrCreateCustomer(stripe, { email: user?.email ?? undefined, userId: context.userId });
