@@ -28,3 +28,5 @@
 - [ ] Connect Lulu sandbox keys and run a test print order end to end (blocked: Shea creates a Lulu developer account).
 - [ ] Confirm Lulu product codes and the 24-page softcover minimum with Lulu (blocked: Lulu account).
 - [x] Rebuild Tell a Story with Bugley Steps, hidden age-sized beats, child-authored pages, automatic illustrations/cover and chapter continuation; live first-page save/image/reopen and three screen widths checked.
+- [x] Rebuild Build a Comic with guided panels, genre-aware setup, automatic layouts/camera/bubbles, editable speech/sound effects, covers and Issue 2; live panel save/image/reopen and no-glow speech/sound changes verified.
+- [ ] Verify complete comic cover, Issue 2 and multi-issue print preview live (first panel and speech verified; finishing the test comic needs more daily glow).

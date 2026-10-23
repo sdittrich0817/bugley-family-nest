@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, EMPTY_MAP, newStoryPage, guidedPages, type StoryData } from "./story";
-import { newComicPage, type ComicData } from "./comic";
+import { guidedComicPages, type ComicData } from "./comic";
 import { BOOK_FORMATS, EMPTY_BIBLE, authorStatusFor, bibleSchema, type BookData } from "./book";
 
 const env = z.enum(["sandbox", "live"]);
@@ -80,7 +80,7 @@ export const startChapter = createServerFn({ method: "POST" }).middleware([requi
   book.data.bible = { ...r.bible, cast: [...r.bible.cast, ...added.map((id) => ({ id, note: "" }))] };
   book.data.absorbed = r.absorbed;
   const base = { genre: book.data.genre, styleKey: book.data.styleKey, characterIds: book.data.characterIds, map: EMPTY_MAP, finished: false, cover: null, bookId: book.id };
-  const details = book.data.format === "comic" ? { ...base, pages: [newComicPage("one")] } satisfies ComicData : { ...base, pages: guidedPages(child.age_band), guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } satisfies StoryData;
+  const details = book.data.format === "comic" ? { ...base, pages: guidedComicPages(child.age_band), guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } satisfies ComicData : { ...base, pages: guidedPages(child.age_band), guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } satisfies StoryData;
   const cid = await s.saveCreation(context.userId, { child_id: child.id, kind: book.data.format, title: data.title, project: book.title, position: book.data.chapterIds.length + 1 });
   const a = await admin();
   await a.from("studio_creations").update({ details: details as never, style_key: book.data.styleKey }).eq("id", cid);

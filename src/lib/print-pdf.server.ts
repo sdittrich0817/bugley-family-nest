@@ -2,7 +2,7 @@
 import { PDFDocument, rgb, degrees, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { Book } from "./book.server";
-import { LAYOUTS } from "./comic";
+import { comicCells } from "./comic";
 import { paddedPageCount, type PrintFormat } from "./print";
 
 const BLEED = 9; // 0.125in in points
@@ -113,12 +113,12 @@ export async function buildInterior(book: Book, nickname: string, format: PrintF
         const p = blank();
         let top = H - BLEED - SAFE / 2;
         if (i === 0) top -= textBlock(p, ch.title, fonts.display, 16, inner.x, top, inner.w, { center: true }) + 6;
-        const n = LAYOUTS[cp.layout]; const cols = n === 1 ? 1 : n === 3 ? 1 : 2; const rows = Math.ceil(n / cols);
+        const cells = comicCells(cp);
         const gx = BLEED + SAFE / 2, gw = W - 2 * gx, gy = BLEED + SAFE / 2, gh = top - gy, gap = 8;
-        const cw = (gw - gap * (cols - 1)) / cols, rh = (gh - gap * (rows - 1)) / rows;
-        for (const [k, panel] of cp.panels.slice(0, n).entries()) {
-          const c = k % cols, r = Math.floor(k / cols);
-          const x = gx + c * (cw + gap), y = gy + gh - (r + 1) * rh - r * gap;
+        for (const [k, panel] of cp.panels.entries()) {
+          const cell = cells[k]; if (!cell) continue;
+          const cw = gw * cell.w - gap, rh = gh * cell.h - gap;
+          const x = gx + gw * cell.x + gap / 2, y = gy + gh * (1 - cell.y - cell.h) + gap / 2;
           const pic = await img.get(panel.image ?? panel.sketch);
           if (pic) img.draw(p, pic, x, y, cw, rh); else p.drawRectangle({ x, y, width: cw, height: rh, color: CREAM });
           p.drawRectangle({ x, y, width: cw, height: rh, borderColor: NAVY, borderWidth: 2 });
@@ -127,7 +127,7 @@ export async function buildInterior(book: Book, nickname: string, format: PrintF
             const lw = (l.w / 100) * cw, lh = (l.h / 100) * rh, lx = x + (l.x / 100) * cw, ly = y + rh - (l.y / 100) * rh - lh;
             if (l.type === "sfx") { fitText(p, l.text.toUpperCase(), fonts.sfx, lx, ly, lw, lh, 28); continue; }
             if (l.type === "speech" || l.type === "thought") {
-              p.drawLine({ start: { x: lx + lw / 2, y: ly + lh / 2 }, end: { x: lx + (l.tx / 100) * lw, y: ly - Math.min(16, lh * 0.5) }, thickness: 1.2, color: NAVY });
+              p.drawLine({ start: { x: lx + lw / 2, y: ly + lh / 2 }, end: { x: x + (l.tx / 100) * cw, y: y + rh - (l.ty / 100) * rh }, thickness: 1.2, color: NAVY });
               p.drawEllipse({ x: lx + lw / 2, y: ly + lh / 2, xScale: lw / 2, yScale: lh / 2, color: rgb(1, 1, 1), borderColor: NAVY, borderWidth: 1.2 });
               fitText(p, l.text, fonts.letter, lx + lw * 0.15, ly + lh * 0.15, lw * 0.7, lh * 0.7, 12);
             } else {
