@@ -29,10 +29,12 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
+          <Button variant="ghost" size="sm" asChild><Link to="/kids">Kids</Link></Button>
           {user ? <><Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button><Button variant="secondary" size="sm" onClick={() => void signOut()}>Log out</Button></> : <><Button variant="secondary" size="sm" onClick={() => open("log_in")}>Log in</Button><Button size="sm" onClick={() => open("start_free")}>Start free</Button></>}
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
+          <Button variant="ghost" size="sm" asChild><Link to="/kids">Kids</Link></Button>
           {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button variant="secondary" size="sm" asChild><Link to="/login">Log in</Link></Button>}
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
