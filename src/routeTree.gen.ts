@@ -11,12 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as KidRouteImport } from './routes/_kid'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BrandRouteImport } from './routes/brand'
 import { Route as CoOpsRouteImport } from './routes/co-ops'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as KidsEntryRouteImport } from './routes/kids-entry'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MissionRouteImport } from './routes/mission'
@@ -31,15 +33,15 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedHubRouteImport } from './routes/_authenticated/hub'
-import { Route as AuthenticatedKidsRouteImport } from './routes/_authenticated/kids'
 import { Route as AuthenticatedPlanRouteImport } from './routes/_authenticated/plan'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedSetupRouteImport } from './routes/_authenticated/setup'
 import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/table'
+import { Route as KidKidsRouteImport } from './routes/_kid.kids'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
-import { Route as AuthenticatedKidsStudioRouteImport } from './routes/_authenticated/kids_.studio'
-import { Route as AuthenticatedKidsStudioGamesRouteImport } from './routes/_authenticated/kids_.studio_.games'
+import { Route as KidKidsStudioRouteImport } from './routes/_kid.kids_.studio'
+import { Route as KidKidsStudioGamesRouteImport } from './routes/_kid.kids_.studio_.games'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -49,6 +51,10 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KidRoute = KidRouteImport.update({
+  id: '/_kid',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -79,6 +85,11 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KidsEntryRoute = KidsEntryRouteImport.update({
+  id: '/kids-entry',
+  path: '/kids-entry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearningRoute = LearningRouteImport.update({
@@ -151,11 +162,6 @@ const AuthenticatedHubRoute = AuthenticatedHubRouteImport.update({
   path: '/hub',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedKidsRoute = AuthenticatedKidsRouteImport.update({
-  id: '/kids',
-  path: '/kids',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const AuthenticatedPlanRoute = AuthenticatedPlanRouteImport.update({
   id: '/plan',
   path: '/plan',
@@ -176,6 +182,11 @@ const AuthenticatedTableRoute = AuthenticatedTableRouteImport.update({
   path: '/table',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const KidKidsRoute = KidKidsRouteImport.update({
+  id: '/kids',
+  path: '/kids',
+  getParentRoute: () => KidRoute,
+} as any)
 const ResourcesIndexRoute = ResourcesIndexRouteImport.update({
   id: '/resources/',
   path: '/resources/',
@@ -186,17 +197,16 @@ const ResourcesSlugRoute = ResourcesSlugRouteImport.update({
   path: '/resources/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedKidsStudioRoute = AuthenticatedKidsStudioRouteImport.update({
+const KidKidsStudioRoute = KidKidsStudioRouteImport.update({
   id: '/kids_/studio',
   path: '/kids/studio',
-  getParentRoute: () => AuthenticatedRouteRoute,
+  getParentRoute: () => KidRoute,
 } as any)
-const AuthenticatedKidsStudioGamesRoute =
-  AuthenticatedKidsStudioGamesRouteImport.update({
-    id: '/kids_/studio_/games',
-    path: '/kids/studio/games',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const KidKidsStudioGamesRoute = KidKidsStudioGamesRouteImport.update({
+  id: '/kids_/studio_/games',
+  path: '/kids/studio/games',
+  getParentRoute: () => KidRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -212,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
@@ -226,15 +237,15 @@ export interface FileRoutesByFullPath {
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
-  '/kids': typeof AuthenticatedKidsRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
+  '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
-  '/kids/studio': typeof AuthenticatedKidsStudioRoute
-  '/kids/studio/games': typeof AuthenticatedKidsStudioGamesRoute
+  '/kids/studio': typeof KidKidsStudioRoute
+  '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -245,6 +256,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
@@ -259,27 +271,29 @@ export interface FileRoutesByTo {
   '/account': typeof AuthenticatedAccountRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/hub': typeof AuthenticatedHubRoute
-  '/kids': typeof AuthenticatedKidsRoute
   '/plan': typeof AuthenticatedPlanRoute
   '/settings': typeof AuthenticatedSettingsRoute
   '/setup': typeof AuthenticatedSetupRoute
   '/table': typeof AuthenticatedTableRoute
+  '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
-  '/kids/studio': typeof AuthenticatedKidsStudioRoute
-  '/kids/studio/games': typeof AuthenticatedKidsStudioGamesRoute
+  '/kids/studio': typeof KidKidsStudioRoute
+  '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/_kid': typeof KidRouteWithChildren
   '/auth': typeof AuthRoute
   '/brand': typeof BrandRoute
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
   '/login': typeof LoginRoute
   '/mission': typeof MissionRoute
@@ -294,15 +308,15 @@ export interface FileRoutesById {
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/hub': typeof AuthenticatedHubRoute
-  '/_authenticated/kids': typeof AuthenticatedKidsRoute
   '/_authenticated/plan': typeof AuthenticatedPlanRoute
   '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/setup': typeof AuthenticatedSetupRoute
   '/_authenticated/table': typeof AuthenticatedTableRoute
+  '/_kid/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
-  '/_authenticated/kids_/studio': typeof AuthenticatedKidsStudioRoute
-  '/_authenticated/kids_/studio_/games': typeof AuthenticatedKidsStudioGamesRoute
+  '/_kid/kids_/studio': typeof KidKidsStudioRoute
+  '/_kid/kids_/studio_/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -315,6 +329,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/kids-entry'
     | '/learning'
     | '/login'
     | '/mission'
@@ -329,11 +344,11 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/hub'
-    | '/kids'
     | '/plan'
     | '/settings'
     | '/setup'
     | '/table'
+    | '/kids'
     | '/resources/$slug'
     | '/resources/'
     | '/kids/studio'
@@ -348,6 +363,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/kids-entry'
     | '/learning'
     | '/login'
     | '/mission'
@@ -362,11 +378,11 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/hub'
-    | '/kids'
     | '/plan'
     | '/settings'
     | '/setup'
     | '/table'
+    | '/kids'
     | '/resources/$slug'
     | '/resources'
     | '/kids/studio'
@@ -376,12 +392,14 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/_kid'
     | '/auth'
     | '/brand'
     | '/co-ops'
     | '/contact'
     | '/forgot-password'
     | '/how-it-works'
+    | '/kids-entry'
     | '/learning'
     | '/login'
     | '/mission'
@@ -396,27 +414,29 @@ export interface FileRouteTypes {
     | '/_authenticated/account'
     | '/_authenticated/admin'
     | '/_authenticated/hub'
-    | '/_authenticated/kids'
     | '/_authenticated/plan'
     | '/_authenticated/settings'
     | '/_authenticated/setup'
     | '/_authenticated/table'
+    | '/_kid/kids'
     | '/resources/$slug'
     | '/resources/'
-    | '/_authenticated/kids_/studio'
-    | '/_authenticated/kids_/studio_/games'
+    | '/_kid/kids_/studio'
+    | '/_kid/kids_/studio_/games'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  KidRoute: typeof KidRouteWithChildren
   AuthRoute: typeof AuthRoute
   BrandRoute: typeof BrandRoute
   CoOpsRoute: typeof CoOpsRoute
   ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  KidsEntryRoute: typeof KidsEntryRoute
   LearningRoute: typeof LearningRoute
   LoginRoute: typeof LoginRoute
   MissionRoute: typeof MissionRoute
@@ -447,6 +467,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_kid': {
+      id: '/_kid'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof KidRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -489,6 +516,13 @@ declare module '@tanstack/react-router' {
       path: '/how-it-works'
       fullPath: '/how-it-works'
       preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kids-entry': {
+      id: '/kids-entry'
+      path: '/kids-entry'
+      fullPath: '/kids-entry'
+      preLoaderRoute: typeof KidsEntryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learning': {
@@ -589,13 +623,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHubRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/kids': {
-      id: '/_authenticated/kids'
-      path: '/kids'
-      fullPath: '/kids'
-      preLoaderRoute: typeof AuthenticatedKidsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/plan': {
       id: '/_authenticated/plan'
       path: '/plan'
@@ -624,6 +651,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTableRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_kid/kids': {
+      id: '/_kid/kids'
+      path: '/kids'
+      fullPath: '/kids'
+      preLoaderRoute: typeof KidKidsRouteImport
+      parentRoute: typeof KidRoute
+    }
     '/resources/': {
       id: '/resources/'
       path: '/resources'
@@ -638,19 +672,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/kids_/studio': {
-      id: '/_authenticated/kids_/studio'
+    '/_kid/kids_/studio': {
+      id: '/_kid/kids_/studio'
       path: '/kids/studio'
       fullPath: '/kids/studio'
-      preLoaderRoute: typeof AuthenticatedKidsStudioRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof KidKidsStudioRouteImport
+      parentRoute: typeof KidRoute
     }
-    '/_authenticated/kids_/studio_/games': {
-      id: '/_authenticated/kids_/studio_/games'
+    '/_kid/kids_/studio_/games': {
+      id: '/_kid/kids_/studio_/games'
       path: '/kids/studio/games'
       fullPath: '/kids/studio/games'
-      preLoaderRoute: typeof AuthenticatedKidsStudioGamesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+      preLoaderRoute: typeof KidKidsStudioGamesRouteImport
+      parentRoute: typeof KidRoute
     }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
@@ -666,40 +700,50 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedHubRoute: typeof AuthenticatedHubRoute
-  AuthenticatedKidsRoute: typeof AuthenticatedKidsRoute
   AuthenticatedPlanRoute: typeof AuthenticatedPlanRoute
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTableRoute: typeof AuthenticatedTableRoute
-  AuthenticatedKidsStudioRoute: typeof AuthenticatedKidsStudioRoute
-  AuthenticatedKidsStudioGamesRoute: typeof AuthenticatedKidsStudioGamesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedHubRoute: AuthenticatedHubRoute,
-  AuthenticatedKidsRoute: AuthenticatedKidsRoute,
   AuthenticatedPlanRoute: AuthenticatedPlanRoute,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTableRoute: AuthenticatedTableRoute,
-  AuthenticatedKidsStudioRoute: AuthenticatedKidsStudioRoute,
-  AuthenticatedKidsStudioGamesRoute: AuthenticatedKidsStudioGamesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface KidRouteChildren {
+  KidKidsRoute: typeof KidKidsRoute
+  KidKidsStudioRoute: typeof KidKidsStudioRoute
+  KidKidsStudioGamesRoute: typeof KidKidsStudioGamesRoute
+}
+
+const KidRouteChildren: KidRouteChildren = {
+  KidKidsRoute: KidKidsRoute,
+  KidKidsStudioRoute: KidKidsStudioRoute,
+  KidKidsStudioGamesRoute: KidKidsStudioGamesRoute,
+}
+
+const KidRouteWithChildren = KidRoute._addFileChildren(KidRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  KidRoute: KidRouteWithChildren,
   AuthRoute: AuthRoute,
   BrandRoute: BrandRoute,
   CoOpsRoute: CoOpsRoute,
   ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
+  KidsEntryRoute: KidsEntryRoute,
   LearningRoute: LearningRoute,
   LoginRoute: LoginRoute,
   MissionRoute: MissionRoute,
