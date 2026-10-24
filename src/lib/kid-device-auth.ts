@@ -29,5 +29,7 @@ export const requireKidOrParentAuth = createMiddleware({type:'function'}).inputV
   if(activeError || !active)throw new Error('A verified parent account is required.');
   result={supabase,userId:verified.claims.sub,claims:verified.claims,kidDeviceId:null,kidChildId:null};
   }
+  const childId=data&&typeof data==='object'&&'childId' in data&&typeof data.childId==='string'?data.childId:result.kidChildId;
+  if(childId){const a=await s.admin();const {data:allowed,error}=await a.rpc('tick_kid_time',{_child:childId,_parent:result.userId});if(error||!allowed)throw new Error('Time for a break! Ask your grown-up.');}
   return next({context:result});
 });

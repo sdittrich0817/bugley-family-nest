@@ -8,6 +8,7 @@ export const verifyChildLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ childId: z.string().uuid(), credential: credentialSchema, environment: z.enum(["sandbox", "live"]) }).parse(input))
   .handler(async ({ data, context }) => {
+    const s=await import('./kid-device.server');await s.attempt(`parent-child:${context.userId}:${data.childId}`);
     // Confirm the child belongs to this verified parent (RLS) before reading the secret.
     const { data: owned } = await context.supabase.from("children").select("id,login_kind").eq("id", data.childId).eq("parent_id", context.userId).maybeSingle();
     if (!owned) throw new Error("We couldn’t find that player.");
@@ -16,7 +17,8 @@ export const verifyChildLogin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: secret } = await supabaseAdmin.from("children").select("credential_hash,credential_salt").eq("id", data.childId).single();
     if (!secret) return { ok: false };
-    const salt = new Uint8Array(secret.credential_salt.match(/../g)!.map((h: string) => parseInt(h, 16)));
+    const saltParts=secret.credential_salt.match(/../g);if(!saltParts)return {ok:false};
+    const salt = new Uint8Array(saltParts.map((h: string) => parseInt(h, 16)));
     const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(credentialValue(data.credential)), "PBKDF2", false, ["deriveBits"]);
     const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", hash: "SHA-256", salt, iterations: 100000 }, key, 256);
     const hex = Array.from(new Uint8Array(bits), (b) => b.toString(16).padStart(2, "0")).join("");

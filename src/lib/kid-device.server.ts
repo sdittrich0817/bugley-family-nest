@@ -14,6 +14,8 @@ export async function resolveDevice() {
   if (error || !data || !deviceAvailable(data)) return null;
   const [{data:profile},{data:consent}] = await Promise.all([a.from('profiles').select('id').eq('id',data.parent_id).maybeSingle(),a.from('parental_consents').select('parent_id').eq('parent_id',data.parent_id).maybeSingle()]);
   if (!profile || !consent) return null;
+  const {data:account,error:accountError}=await a.auth.admin.getUserById(data.parent_id);
+  if(accountError||!account.user?.email_confirmed_at)return null;
   await a.from('kid_devices').update({last_used_at:new Date().toISOString()}).eq('id',data.id).is('revoked_at',null);
   return data;
 }

@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { credentialSchema, credentialValue } from './family';
+import { credentialSchema, credentialValue, type ChildProfile } from './family';
 import { familyHasAccess } from './billing.functions';
 export const getKidFamily=createServerFn({method:'GET'}).handler(async()=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(!d)throw new Error('Ask your grown-up to set up this device for me!');
   const {data,error}=await (await s.admin()).from('children').select('id,nickname,age,avatar,bug,login_kind,age_band,bugley_stage').eq('parent_id',d.parent_id).order('created_at');
-  if(error)throw new Error('Couldn’t load your players.');return {children:data??[],completed:true};
+  if(error)throw new Error('Couldn’t load your players.');return {children:(data??[]) as ChildProfile[],completed:true};
 });
 export const getKidPlan=createServerFn({method:'POST'}).inputValidator((i:unknown)=>z.object({environment:z.enum(['sandbox','live'])}).parse(i)).handler(async({data})=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(!d)throw new Error('This device isn’t set up.');return {active:await familyHasAccess(await s.admin(),d.parent_id,data.environment)};
