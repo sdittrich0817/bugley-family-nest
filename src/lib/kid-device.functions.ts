@@ -75,6 +75,9 @@ export const unlockKidParentPin=createServerFn({method:'POST'}).inputValidator((
   const {error}=await a.from('kid_devices').update({parent_unlocked_until:new Date(Date.now()+15*60000).toISOString(),child_id:null,child_verified_at:null}).eq('id',d.id).is('revoked_at',null);
   if(error)throw new Error('Couldn’t open the parent area.');
   // PIN opens navigation only; a normal authenticated parent session still authorizes Hub data.
+  const {getRequest}=await import('@tanstack/react-start/server');
+  const token=getRequest().headers.get('authorization')?.replace(/^Bearer /,'');
+  if(token){const {createClient}=await import('@supabase/supabase-js');const url=process.env['SUPABASE_URL'],key=process.env['SUPABASE_PUBLISHABLE_KEY'];if(url&&key){const client=createClient(url,key,{auth:{persistSession:false},global:{headers:{Authorization:`Bearer ${token}`}}});const {data:claims}=await client.auth.getClaims(token);if(claims?.claims.sub===d.parent_id){const sessionId=z.string().uuid().parse(claims.claims['session_id']||d.parent_id);const {error:modeError}=await a.from('studio_device_modes').upsert({session_id:sessionId,parent_id:d.parent_id,kid_locked:false,changed_at:new Date().toISOString()});if(modeError)throw new Error('Couldn’t open the parent area.');}}}
   return {ok:true};
 });
 export const resetKidPlayer=createServerFn({method:'POST'}).handler(async()=>{
