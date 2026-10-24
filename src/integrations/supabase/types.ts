@@ -450,6 +450,47 @@ export type Database = {
           },
         ]
       }
+      dash_remixes: {
+        Row: {
+          child_id: string
+          config: Json
+          created_at: string
+          hero_id: string | null
+          id: string
+          parent_id: string
+          shared: boolean
+          title: string
+        }
+        Insert: {
+          child_id: string
+          config: Json
+          created_at?: string
+          hero_id?: string | null
+          id?: string
+          parent_id: string
+          shared?: boolean
+          title: string
+        }
+        Update: {
+          child_id?: string
+          config?: Json
+          created_at?: string
+          hero_id?: string | null
+          id?: string
+          parent_id?: string
+          shared?: boolean
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dash_remixes_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demo_requests: {
         Row: {
           age_range: string
@@ -830,6 +871,27 @@ export type Database = {
         }
         Relationships: []
       }
+      manor_cases: {
+        Row: {
+          active: boolean
+          content: Json
+          created_at: string
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          content: Json
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          active?: boolean
+          content?: Json
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       parent_notifications: {
         Row: {
           child_id: string
@@ -912,6 +974,7 @@ export type Database = {
           game: string
           id: string
           parent_id: string
+          private_state: Json
           score: number
           started_at: string
           state: Json
@@ -925,6 +988,7 @@ export type Database = {
           game: string
           id?: string
           parent_id: string
+          private_state?: Json
           score?: number
           started_at?: string
           state?: Json
@@ -938,6 +1002,7 @@ export type Database = {
           game?: string
           id?: string
           parent_id?: string
+          private_state?: Json
           score?: number
           started_at?: string
           state?: Json
