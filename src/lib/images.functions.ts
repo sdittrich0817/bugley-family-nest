@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from "@/lib/billing.functions";
 import { canUpgradePicture } from "./picture";
 
@@ -100,15 +101,21 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
   }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
+    const {supabaseAdmin:provenanceClient}=await import('@/integrations/supabase/client.server');
+    const {data:provenance}=await provenanceClient.from('hero_portrait_provenance').select('style_key').eq('path',data.path).eq('parent_id',context.userId).eq('child_id',data.childId).maybeSingle();
+    if(!provenance||provenance.style_key!==data.styleKey)throw new Error('Choose a hero portrait made in this look.');
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
-    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? 'Let’s try a made-up idea.', chips: guard.chips ?? [] };
     const looks = await s.guardChildText(context.supabase, context.userId, child, `${data.type}; ${data.personality}; ${data.summary}`, "character_details");
-    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
-    const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: data.summary, images: [data.path] });
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply ?? 'Let’s try a made-up idea.', chips: looks.chips ?? [] };
+    const { lockCharacter } = await import('./images.server');
+    const lock = await lockCharacter(context.userId,data.childId,{path:data.path,styleKey:data.styleKey,hint:`${data.name}, ${data.summary}`});
+    const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path,...lock.refs] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary } }).eq("id", id);
+    const {error}=await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary, dna:lock.dna, refs:lock.refs, model:lock.model } }).eq("id", id).eq('parent_id',context.userId);
+    if(error)throw new Error('Your hero’s matching details couldn’t save. Please try again.');
     return { ok: true as const, id };
   });
 
@@ -126,18 +133,22 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireSu
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
+    const { supabaseAdmin: a } = await import('@/integrations/supabase/client.server');
+    const { data: provenance } = await a.from('hero_portrait_provenance').select('style_key,model').eq('path',data.path).eq('parent_id',context.userId).eq('child_id',data.childId).maybeSingle();
+    if (!provenance || provenance.style_key !== data.styleKey) throw new Error('Choose a hero portrait made in this look.');
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
-    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? 'Let’s try a made-up idea.', chips: guard.chips ?? [] };
     const hint = `a ${data.kind}, mostly ${data.color}, special thing: ${data.special}`;
     const looks = await s.guardChildText(context.supabase, context.userId, child, hint, "character_details");
-    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply ?? 'Let’s try a made-up idea.', chips: looks.chips ?? [] };
     const { lockCharacter } = await import("@/lib/images.server");
     const lock = await lockCharacter(context.userId, data.childId, { path: data.path, styleKey: data.styleKey, hint: `${data.name}, ${hint}` });
     const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path, ...lock.refs] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.kind, color: data.color, special: data.special, summary: hint, dna: lock.dna, refs: lock.refs, model: lock.model } }).eq("id", id);
+    const {error}=await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.kind, color: data.color, special: data.special, summary: hint, dna: lock.dna, refs: lock.refs, model: lock.model } }).eq("id", id).eq('parent_id',context.userId);
+    if(error)throw new Error('Your hero’s matching details couldn’t save. Please try again.');
     return { ok: true as const, id };
   });
 
@@ -152,7 +163,7 @@ export const signImages = createServerFn({ method: "POST" }).middleware([require
   });
 
 // ---------- Admin ----------
-export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const [m, s] = await Promise.all([
     context.supabase.from("image_models").select("mode,model,version,settings,supports_reference").order("mode"),
@@ -161,7 +172,7 @@ export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requi
   return { models: (m.data ?? []).map((r: any) => ({ mode: r.mode as string, model: r.model as string, version: r.version as string, settings: JSON.stringify(r.settings ?? {}, null, 2), supportsReference: !!r.supports_reference })), styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
 });
 
-export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ mode: z.enum(["sketch", "final", "character", "hero", "sheet", "scene_chars", "scene"]), supportsReference: z.boolean().default(false), model: z.string().trim().max(120).regex(/^$|^[\w.-]+\/[\w.-]+$/, "Use owner/name"), version: z.string().trim().max(100), settings: z.record(z.string(), z.unknown()) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -170,7 +181,7 @@ export const saveImageModel = createServerFn({ method: "POST" }).middleware([req
     return { ok: true };
   });
 
-export const saveStyle = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveStyle = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ key: z.string(), name: z.string().trim().min(1).max(40), description: z.string().max(120), recipe: z.string().max(1500), active: z.boolean() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -180,7 +191,7 @@ export const saveStyle = createServerFn({ method: "POST" }).middleware([requireS
   });
 
 /** Drift Report: drift-check failure rates by model and style. */
-export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const { data } = await context.supabase.from("drift_checks").select("model,style_key,passed,score,notes,created_at").order("created_at", { ascending: false }).limit(2000);
   const groups = new Map<string, { model: string; style: string; checks: number; fails: number; scoreSum: number }>();

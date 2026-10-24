@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
 import { PictureMaker } from "@/components/studio/Makers";
-import { useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
+import { useBugleyChat, useVoiceInput, speak, type SidekickChild } from "@/components/studio/Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { listAlbum } from "@/lib/studio.functions";
 import { designInterview, getGame, saveGame } from "@/lib/game-builder.functions";
@@ -15,6 +15,7 @@ import type { Band } from "@/lib/games";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 import { Art, BG_IMAGES, COLOR_CLASS, GamePlayer } from "./engines";
+import { SafeRetry } from '../studio/SafeRetry';
 
 const field = "w-full rounded-lg border-2 border-border bg-background p-3 text-foreground outline-none focus:border-primary";
 const QUESTIONS = [["hero", "Who’s the hero?"], ["goal", "What’s their goal?"], ["obstacle", "What gets in the way?"], ["win", "How do you win?"]] as const;
@@ -30,11 +31,18 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [step, setStep] = useState<"pick" | "interview" | "edit">(gameId ? "edit" : "pick"); useScrollTopOn(step);
   const [answers, setAnswers] = useState({ hero: "", goal: "", obstacle: "", win: "" });
+  const [questionAt,setQuestionAt]=useState(0),[templatePage,setTemplatePage]=useState(0);
+  const question=QUESTIONS[questionAt]??QUESTIONS[0];
+  const voice=useVoiceInput(text=>setAnswers({...answers,[question[0]]:text}));
+  useScrollTopOn(questionAt);
+  useEffect(()=>{if(step==='interview')chat.say(question[1],[]);},[step,questionAt]);
   const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false);
   const [testing, setTesting] = useState(false);
   const [note, setNote] = useState<CoachNote | null>(null);
   const [slot, setSlot] = useState<null | { key: "hero" | "goalArt" | "good" | "bad" | "cards"; index: number }>(null);
   const [making, setMaking] = useState(false);
+  const [editAt,setEditAt]=useState(0);
+  useScrollTopOn(editAt);
   const env = getStripeEnvironment();
   useEffect(() => { if (!gameId) return; setBusy(true); void getGame({ data: { childId: child.id, id: gameId } }).then((g) => { setTitle(g.title); setFile(g.file); setUrls(g.urls); }).catch((e) => toast.error(e.message)).finally(() => setBusy(false)); }, [gameId, child.id]);
   const set = (patch: Partial<Settings>) => { if (!file) return; setFile({ ...file, settings: { ...file.settings, ...patch } }); setDirty(true); };
@@ -48,7 +56,7 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
       setId(g.id); setFile(g.file); setUrls(g.urls); setDirty(false);
       toast.success(published ? "Shared to the Family Arcade!" : published === false ? "Taken out of the Family Arcade" : "Saved!");
       void qc.invalidateQueries({ queryKey: ["my-games"] }); void qc.invalidateQueries({ queryKey: ["album", child.id] });
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Your game is still here. Try saving again."); }
+    } catch (e) { const message=e instanceof Error ? e.message : "Your game is still here. Try saving again.";toast.error(message);const {safetyAlternatives}=await import('../studio/SafeRetry');chat.say(message,safetyAlternatives(message)); }
     finally { setBusy(false); }
   }
   function pick(t: TemplateKey) {
@@ -61,7 +69,7 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
     if (!file) return; setBusy(true);
     try {
       const r = await designInterview({ data: { childId: child.id, template: file.template, answers, environment: env } });
-      if (!r.ok) { toast(r.reply); return; }
+      if (!r.ok) { toast(r.reply);const {safetyAlternatives}=await import('../studio/SafeRetry');chat.say(r.reply,safetyAlternatives(r.reply));return; }
       setFile({ ...file, settings: { ...file.settings, ...r.patch } }); setDirty(true); setStep("edit"); chat.say(r.reply);
     } catch { toast.error("Bugley couldn’t read that right now. You can set things by hand!"); setStep("edit"); }
     finally { setBusy(false); }
@@ -86,8 +94,8 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   if (step === "pick") return <div className="space-y-6">
     <Button variant="ghost" onClick={onClose}><ArrowLeft />Game Studio</Button>
     <h1 className="text-3xl">What kind of game?</h1>
-    <div className="grid gap-4 sm:grid-cols-2">{templatesFor(band).map((t) => <button key={t} onClick={() => pick(t)} className={cn("flex items-center gap-4 rounded-3xl border-2 border-border bg-card p-5 text-left shadow-soft transition hover:-translate-y-1 hover:border-primary", sprouts && "p-7")}>
-      <span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><span><span className="block font-display text-xl">{TEMPLATES[t].name}</span><span className="text-sm text-muted-foreground">{TEMPLATES[t].blurb}</span></span></button>)}</div>
+    <div className="grid gap-4 sm:grid-cols-2">{templatesFor(band).slice(templatePage*3,templatePage*3+3).map((t) => <Button variant="outline" key={t} onClick={() => pick(t)} className={cn("h-auto flex items-center gap-4 whitespace-normal rounded-lg border-2 border-border bg-card p-5 text-left shadow-soft", sprouts && "p-7")}>
+      <span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><span><span className="block font-display text-xl">{TEMPLATES[t].name}</span><span className="text-sm text-muted-foreground">{TEMPLATES[t].blurb}</span></span></Button>)}{templatesFor(band).length>3&&<Button variant="outline" onClick={()=>setTemplatePage((templatePage+1)%Math.ceil(templatesFor(band).length/3))}>More games</Button>}</div>
   </div>;
   if (!file || !s) return <div className="flex min-h-64 items-center justify-center"><Bugley stage={child.bugley_stage} expression="thinking" size={100} /></div>;
   const lastBugley = [...chat.messages].reverse().find((m) => m.from === "bugley")?.text;
@@ -95,23 +103,26 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   if (step === "interview") return <div className="space-y-5">
     <Button variant="ghost" onClick={() => setStep("pick")}><ArrowLeft />Pick a different game</Button>
     <div className="flex items-start gap-3"><Bugley stage={child.bugley_stage} expression="curious" size={84} /><div className="rounded-3xl rounded-tl-none bg-card p-4 shadow-soft"><p className="font-display text-lg">I’m your game designer helper! Answer my questions and I’ll turn them into game rules.</p></div></div>
-    {QUESTIONS.map(([k, q]) => <label key={k} className="block space-y-1"><span className="font-semibold">{q}</span><input className={field} maxLength={160} value={answers[k]} onChange={(e) => setAnswers({ ...answers, [k]: e.target.value })} /></label>)}
-    <div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(answers).every((v) => !v.trim())} onClick={() => void interview()}><Wand2 />{busy ? "Bugley is building…" : "Turn my answers into a game"}</Button><Button variant="ghost" onClick={() => setStep("edit")}>I’ll set it up myself</Button></div>
+    <label className="block space-y-1"><span className="font-semibold">{question[1]}</span><input className={field} maxLength={160} value={answers[question[0]]} onChange={(e)=>setAnswers({...answers,[question[0]]:e.target.value})}/></label>
+    <div className="flex gap-2"><Button variant="outline" onClick={()=>speak(question[1])}>Read question</Button>{voice.supported&&<Button variant="secondary" onClick={voice.start}>Say my answer</Button>}{questionAt>0&&<Button variant="ghost" onClick={()=>setQuestionAt(questionAt-1)}>Previous</Button>}{questionAt<3&&<Button onClick={()=>setQuestionAt(questionAt+1)}>Next</Button>}</div>
+    {lastBugley&&<SafeRetry message={lastBugley} onChoose={idea=>{setAnswers({...answers,hero:idea});chat.say('What should your original hero do next?',[]);}}/>}
+    <div className="flex flex-wrap gap-2">{questionAt===3&&<Button disabled={busy || Object.values(answers).every((v) => !v.trim())} onClick={() => void interview()}><Wand2 />{busy ? "Bugley is building…" : "Turn my answers into a game"}</Button>}<Button variant="ghost" onClick={() => setStep("edit")}>I’ll set it up myself</Button></div>
   </div>;
 
   const t = file.template;
   return <div className="space-y-6" aria-busy={busy}>
+    {lastBugley&&<SafeRetry message={lastBugley} onChoose={idea=>{setTitle(idea);chat.say('Your original game idea is ready to edit.',[]);}}/>}
     <div className="flex flex-wrap items-center justify-between gap-2"><Button variant="ghost" onClick={() => { if (dirty && !window.confirm("Leave without saving?")) return; onClose(); }}><ArrowLeft />Game Studio</Button><span className="text-sm text-muted-foreground">{busy ? "Working…" : dirty ? "Unsaved changes" : id ? "Saved" : "Not saved yet"}</span></div>
     <div className="flex items-center gap-3"><span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><div className="min-w-0 flex-1">{sprouts ? <h1 className="text-3xl">{title}</h1> : <input className={cn(field, "font-display text-2xl")} maxLength={60} value={title} placeholder="Name your game" aria-label="Game name" onChange={(e) => { setTitle(e.target.value); setDirty(true); }} />}<p className="text-sm text-muted-foreground">{TEMPLATES[t].name}</p></div></div>
     {lastBugley && <div className="flex items-start gap-3"><Bugley stage={child.bugley_stage} expression={note ? "thinking" : "happy"} size={64} /><div className="flex-1 rounded-3xl rounded-tl-none bg-card p-4 shadow-soft"><p>{lastBugley}</p>{note?.fix && <Button size="sm" className="mt-2" onClick={() => { set(note.fix!.patch); setNote(null); chat.say("Done! Playtest again to see how it feels."); }}>{note.fix.label}</Button>}</div></div>}
     <div className="flex flex-wrap gap-2"><Button size="lg" onClick={() => { setNote(null); setTesting(true); }}><Play />Playtest</Button><Button size="lg" variant="secondary" disabled={busy || !dirty && !!id} onClick={() => void save()}><Save />Save</Button>
       <Button size="lg" variant="outline" disabled={busy || !id} onClick={() => void save(!file.published)}><Share2 />{file.published ? "Stop sharing" : "Share to Family Arcade"}</Button></div>
 
-    {!sprouts && ["maze", "catch", "jump"].includes(t) && <Section title="The story of your game">
+    {editAt===0&&!sprouts && ["maze", "catch", "jump"].includes(t) && <Section title="The story of your game">
       <div className="grid gap-3 sm:grid-cols-2">{([["heroName", "Hero’s name"], ["goal", "Goal"], ["obstacle", "What gets in the way"], ["winText", "Winning message"]] as const).map(([k, l]) => <label key={k} className="space-y-1 text-sm font-semibold"><span>{l}</span><input className={field} maxLength={k === "heroName" ? 40 : 160} value={s[k]} onChange={(e) => set({ [k]: e.target.value })} /></label>)}</div>
     </Section>}
 
-    <Section title="Art">
+    {editAt===1&&<Section title="Art">
       <div className="flex flex-wrap gap-3">
         {t !== "quiz" && t !== "path" && t !== "memory" && <Slot label="Hero" art={s.hero} urls={urls} onClick={() => setSlot({ key: "hero", index: 0 })} big={sprouts} />}
         {(t === "maze" || t === "jump") && <Slot label="Goal" art={s.goalArt} urls={urls} onClick={() => setSlot({ key: "goalArt", index: 0 })} big={sprouts} />}
@@ -122,14 +133,14 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
         {t === "memory" && s.cards.map((c, i) => <div key={i} className="relative"><Slot label={`Pair ${i + 1}`} art={c} urls={urls} onClick={() => setSlot({ key: "cards", index: i })} big={sprouts} />{s.cards.length > 2 && <button aria-label="Remove pair" onClick={() => set({ cards: s.cards.filter((_, j) => j !== i) })} className="absolute -right-1 -top-1 rounded-full bg-card p-1 shadow-soft"><Trash2 className="size-3" /></button>}</div>)}
         {t === "memory" && s.cards.length < 12 && <Button variant="outline" className={sprouts ? "h-28" : ""} onClick={() => setSlot({ key: "cards", index: s.cards.length })}><Plus />Add a pair</Button>}
       </div>
-    </Section>
+    </Section>}
 
-    <Section title="Look">
+    {editAt===2&&<Section title="Look">
       <div className="flex flex-wrap gap-2">{BACKGROUNDS.map((b) => <button key={b} onClick={() => set({ background: b })} aria-label={`${b} background`} aria-pressed={s.background === b} className={cn("size-16 overflow-hidden rounded-xl border-4 bg-card bg-cover bg-center", s.background === b ? "border-primary" : "border-border")} style={BG_IMAGES[b] ? { backgroundImage: `url(${BG_IMAGES[b]})` } : undefined} />)}</div>
       <div className="flex flex-wrap gap-2">{COLORS.map((c) => <button key={c} onClick={() => set({ color: c })} aria-label={`${c} color`} aria-pressed={s.color === c} className={cn("size-12 rounded-full border-4", COLOR_CLASS[c], s.color === c ? "border-foreground" : "border-transparent")} />)}</div>
-    </Section>
+    </Section>}
 
-    {t !== "path" && <Section title="Rules">
+    {editAt===3&&t !== "path" && <Section title="Rules">
       <div className="grid gap-4 sm:grid-cols-2">
         {["maze", "catch", "jump"].includes(t) && <Stepper label="Speed" value={s.speed} min={1} max={5} onChange={(v) => set({ speed: v })} big={sprouts} />}
         {["maze", "catch", "jump"].includes(t) && <Stepper label="Lives" value={s.lives} min={1} max={5} onChange={(v) => set({ lives: v })} big={sprouts} />}
@@ -142,13 +153,14 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
       </div>
     </Section>}
 
-    {(t === "maze" || t === "jump") && <LevelEditor s={s} t={t} adv={adv} onChange={(grids) => set({ grids })} />}
-    {t === "quiz" && <QuizEditor s={s} onChange={(quiz) => set({ quiz })} />}
-    {t === "path" && <PathEditor s={s} onChange={(path) => set({ path })} />}
+    {editAt===4&&(t === "maze" || t === "jump") && <LevelEditor s={s} t={t} adv={adv} onChange={(grids) => set({ grids })} />}
+    {editAt===4&&t === "quiz" && <QuizEditor s={s} onChange={(quiz) => set({ quiz })} />}
+    {editAt===4&&t === "path" && <PathEditor s={s} onChange={(path) => set({ path })} />}
+    <div className="flex justify-between gap-3"><Button variant="outline" disabled={editAt===0} onClick={()=>setEditAt(editAt-1)}>Previous</Button><Button variant="outline" disabled={editAt===4} onClick={()=>setEditAt(editAt+1)}>Next</Button></div>
   </div>;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="space-y-3 rounded-3xl bg-card p-4 shadow-soft sm:p-5"><h2 className="text-xl">{title}</h2>{children}</section>; }
+function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section className="space-y-3 py-4 sm:py-5"><h2 className="text-xl">{title}</h2>{children}</section>; }
 function Slot({ label, art, urls, onClick, big }: { label: string; art: ArtRef; urls: Record<string, string>; onClick: () => void; big?: boolean }) {
   return <button onClick={onClick} className={cn("flex flex-col items-center gap-1 rounded-2xl border-2 border-border bg-background p-2 hover:border-primary", big ? "w-28" : "w-24")}><Art art={art} urls={urls} className={cn(big ? "size-16 text-5xl" : "size-12 text-4xl")} /><span className="text-xs font-semibold">{label}</span></button>;
 }

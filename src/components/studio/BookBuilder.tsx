@@ -53,7 +53,7 @@ export function BookBuilder({ child, chat, bookId, onBook, onOpenChapter }: { ch
   async function run<T>(fn: () => Promise<T>, ok?: string) {
     setBusy(true);
     try { const r = await fn(); if (ok) toast.success(ok); return r; }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); return undefined; }
+    catch (e) { const message=e instanceof Error ? e.message : "Oops! Try again.";toast.error(message);const {safetyAlternatives}=await import('./SafeRetry');chat.say(message,safetyAlternatives(message));return undefined; }
     finally { setBusy(false); refresh(); }
   }
   const doEdit = (action: "bible" | "author" | "dedication" | "cover" | "absorb" | "order", extra: { bible?: Bible; text?: string; chapterIds?: string[] }, ok = "Saved!") =>
@@ -127,7 +127,7 @@ export function BookBuilder({ child, chat, bookId, onBook, onOpenChapter }: { ch
     <section className="space-y-4 border-t border-border pt-6">
       <h2 className="text-2xl">Book Builder</h2>
       <div className="space-y-2"><label className="block space-y-1"><span className="font-semibold">Author name</span><input className={field} maxLength={40} value={author} onChange={(e) => setAuthor(e.target.value)} /></label>
-        <p className="text-sm text-muted-foreground">Use your first name or a made-up pen name. A grown-up says OK to pen names.</p>
+        <p className="text-sm text-muted-foreground">Use a made-up pen name. A grown-up says OK to it.</p>
         <div className="flex flex-wrap items-center gap-2"><Button size="sm" disabled={busy || !author.trim() || author === book.data.author} onClick={() => void doEdit("author", { text: author })}><Save />Save name</Button>
           <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", book.data.authorStatus === "approved" ? "bg-primary/25" : "bg-muted")}>{book.data.authorStatus === "approved" ? <><Check className="inline size-3" /> {book.data.author}</> : book.data.authorStatus === "pending" ? `“${book.data.author}” is waiting for a grown-up’s OK` : `A grown-up said not this time. Your book shows ${child.nickname}.`}</span></div></div>
       <label className="block space-y-1"><span className="font-semibold">Dedication (optional)</span><textarea rows={2} maxLength={300} className={field} value={dedication} placeholder="For everyone who loves dragons" onChange={(e) => setDedication(e.target.value)} /></label>

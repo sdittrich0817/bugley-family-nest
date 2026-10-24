@@ -16,8 +16,11 @@ export function GlowDash({config,heroUrl,stage,stickers,onEnd}:{config:DashConfi
  useEffect(()=>{
   const r=createDash(config);run.current=r;let last=performance.now(),acc=0,frame=0;
   const key=(e:KeyboardEvent)=>{if([' ','ArrowUp','w'].includes(e.key)&&!e.repeat){e.preventDefault();jump();}};window.addEventListener('keydown',key);
-  const tick=(t:number)=>{acc+=Math.min(100,t-last);last=t;while(acc>=DASH_STEP&&!ended.current){const before=r.view();if(press.current){jumps.current.push(before.tick);r.step(true);press.current=false;}else r.step();acc-=DASH_STEP;if(r.view().tick>=DASH_TICKS){ended.current=true;callback.current(r.view().tick,jumps.current);}}setView({...r.view(),collected:new Set(r.view().collected)});if(!ended.current)frame=requestAnimationFrame(tick);};frame=requestAnimationFrame(tick);
-  return()=>{cancelAnimationFrame(frame);window.removeEventListener('keydown',key);r.dispose();};
+  const deadline=Date.now()+180000;
+  const checkEnd=()=>{if(!ended.current&&Date.now()>=deadline){ended.current=true;cancelAnimationFrame(frame);callback.current(r.view().tick,jumps.current);}};
+  const tick=(t:number)=>{checkEnd();acc+=Math.min(100,t-last);last=t;while(acc>=DASH_STEP&&!ended.current){const before=r.view();if(press.current){jumps.current.push(before.tick);r.step(true);press.current=false;}else r.step();acc-=DASH_STEP;if(r.view().tick>=DASH_TICKS){ended.current=true;callback.current(r.view().tick,jumps.current);}}setView({...r.view(),collected:new Set(r.view().collected)});if(!ended.current)frame=requestAnimationFrame(tick);};frame=requestAnimationFrame(tick);
+  const timer=setInterval(checkEnd,250);document.addEventListener('visibilitychange',checkEnd);window.addEventListener('pageshow',checkEnd);
+  return()=>{clearInterval(timer);document.removeEventListener('visibilitychange',checkEnd);window.removeEventListener('pageshow',checkEnd);cancelAnimationFrame(frame);window.removeEventListener('keydown',key);r.dispose();};
  },[config]);
  const camera=Math.max(0,view.x-150),object=stickers.find(s=>s.key===config.object);
  function finish(){if(ended.current)return;ended.current=true;callback.current(view.tick,jumps.current);}

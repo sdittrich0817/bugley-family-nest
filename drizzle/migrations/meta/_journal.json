@@ -141,6 +141,27 @@
       "when": 1792865446976,
       "tag": "0019_expanded_play_and_remixes",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792867765044,
+      "tag": "0020_studio_safety_boundaries",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792868192690,
+      "tag": "0021_device_mode_session_fallback",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792868339616,
+      "tag": "0022_parent_only_admin_and_timezone",
+      "breakpoints": true
     }
   ]
 }

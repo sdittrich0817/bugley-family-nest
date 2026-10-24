@@ -12,18 +12,21 @@ import { Button } from "@/components/ui/button";
 import { BugleyStep } from "./BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
 import { cn } from "@/lib/utils";
+import { SafeRetry } from './SafeRetry';
 
 const chip = "rounded-full border-2 border-border bg-card px-4 py-2 font-semibold transition hover:border-primary";
 const chipOn = "border-primary bg-primary text-primary-foreground";
 
 export function StylePicker({ value, onChange }: { value: string; onChange: (k: string) => void }) {
   const { data: styles = [] } = useQuery(stylesOptions);
+  const [page,setPage]=useState(0);
   return <div className="flex gap-3 overflow-x-auto pb-2">
-    {styles.map((s) => <button key={s.key} onClick={() => onChange(s.key)} aria-pressed={value === s.key}
+    {styles.slice(page*3,page*3+3).map((s) => <Button variant="outline" key={s.key} onClick={() => onChange(s.key)} aria-pressed={value === s.key}
       className={cn("w-28 shrink-0 overflow-hidden rounded-2xl border-2 bg-card text-left transition", value === s.key ? "border-primary shadow-glow" : "border-border hover:border-primary")}>
       {STYLE_THUMBS[s.key] && <img src={STYLE_THUMBS[s.key]} alt="" loading="lazy" width={112} height={112} className="aspect-square w-full object-cover" />}
       <span className="block px-2 py-1.5 text-sm font-semibold leading-tight">{s.name}</span>
-    </button>)}
+    </Button>)}
+    {styles.length>3&&<Button variant="outline" onClick={()=>setPage((page+1)%Math.ceil(styles.length/3))}>More looks</Button>}
   </div>;
 }
 
@@ -103,6 +106,7 @@ export function PictureMaker({ child, chat }: { child: SidekickChild; chat: Bugl
       </div>}
     </>}
     {note && <p role="alert" className="text-center font-semibold">{note}</p>}
+    {note&&<SafeRetry message={note} onChoose={idea=>{setResult(null);chooseIdea(idea);chat.say('Pick a look for your new idea!',[]);}}/>}
   </div>;
 }
 
@@ -112,7 +116,8 @@ const LOOKS = ["tall", "tiny", "fluffy", "spotty", "sparkly", "stripy", "big eye
 const CLOTHES = ["a cape", "a hoodie", "rain boots", "a crown", "goggles", "a backpack", "a tutu", "a scarf"];
 const COLORS = ["red", "orange", "yellow", "green", "blue", "purple", "pink", "rainbow"];
 
-function Own({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => void }) { const [v, setV] = useState(""); const add = () => { const t = v.trim().replace(/\s+/g, " "); if (t) { onAdd(t.slice(0, 40)); setV(""); } };
+function Own({ placeholder, onAdd }: { placeholder: string; onAdd: (v: string) => void }) { const [v, setV] = useState("");const [open,setOpen]=useState(false);const voice=useVoiceInput(onAdd); const add = () => { const t = v.trim().replace(/\s+/g, " "); if (t) { onAdd(t.slice(0, 40)); setV(""); } };
+    if(!open)return <div className="flex gap-2"><Button variant="outline" onClick={()=>setOpen(true)}>My own idea</Button>{voice.supported&&<Button variant="secondary" size="icon" aria-label={placeholder} onClick={voice.start}><Mic/></Button>}</div>;
     return <div className="flex gap-2"><input value={v} onChange={(e) => setV(e.target.value)} onKeyDown={(e) => e.key === "Enter" && add()} maxLength={40} placeholder={placeholder} aria-label={placeholder} className="h-12 min-w-0 flex-1 rounded-2xl border-2 border-border bg-background px-4 outline-none focus:border-primary" /><button onClick={add} className="rounded-full border-2 border-primary px-5 font-semibold">Add</button></div>;
 }
 
@@ -133,9 +138,12 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
   const qc = useQueryClient();
   const toggle = (list: string[], set: (v: string[]) => void, v: string) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const summary = [`a ${personality} ${type}`, looks.length && `looks: ${looks.join(", ")}`, clothes.length && `wearing ${clothes.join(", ")}`, colors.length && `colors: ${colors.join(", ")}`, special && `special detail: ${special}`].filter(Boolean).join("; ");
-  const steps = ["Type", "Looks", "Special", "Name", "Style", "Portrait"];
-  const canNext = [!!type, looks.length + clothes.length + colors.length > 0, true, !!name.trim() && !!personality, !!style][step] ?? true;
-  const Chips = ({ list, value, onPick }: { list: string[]; value: string[]; onPick: (v: string) => void }) => <div className="flex flex-wrap gap-2">{[...list, ...value.filter((x) => x && !list.includes(x))].map((v) => <button key={v} onClick={() => onPick(v)} aria-pressed={value.includes(v)} className={cn(chip, "capitalize", value.includes(v) && chipOn)}>{v}</button>)}</div>;
+  const steps = ["Type", "Looks", "Clothes", "Colors", "Special", "Name", "Personality", "Style", "Portrait"];
+  const questions=['What kind of character?','What do they look like?','What do they wear?','What colors do they love?','What’s one special detail?','Give them a made-up name!','What are they like?','Pick their look!','Meet your hero!'];
+  useEffect(()=>chat.say(questions[step]??'Meet your hero!',[]),[step]);
+  const canNext = [!!type,true,true,looks.length+clothes.length+colors.length>0,true,!!name.trim(),!!personality,!!style][step] ?? true;
+  const [choicePage,setChoicePage]=useState(0);useEffect(()=>setChoicePage(0),[step]);
+  const Chips = ({ list, value, onPick }: { list: string[]; value: string[]; onPick: (v: string) => void }) => <div className="flex flex-wrap gap-2">{[...list, ...value.filter((x) => x && !list.includes(x))].slice(choicePage*2,choicePage*2+2).map((v) => <Button variant="outline" key={v} onClick={() => onPick(v)} aria-pressed={value.includes(v)} className={cn(chip, "capitalize", value.includes(v) && chipOn)}>{v}</Button>)}<Button variant="ghost" onClick={()=>setChoicePage((choicePage+1)%Math.ceil((list.length+value.filter(x=>!list.includes(x)).length)/2))}>More</Button></div>;
 
   const addTo = (list: string[], set: (v: string[]) => void) => (v: string) => { if (!list.includes(v)) set([...list, v]); };
 
@@ -154,26 +162,29 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
     try {
       const r = await saveCharacter({ data: { childId: child.id, path: portrait.path, name, styleKey: style, type, personality, summary } });
       if (r.ok) { toast.success(`${name} joined My Cast!`); await qc.invalidateQueries({ queryKey: ["cast", child.id] }); refresh(); onDone(); }
-      else { chat.say(r.reply, r.chips); setStep(3); }
+      else { setNote(r.reply);chat.say(r.reply, r.chips); setStep(5); }
     } catch { toast("Oops! Try again."); } finally { setBusy(false); }
   }
 
   return <div className="space-y-6">
     <h1 className="text-3xl sm:text-4xl">Character Creator</h1>
     <ol className="flex gap-1">{steps.map((s, i) => <li key={s} className={cn("h-2 flex-1 rounded-full", i <= step ? "bg-primary" : "bg-muted")} aria-label={s} />)}</ol>
-    <section className="space-y-4 rounded-3xl bg-card p-5 shadow-soft">
+    <section className="space-y-4 py-5">
       {step === 0 && <><h2 className="text-2xl">What kind of character?</h2><Chips list={TYPES} value={[type]} onPick={setType} /><Own placeholder="Or type your own (like “dragon chef”)" onAdd={setType} /></>}
-      {step === 1 && <><h2 className="text-2xl">What do they look like?</h2><Chips list={LOOKS} value={looks} onPick={(v) => toggle(looks, setLooks, v)} /><Own placeholder="Type your own (like “three horns”)" onAdd={addTo(looks, setLooks)} />
+      {step === 1 && <><h2 className="text-2xl">What do they look like?</h2><Chips list={LOOKS} value={looks} onPick={(v) => toggle(looks, setLooks, v)} /><Own placeholder="Type your own (like “three horns”)" onAdd={addTo(looks, setLooks)} /></>}
+      {step === 2 && <>
         <h3 className="text-xl">What do they wear?</h3><Chips list={CLOTHES} value={clothes} onPick={(v) => toggle(clothes, setClothes, v)} /><Own placeholder="Type your own (like “a pizza hat”)" onAdd={addTo(clothes, setClothes)} />
-        <h3 className="text-xl">Favorite colors</h3><Chips list={COLORS} value={colors} onPick={(v) => toggle(colors, setColors, v)} /><Own placeholder="Type your own (like “lime green”)" onAdd={addTo(colors, setColors)} /></>}
-      {step === 2 && <><h2 className="text-2xl">What’s one thing everyone notices?</h2>
+      </>}
+      {step === 3 && <><h3 className="text-xl">Favorite colors</h3><Chips list={COLORS} value={colors} onPick={(v) => toggle(colors, setColors, v)} /><Own placeholder="Type your own (like “lime green”)" onAdd={addTo(colors, setColors)} /></>}
+      {step === 4 && <><h2 className="text-2xl">What’s one thing everyone notices?</h2>
         <input value={special} onChange={(e) => setSpecial(e.target.value)} maxLength={120} placeholder="Glowing purple shoes that squeak" className="h-14 w-full rounded-2xl border-2 border-border bg-background px-4 text-lg outline-none focus:border-primary" />
         <button onClick={() => void chat.send(`Help me think of a special detail for my ${type}`, "chip")} className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground"><Sparkles className="size-4" />Ask Bugley</button></>}
-      {step === 3 && <><h2 className="text-2xl">Give them a made-up name</h2>
+      {step === 5 && <><h2 className="text-2xl">Give them a made-up name</h2>
         <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Captain Noodle" className="h-14 w-full rounded-2xl border-2 border-border bg-background px-4 text-lg outline-none focus:border-primary" />
-        <h3 className="text-xl">Personality</h3><Chips list={PERSONALITIES} value={[personality]} onPick={setPersonality} /><Own placeholder="Or type your own (like “sneaky”)" onAdd={setPersonality} /></>}
-      {step === 4 && <><h2 className="text-2xl">Pick a style</h2><StylePicker value={style} onChange={setStyle} /></>}
-      {step === 5 && <>
+      </>}
+      {step === 6 && <><h3 className="text-xl">Personality</h3><Chips list={PERSONALITIES} value={[personality]} onPick={setPersonality} /><Own placeholder="Or type your own (like “sneaky”)" onAdd={setPersonality} /></>}
+      {step === 7 && <><h2 className="text-2xl">Pick a style</h2><StylePicker value={style} onChange={setStyle} /></>}
+      {step === 8 && <>
         <h2 className="text-2xl">Meet {name}!</h2>
         {busy ? <Working child={child} label={`Drawing ${name}…`} /> : portrait ? <img src={portrait.url} alt={name} className="mx-auto w-full max-w-md rounded-3xl bg-background shadow-lift" />
           : <p className="text-muted-foreground">Bugley will draw {name} from head to toe. Each try uses 1 glow.</p>}
@@ -185,7 +196,8 @@ export function CharacterCreator({ child, chat, onDone }: { child: SidekickChild
     </section>
     <div className="flex justify-between">
       <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0 || busy} className="rounded-full px-5 py-3 font-semibold hover:bg-muted disabled:opacity-40">Back</button>
-      {step < 5 && <button onClick={() => setStep(step + 1)} disabled={!canNext} className="rounded-full bg-primary px-8 py-3 font-display text-primary-foreground shadow-glow disabled:opacity-40">Next</button>}
+      {step < 8 && <Button onClick={() => setStep(step + 1)} disabled={!canNext} className="rounded-full bg-primary px-8 py-3 font-display text-primary-foreground shadow-glow disabled:opacity-40">Next</Button>}
     </div>
+    {note&&<SafeRetry message={note} onChoose={idea=>{setName('Zippy');setType(idea);setPortrait(null);setNote('');setStep(0);}}/>}
   </div>;
 }

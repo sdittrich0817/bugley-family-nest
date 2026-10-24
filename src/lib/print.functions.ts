@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveOrCreateCustomer } from "./billing.functions";
 import { addressSchema, canPrint, freeCreditAvailable, paddedPageCount, priceOrder, SHIPPING_LEVELS, type PrintFormat } from "./print";
+import { requireParentDevice } from './parent-device.functions';
 
 const env = z.enum(["sandbox", "live"]);
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -39,7 +40,7 @@ async function creditFor(sb: any, userId: string, environment: "sandbox" | "live
 }
 
 /** Parent Hub: requests (with full books for the flipbook), orders, formats, credit. */
-export const listPrints = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const listPrints = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ environment: env }).parse(i))
   .handler(async ({ data, context }) => {
     const { loadBook } = await import("./book.server");
@@ -76,14 +77,14 @@ async function quote(sb: any, userId: string, input: z.infer<typeof orderInput>)
   return { req, book, fmt, pageCount, cost, credit, price, luluEnv: s.lulu_env };
 }
 
-export const quotePrint = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const quotePrint = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => orderInput.parse(i))
   .handler(async ({ data, context }): Promise<{ error: string } | { pageCount: number; credit: boolean; price: ReturnType<typeof priceOrder>; currency: string }> => {
     try { const q = await quote(context.supabase, context.userId, data); return { pageCount: q.pageCount, credit: q.credit, price: q.price, currency: q.cost.currency }; }
     catch (e) { return { error: e instanceof Error ? e.message : "We couldn’t get a price right now." }; }
   });
 
-export const startPrintCheckout = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const startPrintCheckout = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => orderInput.extend({ returnUrl: z.string().url() }).parse(i))
   .handler(async ({ data, context }): Promise<{ clientSecret: string; orderId: string } | { error: string }> => {
     try {
@@ -113,7 +114,7 @@ export const startPrintCheckout = createServerFn({ method: "POST" }).middleware(
     }
   });
 
-export const dismissPrintRequest = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const dismissPrintRequest = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await (await admin()).from("print_requests").update({ status: "dismissed" }).eq("id", data.id).eq("parent_id", context.userId).eq("status", "pending");
@@ -121,7 +122,7 @@ export const dismissPrintRequest = createServerFn({ method: "POST" }).middleware
   });
 
 /** Checks on an order with the printer and moves it forward. */
-export const refreshPrintOrder = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const refreshPrintOrder = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: o } = await context.supabase.from("print_orders").select("id,status").eq("id", data.id).eq("parent_id", context.userId).maybeSingle();
@@ -132,7 +133,7 @@ export const refreshPrintOrder = createServerFn({ method: "POST" }).middleware([
   });
 
 // ---- Admin ----
-export const getPrintAdmin = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getPrintAdmin = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const a = await admin();
   const { printSettings } = await import("./print.server");
@@ -141,7 +142,7 @@ export const getPrintAdmin = createServerFn({ method: "POST" }).middleware([requ
   return { formats: await formats(), settings: await printSettings(), orders: orders ?? [], connected: { sandbox: luluConfigured("sandbox"), live: luluConfigured("live") } };
 });
 
-export const savePrintFormat = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const savePrintFormat = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ key: z.string(), label: z.string().min(2).max(60), pod_package_id: z.string().regex(/^[0-9A-Z]{27}$/, "Lulu product codes are 27 letters/numbers"), trim_width_in: z.number().min(2).max(20), trim_height_in: z.number().min(2).max(20), min_pages: z.number().int().min(2), max_pages: z.number().int().min(2), page_multiple: z.number().int().min(1).max(8), markup_percent: z.number().min(0).max(300), active: z.boolean() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -151,7 +152,7 @@ export const savePrintFormat = createServerFn({ method: "POST" }).middleware([re
     return { ok: true };
   });
 
-export const savePrintSettings = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const savePrintSettings = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ lulu_env: z.enum(["sandbox", "live"]), brand_name: z.string().min(1).max(40), contact_email: z.string().email().or(z.literal("")) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -160,7 +161,7 @@ export const savePrintSettings = createServerFn({ method: "POST" }).middleware([
     return { ok: true };
   });
 
-export const retryPrintOrder = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const retryPrintOrder = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);

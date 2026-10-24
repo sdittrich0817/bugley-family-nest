@@ -80,7 +80,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   }, [comic?.data.finished, comic?.data.bookId]);
   async function run(task: () => Promise<void>) {
     if (busy) return; setBusy(true);
-    try { await task(); } catch (e) { toast.error(e instanceof Error ? e.message : "Your panel is saved. Try again."); } finally { setBusy(false); refresh(); }
+    try { await task(); } catch (e) { const message=e instanceof Error ? e.message : "Your panel is saved. Try again.";toast.error(message);const {safetyAlternatives}=await import('./SafeRetry');chat.say(message,safetyAlternatives(message)); } finally { setBusy(false); refresh(); }
   }
   async function paint(next: Comic) {
     if (!current) return;

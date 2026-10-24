@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { saveChildSchema, credentialValue, type ChildProfile } from "@/lib/family";
+import { requireParentDevice } from './parent-device.functions';
 
 export const getFamily = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const { data: profile, error: profileError } = await context.supabase.from("profiles").select("family_setup_completed_at").eq("id", context.userId).single();
@@ -13,7 +14,7 @@ export const getFamily = createServerFn({ method: "GET" }).middleware([requireSu
 });
 export const familyOptions = queryOptions({ queryKey: ["family"], queryFn: () => getFamily() });
 
-export const saveChild = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => saveChildSchema.parse(input)).handler(async ({ data, context }) => {
+export const saveChild = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((input: unknown) => saveChildSchema.parse(input)).handler(async ({ data, context }) => {
   const details = { nickname: data.nickname, age: data.age, avatar: data.avatar };
   let secured: { credential_hash: string; credential_salt: string; login_kind: "pin" | "pictures" } | undefined;
   if (data.credential) {
@@ -33,12 +34,12 @@ export const saveChild = createServerFn({ method: "POST" }).middleware([requireS
   }
   return { saved: true };
 });
-export const removeChild = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
+export const removeChild = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input)).handler(async ({ data, context }) => {
   const { data: removed, error } = await context.supabase.from("children").delete().eq("id", data.id).eq("parent_id", context.userId).select("id").single();
   if (error || !removed) throw new Error("We couldn’t remove this child. Please try again.");
   return { removed: true };
 });
-export const finishFamilySetup = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const finishFamilySetup = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { count, error: countError } = await context.supabase.from("children").select("id", { count: "exact", head: true }).eq("parent_id", context.userId);
   if (countError || !count) throw new Error("Add at least one child before finishing.");
   const { data, error } = await context.supabase.from("profiles").update({ family_setup_completed_at: new Date().toISOString() }).eq("id", context.userId).select("id").single();

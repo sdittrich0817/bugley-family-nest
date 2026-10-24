@@ -1,16 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireParentDevice } from './parent-device.functions';
 
 export const getChildGlow = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => (await import("@/lib/glow.server")).readGlow(context.supabase, context.userId, data.childId));
 
-export const giftGlow = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const giftGlow = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), amount: z.number().int().min(1).max(20), reason: z.string().trim().max(120) }).parse(i))
   .handler(async ({ data, context }) => (await import("@/lib/glow.server")).giftGlowServer(context.supabase, context.userId, data.childId, data.amount, data.reason));
 
-export const setFamilyTimezone = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const setFamilyTimezone = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ tz: z.string().min(1).max(64) }).parse(i))
   .handler(async ({ data, context }) => { await context.supabase.rpc("set_family_timezone", { _tz: data.tz }); return { ok: true }; });
 
@@ -18,7 +19,7 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
   if (!data) throw new Error("Only the Bugley admin can do this.");
 }
-export const getGlowAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getGlowAdmin = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
@@ -34,7 +35,7 @@ export const getGlowAdmin = createServerFn({ method: "GET" }).middleware([requir
     alerts: alerts ?? [],
   };
 });
-export const setFamilyGlowSettings = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const setFamilyGlowSettings = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ parentId: z.string().uuid(), ceiling: z.number().int().min(0).max(100000).nullable(), plan: z.enum(["family", "family_plus"]) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -42,6 +43,6 @@ export const setFamilyGlowSettings = createServerFn({ method: "POST" }).middlewa
     if (error) throw new Error("Couldn’t save.");
     return { ok: true };
   });
-export const resolveAlert = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const resolveAlert = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => { await assertAdmin(context); await context.supabase.from("admin_alerts").update({ resolved: true }).eq("id", data.id); return { ok: true }; });

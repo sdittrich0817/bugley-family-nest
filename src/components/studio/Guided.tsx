@@ -1,5 +1,5 @@
 // Shared building blocks for the step-by-step Studio flows: Bugley's guide bubble, progress dots, big choice tiles.
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight, Volume2 } from "lucide-react";
 import { Bugley } from "@/components/brand/Bugley";
 import { BugleyMature } from "@/components/brand/BugleyMature";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 export function BugleyGuide({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
   const last = [...chat.messages].reverse().find((m) => m.from === "bugley")?.text ?? "";
   const sprouts = child.age_band === "sprouts";
+  useEffect(()=>{if(sprouts&&!chat.busy&&last)speak(last);},[last,sprouts,chat.busy]);
   return <div className="relative flex items-start gap-3 sm:gap-4" aria-live="polite">
     <div key={last} className="studio-guide-fly shrink-0">
       {child.age_band === "builders" ? <BugleyMature variant="headphones" size={64} />

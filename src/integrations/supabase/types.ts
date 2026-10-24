@@ -530,37 +530,52 @@ export type Database = {
       drift_checks: {
         Row: {
           attempt: number
+          checker_available: boolean
           child_id: string
           created_at: string
+          creation_id: string | null
+          delivered: boolean
           id: string
           model: string
+          model_version: string | null
           notes: string
           parent_id: string
           passed: boolean
+          request_id: string | null
           score: number
           style_key: string
         }
         Insert: {
           attempt: number
+          checker_available?: boolean
           child_id: string
           created_at?: string
+          creation_id?: string | null
+          delivered?: boolean
           id?: string
           model: string
+          model_version?: string | null
           notes?: string
           parent_id: string
           passed: boolean
+          request_id?: string | null
           score?: number
           style_key: string
         }
         Update: {
           attempt?: number
+          checker_available?: boolean
           child_id?: string
           created_at?: string
+          creation_id?: string | null
+          delivered?: boolean
           id?: string
           model?: string
+          model_version?: string | null
           notes?: string
           parent_id?: string
           passed?: boolean
+          request_id?: string | null
           score?: number
           style_key?: string
         }
@@ -843,6 +858,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hero_portrait_provenance: {
+        Row: {
+          child_id: string
+          created_at: string
+          model: Json
+          parent_id: string
+          path: string
+          style_key: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          model: Json
+          parent_id: string
+          path: string
+          style_key: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          model?: Json
+          parent_id?: string
+          path?: string
+          style_key?: string
+        }
+        Relationships: []
       }
       image_models: {
         Row: {
@@ -1387,6 +1429,27 @@ export type Database = {
           },
         ]
       }
+      studio_device_modes: {
+        Row: {
+          changed_at: string
+          kid_locked: boolean
+          parent_id: string
+          session_id: string
+        }
+        Insert: {
+          changed_at?: string
+          kid_locked?: boolean
+          parent_id: string
+          session_id: string
+        }
+        Update: {
+          changed_at?: string
+          kid_locked?: boolean
+          parent_id?: string
+          session_id?: string
+        }
+        Relationships: []
+      }
       studio_events: {
         Row: {
           child_id: string
@@ -1623,6 +1686,8 @@ export type Database = {
         Returns: boolean
       }
       is_active_parent: { Args: never; Returns: boolean }
+      is_parent_device: { Args: never; Returns: boolean }
+      lock_studio_art: { Args: { _id: string; _snapshot: Json }; Returns: Json }
       session_is_published: { Args: { _session_id: string }; Returns: boolean }
       set_family_timezone: { Args: { _tz: string }; Returns: undefined }
     }

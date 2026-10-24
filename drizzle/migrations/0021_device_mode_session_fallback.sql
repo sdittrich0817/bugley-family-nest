@@ -1,0 +1,4 @@
+CREATE OR REPLACE FUNCTION public.is_parent_device() RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$ SELECT NOT EXISTS(SELECT 1 FROM public.studio_device_modes WHERE parent_id=auth.uid() AND session_id=coalesce(nullif(auth.jwt()->>'session_id','')::uuid,auth.uid()) AND kid_locked); $$;
+DROP POLICY "Read own session mode" ON public.studio_device_modes;
+CREATE POLICY "Read own session mode" ON public.studio_device_modes FOR SELECT TO authenticated USING(parent_id=auth.uid() AND session_id=coalesce(nullif(auth.jwt()->>'session_id','')::uuid,auth.uid()));
+CREATE POLICY "Parent device inserts controls" ON public.child_controls AS RESTRICTIVE FOR INSERT TO authenticated WITH CHECK(public.is_parent_device());

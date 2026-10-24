@@ -26,6 +26,7 @@ import { useParentSession } from "@/components/site/ParentSession";
 import { cn } from "@/lib/utils";
 import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
+import { lockKidDevice, unlockParentDevice } from '@/lib/parent-device.functions';
 
 export const Route = createFileRoute("/_authenticated/kids")({
   head: () => ({ meta: [
@@ -43,9 +44,12 @@ function KidZone() {
   const [player, setPlayer] = useState<ChildProfile | null>(null);
   const qcRoot = useQueryClient();
   const [exitOpen, setExitOpen] = useState(false); useScrollTopOn(`${picking?.id ?? ""}|${player?.id ?? ""}`);
-  useEffect(() => { setKidZoneLocked(true); const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [deviceReady, setDeviceReady] = useState(false);
+  const [deviceError, setDeviceError] = useState('');
+  useEffect(() => { setKidZoneLocked(true); void lockKidDevice().then(() => { const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); setDeviceReady(true); }).catch(() => setDeviceError('Couldn’t safely open the Kid Zone. Please try again.')); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
+  if (!deviceReady) return <p role={deviceError ? 'alert' : 'status'} className="p-6">{deviceError || 'Opening the Kid Zone…'}</p>;
   if (billing && !billing.active) return <div className="min-h-screen bg-background text-foreground">
     <header className="mx-auto flex max-w-5xl justify-end px-4 py-4"><Button variant="ghost" size="sm" onClick={() => setExitOpen(true)}><Lock />Exit to Parent Hub</Button></header>
     <section className="mx-auto max-w-lg px-4 py-10 text-center">
@@ -189,9 +193,9 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
     e.preventDefault();
     if (!user?.email) return setError("Please try again in a moment.");
     setBusy(true); setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+    try { await unlockParentDevice({ data: { password } }); }
+    catch (err) { setBusy(false); setPassword(''); return setError(err instanceof Error ? err.message : 'Please try again.'); }
     setBusy(false);
-    if (error) { setPassword(""); return setError("That password didn’t match."); }
     window.speechSynthesis?.cancel();
     setKidZoneLocked(false);
     onOpenChange(false);

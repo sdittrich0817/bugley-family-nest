@@ -16,11 +16,12 @@ export async function loadChild(sb: Sb, userId: string, childId: string) {
 }
 
 async function familyNames(sb: Sb, userId: string) {
-  const [{ data: kids }, { data: prof }] = await Promise.all([
+  const [{ data: kids, error: kidError }, { data: prof, error: profileError }] = await Promise.all([
     sb.from("children").select("nickname").eq("parent_id", userId),
     sb.from("profiles").select("first_name,last_name").eq("id", userId).maybeSingle(),
   ]);
-  return [...(kids ?? []).map((k: any) => k.nickname), prof?.first_name, prof?.last_name].filter(Boolean) as string[];
+  if (kidError || profileError) throw new Error('Bugley needs a moment to check privacy safely.');
+  return [...(kids ?? []).flatMap((k: any) => [k.nickname, ...k.nickname.split(/\s+/)]), prof?.first_name, prof?.last_name].filter(Boolean) as string[];
 }
 
 const guardSchema = z.object({
@@ -30,13 +31,13 @@ const guardSchema = z.object({
 
 const GUARD_INSTRUCTIONS = (age: number) => `You are a strict safety checker for a creative studio used by a child aged ${age}. Classify the child's text.
 - "personal_info": the text reveals something real about the child or people they know: a real school, street, address, their own hometown or neighborhood, phone, email, birthday, or a real person's full name. Made-up character names (like "Max") and famous faraway places (Paris, the Moon, Mount Everest) are fine.
-- "unsafe": violent, gory, sexual, hateful, bullying, self-harm, drugs, weapons used to hurt, or scarier than a picture book for that age.
+- "unsafe": violent, gory, sexual, hateful, bullying, profanity, rude insults, grown-up content, self-harm, drugs, weapons used to hurt, or scarier than a picture book for that age.
 - "copyright": asks for a famous existing character, franchise, brand, celebrity, or "in the style of" a specific studio or artist.
 - "ok": everything else.
 If more than one applies, prefer personal_info, then unsafe, then copyright.
 Also give exactly 2 short (max 7 words), playful, original, kid-safe idea suggestions related to what they seemed to want.`;
 
-export type GuardResult = { decision: GuardDecision; reply?: string | undefined; chips?: string[] | undefined };
+export type GuardResult = { decision: GuardDecision; reply?: string | undefined; chips?: string[] | undefined; eventId?: string };
 
 /** Every piece of child text must pass this before reaching any AI model. Logs every decision. */
 export async function guardChildText(sb: Sb, userId: string, child: { id: string; nickname: string; age: number }, text: string, source: string): Promise<GuardResult> {
@@ -50,21 +51,23 @@ export async function guardChildText(sb: Sb, userId: string, child: { id: string
     if (!verdict) decision = "error";
     else {
       decision = verdict.category === "ok" ? "allowed" : verdict.category;
-      chips = verdict.suggestions.map((s) => s.slice(0, 60)).filter(Boolean).slice(0, 2);
+      chips = undefined; // Only audited fixed alternatives are shown after a rejection.
     }
   }
   const blocked = decision === "error" ? "unsafe" : decision;
   const reply = blocked === "allowed" ? undefined : BLOCK_REPLY[blocked];
   if (blocked !== "allowed" && (!chips || chips.length < 2)) chips = DEFAULT_CHIPS[blocked];
   const a = await admin();
-  await a.from("studio_events").insert({ parent_id: userId, child_id: child.id, source, input: text.slice(0, 2000), decision, reply: reply ?? null });
+  const { data: event, error: eventError } = await a.from("studio_events").insert({ parent_id: userId, child_id: child.id, source, input: text, decision, reply: reply ?? null }).select('id').single();
+  if (eventError || !event) throw new Error('Bugley couldn’t save this safety check. Please try again.');
   if (decision === "personal_info") {
     const starter = nameHit
       ? `${child.nickname} tried to use a real family name in the Studio today. It’s a great moment to talk about why we keep personal details private online.`
       : `${child.nickname} tried to share a real personal detail in the Studio today. It’s a great moment to talk about why we keep names, places and other personal details private online.`;
-    await a.from("parent_notifications").insert({ parent_id: userId, child_id: child.id, typed: text.slice(0, 2000), starter });
+    const { error } = await a.from("parent_notifications").insert({ parent_id: userId, child_id: child.id, typed: text, starter });
+    if (error) throw new Error('Bugley couldn’t notify your grown-up. Please try a made-up idea later.');
   }
-  return blocked === "allowed" ? { decision: "allowed" } : { decision: blocked, reply, chips };
+  return blocked === "allowed" ? { decision: "allowed", eventId: event.id } : { decision: blocked, reply, chips, eventId: event.id };
 }
 
 const BAND_VOICE: Record<string, string> = {
@@ -77,7 +80,7 @@ const replySchema = z.object({ reply: z.string(), chips: z.array(z.string()) });
 
 export async function bugleyReply(child: { nickname: string; age_band: string }, text: string, context: string) {
   const instructions = `You are Bugley, a friendly firefly sidekick in a kids' creative studio. Personality: curious, warm, encouraging, a little funny. Short sentences. You ask questions more than you give answers. You are a helper, never the author: never write the child's story or decide for them; help them think and choose. You are an AI helper, not a person and not a real friend; if asked, say so kindly. Never ask for personal details. ${BAND_VOICE[child.age_band] ?? BAND_VOICE['explorers']}
-Where the child is: ${context}. Picture Maker, Character Creator, Story Maker and Comic Maker are ready; Games are still being built. ${storyCoachingInstructions(child.age_band)} In the Comic Maker: ${comicCoachingInstructions()} In the Picture Maker, coach the description with ONE question that makes it richer (time of day, what's in the background, colors, weather, feelings). In the Character Creator, ask about looks, clothes, colors or one special detail. Never describe the picture for them.
+Where the child is: ${context}. Picture Maker, Character Creator, Story Maker and Comic Maker are ready; Games are ready to play. ${storyCoachingInstructions(child.age_band)} In the Comic Maker: ${comicCoachingInstructions()} In the Picture Maker, coach the description with ONE question that makes it richer (time of day, what's in the background, colors, weather, feelings). In the Character Creator, ask about looks, clothes, colors or one special detail. Never describe the picture for them.
 Also give exactly 3 short (max 6 words) reply chips the child could tap next.`;
   const out = await aiObject(replySchema, instructions, text);
   if (!out) return { reply: "Hmm, my glow flickered! Can you tell me that again?", chips: ["Tell me a fun fact", "Give me an idea"] };
