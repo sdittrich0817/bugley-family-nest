@@ -931,6 +931,30 @@ export type Database = {
         }
         Relationships: []
       }
+      kid_daily_usage: {
+        Row: {
+          child_id: string
+          day: string
+          last_tick: string
+          parent_id: string
+          seconds: number
+        }
+        Insert: {
+          child_id: string
+          day: string
+          last_tick?: string
+          parent_id: string
+          seconds?: number
+        }
+        Update: {
+          child_id?: string
+          day?: string
+          last_tick?: string
+          parent_id?: string
+          seconds?: number
+        }
+        Relationships: []
+      }
       kid_devices: {
         Row: {
           child_id: string | null
@@ -1821,6 +1845,10 @@ export type Database = {
       lock_studio_art: { Args: { _id: string; _snapshot: Json }; Returns: Json }
       session_is_published: { Args: { _session_id: string }; Returns: boolean }
       set_family_timezone: { Args: { _tz: string }; Returns: undefined }
+      tick_kid_time: {
+        Args: { _child: string; _parent: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin"

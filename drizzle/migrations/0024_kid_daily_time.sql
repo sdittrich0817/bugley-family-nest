@@ -1,0 +1,6 @@
+CREATE TABLE public.kid_daily_usage (child_id uuid NOT NULL,parent_id uuid NOT NULL,day date NOT NULL,seconds integer NOT NULL DEFAULT 0,last_tick timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(child_id,day));
+GRANT ALL ON public.kid_daily_usage TO service_role;
+ALTER TABLE public.kid_daily_usage ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION public.tick_kid_time(_child uuid,_parent uuid) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE tz text; today date; lim integer; used integer; BEGIN IF NOT EXISTS(SELECT 1 FROM children WHERE id=_child AND parent_id=_parent) THEN RETURN false; END IF; SELECT timezone INTO tz FROM family_glow_settings WHERE parent_id=_parent; today:=(now() AT TIME ZONE coalesce(tz,'UTC'))::date; SELECT daily_minutes INTO lim FROM child_controls WHERE child_id=_child AND parent_id=_parent; INSERT INTO kid_daily_usage(child_id,parent_id,day,seconds,last_tick) VALUES(_child,_parent,today,0,now()) ON CONFLICT(child_id,day) DO UPDATE SET seconds=kid_daily_usage.seconds+least(30,greatest(0,extract(epoch FROM now()-kid_daily_usage.last_tick)::integer)),last_tick=now() RETURNING seconds INTO used; RETURN lim IS NULL OR used<lim*60; END $$;
+REVOKE ALL ON FUNCTION public.tick_kid_time(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.tick_kid_time(uuid,uuid) TO service_role;
