@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { BugleyStep } from "./BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
 import { cn } from "@/lib/utils";
+import { SafeRetry } from './SafeRetry';
 
 const chip = "rounded-full border-2 border-border bg-card px-4 py-2 font-semibold transition hover:border-primary";
 const chipOn = "border-primary bg-primary text-primary-foreground";
@@ -103,6 +104,7 @@ export function PictureMaker({ child, chat }: { child: SidekickChild; chat: Bugl
       </div>}
     </>}
     {note && <p role="alert" className="text-center font-semibold">{note}</p>}
+    {note&&<SafeRetry message={note} onChoose={idea=>{setResult(null);chooseIdea(idea);chat.say('Pick a look for your new idea!',[]);}}/>}
   </div>;
 }
 
