@@ -9,7 +9,7 @@ import candy from '@/assets/games/dash-candy.jpg';
 import lava from '@/assets/games/dash-lava.jpg';
 import cloud from '@/assets/games/dash-cloud.jpg';
 export const DASH_ART={candy,lava,cloud};
-export function GlowDash({config,heroUrl,stage,stickers,onEnd}:{config:DashConfig;heroUrl:string;stage:React.ComponentProps<typeof Bugley>['stage'];stickers:Sticker[];onEnd:(ticks:number,jumps:number[])=>void}){
+export function GlowDash({config,heroUrl,stage,stickers,onEnd}:{config:DashConfig;heroUrl:string;stage:NonNullable<React.ComponentProps<typeof Bugley>['stage']>;stickers:Sticker[];onEnd:(ticks:number,jumps:number[])=>void}){
  const [view,setView]=useState({x:100,y:270,tick:0,orbs:0,hits:0,checkpoint:100,shield:0,collected:new Set<number>()});
  const run=useRef<ReturnType<typeof createDash>|null>(null),jumps=useRef<number[]>([]),press=useRef(false),ended=useRef(false),callback=useRef(onEnd);callback.current=onEnd;
  const jump=()=>{press.current=true;};
