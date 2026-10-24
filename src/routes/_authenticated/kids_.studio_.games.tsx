@@ -14,8 +14,8 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/kids_/studio_/games")({
   head: () => ({ meta: [
-    { title: "PLAY · Bugley’s Studio" }, { name: "description", content: "Say It, See It, Creature Lab, Silly Story Blanks and Doodle Duel: joyful family games with Bugley." },
-    { property: "og:title", content: "PLAY · Bugley’s Studio" }, { property: "og:description", content: "Hatch creatures, rescue the day, make silly stories and duel with doodles." },
+    { title: "PLAY · Bugley’s Studio" }, { name: "description", content: "Seven joyful family games: creatures, doodles, mysteries, guessing and Glow Dash remixes with Bugley." },
+    { property: "og:title", content: "PLAY · Bugley’s Studio" }, { property: "og:description", content: "Play seven safe games, solve Mystery Manor, and share Glow Dash remixes with your family." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
   validateSearch: z.object({ game: z.string().uuid().optional() }),
