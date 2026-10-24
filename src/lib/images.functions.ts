@@ -156,7 +156,8 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireKi
 export const signImages = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ paths: z.array(z.string().max(200)).max(200) }).parse(i))
   .handler(async ({ data, context }) => {
-    const own = data.paths.filter((p) => p.startsWith(`${context.userId}/`));
+    const prefix=context.kidChildId?`${context.userId}/${context.kidChildId}/`:`${context.userId}/`;
+    const own = data.paths.filter((p) => p.startsWith(prefix)&&!p.includes('..'));
     const { signPaths } = await import("@/lib/images.server");
     const urls = await signPaths(own);
     return Object.fromEntries(own.map((p, i) => [p, urls[i] ?? ""])) as Record<string, string>;

@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { controlsSchema, DEFAULT_CONTROLS, type ChildControls } from "@/lib/hub";
 import { requireParentDevice } from './parent-device.functions';
 
-export const getChildControls = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getChildControls = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { data, error } = await context.supabase.from("child_controls").select("child_id,daily_minutes,studio_stories,studio_games,read_aloud,spelling_help").eq("parent_id", context.userId);
   if (error) throw new Error("We couldn’t load your controls. Please try again.");
   const map: Record<string, ChildControls> = {};

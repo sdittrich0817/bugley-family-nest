@@ -6,6 +6,7 @@ import { saveChildSchema, credentialValue, type ChildProfile } from "@/lib/famil
 import { requireParentDevice } from './parent-device.functions';
 
 export const getFamily = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const s=await import('./kid-device.server');if(s.cookie('bugley_kids'))throw new Error('Use the Kids player picker on this device.');
   const { data: profile, error: profileError } = await context.supabase.from("profiles").select("family_setup_completed_at").eq("id", context.userId).single();
   if (profileError || !profile) throw new Error("A verified parent account and parental consent are required.");
   const { data, error } = await context.supabase.from("children").select("id,nickname,age,avatar,bug,login_kind,age_band,bugley_stage").eq("parent_id", context.userId).order("created_at");

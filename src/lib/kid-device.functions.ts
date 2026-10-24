@@ -42,8 +42,9 @@ export const createKidPairing=createServerFn({method:'POST'}).middleware([requir
 export const claimKidPairing=createServerFn({method:'POST'}).inputValidator((i:unknown)=>z.object({code:z.string().min(8).max(64),name}).parse(i)).handler(async({data})=>{
   const s=await import('./kid-device.server'),a=await s.admin();
   const {getRequest}=await import('@tanstack/react-start/server'); const req=getRequest();
-  await s.attempt(`pair-global`,100,900);await s.attempt(`pair-ip:${await s.digest(req.headers.get('cf-connecting-ip')??req.headers.get('x-forwarded-for')??'local')}`,10,900);
+  await s.attempt(`pair-ip:${await s.digest(req.headers.get('cf-connecting-ip')??'local')}`,10,900);
   const column=data.code.length===64?'proof_hash':'code_hash',key=await s.digest(data.code.toUpperCase().length===8?data.code.toUpperCase():data.code);
+  await s.attempt(`pair-code:${key}`,5,900);
   const {data:pair}=await a.from('kid_pairings').select('id,expires_at').eq(column,key).is('claim_hash',null).is('consumed_at',null).gt('expires_at',new Date().toISOString()).maybeSingle();
   if(!pair)throw new Error('That code is unavailable or expired. Ask your grown-up for a new one.');
   const claim=s.randomSecret();const {data:updated,error}=await a.from('kid_pairings').update({claim_hash:await s.digest(claim),device_name:data.name}).eq('id',pair.id).is('claim_hash',null).select('id').maybeSingle();
