@@ -39,6 +39,10 @@
 - [x] Remove parent activity fetch/feed caps; keep read notifications visible; include private family Dash remixes.
 - [x] Bound every PLAY duration below 300 seconds, cap custom playtests, stop Dash on elapsed time, and hide timed-out gameplay even while requests are pending; simulated Creature Lab ending verified.
 - [x] Reduce shared guide/PLAY/style choice lists; split character details and game interviews/edit sections into steps; preserve authored words and add Sprouts guide read-aloud.
-- [ ] Complete remaining simplicity certification (legacy Book Builder/editor forms and menus still present); full form-free authoring conflicts with preserving typed child words and needs Shea's preferred interaction clarified.
-- [ ] Complete full Studio test matrix (blocked: generation budget/test account for ten-style 12+12 run, actual sibling and other age-band test access, real microphone/device checks); see Bugley-Studio-Audit report for exact unverified coverage.
+- [x] Simplify Book Builder setup, chapter/cast choices and memory/author/dedication/cover editing; opt-in typing/voice, saved dedication readback, no horizontal overflow in 9 CSS-skin/size checks. Also page the legacy shared setup genre choices.
+- [x] Measure live taps: picture preview 6 (typed idea, no hero); attempted print-quality finish 7 but upgrade failed; Say It, See It started in 3.
+- [ ] Certify finished-picture and five-page-story taps (blocked: print-quality image output rejected; no Sprouts child for actual five-page guided flow).
+- [ ] Complete ten-style 12+12 art matrix (blocked: 18 existing Glow remaining vs at least 720 for scenes alone; comic sample provider timeout, upgrade output rejected). Fresh reference hero and two Classic Comic story image checks passed first attempt, 98/96 scores, google/nano-banana-pro; no full-style failure-rate claim.
+- [ ] Verify sibling pass-and-play and real age-specific/voice behavior (blocked: one Explorers child, no physical microphone/device access). CSS-only skin tests are not actual Sprouts/Builders child tests.
+- [x] Follow-up regression: 137 tests pass; build OK; no browser errors during saved book editing. Test creations were added to the family album; Glow total went 26 to 18 through normal charges/refunds only.
 - [x] Approved-fix regression check: 136 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.

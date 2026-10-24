@@ -62,8 +62,9 @@ export function MakerSetup({ child, chat, kind, mapLabels, defaultStyle, onCreat
 
   return <div className="space-y-5">
     <StepDots count={total} at={step} />
-    {step === 0 && <><h1 className="text-center text-3xl sm:text-4xl">What kind of {noun}?</h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">{GENRES.map((g) => <ChoiceTile key={g} emoji={GENRE_EMOJI[g]} label={g} selected={genre === g} onClick={() => { setGenre(g); next(); }} />)}</div></>}
+    {step === 0 && <BugleyStep child={child} bare question={`What kind of ${noun}?`} allowOwnIdea={false}
+      choices={GENRES.map(g => ({key:g,label:g,emoji:GENRE_EMOJI[g]}))}
+      onChoose={c => { const selected=GENRES.find(g=>g===c.key);if(selected){setGenre(selected);next();} }} />}
     {step === 1 && <BugleyStep child={child} bare question={kind === "story" ? "How should our book look?" : "How should our comic look?"} allowOwnIdea={false} onBack={back}
       choices={STYLE_ORDER.map((k) => styles.find((x) => x.key === k)).filter((x): x is NonNullable<typeof x> => !!x).concat(styles.filter((x) => !STYLE_ORDER.includes(x.key))).map((x) => ({ key: x.key, label: x.key === "classic_comic" ? "Comic" : x.name, image: STYLE_THUMBS[x.key] }))}
       onChoose={(c) => { setStyle(c.key); next(); }} />}
