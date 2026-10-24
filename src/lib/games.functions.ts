@@ -139,7 +139,7 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
   if (!data) throw new Error("Only the Bugley admin can do this.");
 }
-export const listGameContent = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const listGameContent = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const { data } = await context.supabase.from("game_content").select("*").order("game").order("level").order("position");
   const rows = data ?? [];
@@ -148,7 +148,7 @@ export const listGameContent = createServerFn({ method: "POST" }).middleware([re
   const map = new Map(paths.map((p: string, i: number) => [p, urls[i]]));
   return rows.map((r: any) => ({ ...r, url: r.image_path ? map.get(r.image_path) ?? "" : "" }));
 });
-export const saveGameContent = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ id: z.string().uuid().optional(), game: gameKey, level: z.number().int().min(1).max(3), bands: z.array(z.enum(["sprouts", "explorers", "builders"])).min(1), data: z.record(z.string(), z.unknown()), image_path: z.string().max(300).nullable(), position: z.number().int(), active: z.boolean() }).parse(i)).handler(async ({ data, context }) => {
+export const saveGameContent = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((i: unknown) => z.object({ id: z.string().uuid().optional(), game: gameKey, level: z.number().int().min(1).max(3), bands: z.array(z.enum(["sprouts", "explorers", "builders"])).min(1), data: z.record(z.string(), z.unknown()), image_path: z.string().max(300).nullable(), position: z.number().int(), active: z.boolean() }).parse(i)).handler(async ({ data, context }) => {
   await assertAdmin(context);
   const { id, ...row } = data;
   const q = id ? context.supabase.from("game_content").update(row as never).eq("id", id) : context.supabase.from("game_content").insert(row as never);
@@ -156,7 +156,7 @@ export const saveGameContent = createServerFn({ method: "POST" }).middleware([re
   if (error) throw new Error("We couldn’t save that game item.");
   return { ok: true };
 });
-export const deleteGameContent = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const deleteGameContent = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   await assertAdmin(context);
   const { error } = await context.supabase.from("game_content").delete().eq("id", data.id);
   if (error) throw new Error("We couldn’t delete that game item.");
