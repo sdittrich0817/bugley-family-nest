@@ -8,7 +8,7 @@ import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
 import { getActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
 import { listAlbum, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
-import { billingOptions } from "@/lib/billing.functions";
+import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
 import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";

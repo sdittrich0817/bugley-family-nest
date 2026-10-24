@@ -72,7 +72,9 @@ export const unlockKidParentPin=createServerFn({method:'POST'}).inputValidator((
   const a=await s.admin(),{data:pin}=await a.from('parent_device_pins').select('pin_hash,pin_salt').eq('parent_id',d.parent_id).maybeSingle();
   if(!pin||!s.sameSecret(await s.pinHash(data.pin,pin.pin_salt),pin.pin_hash))throw new Error('That PIN didn’t match.');
   const {error}=await a.from('kid_devices').update({parent_unlocked_until:new Date(Date.now()+15*60000).toISOString(),child_id:null,child_verified_at:null}).eq('id',d.id).is('revoked_at',null);
-  if(error)throw new Error('Couldn’t open the parent area.');return {ok:true};
+  if(error)throw new Error('Couldn’t open the parent area.');
+  // PIN opens navigation only; a normal authenticated parent session still authorizes Hub data.
+  return {ok:true};
 });
 export const resetKidPlayer=createServerFn({method:'POST'}).handler(async()=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(d){const {error}=await (await s.admin()).from('kid_devices').update({child_id:null,child_verified_at:null,parent_unlocked_until:null}).eq('id',d.id).is('revoked_at',null);if(error)throw new Error('Couldn’t switch players.');}return {ok:true};

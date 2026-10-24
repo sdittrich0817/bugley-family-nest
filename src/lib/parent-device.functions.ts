@@ -3,11 +3,15 @@ import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 
 export const requireParentDevice = createMiddleware({ type: 'function' }).middleware([requireSupabaseAuth]).server(async ({ context, next }) => {
+  const s=await import('./kid-device.server');
+  if(s.cookie('bugley_kids')) { const d=await s.resolveDevice(); if(!d || d.parent_id!==context.userId || !d.parent_unlocked_until || Date.parse(d.parent_unlocked_until)<=Date.now()) throw new Error('Enter your parent PIN to open this area.'); }
   const { data, error } = await context.supabase.rpc('is_parent_device');
   if (error || data !== true) throw new Error('Enter your parent password to open this area.');
   return next();
 });
 export const getDeviceMode = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const s=await import('./kid-device.server');
+  if(s.cookie('bugley_kids')) { const d=await s.resolveDevice(); return {locked:!d || d.parent_id!==context.userId || !d.parent_unlocked_until || Date.parse(d.parent_unlocked_until)<=Date.now()}; }
   const {data,error}=await context.supabase.rpc('is_parent_device');
   if(error)throw new Error('Couldn’t check this device.');
   return {locked:data!==true};

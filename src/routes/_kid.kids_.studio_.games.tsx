@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getActivePlayer, setKidZoneLocked } from "@/lib/kid-zone";
-import { billingOptions } from "@/lib/billing.functions";
+import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { PlayStudio } from "@/components/games/PlayStudio";
 import { GameBuilder } from "@/components/games/GameBuilder";

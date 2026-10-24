@@ -5,17 +5,18 @@ import type { Database } from '@/integrations/supabase/types';
 import { childAuthorized } from './kid-device-rules';
 
 // Only explicitly kid-facing handlers import this boundary. Parent handlers keep managed auth.
-export const requireKidOrParentAuth = createMiddleware({type:'function'}).server(async ({data,next}) => {
+export const requireKidOrParentAuth = createMiddleware({type:'function'}).inputValidator((data:unknown)=>data).server(async ({data,next}) => {
   const s=await import('./kid-device.server');
   const device=await s.resolveDevice();
+  let result: {supabase:ReturnType<typeof createClient<Database>>;userId:string;claims:Record<string,unknown>;kidDeviceId:string|null;kidChildId:string|null};
   if(device) {
     const childId=data && typeof data==='object' && 'childId' in data ? data.childId : undefined;
     if(!device.child_verified_at || !childAuthorized(device.child_id,childId)) throw new Error('Pick your avatar and enter your secret first.');
     const a=await s.admin();
     const {data:owned}=await a.from('children').select('id').eq('id',device.child_id ?? '').eq('parent_id',device.parent_id).maybeSingle();
     if(!owned)throw new Error('This player is no longer available.');
-    return next({context:{supabase:a,userId:device.parent_id,claims:{sub:device.parent_id},kidDeviceId:device.id,kidChildId:owned.id}});
-  }
+    result={supabase:a,userId:device.parent_id,claims:{sub:device.parent_id},kidDeviceId:device.id,kidChildId:owned.id};
+  } else {
   // A stale/revoked device cookie must not fall through to a parent bearer session.
   if(s.cookie('bugley_kids'))throw new Error('Ask your grown-up to set up this device again.');
   const token=getRequest().headers.get('authorization')?.replace(/^Bearer /,'');
@@ -26,5 +27,7 @@ export const requireKidOrParentAuth = createMiddleware({type:'function'}).server
   if(error || !verified?.claims.sub)throw new Error('Please sign in again.');
   const {data:active,error:activeError}=await supabase.rpc('is_active_parent');
   if(activeError || !active)throw new Error('A verified parent account is required.');
-  return next({context:{supabase,userId:verified.claims.sub,claims:verified.claims,kidDeviceId:null,kidChildId:null}});
+  result={supabase,userId:verified.claims.sub,claims:verified.claims,kidDeviceId:null,kidChildId:null};
+  }
+  return next({context:result});
 });
