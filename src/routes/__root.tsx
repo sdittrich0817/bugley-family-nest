@@ -147,9 +147,10 @@ function KidZoneShell() {
   const router = useRouter();
   const {user}=useParentSession();
   const [checkedPath,setCheckedPath]=useState('');
-  useEffect(()=>{if(!user){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
+  useEffect(()=>{if(!user){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
-  const target = kidZoneRedirect(pathname, locked);
+  // Do not redirect using stale browser state while the server check is pending.
+  const target = checkedPath === pathname ? kidZoneRedirect(pathname, locked) : null;
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
   // Every new page starts at the top once it has finished loading and drawing.
   // Links to a #section still jump there, and Back/Forward keep their old spot.

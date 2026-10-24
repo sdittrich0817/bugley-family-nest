@@ -26,7 +26,7 @@ import { useParentSession } from "@/components/site/ParentSession";
 import { cn } from "@/lib/utils";
 import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
-import { lockKidDevice, unlockParentDevice } from '@/lib/parent-device.functions';
+import { unlockParentDevice } from '@/lib/parent-device.functions';
 
 export const Route = createFileRoute("/_authenticated/kids")({
   head: () => ({ meta: [
@@ -46,7 +46,9 @@ function KidZone() {
   const [exitOpen, setExitOpen] = useState(false); useScrollTopOn(`${picking?.id ?? ""}|${player?.id ?? ""}`);
   const [deviceReady, setDeviceReady] = useState(false);
   const [deviceError, setDeviceError] = useState('');
-  useEffect(() => { setKidZoneLocked(true); void lockKidDevice().then(() => { const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); setDeviceReady(true); }).catch(() => setDeviceError('Couldn’t safely open the Kid Zone. Please try again.')); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // The root shell completes the server lock before mounting this page.
+  // A second lock here can finish after password verification and relock the exit.
+  useEffect(() => { const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); setDeviceReady(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   if (!deviceReady) return <p role={deviceError ? 'alert' : 'status'} className="p-6">{deviceError || 'Opening the Kid Zone…'}</p>;
