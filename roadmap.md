@@ -34,5 +34,5 @@
 - [ ] Verify sibling pass-and-play with a second family child (blocked: only one child exists); test bulk admin generation at scale before growing the starter library to thousands.
 - [x] Add ages-7+ Bugley Guesses, admin-managed Mystery Manor, Glow Dash with bounded spoken remixes and family sharing; both guessing roles, solved case, dash/remix/share readback, saved rewards and three menu sizes verified.
 - [x] Report Studio audit findings: safety UI/server probes, deployed permissions, art safeguards/rates, simplicity counts and timing gaps; no application fixes made.
-- [ ] Apply Studio audit fixes only after Shea approves the report.
+- [ ] Apply approved Studio audit fixes: parent protection, safety, reference locks, parent visibility, simpler flows and bounded game endings.
 - [ ] Complete full Studio test matrix (blocked: generation budget/test account for ten-style 12+12 run, actual sibling and other age-band test access, real microphone/device checks); see Bugley-Studio-Audit report for exact unverified coverage.

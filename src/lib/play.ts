@@ -12,7 +12,7 @@ export const PLAY_GAMES = {
   glow_dash: { name:'Glow Dash',line:'Run, jump and dodge through glowing worlds!',pitch:'Jump, double-jump, and scoop up glow on the way to the finish!',secret:'You just gave instructions to a computer, and it listened!' },
 } as const;
 export const playAllowed = (game: PlayKey, band: Band) => ['bugley_guesses','mystery_manor','glow_dash'].includes(game) ? band !== 'sprouts' : game !== 'story_blanks' || band !== 'builders';
-export const playSeconds=(game:PlayKey)=>game==='mystery_manor'?300:game==='glow_dash'?180:240;
+export const playSeconds=(game:PlayKey)=>game==='mystery_manor'?290:game==='glow_dash'?180:240;
 export const PLAY_SECONDS = 240;
 export const GAME_BONUS_CAP = 3;
 export const gameBonus = (stars: number, used: number) => stars >= 3 && used < GAME_BONUS_CAP ? 1 : 0;

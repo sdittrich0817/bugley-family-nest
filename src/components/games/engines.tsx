@@ -44,13 +44,15 @@ export function GamePlayer({ file, urls, title, onEnd, onClose }: { file: GameFi
   const s = file.settings;
   const [run, setRun] = useState(0);
   const [end, setEnd] = useState<Playtest | null>(null);
-  const [left, setLeft] = useState<number>(s.timer);
+  const duration = s.timer > 0 ? Math.min(s.timer, 240) : 240;
+  const [left, setLeft] = useState<number>(duration);
   const started = useRef(performance.now());
-  const timed = s.timer > 0 && ["maze", "catch", "jump", "memory"].includes(file.template);
-  useEffect(() => { started.current = performance.now(); setLeft(s.timer); setEnd(null); }, [run, s.timer]);
-  useEffect(() => { if (!timed || end) return; const t = setInterval(() => setLeft((l) => Math.max(0, l - 1)), 1000); return () => clearInterval(t); }, [timed, end, run]);
+  const timed = true;
+  useEffect(() => { started.current = performance.now(); setLeft(duration); setEnd(null); }, [run, duration]);
+  useEffect(() => { if (end) return; const update = () => setLeft(Math.max(0, Math.ceil(duration - (performance.now() - started.current) / 1000))); const t = setInterval(update, 250); window.addEventListener('pageshow',update); document.addEventListener('visibilitychange',update); return () => { clearInterval(t);window.removeEventListener('pageshow',update);document.removeEventListener('visibilitychange',update); }; }, [duration, end, run]);
   const finish = useCallback((p: Omit<Playtest, "seconds">) => { setEnd((e) => { if (e) return e; const r = { ...p, seconds: (performance.now() - started.current) / 1000 }; onEnd?.(r); return r; }); }, [onEnd]);
-  const props: EngineProps = { s, urls, onEnd: finish, running: !end, timeUp: timed && left === 0 };
+  useEffect(() => { if (left === 0 && !end) finish({ won: false, score: 0 }); }, [left, end, finish]);
+  const props: EngineProps = { s, urls, onEnd: finish, running: !end && left > 0, timeUp: left === 0 };
   const bg = BG_IMAGES[s.background];
   return <div className="space-y-3">
     <div className="flex items-center justify-between gap-2"><p className="font-display text-xl">{title}</p><span className="flex items-center gap-2">{timed && <span className="rounded-full bg-muted px-3 py-1 text-sm font-semibold">⏱ {left}s</span>}{onClose && <Button size="sm" variant="ghost" onClick={onClose}>Close</Button>}</span></div>
