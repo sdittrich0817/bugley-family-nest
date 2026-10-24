@@ -26,13 +26,13 @@ export function StudioActivity({ kids }: { kids: ChildProfile[] }) {
         {e.reply && <p className="mt-1 text-muted-foreground">Bugley: {e.reply}</p>}<p className="mt-1 text-xs text-muted-foreground">{when(e.created_at)}</p></div></li> })),
     ...data.creations.map((c) => ({ at: c.created_at, key: `c${c.id}`, el: <li key={`c${c.id}`} className="flex gap-3 py-3"><BookOpen className="mt-0.5 size-5 shrink-0 text-muted-foreground" /><div className="text-sm"><p><b>{name(c.child_id)}</b> made a {c.kind}: “{c.title}”</p><p className="mt-1 text-xs text-muted-foreground">{when(c.created_at)}</p></div></li> })),
   ].sort((a, b) => b.at.localeCompare(a.at));
-  const unread = data.notifications.filter((n: any) => !n.read);
+  const notifications = data.notifications;
   return <div className="space-y-4">
-    {unread.map((n: any) => <div key={n.id} className="rounded-2xl border border-primary/50 bg-primary/15 p-5">
+    {notifications.map((n: any) => <div key={n.id} className="rounded-2xl border border-primary/50 bg-primary/15 p-5">
       <p className="flex items-center gap-2 font-semibold"><Bell className="size-4" />{name(n.child_id)} shared something personal · {when(n.created_at)}</p>
       <p className="mt-2 whitespace-pre-wrap break-words text-sm">They shared: “{n.typed}”</p>
       <p className="mt-2 text-sm text-muted-foreground">{n.starter}</p>
-      <Button size="sm" variant="secondary" className="mt-3" onClick={() => act(markNotificationRead({ data: { id: n.id } }), "Marked as read")}>Got it</Button>
+      {n.read?<p className="mt-3 text-xs text-muted-foreground">Read</p>:<Button size="sm" variant="secondary" className="mt-3" onClick={() => act(markNotificationRead({ data: { id: n.id } }), "Marked as read")}>Got it</Button>}
     </div>)}
     {feed.length ? <><ul className={`${card} divide-y divide-border py-1`}>{feed.slice(0, visible).map((f) => f.el)}</ul>{visible<feed.length&&<Button variant="outline" onClick={()=>setVisible(visible+60)}>Load more</Button>}</>
       : <div className={`${card} flex flex-col items-center gap-3 py-10 text-center`}><Bugley stage="scout" expression="sleepy" size={72} /><p className="text-muted-foreground">Your kids’ creations will show up here.</p></div>}

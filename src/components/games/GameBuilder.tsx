@@ -15,6 +15,7 @@ import type { Band } from "@/lib/games";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 import { Art, BG_IMAGES, COLOR_CLASS, GamePlayer } from "./engines";
+import { SafeRetry } from '../studio/SafeRetry';
 
 const field = "w-full rounded-lg border-2 border-border bg-background p-3 text-foreground outline-none focus:border-primary";
 const QUESTIONS = [["hero", "Who’s the hero?"], ["goal", "What’s their goal?"], ["obstacle", "What gets in the way?"], ["win", "How do you win?"]] as const;
@@ -96,11 +97,13 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
     <Button variant="ghost" onClick={() => setStep("pick")}><ArrowLeft />Pick a different game</Button>
     <div className="flex items-start gap-3"><Bugley stage={child.bugley_stage} expression="curious" size={84} /><div className="rounded-3xl rounded-tl-none bg-card p-4 shadow-soft"><p className="font-display text-lg">I’m your game designer helper! Answer my questions and I’ll turn them into game rules.</p></div></div>
     {QUESTIONS.map(([k, q]) => <label key={k} className="block space-y-1"><span className="font-semibold">{q}</span><input className={field} maxLength={160} value={answers[k]} onChange={(e) => setAnswers({ ...answers, [k]: e.target.value })} /></label>)}
+    {lastBugley&&<SafeRetry message={lastBugley} onChoose={idea=>{setAnswers({...answers,hero:idea});chat.say('What should your original hero do next?',[]);}}/>}
     <div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(answers).every((v) => !v.trim())} onClick={() => void interview()}><Wand2 />{busy ? "Bugley is building…" : "Turn my answers into a game"}</Button><Button variant="ghost" onClick={() => setStep("edit")}>I’ll set it up myself</Button></div>
   </div>;
 
   const t = file.template;
   return <div className="space-y-6" aria-busy={busy}>
+    {lastBugley&&<SafeRetry message={lastBugley} onChoose={idea=>{setTitle(idea);chat.say('Your original game idea is ready to edit.',[]);}}/>}
     <div className="flex flex-wrap items-center justify-between gap-2"><Button variant="ghost" onClick={() => { if (dirty && !window.confirm("Leave without saving?")) return; onClose(); }}><ArrowLeft />Game Studio</Button><span className="text-sm text-muted-foreground">{busy ? "Working…" : dirty ? "Unsaved changes" : id ? "Saved" : "Not saved yet"}</span></div>
     <div className="flex items-center gap-3"><span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><div className="min-w-0 flex-1">{sprouts ? <h1 className="text-3xl">{title}</h1> : <input className={cn(field, "font-display text-2xl")} maxLength={60} value={title} placeholder="Name your game" aria-label="Game name" onChange={(e) => { setTitle(e.target.value); setDirty(true); }} />}<p className="text-sm text-muted-foreground">{TEMPLATES[t].name}</p></div></div>
     {lastBugley && <div className="flex items-start gap-3"><Bugley stage={child.bugley_stage} expression={note ? "thinking" : "happy"} size={64} /><div className="flex-1 rounded-3xl rounded-tl-none bg-card p-4 shadow-soft"><p>{lastBugley}</p>{note?.fix && <Button size="sm" className="mt-2" onClick={() => { set(note.fix!.patch); setNote(null); chat.say("Done! Playtest again to see how it feels."); }}>{note.fix.label}</Button>}</div></div>}

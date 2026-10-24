@@ -7,6 +7,7 @@ import { chargeGlow, giftGlowServer } from "@/lib/glow.server";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
+import { imageFileType, MAX_IMAGE_BYTES } from './image-file';
 
 type Sb = SupabaseClient<any>;
 export type ImageMode = "sketch" | "final" | "character";
@@ -81,10 +82,15 @@ async function driftCheck(image: string, refs: string[], dna: string, style: str
 }
 
 async function store(src: string, userId: string, childId: string, printSize = false) {
-  const img = await fetch(src);
+  if(new URL(src).protocol!=='https:')throw new Error('Invalid image output');
+  const img = await fetch(src,{signal:AbortSignal.timeout(30000)});
   if (!img.ok) throw new Error("fetch output failed");
-  const type = img.headers.get("content-type") ?? "image/png";
-  const bytes = new Uint8Array(await img.arrayBuffer());
+  const declared=img.headers.get('content-type')?.split(';')[0];
+  if(!declared||!['image/png','image/jpeg','image/webp'].includes(declared)||Number(img.headers.get('content-length')??0)>MAX_IMAGE_BYTES||!img.body)throw new Error('Invalid image output');
+  const reader=img.body.getReader(),chunks:Uint8Array[]=[];let length=0;
+  try{while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>MAX_IMAGE_BYTES)throw new Error('Image output too large');chunks.push(value);}}finally{await reader.cancel();}
+  const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
+  const type=imageFileType(bytes);if(!type||type!==declared)throw new Error('Invalid image output');
   if (printSize) {
     const png = bytes.length >= 24 && bytes[0] === 137 && bytes[1] === 80 && bytes[2] === 78 && bytes[3] === 71;
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
