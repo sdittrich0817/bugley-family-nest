@@ -913,6 +913,108 @@ export type Database = {
         }
         Relationships: []
       }
+      kid_auth_attempts: {
+        Row: {
+          attempts: number
+          key: string
+          window_at: string
+        }
+        Insert: {
+          attempts?: number
+          key: string
+          window_at?: string
+        }
+        Update: {
+          attempts?: number
+          key?: string
+          window_at?: string
+        }
+        Relationships: []
+      }
+      kid_devices: {
+        Row: {
+          child_id: string | null
+          child_verified_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          last_used_at: string
+          name: string
+          parent_id: string
+          parent_unlocked_until: string | null
+          revoked_at: string | null
+          secret_hash: string
+        }
+        Insert: {
+          child_id?: string | null
+          child_verified_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string
+          name: string
+          parent_id: string
+          parent_unlocked_until?: string | null
+          revoked_at?: string | null
+          secret_hash: string
+        }
+        Update: {
+          child_id?: string | null
+          child_verified_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          last_used_at?: string
+          name?: string
+          parent_id?: string
+          parent_unlocked_until?: string | null
+          revoked_at?: string | null
+          secret_hash?: string
+        }
+        Relationships: []
+      }
+      kid_pairings: {
+        Row: {
+          approved_at: string | null
+          claim_hash: string | null
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          device_id: string | null
+          device_name: string | null
+          expires_at: string
+          id: string
+          parent_id: string
+          proof_hash: string
+        }
+        Insert: {
+          approved_at?: string | null
+          claim_hash?: string | null
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          parent_id: string
+          proof_hash: string
+        }
+        Update: {
+          approved_at?: string | null
+          claim_hash?: string | null
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          device_name?: string | null
+          expires_at?: string
+          id?: string
+          parent_id?: string
+          proof_hash?: string
+        }
+        Relationships: []
+      }
       manor_cases: {
         Row: {
           active: boolean
@@ -931,6 +1033,27 @@ export type Database = {
           content?: Json
           created_at?: string
           id?: string
+        }
+        Relationships: []
+      }
+      parent_device_pins: {
+        Row: {
+          parent_id: string
+          pin_hash: string
+          pin_salt: string
+          updated_at: string
+        }
+        Insert: {
+          parent_id: string
+          pin_hash: string
+          pin_salt: string
+          updated_at?: string
+        }
+        Update: {
+          parent_id?: string
+          pin_hash?: string
+          pin_salt?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1645,6 +1768,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_kid_auth_attempt: {
+        Args: { _key: string; _limit: number; _seconds: number }
+        Returns: boolean
+      }
+      consume_kid_pairing: {
+        Args: { _claim: string; _id: string; _secret: string }
+        Returns: string
+      }
       finish_play_session: {
         Args: { _parent: string; _session: string }
         Returns: Json

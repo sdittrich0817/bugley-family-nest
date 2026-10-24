@@ -162,6 +162,13 @@
       "when": 1792868339616,
       "tag": "0022_parent_only_admin_and_timezone",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792875159872,
+      "tag": "0023_trusted_kid_devices",
+      "breakpoints": true
     }
   ]
 }
