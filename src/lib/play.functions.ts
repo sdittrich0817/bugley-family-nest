@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
-import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireKidOrParentAuth } from './kid-device-auth';
 import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from './billing.functions';
 import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
@@ -28,7 +28,7 @@ async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=fals
   const {error}=await a.from('game_stickers').upsert(row,{onConflict:'key',ignoreDuplicates:true});if(error)throw new Error('The sticker couldn’t be saved.');
   return {key,name:row.name,power:row.power,rare:false};
 }
-export const getPlayHome=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,environment}).parse(i)).handler(async({data,context})=>{
+export const getPlayHome=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,environment}).parse(i)).handler(async({data,context})=>{
   await child(context,data.childId,data.environment);
   const [{data:rounds},{data:progress},{data:badges},{data:dex},{data:stickers},{data:kids}]=await Promise.all([
     context.supabase.from('play_sessions').select('child_id,game,score,bonus,finished_at').eq('parent_id',context.userId).not('finished_at','is',null).order('finished_at',{ascending:false}).limit(1000),
@@ -37,7 +37,7 @@ export const getPlayHome=createServerFn({method:'POST'}).middleware([requireSupa
   const {signPaths}=await import('./images.server');const urls=await signPaths((stickers??[]).map(s=>s.image_path));
   return {rounds:rounds??[],stars:(progress??[]).filter(p=>p.child_id===data.childId).reduce((n,p)=>n+p.sparks,0),badges:badges??[],dex:(dex??[]).map(d=>d.sticker_key),stickers:(stickers??[]).map((s,i)=>({key:s.key,name:s.name,synonyms:s.synonyms,url:urls[i]??'',creature:s.creature,power:s.power,rare:s.rare})),players:kids??[]};
 });
-export const startPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,game:z.enum(PLAY_KEYS),environment,dash:dashSchema.optional(),heroId:id.optional(),remixId:id.optional()}).parse(i)).handler(async({data,context})=>{
+export const startPlay=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,game:z.enum(PLAY_KEYS),environment,dash:dashSchema.optional(),heroId:id.optional(),remixId:id.optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment);if(!playAllowed(data.game,kid.age_band as any))throw new Error('Pick another game for your age.');
   const a=await admin(),state=initialPlayState();let hidden:Record<string,unknown>={},heroUrl='';
   if(data.game==='bugley_guesses'){state.guess=firstGuess();hidden['secret']=SECRETS[Math.floor(Math.random()*SECRETS.length)];}
@@ -51,7 +51,7 @@ export const startPlay=createServerFn({method:'POST'}).middleware([requireSupaba
   const {data:r,error}=await a.from('play_sessions').insert({parent_id:context.userId,child_id:kid.id,game:data.game,state:state as any,private_state:hidden as any}).select('id,started_at,state').single();if(error||!r)throw new Error('The game couldn’t start.');
   return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+playSeconds(data.game)*1000).toISOString(),state:r.state as unknown as PlayState,heroUrl,heroId:typeof hidden['heroId']==='string'?hidden['heroId']:undefined};
 });
-export const playMove=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
+export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment),a=await admin();
   const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(!['say_see','creature_lab','story_blanks','doodle_duel'].includes(r.game))throw new Error('Pick the matching game controls.');if(Date.now()>new Date(r.started_at).getTime()+playSeconds(r.game as any)*1000)return {expired:true,state:r.state as unknown as PlayState};
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
@@ -93,7 +93,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
     return {expired:false,state};
   }catch(e){await a.from('play_sessions').update({busy:false}).eq('id',r.id).eq('version',r.version);throw e;}
 });
-export const finishPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment}).parse(i)).handler(async({data,context})=>{
+export const finishPlay=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment}).parse(i)).handler(async({data,context})=>{
   await child(context,data.childId,data.environment);const a=await admin();const {data:r}=await a.from('play_sessions').select('id').eq('id',data.sessionId).eq('child_id',data.childId).eq('parent_id',context.userId).maybeSingle();if(!r)throw new Error('Game not found.');const {data:result,error}=await a.rpc('finish_play_session',{_session:r.id,_parent:context.userId});if(error)throw new Error('Your results couldn’t save yet.');return result as {score:number;bonus:number};
 });
 export const manageStickers=createServerFn({method:'POST'}).middleware([requireParentDevice]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','toggle','generate','tag']),key:z.string().max(100).optional(),active:z.boolean().optional(),synonyms:z.array(z.string().trim().min(1).max(60)).max(30).optional(),childId:id.optional(),words:z.array(z.string().trim().min(1).max(60)).max(10).optional()}).parse(i)).handler(async({data,context})=>{

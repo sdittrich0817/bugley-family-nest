@@ -4,7 +4,7 @@ import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-quer
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { familyOptions } from "@/lib/family.functions";
+import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
 import { getActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
 import { listAlbum, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
@@ -26,7 +26,7 @@ import pictureArt from "@/assets/illustrations/studio-picture.jpg";
 import comicArt from "@/assets/illustrations/studio-comic-adventure.jpg";
 import storyArt from "@/assets/illustrations/studio-story.jpg";
 
-export const Route = createFileRoute("/_authenticated/kids_/studio")({
+export const Route = createFileRoute("/_kid/kids_/studio")({
   head: () => ({ meta: [
     { title: "Bugley’s Studio · Kid Zone" }, { name: "description", content: "Make pictures, stories, comics and games with Bugley, your AI helper." },
     { property: "og:title", content: "Bugley’s Studio · Kid Zone" }, { property: "og:description", content: "Make pictures, stories, comics and games with Bugley." },

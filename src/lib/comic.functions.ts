@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, storyMapSchema } from "./story";
 import { ANGLE_PROMPT, comicPageSchema, layerSchema, movePage, newComicPage, readyToFinishComic, EMPTY_MAP, type ComicData, guidedComicPages, dialogueLayers } from "./comic";
@@ -9,12 +9,12 @@ const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() })
 const env = z.enum(["sandbox", "live"]);
 const NAP = "Ask a grown-up to open the Studio plan first.";
 
-export const getComic = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {
+export const getComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {
   const { loadComic } = await import("./comic.server");
   return loadComic(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createComic = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -37,7 +37,7 @@ export const createComic = createServerFn({ method: "POST" }).middleware([requir
 
 const browserPage = comicPageSchema.extend({ panels: z.array(z.object({ id: z.string().uuid(), description: z.string().max(600), angle: comicPageSchema.shape.panels.element.shape.angle, layers: z.array(layerSchema).max(12) })).min(1).max(6) });
 
-export const editComic = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => identity.extend({
+export const editComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({
   action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers"]), environment: env,
   map: storyMapSchema.optional(), page: browserPage.optional(), pageId: z.string().uuid().optional(), panelId: z.string().uuid().optional(), to: z.number().int().min(0).optional(), description: z.string().max(600).optional(), text: z.string().max(200).optional(), sfx: z.enum(["POW!", "WHOOSH!", "ZAP!", "SPLASH!"]).optional(), title: z.string().trim().min(1).max(80).optional(), layers: z.array(layerSchema).max(12).optional(),
 }).parse(i)).handler(async ({ data, context }) => {

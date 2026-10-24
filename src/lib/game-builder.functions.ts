@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { BACKGROUNDS, COLORS, SPRITES, TEMPLATE_KEYS, creationRefs, gameFileSchema, gameTexts, generateJump, generateMaze, templatesFor, type GameFile, type Settings } from "./game-builder";
 import type { Band } from "./games";
@@ -33,7 +33,7 @@ async function load(sb: any, userId: string, viewerId: string | null, id: string
   return { id: row.id, title: row.title, ownerId: row.child_id, ownerName: row.children?.nickname ?? "", file: parsed.data, urls: await refUrls(sb, userId, creationRefs(parsed.data.settings)), mine };
 }
 
-export const listMyGames = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const listMyGames = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const { data: rows } = await context.supabase.from("studio_creations").select("id,title,child_id,details,updated_at,children(nickname)").eq("parent_id", context.userId).eq("kind", "game").is("deleted_at", null).order("updated_at", { ascending: false });
   const all = (rows ?? []).map((r: any) => ({ id: r.id as string, title: r.title as string, childId: r.child_id as string, nickname: r.children?.nickname ?? "", template: r.details?.template as string, published: !!r.details?.published }));
   return { mine: all.filter((g) => g.childId === data.childId), family: all.filter((g) => g.published) };
@@ -45,12 +45,12 @@ export const listFamilyGamesForParent = createServerFn({ method: "POST" }).middl
   for (const r of rows ?? []) { try { out.push(await load(context.supabase, context.userId, null, r.id)); } catch { /* skip */ } }
   return out;
 });
-export const getGame = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const getGame = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   await kid(context.supabase, context.userId, data.childId);
   return load(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const saveGame = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid().optional(), title: z.string().trim().min(1).max(60), file: gameFileSchema, environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const saveGame = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid().optional(), title: z.string().trim().min(1).max(60), file: gameFileSchema, environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child } = await kid(context.supabase, context.userId, data.childId, data.environment);
   if (!templatesFor(child.age_band as Band).includes(data.file.template)) throw new Error("That game type isn’t open for your age group yet.");
   let old: LoadedGame | null = null;
@@ -76,7 +76,7 @@ export const saveGame = createServerFn({ method: "POST" }).middleware([requireSu
 });
 
 /** Bugley turns the child's interview answers into settings. The AI only picks values; it never writes code or game text. */
-export const designInterview = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), template: z.enum(TEMPLATE_KEYS), answers: z.object({ hero: z.string().max(160), goal: z.string().max(160), obstacle: z.string().max(160), win: z.string().max(160) }), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const designInterview = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), template: z.enum(TEMPLATE_KEYS), answers: z.object({ hero: z.string().max(160), goal: z.string().max(160), obstacle: z.string().max(160), win: z.string().max(160) }), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child } = await kid(context.supabase, context.userId, data.childId, data.environment);
   for (const t of Object.values(data.answers)) if (t.trim()) {
     const g = await s.guardChildText(context.supabase, context.userId, child, t, "game_interview");

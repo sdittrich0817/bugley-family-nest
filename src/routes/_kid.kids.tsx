@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Award, BookOpen, Delete, Lock, Sparkles, Users, Volume2 } from "lucide-react";
-import { familyOptions } from "@/lib/family.functions";
+import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { verifyChildLogin } from "@/lib/kid.functions";
 import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
 import { getChildGlow } from "@/lib/glow.functions";
@@ -28,7 +28,7 @@ import { billingOptions } from "@/lib/billing.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { unlockParentDevice } from '@/lib/parent-device.functions';
 
-export const Route = createFileRoute("/_authenticated/kids")({
+export const Route = createFileRoute("/_kid/kids")({
   head: () => ({ meta: [
     { title: "Kid Zone · Bugley" }, { name: "description", content: "Your family’s Kid Zone: pick a player and play with Bugley." },
     { property: "og:title", content: "Kid Zone · Bugley" }, { property: "og:description", content: "Pick a player and play with Bugley." },

@@ -1,17 +1,17 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { BUG_ANTENNAE, BUG_EXTRAS, BUG_EYES, BUG_KINDS, BUG_MOUTHS, BUG_PATTERNS, COLOR_KEYS, bugSchema } from "./bug-avatar";
 
 /** Kid saves the bug they built. Only allow-listed parts can be stored. */
-export const saveBug = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bug: bugSchema }).parse(i)).handler(async ({ data, context }) => {
+export const saveBug = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bug: bugSchema }).parse(i)).handler(async ({ data, context }) => {
   const { data: row, error } = await context.supabase.from("children").update({ bug: data.bug as never }).eq("id", data.childId).eq("parent_id", context.userId).select("id").single();
   if (error || !row) throw new Error("We couldn’t save your bug. Try again!");
   return { bug: data.bug };
 });
 
 /** Bugley turns the kid's words into bug parts. The AI only picks from the parts list; it never draws or writes anything. */
-export const designBugFromWords = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), words: z.string().trim().min(2).max(200) }).parse(i)).handler(async ({ data, context }) => {
+export const designBugFromWords = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), words: z.string().trim().min(2).max(200) }).parse(i)).handler(async ({ data, context }) => {
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const g = await s.guardChildText(context.supabase, context.userId, child, data.words, "avatar");
