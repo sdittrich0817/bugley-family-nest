@@ -101,6 +101,9 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
   }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
+    const {supabaseAdmin:provenanceClient}=await import('@/integrations/supabase/client.server');
+    const {data:provenance}=await provenanceClient.from('hero_portrait_provenance').select('style_key').eq('path',data.path).eq('parent_id',context.userId).eq('child_id',data.childId).maybeSingle();
+    if(!provenance||provenance.style_key!==data.styleKey)throw new Error('Choose a hero portrait made in this look.');
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
