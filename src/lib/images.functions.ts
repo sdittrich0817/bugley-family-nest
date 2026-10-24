@@ -158,7 +158,7 @@ export const signImages = createServerFn({ method: "POST" }).middleware([require
   });
 
 // ---------- Admin ----------
-export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const [m, s] = await Promise.all([
     context.supabase.from("image_models").select("mode,model,version,settings,supports_reference").order("mode"),
@@ -167,7 +167,7 @@ export const getImageAdmin = createServerFn({ method: "GET" }).middleware([requi
   return { models: (m.data ?? []).map((r: any) => ({ mode: r.mode as string, model: r.model as string, version: r.version as string, settings: JSON.stringify(r.settings ?? {}, null, 2), supportsReference: !!r.supports_reference })), styles: (s.data ?? []) as (ArtStyle & { recipe: string; position: number; active: boolean })[] };
 });
 
-export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveImageModel = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ mode: z.enum(["sketch", "final", "character", "hero", "sheet", "scene_chars", "scene"]), supportsReference: z.boolean().default(false), model: z.string().trim().max(120).regex(/^$|^[\w.-]+\/[\w.-]+$/, "Use owner/name"), version: z.string().trim().max(100), settings: z.record(z.string(), z.unknown()) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -176,7 +176,7 @@ export const saveImageModel = createServerFn({ method: "POST" }).middleware([req
     return { ok: true };
   });
 
-export const saveStyle = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveStyle = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ key: z.string(), name: z.string().trim().min(1).max(40), description: z.string().max(120), recipe: z.string().max(1500), active: z.boolean() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
@@ -186,7 +186,7 @@ export const saveStyle = createServerFn({ method: "POST" }).middleware([requireS
   });
 
 /** Drift Report: drift-check failure rates by model and style. */
-export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
   const { data } = await context.supabase.from("drift_checks").select("model,style_key,passed,score,notes,created_at").order("created_at", { ascending: false }).limit(2000);
   const groups = new Map<string, { model: string; style: string; checks: number; fails: number; scoreSum: number }>();
