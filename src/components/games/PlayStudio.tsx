@@ -12,6 +12,7 @@ import { STARTER_CREATURES, STARTER_STICKERS, type Sticker } from '@/lib/sticker
 import { getStripeEnvironment } from '@/lib/stripe';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
+import { SafeRetry } from '@/components/studio/SafeRetry';
 import { DoodleCanvas } from './DoodleCanvas';
 import { ExtraRound } from './ExtraRound';
 import { getDashShelf } from '@/lib/play-extra.functions';
@@ -83,7 +84,7 @@ function GameRound({session,game,stickers,onDone,onLibrary,handoff}:{session:Ses
  {!state.feedback&&!(game==='doodle_duel'&&state.turn%2===0)&&<><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{choices.slice(choicePage*3,choicePage*3+3).map(w=>{const s=stickers.find(x=>x.key===w||x.synonyms.includes(w));return <Button key={w} variant="outline" className="h-auto min-h-20 flex-col whitespace-normal rounded-lg p-2" disabled={busy} onClick={()=>{if(game==='creature_lab'){if(!text||second){setText(w);setSecond('');}else setSecond(w);}else void move({word:w});}}>{s&&<img src={s.url} width={384} height={384} loading="lazy" alt="" className="size-16 object-contain"/>}<span className="capitalize">{w}</span></Button>;})}<Button variant="outline" disabled={busy} onClick={()=>setChoicePage((choicePage+1)%Math.ceil(choices.length/3))}>More!</Button></div><form className="flex flex-wrap gap-2" onSubmit={e=>{e.preventDefault();void move();}}><Input aria-label="Your game idea" maxLength={120} value={text} onChange={e=>setText(e.target.value)} placeholder={game==='creature_lab'?'First thing…':'My idea…'} className="min-w-36 flex-1" disabled={busy}/>{game==='creature_lab'&&<Input aria-label="Second thing" maxLength={60} value={second} onChange={e=>setSecond(e.target.value)} placeholder="Second thing…" className="min-w-36 flex-1" disabled={busy}/>} {voice.supported&&<Button type="button" size="icon" variant="secondary" aria-label="Say game idea" disabled={busy} onClick={voice.start}><Mic/></Button>}<Button disabled={busy||!text.trim()||(game==='creature_lab'&&!second.trim())} type="submit"><Sparkles/>{busy?'Bugley’s working…':game==='creature_lab'?'Hatch!':'Go!'}</Button></form></>}
  {game==='doodle_duel'&&state.turn%2===0&&!state.drawingGuessed&&<Button variant="outline" disabled={busy||!strokes.length||(state.drawGuesses??0)>=6} onClick={()=>void move({drawing:true})}><Sparkles/>{busy?'Looking…':'Guess my doodle!'}</Button>}
  {newSticker&&<div className="space-y-3 bg-play-mint p-4"><p>That’s a brand-new sticker! Shall I draw it for 1 glow?</p><div className="flex flex-wrap gap-2"><Button disabled={busy} onClick={()=>void move({make:true})}><Sparkles/>Draw it · 1 glow</Button><Button variant="outline" disabled={busy} onClick={()=>setNewSticker(false)}>Pick something else</Button></div></div>}
- {error&&<p role="alert" className="text-destructive">{error}</p>}
+ {error&&<><p role="alert" className="text-destructive">{error}</p><SafeRetry message={error} onChoose={idea=>{setText(idea);setSecond('');setError('');}}/></>}
  {(state.feedback||state.story)&&<Button size="lg" className="w-full" disabled={busy||ending} onClick={()=>done?void finish():void move({next:true})}>{done?'See my stars':game==='creature_lab'?'Mix again':'Next turn'}<ArrowRight/></Button>}
  {ending&&<p role="status">Saving your stars…</p>}</>}
  </div>;

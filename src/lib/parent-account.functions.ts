@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireParentDevice } from './parent-device.functions';
 
-export const getParentAccount = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getParentAccount = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { data: userData, error: userError } = await context.supabase.auth.getUser();
   if (userError || !userData.user?.email_confirmed_at) throw new Error("Please verify your email before opening your account.");
   const { data: profile, error } = await context.supabase.from("profiles").select("first_name,last_name").eq("id", context.userId).single();

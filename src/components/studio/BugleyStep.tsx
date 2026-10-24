@@ -27,12 +27,12 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
   const voice = useVoiceInput((t) => onOwnIdea?.(t));
   const [page, setPage] = useState(0);
   const own = allowOwnIdea && !!onOwnIdea;
-  const room = own && !ownIdeaBelow ? 3 : 4; // never more than 4 cards on screen
+  const room = own ? 3 : 4; // include the own-idea route in the four-choice budget
   const paged = choices.length > room;
   const size = paged ? room - 1 : room;
   const pages = Math.max(1, Math.ceil(choices.length / size));
   const shown = choices.slice((page % pages) * size, (page % pages) * size + size);
-  useEffect(() => setPage(0), [question]);
+  useEffect(() => setPage(0), [question,choices.map(c=>c.key).join('|')]);
 
   useEffect(() => { if (sprouts && !bare) speak(question); }, [question, sprouts, bare]);
   useEffect(() => { setTyping(longAnswer || !!initialAnswer); setText(initialAnswer); }, [longAnswer, initialAnswer]);

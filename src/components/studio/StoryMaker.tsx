@@ -74,7 +74,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     if (busy) return;
     setBusy(true);
     try { await task(); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Your words are safe. Try again."); }
+    catch (e) { const message=e instanceof Error ? e.message : "Your words are safe. Try again."; toast.error(message);const {safetyAlternatives}=await import('./SafeRetry');chat.say(message,safetyAlternatives(message)); }
     finally { setBusy(false); refresh(); }
   }
   async function paint(current: Story) {
