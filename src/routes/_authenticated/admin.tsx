@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { ImageAdmin } from "@/components/site/ImageAdmin";
 import { GameAdmin } from "@/components/site/GameAdmin";
 import { StickerAdmin } from "@/components/site/StickerAdmin";
+import { ManorAdmin } from "@/components/site/ManorAdmin";
 import { PrintAdmin } from "@/components/site/PrintAdmin";
 import { Badge } from "@/components/ui/badge";
 
@@ -76,6 +77,7 @@ function AdminArea() {
     <ImageAdmin />
     <GameAdmin />
     <StickerAdmin />
+    <ManorAdmin />
     <PrintAdmin />
   </section>;
 }
