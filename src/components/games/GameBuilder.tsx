@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
 import { PictureMaker } from "@/components/studio/Makers";
-import { useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
+import { useBugleyChat, useVoiceInput, speak, type SidekickChild } from "@/components/studio/Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { listAlbum } from "@/lib/studio.functions";
 import { designInterview, getGame, saveGame } from "@/lib/game-builder.functions";
@@ -31,6 +31,11 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [step, setStep] = useState<"pick" | "interview" | "edit">(gameId ? "edit" : "pick"); useScrollTopOn(step);
   const [answers, setAnswers] = useState({ hero: "", goal: "", obstacle: "", win: "" });
+  const [questionAt,setQuestionAt]=useState(0),[templatePage,setTemplatePage]=useState(0);
+  const question=QUESTIONS[questionAt]??QUESTIONS[0];
+  const voice=useVoiceInput(text=>setAnswers({...answers,[question[0]]:text}));
+  useScrollTopOn(questionAt);
+  useEffect(()=>{if(step==='interview')chat.say(question[1],[]);},[step,questionAt]);
   const [busy, setBusy] = useState(false), [dirty, setDirty] = useState(false);
   const [testing, setTesting] = useState(false);
   const [note, setNote] = useState<CoachNote | null>(null);
@@ -87,8 +92,8 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   if (step === "pick") return <div className="space-y-6">
     <Button variant="ghost" onClick={onClose}><ArrowLeft />Game Studio</Button>
     <h1 className="text-3xl">What kind of game?</h1>
-    <div className="grid gap-4 sm:grid-cols-2">{templatesFor(band).map((t) => <button key={t} onClick={() => pick(t)} className={cn("flex items-center gap-4 rounded-3xl border-2 border-border bg-card p-5 text-left shadow-soft transition hover:-translate-y-1 hover:border-primary", sprouts && "p-7")}>
-      <span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><span><span className="block font-display text-xl">{TEMPLATES[t].name}</span><span className="text-sm text-muted-foreground">{TEMPLATES[t].blurb}</span></span></button>)}</div>
+    <div className="grid gap-4 sm:grid-cols-2">{templatesFor(band).slice(templatePage*3,templatePage*3+3).map((t) => <Button variant="outline" key={t} onClick={() => pick(t)} className={cn("h-auto flex items-center gap-4 whitespace-normal rounded-lg border-2 border-border bg-card p-5 text-left shadow-soft", sprouts && "p-7")}>
+      <span className="text-5xl" aria-hidden>{TEMPLATES[t].emoji}</span><span><span className="block font-display text-xl">{TEMPLATES[t].name}</span><span className="text-sm text-muted-foreground">{TEMPLATES[t].blurb}</span></span></Button>)}{templatesFor(band).length>3&&<Button variant="outline" onClick={()=>setTemplatePage((templatePage+1)%Math.ceil(templatesFor(band).length/3))}>More games</Button>}</div>
   </div>;
   if (!file || !s) return <div className="flex min-h-64 items-center justify-center"><Bugley stage={child.bugley_stage} expression="thinking" size={100} /></div>;
   const lastBugley = [...chat.messages].reverse().find((m) => m.from === "bugley")?.text;
@@ -96,9 +101,10 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
   if (step === "interview") return <div className="space-y-5">
     <Button variant="ghost" onClick={() => setStep("pick")}><ArrowLeft />Pick a different game</Button>
     <div className="flex items-start gap-3"><Bugley stage={child.bugley_stage} expression="curious" size={84} /><div className="rounded-3xl rounded-tl-none bg-card p-4 shadow-soft"><p className="font-display text-lg">I’m your game designer helper! Answer my questions and I’ll turn them into game rules.</p></div></div>
-    {QUESTIONS.map(([k, q]) => <label key={k} className="block space-y-1"><span className="font-semibold">{q}</span><input className={field} maxLength={160} value={answers[k]} onChange={(e) => setAnswers({ ...answers, [k]: e.target.value })} /></label>)}
+    <label className="block space-y-1"><span className="font-semibold">{question[1]}</span><input className={field} maxLength={160} value={answers[question[0]]} onChange={(e)=>setAnswers({...answers,[question[0]]:e.target.value})}/></label>
+    <div className="flex gap-2"><Button variant="outline" onClick={()=>speak(question[1])}>Read question</Button>{voice.supported&&<Button variant="secondary" onClick={voice.start}>Say my answer</Button>}{questionAt>0&&<Button variant="ghost" onClick={()=>setQuestionAt(questionAt-1)}>Previous</Button>}{questionAt<3&&<Button onClick={()=>setQuestionAt(questionAt+1)}>Next</Button>}</div>
     {lastBugley&&<SafeRetry message={lastBugley} onChoose={idea=>{setAnswers({...answers,hero:idea});chat.say('What should your original hero do next?',[]);}}/>}
-    <div className="flex flex-wrap gap-2"><Button disabled={busy || Object.values(answers).every((v) => !v.trim())} onClick={() => void interview()}><Wand2 />{busy ? "Bugley is building…" : "Turn my answers into a game"}</Button><Button variant="ghost" onClick={() => setStep("edit")}>I’ll set it up myself</Button></div>
+    <div className="flex flex-wrap gap-2">{questionAt===3&&<Button disabled={busy || Object.values(answers).every((v) => !v.trim())} onClick={() => void interview()}><Wand2 />{busy ? "Bugley is building…" : "Turn my answers into a game"}</Button>}<Button variant="ghost" onClick={() => setStep("edit")}>I’ll set it up myself</Button></div>
   </div>;
 
   const t = file.template;
