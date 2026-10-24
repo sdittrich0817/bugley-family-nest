@@ -48,6 +48,7 @@
   --color-leaf-foreground: var(--leaf-foreground);
   --color-play-coral: var(--play-coral);
   --color-play-mint: var(--play-mint);
+  --color-dash-night: var(--dash-night);
   --color-glow: var(--glow);
   --color-dusk: var(--dusk);
   --color-destructive: var(--destructive);
@@ -79,6 +80,7 @@
   --radius: 1rem;
   --play-coral: oklch(0.72 0.17 20);
   --play-mint: oklch(0.94 0.045 165);
+  --dash-night: oklch(0.23 0.05 268);
   --space-section: clamp(3.5rem, 8vw, 7rem);
   --space-gutter: clamp(1.25rem, 4vw, 2rem);
   --control-h: 2.75rem;
@@ -328,6 +330,7 @@
 .play-preview { animation: play-preview 2.5s ease-out both; }
 .play-pop { animation: play-pop 0.8s ease-out both; }
 .play-egg { animation: play-egg 0.45s ease-in-out infinite; }
+.dash-chocolate { filter: sepia(.7) saturate(.8); }
 @keyframes play-rescue-fly { from { transform: translate(0,0) rotate(-8deg); } to { transform: translate(260px,150px) rotate(8deg); } }
 @keyframes play-rescue-bounce { 0% { transform: translate(0,0); } 50% { transform: translate(120px,-20px); } 100% { transform: translate(220px,160px); } }
 .play-rescue-fly,.play-rescue-float,.play-rescue-climb { animation: play-rescue-fly 1.7s ease-in-out both; }

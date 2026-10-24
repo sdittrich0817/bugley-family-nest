@@ -1,0 +1,35 @@
+ALTER TABLE public.play_sessions DROP CONSTRAINT play_sessions_game_check;
+ALTER TABLE public.play_sessions ADD CONSTRAINT play_sessions_game_check CHECK (game IN ('say_see','creature_lab','story_blanks','doodle_duel','bugley_guesses','mystery_manor','glow_dash'));
+ALTER TABLE public.play_sessions ADD COLUMN private_state jsonb NOT NULL DEFAULT '{}'::jsonb;
+REVOKE SELECT ON public.play_sessions FROM authenticated;
+GRANT SELECT(id,parent_id,child_id,game,state,version,busy,started_at,finished_at,score,bonus) ON public.play_sessions TO authenticated;
+CREATE TABLE public.manor_cases (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), content jsonb NOT NULL, active boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT,INSERT,UPDATE ON public.manor_cases TO authenticated;
+GRANT ALL ON public.manor_cases TO service_role;
+ALTER TABLE public.manor_cases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins manage manor cases" ON public.manor_cases FOR ALL TO authenticated USING (public.has_role(auth.uid(),'admin')) WITH CHECK (public.has_role(auth.uid(),'admin'));
+CREATE TABLE public.dash_remixes (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), parent_id uuid NOT NULL, child_id uuid NOT NULL REFERENCES public.children(id) ON DELETE CASCADE, title text NOT NULL, config jsonb NOT NULL, hero_id uuid, shared boolean NOT NULL DEFAULT false, created_at timestamptz NOT NULL DEFAULT now());
+GRANT SELECT ON public.dash_remixes TO authenticated;
+GRANT ALL ON public.dash_remixes TO service_role;
+ALTER TABLE public.dash_remixes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Family reads dash remixes" ON public.dash_remixes FOR SELECT TO authenticated USING (parent_id=auth.uid() AND public.is_active_parent());
+CREATE OR REPLACE FUNCTION public.finish_play_session(_session uuid, _parent uuid) RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE r public.play_sessions; tz text; day_start timestamptz; used int; earned int := 0; badge_name text;
+BEGIN
+ SELECT * INTO r FROM public.play_sessions WHERE id = _session AND parent_id = _parent FOR UPDATE;
+ IF NOT FOUND THEN RAISE EXCEPTION 'session not found'; END IF;
+ IF r.finished_at IS NOT NULL THEN RETURN jsonb_build_object('score',r.score,'bonus',r.bonus); END IF;
+ IF r.busy THEN RAISE EXCEPTION 'wait for current move'; END IF;
+ PERFORM 1 FROM public.children WHERE id = r.child_id AND parent_id = _parent FOR UPDATE;
+ SELECT timezone INTO tz FROM public.family_glow_settings WHERE parent_id = _parent;
+ day_start := date_trunc('day', now() AT TIME ZONE COALESCE(tz,'America/New_York')) AT TIME ZONE COALESCE(tz,'America/New_York');
+ SELECT COALESCE(sum(bonus),0) INTO used FROM (SELECT bonus FROM public.play_sessions WHERE child_id = r.child_id AND finished_at >= day_start UNION ALL SELECT bonus FROM public.game_rounds WHERE child_id = r.child_id AND finished_at >= day_start) rewards;
+ IF r.score >= 3 AND used < 3 THEN earned := 1; PERFORM public.glow_gift(r.child_id,1,'Game bonus: playful round'); END IF;
+ UPDATE public.play_sessions SET finished_at = now(), bonus = earned WHERE id = r.id;
+ INSERT INTO public.game_progress(child_id,parent_id,game,sparks) VALUES (r.child_id,_parent,r.game,r.score) ON CONFLICT(child_id,game) DO UPDATE SET sparks = public.game_progress.sparks + EXCLUDED.sparks, updated_at = now();
+ badge_name := CASE r.game WHEN 'say_see' THEN 'Word Wizard' WHEN 'creature_lab' THEN 'Creature Keeper' WHEN 'story_blanks' THEN 'Silly Story Star' WHEN 'bugley_guesses' THEN 'Mind Detective' WHEN 'mystery_manor' THEN 'Clue Checker' WHEN 'glow_dash' THEN 'Glow Runner' ELSE 'Doodle Detective' END;
+ IF r.score > 0 THEN INSERT INTO public.game_badges(child_id,parent_id,game,badge) VALUES(r.child_id,_parent,r.game,badge_name) ON CONFLICT DO NOTHING; END IF;
+ RETURN jsonb_build_object('score',r.score,'bonus',earned);
+END; $$;
+REVOKE ALL ON FUNCTION public.finish_play_session(uuid,uuid) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.finish_play_session(uuid,uuid) TO service_role;

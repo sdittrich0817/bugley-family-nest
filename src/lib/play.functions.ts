@@ -2,7 +2,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { familyHasAccess } from './billing.functions';
-import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, PLAY_SECONDS, playAllowed, PUZZLES, type PlayState } from './play';
+import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
+import { caseSchema, dashSchema, defaultDash, firstGuess, SECRETS } from './play-extra';
 import { STARTER_CREATURES, STARTER_STICKERS } from './stickers';
 const id = z.string().uuid();
 const environment = z.enum(['sandbox','live']);
@@ -35,14 +36,23 @@ export const getPlayHome=createServerFn({method:'POST'}).middleware([requireSupa
   const {signPaths}=await import('./images.server');const urls=await signPaths((stickers??[]).map(s=>s.image_path));
   return {rounds:rounds??[],stars:(progress??[]).filter(p=>p.child_id===data.childId).reduce((n,p)=>n+p.sparks,0),badges:badges??[],dex:(dex??[]).map(d=>d.sticker_key),stickers:(stickers??[]).map((s,i)=>({key:s.key,name:s.name,synonyms:s.synonyms,url:urls[i]??'',creature:s.creature,power:s.power,rare:s.rare})),players:kids??[]};
 });
-export const startPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,game:z.enum(PLAY_KEYS),environment}).parse(i)).handler(async({data,context})=>{
+export const startPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,game:z.enum(PLAY_KEYS),environment,dash:dashSchema.optional(),heroId:id.optional(),remixId:id.optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment);if(!playAllowed(data.game,kid.age_band as any))throw new Error('Pick another game for your age.');
-  const {data:r,error}=await (await admin()).from('play_sessions').insert({parent_id:context.userId,child_id:kid.id,game:data.game,state:initialPlayState() as any}).select('id,started_at,state').single();if(error||!r)throw new Error('The game couldn’t start.');
-  return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+PLAY_SECONDS*1000).toISOString(),state:r.state as unknown as PlayState};
+  const a=await admin(),state=initialPlayState();let hidden:Record<string,unknown>={},heroUrl='';
+  if(data.game==='bugley_guesses'){state.guess=firstGuess();hidden['secret']=SECRETS[Math.floor(Math.random()*SECRETS.length)];}
+  if(data.game==='mystery_manor'){const {data:cases}=await a.from('manor_cases').select('content').eq('active',true).limit(100);const row=cases?.[Math.floor(Math.random()*(cases?.length??0))];if(!row)throw new Error('New mysteries are coming soon. Pick another game!');const c=caseSchema.parse(row.content);state.manor={title:c.title,intro:c.intro,rooms:c.rooms};state.visited=[];hidden['case']=c;}
+  if(data.game==='glow_dash'){
+   state.dash=data.dash??defaultDash();let heroId=data.heroId;
+   if(data.remixId){const {data:remix}=await context.supabase.from('dash_remixes').select('*').eq('id',data.remixId).eq('parent_id',context.userId).maybeSingle();if(!remix||(!remix.shared&&remix.child_id!==kid.id))throw new Error('That remix isn’t shared.');state.dash=dashSchema.parse(remix.config);state.remixId=remix.id;heroId=remix.hero_id??undefined;}
+   const allowed=[...STARTER_STICKERS].some(s=>s.key===state.dash?.object);if(!allowed){const {data:s}=await context.supabase.from('game_stickers').select('key').eq('key',state.dash.object).eq('active',true).maybeSingle();if(!s)throw new Error('Pick a library sticker.');}
+   if(heroId){let q=context.supabase.from('studio_creations').select('images').eq('id',heroId).eq('parent_id',context.userId).eq('kind','character').is('deleted_at',null);if(!data.remixId)q=q.eq('child_id',kid.id);const {data:h}=await q.maybeSingle();if(!h)throw new Error('Choose one of your heroes.');const {signPaths}=await import('./images.server');heroUrl=(await signPaths(h.images))?.[0]??'';hidden['heroId']=heroId;}
+  }
+  const {data:r,error}=await a.from('play_sessions').insert({parent_id:context.userId,child_id:kid.id,game:data.game,state:state as any,private_state:hidden as any}).select('id,started_at,state').single();if(error||!r)throw new Error('The game couldn’t start.');
+  return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+playSeconds(data.game)*1000).toISOString(),state:r.state as unknown as PlayState,heroUrl,heroId:typeof hidden['heroId']==='string'?hidden['heroId']:undefined};
 });
 export const playMove=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment),a=await admin();
-  const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(Date.now()>new Date(r.started_at).getTime()+PLAY_SECONDS*1000)return {expired:true,state:r.state as unknown as PlayState};
+  const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(!['say_see','creature_lab','story_blanks','doodle_duel'].includes(r.game))throw new Error('Pick the matching game controls.');if(Date.now()>new Date(r.started_at).getTime()+playSeconds(r.game as any)*1000)return {expired:true,state:r.state as unknown as PlayState};
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
   let state=r.state as unknown as PlayState,score=r.score;
   try {

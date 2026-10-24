@@ -134,6 +134,13 @@
       "when": 1792784921265,
       "tag": "0018_studio_play_and_stickers",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792865446976,
+      "tag": "0019_expanded_play_and_remixes",
+      "breakpoints": true
     }
   ]
 }

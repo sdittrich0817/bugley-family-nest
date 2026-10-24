@@ -32,3 +32,4 @@
 - [ ] Verify complete comic cover, Issue 2 and multi-issue print preview live (first panel and speech verified; finishing the test comic needs more daily glow).
 - [x] Rebuild PLAY with four launch games, illustrated previews, bounded rounds, family scores/rewards, Bugdex, safe doodle vision and shared admin sticker library; all four games, new one-glow sticker, saved collection/results and three screen sizes verified live; 117 tests passed.
 - [ ] Verify sibling pass-and-play with a second family child (blocked: only one child exists); test bulk admin generation at scale before growing the starter library to thousands.
+- [x] Add ages-7+ Bugley Guesses, admin-managed Mystery Manor, Glow Dash with bounded spoken remixes and family sharing; both guessing roles, solved case, dash/remix/share readback, saved rewards and three menu sizes verified.
