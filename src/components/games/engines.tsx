@@ -3,6 +3,7 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Heart, RotateCcw } from "luc
 import { Button } from "@/components/ui/button";
 import { at, JUMP_H, type ArtRef, type GameFile, type Grid, type Playtest, type Settings } from "@/lib/game-builder";
 import { cn } from "@/lib/utils";
+import { customRoundSeconds, elapsedRoundSeconds } from '@/lib/round-deadline';
 import sky from "@/assets/illustrations/hero-horizon.jpg";
 import meadow from "@/assets/illustrations/leaves-grass.jpg";
 import night from "@/assets/illustrations/night-sky.jpg";
