@@ -39,6 +39,7 @@
 - [x] Remove parent activity fetch/feed caps; keep read notifications visible; include private family Dash remixes.
 - [x] Bound every PLAY duration below 300 seconds, cap custom playtests, stop Dash on elapsed time, and hide timed-out gameplay even while requests are pending; simulated Creature Lab ending verified.
 - [x] Reduce shared guide/PLAY/style choice lists; split character details and game interviews/edit sections into steps; preserve authored words and add Sprouts guide read-aloud.
-- [ ] Complete remaining simplicity certification (legacy Book Builder/editor forms and menus still present); full form-free authoring conflicts with preserving typed child words and needs Shea's preferred interaction clarified.
-- [ ] Complete full Studio test matrix (blocked: generation budget/test account for ten-style 12+12 run, actual sibling and other age-band test access, real microphone/device checks); see Bugley-Studio-Audit report for exact unverified coverage.
+- [ ] Finish approved Book Builder/editor simplification; preserve children's own typed/spoken words and count picture/story/game taps.
+- [ ] Run artwork consistency checks using approved existing family Glow only; stop at insufficient balance, with no top-up or balance changes.
+- [ ] Complete available age-skin, screen-size and sibling checks; report real-microphone or account-access limits precisely.
 - [x] Approved-fix regression check: 136 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.
