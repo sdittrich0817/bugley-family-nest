@@ -34,5 +34,11 @@
 - [ ] Verify sibling pass-and-play with a second family child (blocked: only one child exists); test bulk admin generation at scale before growing the starter library to thousands.
 - [x] Add ages-7+ Bugley Guesses, admin-managed Mystery Manor, Glow Dash with bounded spoken remixes and family sharing; both guessing roles, solved case, dash/remix/share readback, saved rewards and three menu sizes verified.
 - [x] Report Studio audit findings: safety UI/server probes, deployed permissions, art safeguards/rates, simplicity counts and timing gaps; no application fixes made.
-- [ ] Apply approved Studio audit fixes: parent protection, safety, reference locks, parent visibility, simpler flows and bounded game endings.
+- [x] Close Studio parent-action and direct-title bypasses; server lock + restrictive policies; live child checks block gift/feed/title writes and storage tampering, and reject wrong parent passwords.
+- [x] Fail closed on moderation/notification failures and unavailable/failed drift checks; preserve book art snapshots, require portrait provenance, bound image downloads, and show fixed safety alternatives.
+- [x] Remove parent activity fetch/feed caps; keep read notifications visible; include private family Dash remixes.
+- [x] Bound every PLAY duration below 300 seconds, cap custom playtests, stop Dash on elapsed time, and hide timed-out gameplay even while requests are pending; simulated Creature Lab ending verified.
+- [x] Reduce shared guide/PLAY/style choice lists; split character details and game interviews/edit sections into steps; preserve authored words and add Sprouts guide read-aloud.
+- [ ] Complete remaining simplicity certification (legacy Book Builder/editor forms and menus still present); full form-free authoring conflicts with preserving typed child words and needs Shea's preferred interaction clarified.
 - [ ] Complete full Studio test matrix (blocked: generation budget/test account for ten-style 12+12 run, actual sibling and other age-band test access, real microphone/device checks); see Bugley-Studio-Audit report for exact unverified coverage.
+- [x] Approved-fix regression check: 132 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.
