@@ -8,9 +8,11 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone } from "@/lib/kid-zone";
+import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone, setKidZoneLocked } from "@/lib/kid-zone";
+import { getDeviceMode } from '@/lib/parent-device.functions';
+import { useParentSession } from '@/components/site/ParentSession';
 import { scrollToTop } from "@/lib/scroll";
 
 import appCss from "../styles.css?url";
@@ -48,6 +50,9 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
+  const {user}=useParentSession();
+  const [checkedPath,setCheckedPath]=useState('');
+  useEffect(()=>{if(!user||isKidZonePath(pathname)){setCheckedPath(pathname);return;}let active=true;void getDeviceMode().then(mode=>{if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);}).catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -162,7 +167,7 @@ function KidZoneShell() {
     const offResolved = router.subscribe("onResolved", toTop);
     return () => { offResolved(); window.removeEventListener("popstate", onPop); };
   }, [router]);
-  if (target) return null;
+  if (target || (user && !isKidZonePath(pathname) && checkedPath!==pathname)) return null;
   if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
     <div className="flex min-h-screen flex-col">

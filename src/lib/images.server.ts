@@ -243,7 +243,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
     const src = await replicateRun(model, prompt, []);
     if (!(await imageIsSafe(src))) throw new Error("unsafe");
     const path = await store(src, userId, child.id);
-    const { error } = await a.from('hero_portrait_provenance').insert({path,parent_id:userId,child_id:child.id,style_key:input.styleKey,model});
+    const { error } = await a.from('hero_portrait_provenance').insert({path,parent_id:userId,child_id:child.id,style_key:input.styleKey,model:JSON.parse(JSON.stringify(model))});
     if (error) throw new Error('Hero provenance couldn’t save.');
     return path;
   }));

@@ -7,6 +7,11 @@ export const requireParentDevice = createMiddleware({ type: 'function' }).middle
   if (error || data !== true) throw new Error('Enter your parent password to open this area.');
   return next();
 });
+export const getDeviceMode = createServerFn({ method: 'GET' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  const {data,error}=await context.supabase.rpc('is_parent_device');
+  if(error)throw new Error('Couldn’t check this device.');
+  return {locked:data!==true};
+});
 export const lockKidDevice = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   const sessionId = z.string().uuid().parse(context.claims['session_id']);
   const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
