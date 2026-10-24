@@ -48,7 +48,7 @@ export const startPlay=createServerFn({method:'POST'}).middleware([requireSupaba
    if(heroId){let q=context.supabase.from('studio_creations').select('images').eq('id',heroId).eq('parent_id',context.userId).eq('kind','character').is('deleted_at',null);if(!data.remixId)q=q.eq('child_id',kid.id);const {data:h}=await q.maybeSingle();if(!h)throw new Error('Choose one of your heroes.');const {signPaths}=await import('./images.server');heroUrl=(await signPaths(h.images))?.[0]??'';hidden['heroId']=heroId;}
   }
   const {data:r,error}=await a.from('play_sessions').insert({parent_id:context.userId,child_id:kid.id,game:data.game,state:state as any,private_state:hidden as any}).select('id,started_at,state').single();if(error||!r)throw new Error('The game couldn’t start.');
-  return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+playSeconds(data.game)*1000).toISOString(),state:r.state as unknown as PlayState,heroUrl};
+  return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+playSeconds(data.game)*1000).toISOString(),state:r.state as unknown as PlayState,heroUrl,heroId:typeof hidden['heroId']==='string'?hidden['heroId']:undefined};
 });
 export const playMove=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment),a=await admin();
