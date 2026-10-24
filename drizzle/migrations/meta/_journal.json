@@ -155,6 +155,13 @@
       "when": 1792868192690,
       "tag": "0021_device_mode_session_fallback",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1792868339616,
+      "tag": "0022_parent_only_admin_and_timezone",
+      "breakpoints": true
     }
   ]
 }
