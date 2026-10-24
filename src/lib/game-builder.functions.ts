@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "./billing.functions";
 import { BACKGROUNDS, COLORS, SPRITES, TEMPLATE_KEYS, creationRefs, gameFileSchema, gameTexts, generateJump, generateMaze, templatesFor, type GameFile, type Settings } from "./game-builder";
 import type { Band } from "./games";
+import { requireParentDevice } from './parent-device.functions';
 
 const env = z.enum(["sandbox", "live"]);
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -38,7 +39,7 @@ export const listMyGames = createServerFn({ method: "POST" }).middleware([requir
   return { mine: all.filter((g) => g.childId === data.childId), family: all.filter((g) => g.published) };
 });
 /** Parent Hub: every game in the family, shared or not. */
-export const listFamilyGamesForParent = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const listFamilyGamesForParent = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { data: rows } = await context.supabase.from("studio_creations").select("id").eq("parent_id", context.userId).eq("kind", "game").is("deleted_at", null).order("updated_at", { ascending: false });
   const out: LoadedGame[] = [];
   for (const r of rows ?? []) { try { out.push(await load(context.supabase, context.userId, null, r.id)); } catch { /* skip */ } }

@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveOrCreateCustomer } from "./billing.functions";
 import { addressSchema, canPrint, freeCreditAvailable, paddedPageCount, priceOrder, SHIPPING_LEVELS, type PrintFormat } from "./print";
+import { requireParentDevice } from './parent-device.functions';
 
 const env = z.enum(["sandbox", "live"]);
 const admin = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;

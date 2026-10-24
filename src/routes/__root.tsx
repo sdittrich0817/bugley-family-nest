@@ -50,9 +50,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
-  const {user}=useParentSession();
-  const [checkedPath,setCheckedPath]=useState('');
-  useEffect(()=>{if(!user||isKidZonePath(pathname)){setCheckedPath(pathname);return;}let active=true;void getDeviceMode().then(mode=>{if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);}).catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -148,6 +145,9 @@ function KidZoneShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const router = useRouter();
+  const {user}=useParentSession();
+  const [checkedPath,setCheckedPath]=useState('');
+  useEffect(()=>{if(!user||isKidZonePath(pathname)){setCheckedPath(pathname);return;}let active=true;void getDeviceMode().then(mode=>{if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);}).catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   const target = kidZoneRedirect(pathname, locked);
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);

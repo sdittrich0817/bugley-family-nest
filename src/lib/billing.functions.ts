@@ -5,6 +5,7 @@ import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
 import { hasAccess, planForPrice, PRICE_IDS, TRIAL_DAYS } from "@/lib/billing";
+import { requireParentDevice } from './parent-device.functions';
 
 const envSchema = z.enum(["sandbox", "live"]);
 
@@ -42,7 +43,7 @@ export async function resolveOrCreateCustomer(stripe: Stripe, options: { email?:
   return (await stripe.customers.create({ ...(options.email && { email: options.email }), metadata: { userId: options.userId } })).id;
 }
 
-export const createCheckoutSession = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const createCheckoutSession = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ priceId: z.enum(PRICE_IDS), returnUrl: z.string().url(), environment: envSchema }).parse(i))
   .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
     const existing = await latestSub(context.supabase, context.userId, data.environment);
@@ -71,7 +72,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" }).middlewa
     }
   });
 
-export const createPortalSession = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const createPortalSession = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ returnUrl: z.string().url(), environment: envSchema }).parse(i))
   .handler(async ({ data, context }): Promise<{ url: string } | { error: string }> => {
     const sub = await latestSub(context.supabase, context.userId, data.environment);
