@@ -33,7 +33,7 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2 lg:hidden">
-          {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button size="sm" onClick={() => open("start_free")}>Start free</Button>}
+          {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button variant="secondary" size="sm" asChild><Link to="/login">Log in</Link></Button>}
           <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
