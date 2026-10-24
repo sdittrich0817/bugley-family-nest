@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { familyHasAccess } from './billing.functions';
 import { canAskGuess, caseSchema, checkedDashTicks, dashSchema, GUESS_LIMIT, type GuessState, type ManorCase } from './play-extra';
 import { playSeconds, type PlayState } from './play';
+import { requireParentDevice } from './parent-device.functions';
 const base={childId:z.string().uuid(),environment:z.enum(['sandbox','live'])};
 async function kid(ctx:any,id:string,env:'sandbox'|'live'){if(!await familyHasAccess(ctx.supabase,ctx.userId,env))throw new Error('Ask a grown-up to wake Bugley up.');const s=await import('./studio.server');return {s,child:await s.loadChild(ctx.supabase,ctx.userId,id)};}
 async function guard(ctx:any,k:any,text:string){const {guardChildText}=await import('./studio.server');const r=await guardChildText(ctx.supabase,ctx.userId,k,text,'play');if(r.decision!=='allowed')throw new Error(r.reply??'Let’s try a friendly made-up idea.');}
@@ -57,8 +58,8 @@ export const saveDashRemix=createServerFn({method:'POST'}).middleware([requireSu
 export const getDashShelf=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({...base}).parse(i)).handler(async({data,context})=>{
  const {child}=await kid(context,data.childId,data.environment);const [{data:rows},{data:heroes}]=await Promise.all([context.supabase.from('dash_remixes').select('id,title,child_id,shared,config').eq('parent_id',context.userId).order('created_at',{ascending:false}).limit(100),context.supabase.from('studio_creations').select('id,title,images').eq('parent_id',context.userId).eq('child_id',child.id).eq('kind','character').is('deleted_at',null)]);const {signPaths}=await import('./images.server');const urls=await signPaths((heroes??[]).map(h=>h.images?.[0]??''));return {remixes:(rows??[]).filter(r=>r.shared||r.child_id===child.id).map(r=>({...r,config:dashSchema.parse(r.config)})),heroes:(heroes??[]).map((h,i)=>({id:h.id,title:h.title,url:urls[i]??''}))};
 });
-export const getParentDashShelf=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).handler(async({context})=>{
- const {data:rows,error}=await context.supabase.from('dash_remixes').select('id,title,config,hero_id').eq('parent_id',context.userId).eq('shared',true).order('created_at',{ascending:false}).limit(100);if(error)throw new Error('Couldn’t load family remixes.');
+export const getParentDashShelf=createServerFn({method:'POST'}).middleware([requireParentDevice]).handler(async({context})=>{
+ const {data:rows,error}=await context.supabase.from('dash_remixes').select('id,title,config,hero_id').eq('parent_id',context.userId).order('created_at',{ascending:false});if(error)throw new Error('Couldn’t load family remixes.');
  const ids=(rows??[]).flatMap(r=>r.hero_id?[r.hero_id]:[]);const {data:heroes}=ids.length?await context.supabase.from('studio_creations').select('id,images').eq('parent_id',context.userId).eq('kind','character').is('deleted_at',null).in('id',ids):{data:[]};const {signPaths}=await import('./images.server');const urls=await signPaths((heroes??[]).map(h=>h.images?.[0]??''));return (rows??[]).map(r=>({...r,config:dashSchema.parse(r.config),heroUrl:urls[(heroes??[]).findIndex(h=>h.id===r.hero_id)]??''}));
 });
 export const manageManor=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','save','toggle']),id:z.string().uuid().optional(),content:caseSchema.optional(),active:z.boolean().optional()}).parse(i)).handler(async({data,context})=>{

@@ -5,6 +5,7 @@ import { familyHasAccess } from "./billing.functions";
 import { GENRES, EMPTY_MAP, newStoryPage, guidedPages, type StoryData } from "./story";
 import { guidedComicPages, type ComicData } from "./comic";
 import { BOOK_FORMATS, EMPTY_BIBLE, authorStatusFor, bibleSchema, type BookData } from "./book";
+import { requireParentDevice } from './parent-device.functions';
 
 const env = z.enum(["sandbox", "live"]);
 const NAP = "Ask a grown-up to open the Studio plan first.";
@@ -76,6 +77,7 @@ export const startChapter = createServerFn({ method: "POST" }).middleware([requi
   const book = await loadBook(context.supabase, context.userId, child.id, data.bookId);
   const r = await absorbAndRecap(book);
   const added = data.newCharacterIds.filter((id) => !book.data.characterIds.includes(id));
+  if(new Set([...book.data.characterIds,...added]).size>3)throw new Error('This book keeps up to three heroes.');
   book.data.characterIds = [...book.data.characterIds, ...added];
   book.data.bible = { ...r.bible, cast: [...r.bible.cast, ...added.map((id) => ({ id, note: "" }))] };
   book.data.absorbed = r.absorbed;
@@ -130,7 +132,7 @@ export const editBook = createServerFn({ method: "POST" }).middleware([requireSu
 });
 
 /** Parent Hub: every family book with all chapters. */
-export const listFamilyBooks = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const listFamilyBooks = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { data: rows } = await context.supabase.from("studio_creations").select("id,child_id").eq("parent_id", context.userId).eq("kind", "book").is("deleted_at", null).order("updated_at", { ascending: false });
   const { loadBook } = await import("./book.server");
   const books = [];
@@ -138,7 +140,7 @@ export const listFamilyBooks = createServerFn({ method: "POST" }).middleware([re
   return books;
 });
 
-export const decidePenName = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), approve: z.boolean() }).parse(i)).handler(async ({ data, context }) => {
+export const decidePenName = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), approve: z.boolean() }).parse(i)).handler(async ({ data, context }) => {
   const { loadBook, persistBook } = await import("./book.server");
   const book = await loadBook(context.supabase, context.userId, data.childId, data.id);
   book.data.authorStatus = data.approve ? "approved" : "declined";
