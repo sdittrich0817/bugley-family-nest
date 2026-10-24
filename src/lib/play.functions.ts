@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod';
 import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
+import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from './billing.functions';
 import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
 import { caseSchema, dashSchema, defaultDash, firstGuess, SECRETS } from './play-extra';
@@ -95,7 +96,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireSupabas
 export const finishPlay=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment}).parse(i)).handler(async({data,context})=>{
   await child(context,data.childId,data.environment);const a=await admin();const {data:r}=await a.from('play_sessions').select('id').eq('id',data.sessionId).eq('child_id',data.childId).eq('parent_id',context.userId).maybeSingle();if(!r)throw new Error('Game not found.');const {data:result,error}=await a.rpc('finish_play_session',{_session:r.id,_parent:context.userId});if(error)throw new Error('Your results couldn’t save yet.');return result as {score:number;bonus:number};
 });
-export const manageStickers=createServerFn({method:'POST'}).middleware([requireSupabaseAuth]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','toggle','generate','tag']),key:z.string().max(100).optional(),active:z.boolean().optional(),synonyms:z.array(z.string().trim().min(1).max(60)).max(30).optional(),childId:id.optional(),words:z.array(z.string().trim().min(1).max(60)).max(10).optional()}).parse(i)).handler(async({data,context})=>{
+export const manageStickers=createServerFn({method:'POST'}).middleware([requireParentDevice]).inputValidator((i:unknown)=>z.object({action:z.enum(['list','toggle','generate','tag']),key:z.string().max(100).optional(),active:z.boolean().optional(),synonyms:z.array(z.string().trim().min(1).max(60)).max(30).optional(),childId:id.optional(),words:z.array(z.string().trim().min(1).max(60)).max(10).optional()}).parse(i)).handler(async({data,context})=>{
   const {data:ok}=await context.supabase.rpc('has_role',{_user_id:context.userId,_role:'admin'});if(!ok)throw new Error('Admins only.');
   if(data.action==='toggle'&&data.key){const {error}=await context.supabase.from('game_stickers').update({active:data.active??false}).eq('key',data.key);if(error)throw new Error('Couldn’t save.');}
   if(data.action==='tag'&&data.key){const {error}=await context.supabase.from('game_stickers').update({synonyms:(data.synonyms??[]).map(normalizeWord)}).eq('key',data.key);if(error)throw new Error('Couldn’t save tags.');}
