@@ -104,14 +104,15 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
-    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? 'Let’s try a made-up idea.', chips: guard.chips ?? [] };
     const looks = await s.guardChildText(context.supabase, context.userId, child, `${data.type}; ${data.personality}; ${data.summary}`, "character_details");
-    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply ?? 'Let’s try a made-up idea.', chips: looks.chips ?? [] };
     const { lockCharacter } = await import('./images.server');
     const lock = await lockCharacter(context.userId,data.childId,{path:data.path,styleKey:data.styleKey,hint:`${data.name}, ${data.summary}`});
     const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path,...lock.refs] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary, dna:lock.dna, refs:lock.refs, model:lock.model } }).eq("id", id);
+    const {error}=await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary, dna:lock.dna, refs:lock.refs, model:lock.model } }).eq("id", id).eq('parent_id',context.userId);
+    if(error)throw new Error('Your hero’s matching details couldn’t save. Please try again.');
     return { ok: true as const, id };
   });
 
@@ -135,15 +136,16 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireSu
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
-    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+    if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? 'Let’s try a made-up idea.', chips: guard.chips ?? [] };
     const hint = `a ${data.kind}, mostly ${data.color}, special thing: ${data.special}`;
     const looks = await s.guardChildText(context.supabase, context.userId, child, hint, "character_details");
-    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
+    if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply ?? 'Let’s try a made-up idea.', chips: looks.chips ?? [] };
     const { lockCharacter } = await import("@/lib/images.server");
     const lock = await lockCharacter(context.userId, data.childId, { path: data.path, styleKey: data.styleKey, hint: `${data.name}, ${hint}` });
     const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path, ...lock.refs] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.kind, color: data.color, special: data.special, summary: hint, dna: lock.dna, refs: lock.refs, model: lock.model } }).eq("id", id);
+    const {error}=await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.kind, color: data.color, special: data.special, summary: hint, dna: lock.dna, refs: lock.refs, model: lock.model } }).eq("id", id).eq('parent_id',context.userId);
+    if(error)throw new Error('Your hero’s matching details couldn’t save. Please try again.');
     return { ok: true as const, id };
   });
 

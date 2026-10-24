@@ -222,6 +222,10 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     const path = await store(best.src, userId, child.id, upgrade);
     const [url] = await signPaths([path]);
     if (!url) throw new Error("image signing failed");
+    if(input.mode==='character'){
+      const {error}=await a.from('hero_portrait_provenance').insert({path,parent_id:userId,child_id:child.id,style_key:input.styleKey,model:JSON.parse(JSON.stringify(model))});
+      if(error)throw new Error('Hero provenance couldn’t save.');
+    }
     return { ok: true, path, url, prompt: paintPrompt, lock: input.lockId ? model : undefined };
   } catch (e) {
     await refund();
