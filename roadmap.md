@@ -1,3 +1,5 @@
+- [x] Restore a visible home-page login at small screen widths; verified at 695×594 that it opens /login.
+- [ ] Build Bugley Kids installation/offline support, trusted device setup and pairing, parent PIN/revocation, and device-lock guides (new uploaded brief).
 - [x] Add verified parent signup, adult attestation, profiles and timestamped consent.
 - [x] Add login, forgot/reset password and private parent account page.
 - [x] Replace waitlist actions with real account navigation; preserve waitlist data.
