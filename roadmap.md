@@ -45,4 +45,6 @@
 - [ ] Complete ten-style 12+12 art matrix (blocked: 18 existing Glow remaining vs at least 720 for scenes alone; comic sample provider timeout, upgrade output rejected). Fresh reference hero and two Classic Comic story image checks passed first attempt, 98/96 scores, google/nano-banana-pro; no full-style failure-rate claim.
 - [ ] Verify sibling pass-and-play and real age-specific/voice behavior (blocked: one Explorers child, no physical microphone/device access). CSS-only skin tests are not actual Sprouts/Builders child tests.
 - [x] Follow-up regression: 137 tests pass; build OK; no browser errors during saved book editing. Test creations were added to the family album; Glow total went 26 to 18 through normal charges/refunds only.
+- [x] Remove duplicate Kid Zone page lock and defer parent redirects until server mode is checked; 7 targeted tests pass, wrong password stays blocked, build OK.
+- [ ] Confirm successful password exit to Parent Hub in Shea's preview (blocked: no parent password available for a real successful-password check).
 - [x] Approved-fix regression check: 136 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.
