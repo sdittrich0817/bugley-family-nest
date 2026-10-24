@@ -6,6 +6,7 @@ import { aiObject } from "@/lib/studio-ai.server";
 import { chargeGlow, giftGlowServer } from "@/lib/glow.server";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
+import { passesCharacterCheck } from './image-consistency';
 
 type Sb = SupabaseClient<any>;
 export type ImageMode = "sketch" | "final" | "character";
@@ -45,6 +46,7 @@ async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
   const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": key, "Content-Type": "application/json", Prefer: "wait=55" };
   const { reference_field, reference_single, ...settings } = model.settings as { reference_field?: string; reference_single?: boolean };
   const input: Record<string, unknown> = { ...settings, prompt };
+  if (refs.length && !takesRefs(model, refs.length)) throw new Error('Bugley needs a paintbrush that can use every reference.');
   if (refs.length && reference_field) input[reference_field] = reference_single ? refs[0] : refs;
   const url = model.version ? `${GW}/predictions` : `${GW}/models/${model.model}/predictions`;
   const body = model.version ? { version: model.version, input } : { input };
@@ -66,7 +68,7 @@ async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
 
 const checkSchema = z.object({ safe: z.boolean(), has_text: z.boolean() });
 async function imageIsSafe(url: string) {
-  const v = await aiObject(checkSchema, "You review images made for a children's creative app (ages 5–12). safe=false if the image has anything violent, gory, scary beyond a picture book, sexual, suggestive, hateful, drug-related, a realistic photo of a real-looking person, or a famous copyrighted character or logo. has_text=true if it contains readable words, letters or speech bubbles.", "Review this image.", url);
+  const v = await aiObject(checkSchema, "You review images made for a children's creative app (ages 5–12). safe=false if the image has anything violent, gory, scary beyond a picture book, sexual, suggestive, hateful, drug-related, a realistic photo of a real-looking person, or a famous copyrighted character or logo. has_text=true if it contains any words, letters, numbers, signs, captions, logos or speech bubbles, including tiny or partly readable writing.", "Review this image.", url);
   return v ? v.safe && !v.has_text : false; // fail closed; words never belong inside images
 }
 
@@ -75,7 +77,7 @@ async function driftCheck(image: string, refs: string[], dna: string, style: str
   const v = await aiObject(driftSchema,
     "You check character consistency for a children's book. The FIRST image is a new scene; the others are the character reference set. Compare each locked character in the scene to its references and DNA: same colors, same outfit, same special item, same features and markings, same art style. Changes the request explicitly asks for are allowed. score 0-100 for match; pass=true only if every locked character clearly matches (score >= 70).",
     `Character DNA: ${dna}\nArt style: ${style}\nScene request: ${request}`, [image, ...refs.slice(0, 6)]);
-  return v ?? { pass: true, score: 50, issues: "check unavailable" }; // never block a picture just because the checker is down
+  return v ?? { pass: false, score: 0, issues: "check unavailable" };
 }
 
 async function store(src: string, userId: string, childId: string, printSize = false) {
@@ -102,14 +104,15 @@ export async function signPaths(paths: string[]) {
 }
 
 type Locked = { title: string; dna: string; refs: string[] };
-async function loadLocked(sb: Sb, userId: string, childId: string, ids: string[]): Promise<Locked[] | null> {
+async function loadLocked(sb: Sb, userId: string, childId: string, ids: string[], styleKey: string): Promise<Locked[] | null> {
   if (!ids.length) return [];
-  const { data: cast } = await sb.from("studio_creations").select("title,images,details").eq("parent_id", userId).eq("child_id", childId).eq("kind", "character").is("deleted_at", null).in("id", ids);
-  if ((cast ?? []).length !== ids.length || (cast ?? []).some((c: any) => !c.images?.[0])) return null;
+  const { data: cast } = await sb.from("studio_creations").select("title,images,details,style_key").eq("parent_id", userId).eq("child_id", childId).eq("kind", "character").is("deleted_at", null).in("id", ids);
+  if ((cast ?? []).length !== ids.length || (cast ?? []).some((c: any) => !c.images?.[0] || c.style_key !== styleKey || !c.details?.dna || !c.details?.refs?.length)) return null;
   return Promise.all((cast ?? []).map(async (c: any) => {
     const d = c.details ?? {};
     const refs = await signPaths([...(c.images ?? []).slice(0, 1), ...((d.refs ?? []) as string[])].filter(Boolean));
-    return { title: c.title, dna: d.dna ?? d.summary ?? "", refs };
+    if (refs.some(r => !r)) throw new Error('Bugley couldn’t open every character reference.');
+    return { title: c.title, dna: d.dna, refs };
   }));
 }
 
@@ -136,15 +139,32 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
   if (guard.decision !== "allowed") return { ok: false, reply: guard.reply ?? "Let’s try a new idea!", chips: guard.chips ?? [] };
   const a = await admin();
-  const ids = [...new Set(input.characterIds)].slice(0, MAX_LOCKED);
+  const ids = [...new Set(input.characterIds)];
+  if (ids.length > MAX_LOCKED) return { ok: false, reply: 'Choose up to three heroes.' };
   const withChars = ids.length > 0 && input.mode !== "character";
   const modeKey: ModelMode = input.pictureFlow ? input.mode : input.mode === "character" ? "hero" : withChars ? "scene_chars" : input.mode === "final" && input.requireReferences ? "scene" : input.mode;
-  const [{ data: style }, base] = await Promise.all([
+  const [{ data: currentStyle }, base] = await Promise.all([
     a.from("art_styles").select("name,recipe").eq("key", input.styleKey).eq("active", true).maybeSingle(),
     loadModel(modeKey).then(async (m) => m ?? (modeKey === "hero" ? loadModel("character") : modeKey === "scene" || modeKey === "scene_chars" ? loadModel("final") : null)),
   ]);
+  let style = currentStyle;
+  let model = base;
+  if (input.lockId) {
+    const { data: row } = await a.from('studio_creations').select('details').eq('id', input.lockId).eq('parent_id', userId).eq('child_id', child.id).maybeSingle();
+    if (!row) return { ok: false, reply: 'Your saved book couldn’t be opened.' };
+    const details = row.details as any;
+    const { data: book } = details?.bookId ? await a.from('studio_creations').select('details').eq('id',details.bookId).eq('parent_id',userId).eq('child_id',child.id).maybeSingle() : { data: row };
+    const existing = (book?.details as any)?.artLock;
+    const fallbackModel = (book?.details as any)?.modelLock ?? base;
+    if (!existing && (!currentStyle || !fallbackModel)) return { ok: false, reply: NOT_READY };
+    const snapshot = existing ?? { styleKey: input.styleKey, style: currentStyle, model: fallbackModel };
+    const { data: saved, error } = await a.rpc('lock_studio_art', { _id: input.lockId, _snapshot: snapshot });
+    if (error || !saved) return { ok: false, reply: 'Your book’s look couldn’t be safely locked. Please try again.' };
+    const lock = saved as any;
+    if (lock.styleKey !== input.styleKey) return { ok: false, reply: 'This book keeps its original look.' };
+    style = lock.style; model = lock.model;
+  }
   if (!style) return { ok: false, reply: "Pick a style first!" };
-  let model = withChars ? await lockedModel(input.lockId, base) : base;
   if (!model) return { ok: false, reply: NOT_READY };
   const upgrade = input.pictureFlow === true && input.mode === "final" && !!input.previewPath;
   if (upgrade) {
@@ -154,9 +174,10 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   let locked: Locked[] = [];
   if (withChars) {
     if (!takesRefs(model, ids.length)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
-    const l = await loadLocked(sb, userId, child.id, ids);
-    if (!l) return { ok: false, reply: "One of this story’s characters is missing from My Cast. Ask a grown-up to restore it first." };
+    const l = await loadLocked(sb, userId, child.id, ids, input.styleKey);
+    if (!l) return { ok: false, reply: "Choose a hero with matching reference pictures in this look. Your words are safe." };
     locked = l;
+    if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
   }
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
@@ -174,6 +195,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     const paintPrompt = upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
     // 4–6) model, safety, drift (up to 2 free retries; keep the best match)
     let best: { src: string; score: number } | null = null;
+    const requestId = crypto.randomUUID();
     for (let attempt = 1; attempt <= (locked.length ? 3 : 1); attempt++) {
       const src = await replicateRun(model, paintPrompt, refs);
       if (!(await imageIsSafe(src))) {
@@ -184,16 +206,17 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
       }
       if (!locked.length) { best = { src, score: 100 }; break; }
       const d = await driftCheck(src, locked.flatMap((c) => c.refs), dna, style.name, input.description);
-      await a.from("drift_checks").insert({ parent_id: userId, child_id: child.id, model: model.model, style_key: input.styleKey, attempt, passed: d.pass, score: Math.round(d.score), notes: d.issues });
-      if (!best || d.score > best.score) best = { src, score: d.score };
-      if (d.pass) break;
+      const passed = passesCharacterCheck(d);
+      const { error: logError } = await a.from("drift_checks").insert({ parent_id: userId, child_id: child.id, model: model.model, model_version: model.version, request_id: requestId, creation_id: input.lockId ?? null, style_key: input.styleKey, attempt, passed, score: Math.round(d.score), notes: d.issues, checker_available: d.issues !== 'check unavailable', delivered: passed });
+      if (logError) throw new Error('Character check couldn’t be recorded.');
+      if (passed) { best = { src, score: d.score }; break; }
     }
-    if (!best) throw new Error("no image");
+    if (!best) throw new Error("Bugley couldn’t match your hero safely. Your glow is back. Let’s try again.");
     // 7) storage
     const path = await store(best.src, userId, child.id, upgrade);
     const [url] = await signPaths([path]);
     if (!url) throw new Error("image signing failed");
-    return { ok: true, path, url, prompt: paintPrompt, lock: withChars ? model : undefined };
+    return { ok: true, path, url, prompt: paintPrompt, lock: input.lockId ? model : undefined };
   } catch (e) {
     await refund();
     console.error("image pipeline", e);
@@ -219,7 +242,10 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   const results = await Promise.allSettled([0, 1, 2].map(async () => {
     const src = await replicateRun(model, prompt, []);
     if (!(await imageIsSafe(src))) throw new Error("unsafe");
-    return store(src, userId, child.id);
+    const path = await store(src, userId, child.id);
+    const { error } = await a.from('hero_portrait_provenance').insert({path,parent_id:userId,child_id:child.id,style_key:input.styleKey,model});
+    if (error) throw new Error('Hero provenance couldn’t save.');
+    return path;
   }));
   const paths = results.flatMap((r) => r.status === "fulfilled" ? [r.value] : []);
   if (!paths.length) {
@@ -249,5 +275,6 @@ export async function lockCharacter(userId: string, childId: string, input: { pa
     "Write a precise, fixed visual description (Character DNA) of the single character in this children's-book image, for an illustrator to reproduce exactly. Include: species/type, body shape and size, exact colors of every part (e.g. 'bright orange fur, cream belly'), outfit, their special item, eye color, and any markings. One paragraph, plain words, no names of real people or brands, no story.",
     `The child described them as: ${input.hint}`, chosen) : Promise.resolve(null);
   const [, dna] = await Promise.all([sheetJob, dnaJob]);
-  return { refs, dna: dna?.dna ?? input.hint, model: sheetModel ? { model: sheetModel.model, version: sheetModel.version } : null };
+  if (!refs.length || !dna?.dna || !sheetModel) throw new Error('Your hero’s matching pictures aren’t ready. Please try again; your chosen portrait is safe.');
+  return { refs, dna: dna.dna, model: { model: sheetModel.model, version: sheetModel.version } };
 }
