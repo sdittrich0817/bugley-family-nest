@@ -11,7 +11,7 @@ import {
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone, setKidZoneLocked } from "@/lib/kid-zone";
-import { getDeviceMode } from '@/lib/parent-device.functions';
+import { getDeviceMode, lockKidDevice } from '@/lib/parent-device.functions';
 import { useParentSession } from '@/components/site/ParentSession';
 import { scrollToTop } from "@/lib/scroll";
 
@@ -147,7 +147,7 @@ function KidZoneShell() {
   const router = useRouter();
   const {user}=useParentSession();
   const [checkedPath,setCheckedPath]=useState('');
-  useEffect(()=>{if(!user||isKidZonePath(pathname)){setCheckedPath(pathname);return;}let active=true;void getDeviceMode().then(mode=>{if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);}).catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
+  useEffect(()=>{if(!user){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;if(mode.locked){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   const target = kidZoneRedirect(pathname, locked);
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
@@ -167,7 +167,7 @@ function KidZoneShell() {
     const offResolved = router.subscribe("onResolved", toTop);
     return () => { offResolved(); window.removeEventListener("popstate", onPop); };
   }, [router]);
-  if (target || (user && !isKidZonePath(pathname) && checkedPath!==pathname)) return null;
+  if (target || (user && checkedPath!==pathname)) return null;
   if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
     <div className="flex min-h-screen flex-col">

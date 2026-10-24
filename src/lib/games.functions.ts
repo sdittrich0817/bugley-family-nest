@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from "./billing.functions";
 import { GAME_KEYS, GAMES, MAX_LEVEL, ROUND_MINUTES, badgesFor, bonusFor, canPlay, roundSize, runChef, shouldUnlock, trainBugley, type Band, type GameKey } from "./games";
 
