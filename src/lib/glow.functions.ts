@@ -1,12 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireParentDevice } from './parent-device.functions';
 
 export const getChildGlow = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => (await import("@/lib/glow.server")).readGlow(context.supabase, context.userId, data.childId));
 
-export const giftGlow = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const giftGlow = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), amount: z.number().int().min(1).max(20), reason: z.string().trim().max(120) }).parse(i))
   .handler(async ({ data, context }) => (await import("@/lib/glow.server")).giftGlowServer(context.supabase, context.userId, data.childId, data.amount, data.reason));
 
