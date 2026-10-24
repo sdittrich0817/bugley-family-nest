@@ -48,7 +48,7 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
       setId(g.id); setFile(g.file); setUrls(g.urls); setDirty(false);
       toast.success(published ? "Shared to the Family Arcade!" : published === false ? "Taken out of the Family Arcade" : "Saved!");
       void qc.invalidateQueries({ queryKey: ["my-games"] }); void qc.invalidateQueries({ queryKey: ["album", child.id] });
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Your game is still here. Try saving again."); }
+    } catch (e) { const message=e instanceof Error ? e.message : "Your game is still here. Try saving again.";toast.error(message);const {safetyAlternatives}=await import('../studio/SafeRetry');chat.say(message,safetyAlternatives(message)); }
     finally { setBusy(false); }
   }
   function pick(t: TemplateKey) {
@@ -61,7 +61,7 @@ export function GameBuilder({ child, gameId, onClose }: { child: SidekickChild; 
     if (!file) return; setBusy(true);
     try {
       const r = await designInterview({ data: { childId: child.id, template: file.template, answers, environment: env } });
-      if (!r.ok) { toast(r.reply); return; }
+      if (!r.ok) { toast(r.reply);const {safetyAlternatives}=await import('../studio/SafeRetry');chat.say(r.reply,safetyAlternatives(r.reply));return; }
       setFile({ ...file, settings: { ...file.settings, ...r.patch } }); setDirty(true); setStep("edit"); chat.say(r.reply);
     } catch { toast.error("Bugley couldn’t read that right now. You can set things by hand!"); setStep("edit"); }
     finally { setBusy(false); }

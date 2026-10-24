@@ -104,7 +104,8 @@ export const purgeCreation = createServerFn({ method: "POST" }).middleware([requ
     const { data: own } = await context.supabase.from("studio_creations").select("id").eq("id", data.id).eq("parent_id", context.userId).not("deleted_at", "is", null).maybeSingle();
     if (!own) throw new Error("We couldn’t find that.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").delete().eq("id", data.id);
+    const {error}=await supabaseAdmin.from("studio_creations").delete().eq("id", data.id).eq('parent_id',context.userId);
+    if(error)throw new Error('We couldn’t delete that. Please try again.');
     return { ok: true };
   });
 
