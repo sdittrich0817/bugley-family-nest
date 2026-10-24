@@ -148,6 +148,13 @@
       "when": 1792867765044,
       "tag": "0020_studio_safety_boundaries",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792868192690,
+      "tag": "0021_device_mode_session_fallback",
+      "breakpoints": true
     }
   ]
 }
