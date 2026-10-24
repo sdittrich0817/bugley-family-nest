@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from "@/lib/billing.functions";
 import { canUpgradePicture } from "./picture";
@@ -16,14 +16,14 @@ async function assertAdmin(ctx: { supabase: any; userId: string }) {
 const env = z.enum(["sandbox", "live"]);
 
 /** Kid-facing style list (recipes stay hidden on the server). */
-export const listStyles = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async () => {
+export const listStyles = createServerFn({ method: "GET" }).middleware([requireKidOrParentAuth]).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin.from("art_styles").select("key,name,description").eq("active", true).order("position");
   return (data ?? []) as ArtStyle[];
 });
 export const stylesOptions = queryOptions({ queryKey: ["art-styles"], queryFn: () => listStyles() });
 
-export const listCast = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const listCast = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: rows } = await context.supabase.from("studio_creations").select("id,title,images,details").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).order("created_at", { ascending: false });
@@ -38,7 +38,7 @@ const genInput = z.object({
 });
 
 /** Picture Maker: saved one-glow preview. Legacy final calls retain their three-glow cost. */
-export const makePicture = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const makePicture = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => genInput.extend({ mode: z.enum(["sketch", "final"]) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
@@ -55,7 +55,7 @@ export const makePicture = createServerFn({ method: "POST" }).middleware([requir
   });
 
 /** The client supplies only a preview ID: ownership, eligibility, costs and references stay server-side. */
-export const upgradePicture = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const upgradePicture = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, previewId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
@@ -85,7 +85,7 @@ export const upgradePicture = createServerFn({ method: "POST" }).middleware([req
   });
 
 /** Character Creator: portrait generation (1 glow each try). Not saved until the kid picks it. */
-export const makeCharacterPortrait = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const makeCharacterPortrait = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => genInput.omit({ characterIds: true }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
@@ -94,7 +94,7 @@ export const makeCharacterPortrait = createServerFn({ method: "POST" }).middlewa
     return r.ok ? { ok: true as const, path: r.path, url: r.url } : r;
   });
 
-export const saveCharacter = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveCharacter = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({
     childId: z.string().uuid(), path: z.string().max(200), name: z.string().trim().min(1).max(40), styleKey: z.string().max(40),
     type: z.string().max(40), personality: z.string().max(40), summary: z.string().max(600),
@@ -120,7 +120,7 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
   });
 
 /** Hero Builder: three hero options for one glow. */
-export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
@@ -129,7 +129,7 @@ export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([re
   });
 
 /** "That's my hero!": guards the words, runs Character Lock (reference sheet + DNA), saves to My Heroes. */
-export const saveHero = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const saveHero = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
@@ -153,10 +153,11 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireSu
   });
 
 /** Signs stored image paths for the album. */
-export const signImages = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const signImages = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ paths: z.array(z.string().max(200)).max(200) }).parse(i))
   .handler(async ({ data, context }) => {
-    const own = data.paths.filter((p) => p.startsWith(`${context.userId}/`));
+    const prefix=context.kidChildId?`${context.userId}/${context.kidChildId}/`:`${context.userId}/`;
+    const own = data.paths.filter((p) => p.startsWith(prefix)&&!p.includes('..'));
     const { signPaths } = await import("@/lib/images.server");
     const urls = await signPaths(own);
     return Object.fromEntries(own.map((p, i) => [p, urls[i] ?? ""])) as Record<string, string>;

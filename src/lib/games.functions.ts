@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from "./billing.functions";
 import { GAME_KEYS, GAMES, MAX_LEVEL, ROUND_MINUTES, badgesFor, bonusFor, canPlay, roundSize, runChef, shouldUnlock, trainBugley, type Band, type GameKey } from "./games";
@@ -22,7 +22,7 @@ const shuffle = <T,>(xs: T[]) => xs.map((x) => [Math.random(), x] as const).sort
 const weight = (game: GameKey, data: any) => game === "train_bugley" ? (data.tests?.length ?? 1) : 1;
 const startOfUtcDay = () => { const d = new Date(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); };
 
-export const getArcade = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const getArcade = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const child = await kid(context.supabase, context.userId, data.childId);
   const a = await admin();
   const [{ data: content }, { data: progress }, { data: badges }, { data: rounds }, { data: kids }] = await Promise.all([
@@ -49,7 +49,7 @@ export const getArcade = createServerFn({ method: "POST" }).middleware([requireS
   return { games, badges: badges ?? [], bonusToday, sparks, players: (kids ?? []).map((k: any) => ({ id: k.id, nickname: k.nickname, avatar: k.bug ?? k.avatar })) };
 });
 
-export const startRound = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), game: gameKey, level: z.number().int().min(1).max(MAX_LEVEL), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const startRound = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), game: gameKey, level: z.number().int().min(1).max(MAX_LEVEL), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const child = await kid(context.supabase, context.userId, data.childId, data.environment);
   const band = child.age_band as Band;
   if (!canPlay(data.game, band)) throw new Error(`${GAMES[data.game].name} is for ${GAMES[data.game].ages.toLowerCase()}.`);
@@ -81,7 +81,7 @@ async function loadRound(sb: any, userId: string, childId: string, roundId: stri
   return r as unknown as { id: string; game: GameKey; level: number; items: string[]; answers: Record<string, { points: number; max: number; tries: number; done: boolean }>; total: number; started_at: string; finished_at: string | null };
 }
 
-export const answerItem = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), roundId: z.string().uuid(), itemId: z.string().uuid(), choice: z.string().max(20).optional(), plan: z.array(z.string().max(10)).max(20).optional(), sorted: z.record(z.string().max(10), z.string().max(40)).optional() }).parse(i)).handler(async ({ data, context }) => {
+export const answerItem = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), roundId: z.string().uuid(), itemId: z.string().uuid(), choice: z.string().max(20).optional(), plan: z.array(z.string().max(10)).max(20).optional(), sorted: z.record(z.string().max(10), z.string().max(40)).optional() }).parse(i)).handler(async ({ data, context }) => {
   const r = await loadRound(context.supabase, context.userId, data.childId, data.roundId);
   if (r.finished_at) throw new Error("This round is over.");
   if (Date.now() > new Date(r.started_at).getTime() + (ROUND_MINUTES * 60 + 30) * 1000) return { timeUp: true as const };
@@ -113,7 +113,7 @@ export const answerItem = createServerFn({ method: "POST" }).middleware([require
   return { timeUp: false as const, ...feedback };
 });
 
-export const finishRound = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), roundId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const finishRound = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), roundId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const r = await loadRound(context.supabase, context.userId, data.childId, data.roundId);
   const a = await admin();
   if (r.finished_at) throw new Error("This round is already finished.");

@@ -1,11 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, storyMapSchema, pageSchema, EMPTY_MAP, newStoryPage, readyToFinish, type StoryData, guidedPages, storyBeats, needsStoryFollowup } from "./story";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
-export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), heroId: z.string().uuid(), place: z.string().trim().min(1).max(600), genre: z.enum(GENRES).optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
+export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), heroId: z.string().uuid(), place: z.string().trim().min(1).max(600), genre: z.enum(GENRES).optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -19,11 +19,11 @@ export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([re
   const problems = cleanSparks(out?.problems ?? []);
   return { problems: problems.length === 3 ? problems : ["Something precious goes missing", "A surprise visitor arrives", "The lights go out"] };
 });
-export const getStory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {
+export const getStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {
   const { loadStory } = await import("./story.server");
   return loadStory(context.supabase, context.userId, data.childId, data.id);
 });
-export const createStory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
+export const createStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -44,7 +44,7 @@ export const createStory = createServerFn({ method: "POST" }).middleware([requir
   return loadStory(context.supabase, context.userId, child.id, id);
 });
 
-export const editStory = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional() }).parse(i)).handler(async ({ data, context }) => {
+export const editStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const { loadStory, persistStory } = await import("./story.server");

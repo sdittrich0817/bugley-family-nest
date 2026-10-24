@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
+import { requireParentDevice } from './parent-device.functions';
 import { familyCompleted, pickCurrentSession } from "@/lib/curriculum";
 
 type Ctx = { supabase: any; userId: string };
@@ -25,7 +27,7 @@ async function progress(ctx: Ctx) {
   return { sessions: sp.data ?? [], activities: ap.data ?? [], badges: bd.data ?? [], childIds: (ch.data ?? []).map((c: any) => c.id as string) };
 }
 
-export const getFamilyCurriculum = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getFamilyCurriculum = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const [ordered, p] = await Promise.all([loadOrdered(context), progress(context)]);
   const done = familyCompleted(ordered.map((s) => s.id), p.childIds, p.sessions);
   const current = pickCurrentSession(ordered, done);
@@ -44,7 +46,7 @@ export const getFamilyCurriculum = createServerFn({ method: "GET" }).middleware(
 });
 export const familyCurriculumOptions = queryOptions({ queryKey: ["curriculum", "family"], queryFn: () => getFamilyCurriculum() });
 
-export const getChildMission = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const getChildMission = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const { data: child } = await context.supabase.from("children").select("id,age_band").eq("id", data.childId).eq("parent_id", context.userId).maybeSingle();
   if (!child) throw new Error("We couldn’t find that player.");
   const ordered = await loadOrdered(context);
@@ -63,7 +65,7 @@ export const getChildMission = createServerFn({ method: "POST" }).middleware([re
 });
 
 /** Marks one activity done; completes the session when all its activities are done, and awards the unit badge when every session in the unit is done. */
-export const completeActivity = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), activityId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const completeActivity = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), activityId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const sb = context.supabase; const base = { child_id: data.childId, parent_id: context.userId };
   const { error } = await sb.from("child_activity_progress").upsert({ ...base, activity_id: data.activityId }, { ignoreDuplicates: true });
   if (error) throw new Error("We couldn’t save that. Please try again.");
@@ -85,7 +87,7 @@ export const completeActivity = createServerFn({ method: "POST" }).middleware([r
 });
 
 /** Family Table finish: records every activity and the session for each child who took part, and awards the unit badge when the unit is complete. */
-export const completeFamilySession = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ sessionId: z.string().uuid(), childIds: z.array(z.string().uuid()).min(1).max(5) }).parse(i)).handler(async ({ data, context }) => {
+export const completeFamilySession = createServerFn({ method: "POST" }).middleware([requireParentDevice]).inputValidator((i: unknown) => z.object({ sessionId: z.string().uuid(), childIds: z.array(z.string().uuid()).min(1).max(5) }).parse(i)).handler(async ({ data, context }) => {
   const sb = context.supabase;
   const { data: kids } = await sb.from("children").select("id").eq("parent_id", context.userId).in("id", data.childIds);
   const ids = (kids ?? []).map((k) => k.id);

@@ -1,0 +1,6 @@
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useEffect } from 'react';
+import { Bugley } from '@/components/brand/Bugley';
+import { kidDeviceStatus } from '@/lib/kid-device.functions';
+export const Route=createFileRoute('/kids-entry')({head:()=>({meta:[{title:'Bugley Kids · Device setup'},{name:'description',content:'A grown-up can set up a trusted device for Bugley Kids.'},{property:'og:title',content:'Bugley Kids · Device setup'},{property:'og:description',content:'Safe family device setup for Bugley Kids.'},{property:'og:type',content:'website'},{name:'twitter:card',content:'summary'},{name:'robots',content:'noindex'}]}),component:KidsEntry});
+function KidsEntry(){const navigate=useNavigate();useEffect(()=>{void kidDeviceStatus().then(s=>{if(s.trusted)void navigate({to:'/kids',replace:true});});},[navigate]);return <section className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-6 px-6 text-center"><Bugley stage="scout" expression="curious" glow size={160}/><h1 className="text-3xl">Bugley Kids</h1><p className="font-display text-xl">Ask your grown-up to set up this device for me!</p></section>;}

@@ -2,9 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { familyOptions } from "@/lib/family.functions";
+import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getActivePlayer, setKidZoneLocked } from "@/lib/kid-zone";
-import { billingOptions } from "@/lib/billing.functions";
+import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { PlayStudio } from "@/components/games/PlayStudio";
 import { GameBuilder } from "@/components/games/GameBuilder";
@@ -12,7 +12,7 @@ import { MyGames } from "@/components/games/MyGames";
 import { z } from "zod";
 import { cn } from "@/lib/utils";
 
-export const Route = createFileRoute("/_authenticated/kids_/studio_/games")({
+export const Route = createFileRoute("/_kid/kids_/studio_/games")({
   head: () => ({ meta: [
     { title: "PLAY · Bugley’s Studio" }, { name: "description", content: "Seven joyful family games: creatures, doodles, mysteries, guessing and Glow Dash remixes with Bugley." },
     { property: "og:title", content: "PLAY · Bugley’s Studio" }, { property: "og:description", content: "Play seven safe games, solve Mystery Manor, and share Glow Dash remixes with your family." },

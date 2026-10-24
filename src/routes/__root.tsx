@@ -14,6 +14,9 @@ import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone, setK
 import { getDeviceMode, lockKidDevice } from '@/lib/parent-device.functions';
 import { useParentSession } from '@/components/site/ParentSession';
 import { scrollToTop } from "@/lib/scroll";
+import { kidDeviceStatus } from '@/lib/kid-device.functions';
+import { registerKidsWorker } from '@/lib/kids-pwa';
+import { KidsConnectivity } from '@/components/site/KidsConnectivity';
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -147,6 +150,9 @@ function KidZoneShell() {
   const router = useRouter();
   const {user}=useParentSession();
   const [checkedPath,setCheckedPath]=useState('');
+  const [deviceChecked,setDeviceChecked]=useState(false);
+  useEffect(()=>{void registerKidsWorker();},[]);
+  useEffect(()=>{let active=true;void kidDeviceStatus().then(d=>{if(!active)return;if((d.trusted&&!d.parentUnlocked&&!isKidZonePath(pathname))||(d.trusted&&pathname==='/')){setKidZoneLocked(true);void navigate({to:'/kids',replace:true});}else if(d.invalid&&isKidZonePath(pathname)){void navigate({to:'/kids-entry',replace:true});}setDeviceChecked(true);}).catch(()=>{if(active)setDeviceChecked(true);});return()=>{active=false;};},[pathname,navigate]);
   useEffect(()=>{if(!user){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   // Do not redirect using stale browser state while the server check is pending.
@@ -168,8 +174,9 @@ function KidZoneShell() {
     const offResolved = router.subscribe("onResolved", toTop);
     return () => { offResolved(); window.removeEventListener("popstate", onPop); };
   }, [router]);
-  if (target || (user && checkedPath!==pathname)) return null;
-  if (isKidZonePath(pathname) || pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
+  if (target || (user && checkedPath!==pathname) || !deviceChecked) return <div className="flex min-h-screen items-center justify-center"><Bugley stage="scout" expression="happy" glow size={120}/></div>;
+  if (isKidZonePath(pathname) || pathname==='/kids-entry' || pathname==='/pair') return <main className="min-h-screen"><KidsConnectivity><Outlet /></KidsConnectivity></main>;
+  if (pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />

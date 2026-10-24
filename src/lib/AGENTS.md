@@ -1,5 +1,9 @@
 # Studio makers and books
 
+- Trusted devices authorize only explicitly kid-facing handlers through `requireKidOrParentAuth`, with server-verified selected child, family ownership, revocation and daily-time checks; parent handlers retain managed authentication plus `requireParentDevice`. Why: opaque device cookies cannot become adult accounts or bypass child limits.
+- Pairing and device credentials are hashed server-side, raw device secrets are HttpOnly cookies, and parent PIN only opens navigation to normal parent sign-in. Why: installation never persists a parent password or grants adult authority from a four-digit PIN.
+- Offline installation uses one preview-safe PWA wrapper and generated worker caching only public assets and the static offline screen. Why: private data and authentication never become offline caches.
+
 - My Cast characters are `studio_creations` rows of kind `character`; their stored portrait is the reference image for later pictures. Why: reuse album save/delete/restore rules.
 - Story Maker stores its map, immutable style/cast selection and ordered child-authored pages in a story creation’s details; server-only updates use optimistic version checks, and story coaching loads saved content through askBugley. Why: reuse family isolation, album lifecycle and audited AI/image paths without allowing browser edits to private storage.
 - Comic Maker uses the shared StorySetup and BugleyStep flow, server-created age-band panels, hidden scene planning and saved one-time follow-ups; comicCells defines automatic page geometry including the wide big moment for screen and print. Image vision supplies speech placement, and dialogue/layer actions never generate or charge glow; askBugley reads comicId/panelId and the book Bible. Why: child authorship and simple screens with consistent art, private storage and text separate from images.

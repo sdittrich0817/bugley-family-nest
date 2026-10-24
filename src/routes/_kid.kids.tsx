@@ -3,8 +3,11 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Award, BookOpen, Delete, Lock, Sparkles, Users, Volume2 } from "lucide-react";
-import { familyOptions } from "@/lib/family.functions";
+import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { verifyChildLogin } from "@/lib/kid.functions";
+import { verifyTrustedChild } from '@/lib/kid-entry.functions';
+import { kidDeviceStatus, resetKidPlayer, unlockKidParentPin } from '@/lib/kid-device.functions';
+import { useServerFn } from '@tanstack/react-start';
 import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
 import { getChildGlow } from "@/lib/glow.functions";
 import { GlowMeter } from "@/components/studio/GlowMeter";
@@ -24,11 +27,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { supabase } from "@/integrations/supabase/client";
 import { useParentSession } from "@/components/site/ParentSession";
 import { cn } from "@/lib/utils";
-import { billingOptions } from "@/lib/billing.functions";
+import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { unlockParentDevice } from '@/lib/parent-device.functions';
 
-export const Route = createFileRoute("/_authenticated/kids")({
+export const Route = createFileRoute("/_kid/kids")({
   head: () => ({ meta: [
     { title: "Kid Zone · Bugley" }, { name: "description", content: "Your family’s Kid Zone: pick a player and play with Bugley." },
     { property: "og:title", content: "Kid Zone · Bugley" }, { property: "og:description", content: "Pick a player and play with Bugley." },
@@ -48,7 +51,7 @@ function KidZone() {
   const [deviceError, setDeviceError] = useState('');
   // The root shell completes the server lock before mounting this page.
   // A second lock here can finish after password verification and relock the exit.
-  useEffect(() => { const id = getActivePlayer(); const c = id && data.children.find((k) => k.id === id); if (c) setPlayer(c); setDeviceReady(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void kidDeviceStatus().then(d=>{const id=d.trusted?d.childId:getActivePlayer();const c=id&&data.children.find(k=>k.id===id);if(c){setActivePlayer(c.id);setPlayer(c);}setDeviceReady(true);}).catch(()=>setDeviceError('Couldn’t open this device. Ask your grown-up.')); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   if (!deviceReady) return <p role={deviceError ? 'alert' : 'status'} className="p-6">{deviceError || 'Opening the Kid Zone…'}</p>;
@@ -63,7 +66,7 @@ function KidZone() {
   </div>;
   return <div className={cn("min-h-screen bg-background text-foreground", player && `skin-${band}`)}>
     <header className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4">
-      {player ? <Button variant="secondary" onClick={() => { window.speechSynthesis?.cancel(); setActivePlayer(null); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Kid Zone</span>}
+      {player ? <Button variant="secondary" onClick={async () => { await resetKidPlayer(); window.speechSynthesis?.cancel(); setActivePlayer(null); setPlayer(null); }}><Users />Switch player</Button> : <span className="font-display text-lg">Bugley Kids</span>}
       <Button variant="ghost" size="sm" onClick={() => setExitOpen(true)}><Lock />Exit to Parent Hub</Button>
     </header>
     {player ? <KidHome child={player} onBug={(bug) => { setPlayer({ ...player, bug }); void qcRoot.invalidateQueries({ queryKey: ["family"] }); }} /> : picking ? <ChildLogin child={picking} onBack={() => setPicking(null)} onSuccess={() => { setActivePlayer(picking.id); setPlayer(picking); setPicking(null); }} /> : <WhosPlaying children={data.children} onPick={setPicking} />}
@@ -94,7 +97,7 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
     if (entry.length !== need) return;
     setBusy(true);
     const credential = isPin ? { kind: "pin" as const, pin: entry.join("") } : { kind: "pictures" as const, pictures: entry as (typeof PICTURES)[number][] };
-    verifyChildLogin({ data: { childId: child.id, credential, environment: getStripeEnvironment() } })
+    kidDeviceStatus().then(d=>(d.trusted?verifyTrustedChild:verifyChildLogin)({ data: { childId: child.id, credential, environment: getStripeEnvironment() } }))
       .then((r) => { if ("paused" in r && r.paused) { setError("The Kid Zone is paused. Ask a grown-up!"); setEntry([]); } else if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
       .catch(() => { setError("Something went wrong. Try again."); setEntry([]); })
       .finally(() => setBusy(false));
@@ -191,11 +194,14 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [trusted,setTrusted]=useState(false);
+  const unlockPin=useServerFn(unlockKidParentPin);
+  useEffect(()=>{if(open)void kidDeviceStatus().then(d=>setTrusted(d.trusted));},[open]);
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!user?.email) return setError("Please try again in a moment.");
+    if (!trusted && !user?.email) return setError("Please try again in a moment.");
     setBusy(true); setError("");
-    try { await unlockParentDevice({ data: { password } }); }
+    try { if(trusted)await unlockPin({data:{pin:password}});else await unlockParentDevice({ data: { password } }); }
     catch (err) { setBusy(false); setPassword(''); return setError(err instanceof Error ? err.message : 'Please try again.'); }
     setBusy(false);
     window.speechSynthesis?.cancel();
@@ -205,9 +211,9 @@ function ExitDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (o: b
   }
   return <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); setPassword(""); setError(""); }}>
     <DialogContent>
-      <DialogHeader><DialogTitle>Grown-ups only</DialogTitle><DialogDescription>Enter your parent account password to leave the Kid Zone.</DialogDescription></DialogHeader>
+      <DialogHeader><DialogTitle>Grown-ups only</DialogTitle><DialogDescription>{trusted?'Enter your four-digit parent PIN to leave Bugley Kids. Your parent account still protects the Hub.':'Enter your parent account password to leave the Kid Zone.'}</DialogDescription></DialogHeader>
       <form onSubmit={submit} className="space-y-4">
-        <Input type="password" autoComplete="current-password" aria-label="Parent password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <Input type="password" inputMode={trusted?'numeric':undefined} maxLength={trusted?4:200} autoComplete={trusted?'off':'current-password'} aria-label={trusted?'Parent PIN':'Parent password'} value={password} onChange={(e) => setPassword(e.target.value)} required />
         {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
         <Button type="submit" className="w-full" disabled={busy}>{busy ? "Checking…" : "Exit to Parent Hub"}</Button>
       </form>

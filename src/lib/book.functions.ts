@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, EMPTY_MAP, newStoryPage, guidedPages, type StoryData } from "./story";
 import { guidedComicPages, type ComicData } from "./comic";
@@ -28,12 +28,12 @@ async function assertCast(supabase: any, userId: string, childId: string, ids: s
   if ((data ?? []).length !== new Set(ids).size) throw new Error("Choose characters from your own My Cast.");
 }
 
-export const getBook = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+export const getBook = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
   const { loadBook } = await import("./book.server");
   return loadBook(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createBook = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createBook = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), format: z.enum(BOOK_FORMATS), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child, check } = await ctx(context.supabase, context.userId, data.childId, data.environment);
   await check(data.title, "book_title");
   const a = await admin();
@@ -49,7 +49,7 @@ export const createBook = createServerFn({ method: "POST" }).middleware([require
 });
 
 /** Turns a finished or in-progress one-shot into Chapter 1 of a new Book. */
-export const bookFromOneShot = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), creationId: z.string().uuid(), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const bookFromOneShot = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), creationId: z.string().uuid(), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child } = await ctx(context.supabase, context.userId, data.childId, data.environment);
   const { data: row } = await context.supabase.from("studio_creations").select("id,kind,title,details").eq("id", data.creationId).eq("parent_id", context.userId).eq("child_id", child.id).in("kind", ["story", "comic"]).is("deleted_at", null).maybeSingle();
   if (!row) throw new Error("We couldn’t find that creation.");
@@ -69,7 +69,7 @@ export const bookFromOneShot = createServerFn({ method: "POST" }).middleware([re
   return loadBook(context.supabase, context.userId, child.id, id);
 });
 
-export const startChapter = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bookId: z.string().uuid(), title: z.string().trim().min(1).max(80), newCharacterIds: z.array(z.string().uuid()), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const startChapter = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bookId: z.string().uuid(), title: z.string().trim().min(1).max(80), newCharacterIds: z.array(z.string().uuid()), environment: env }).parse(i)).handler(async ({ data, context }) => {
   const { s, child, check } = await ctx(context.supabase, context.userId, data.childId, data.environment);
   await check(data.title, "chapter_title");
   await assertCast(context.supabase, context.userId, child.id, data.newCharacterIds);
@@ -91,7 +91,7 @@ export const startChapter = createServerFn({ method: "POST" }).middleware([requi
   return { chapterId: cid, kind: book.data.format, recap: r.recap || "A brand-new book! How does your story begin? Your call!" };
 });
 
-export const editBook = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), environment: env, action: z.enum(["bible", "author", "dedication", "cover", "absorb", "order"]), bible: bibleSchema.optional(), text: z.string().trim().max(300).optional(), chapterIds: z.array(z.string().uuid()).optional() }).parse(i)).handler(async ({ data, context }) => {
+export const editBook = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), environment: env, action: z.enum(["bible", "author", "dedication", "cover", "absorb", "order"]), bible: bibleSchema.optional(), text: z.string().trim().max(300).optional(), chapterIds: z.array(z.string().uuid()).optional() }).parse(i)).handler(async ({ data, context }) => {
   const { child, check } = await ctx(context.supabase, context.userId, data.childId, data.environment);
   const { loadBook, persistBook, absorbAndRecap } = await import("./book.server");
   const book = await loadBook(context.supabase, context.userId, child.id, data.id);

@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "@/lib/billing.functions";
 import { requireParentDevice } from './parent-device.functions';
 
@@ -12,7 +12,7 @@ const COLS = "id,child_id,kind,title,project,position,body,images,favorite,delet
 const DAY = 86400000;
 
 /** All of Bugley's replies come from here; child text passes the safety guard first. */
-export const askBugley = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const askBugley = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({
     childId: z.string().uuid(), text: z.string().trim().min(1).max(600),
     source: z.enum(["prompt_bar", "sidekick", "chip"]), context: z.string().max(80), environment: z.enum(["sandbox", "live"]),
@@ -40,7 +40,7 @@ export const askBugley = createServerFn({ method: "POST" }).middleware([requireS
     return { ...out, blocked: false };
   });
 
-export const listAlbum = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const listAlbum = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.from("studio_creations").select(COLS).eq("child_id", data.childId).eq("parent_id", context.userId).is("deleted_at", null).order("created_at", { ascending: false });
@@ -53,7 +53,7 @@ export const listAlbum = createServerFn({ method: "POST" }).middleware([requireS
     return list.map((c) => ({ ...c, images: c.images.map((p) => map.get(p) ?? p) }));
   });
 
-export const updateCreation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const updateCreation = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), title: z.string().trim().min(1).max(80).optional(), favorite: z.boolean().optional(), remove: z.boolean().optional() }).parse(i))
   .handler(async ({ data, context }) => {
     const patch: { updated_at: string; title?: string; favorite?: boolean; deleted_at?: string } = { updated_at: new Date().toISOString() };
