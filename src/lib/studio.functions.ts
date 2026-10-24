@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { familyHasAccess } from "@/lib/billing.functions";
+import { requireParentDevice } from './parent-device.functions';
 
 export const CREATION_KINDS = ["picture", "story", "comic", "book", "character", "game"] as const;
 export type CreationKind = (typeof CREATION_KINDS)[number];
@@ -31,9 +32,11 @@ export const askBugley = createServerFn({ method: "POST" }).middleware([requireS
       ? await (await import("./comic.server")).assistComic(context.supabase, context.userId, child, data.comicId, data.text, data.pageId, data.purpose ?? "coach", data.panelId)
       : data.storyId
       ? await (await import("./story.server")).assistStory(context.supabase, context.userId, child, data.storyId, data.text, data.purpose ?? "coach", data.pageId)
-      : await s.bugleyReply(child, data.text, data.context);
+      : await s.bugleyReply(child, data.text, ['Studio home','Choosing what to create','My Album','Picture Maker','Character Creator','Story Maker','Comic Maker','Book Builder','Game Builder'].includes(data.context) ? data.context : 'Studio home');
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_events").update({ reply: out.reply }).eq("child_id", child.id).eq("decision", "allowed").is("reply", null).eq("input", data.text.slice(0, 2000));
+    if (!guard.eventId) throw new Error('Safety record missing.');
+    const { error } = await supabaseAdmin.from("studio_events").update({ reply: out.reply }).eq('id',guard.eventId).eq('parent_id',context.userId);
+    if (error) throw new Error('Couldn’t record Bugley’s reply.');
     return { ...out, blocked: false };
   });
 
@@ -63,34 +66,39 @@ export const updateCreation = createServerFn({ method: "POST" }).middleware([req
     }
     if (data.favorite !== undefined) patch.favorite = data.favorite;
     if (data.remove) patch.deleted_at = new Date().toISOString();
-    const { error } = await context.supabase.from("studio_creations").update(patch).eq("id", data.id).eq("child_id", data.childId).eq("parent_id", context.userId).is("deleted_at", null);
+    const { data: owned } = await context.supabase.from('studio_creations').select('id').eq('id',data.id).eq('child_id',data.childId).eq('parent_id',context.userId).is('deleted_at',null).maybeSingle();
+    if (!owned) throw new Error('Creation not found.');
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { error } = await supabaseAdmin.from("studio_creations").update(patch).eq("id", owned.id).eq("parent_id", context.userId);
     if (error) throw new Error("We couldn’t save that.");
     return { ok: true };
   });
 
 // ---------- Parent Hub ----------
-export const getStudioActivity = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+export const getStudioActivity = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const since = new Date(Date.now() - 30 * DAY).toISOString();
+  const all = async (query: any) => { const rows: any[] = []; for (let offset=0;;offset+=500) { const result=await query.range(offset,offset+499);if(result.error)return {data:rows,error:result.error}; rows.push(...(result.data??[]));if((result.data??[]).length<500)return {data:rows,error:null}; } };
   const [ev, cr, del, no] = await Promise.all([
-    context.supabase.from("studio_events").select("id,child_id,source,input,decision,reply,created_at").eq("parent_id", context.userId).order("created_at", { ascending: false }).limit(100),
-    context.supabase.from("studio_creations").select(COLS).eq("parent_id", context.userId).is("deleted_at", null).order("created_at", { ascending: false }).limit(100),
+    all(context.supabase.from("studio_events").select("id,child_id,source,input,decision,reply,created_at").eq("parent_id", context.userId).order("created_at", { ascending: false }).order('id')),
+    all(context.supabase.from("studio_creations").select(COLS).eq("parent_id", context.userId).is("deleted_at", null).order("created_at", { ascending: false }).order('id')),
     context.supabase.from("studio_creations").select(COLS).eq("parent_id", context.userId).gte("deleted_at", since).order("deleted_at", { ascending: false }),
-    context.supabase.from("parent_notifications").select("id,child_id,typed,starter,read,created_at").eq("parent_id", context.userId).order("created_at", { ascending: false }).limit(50),
+    all(context.supabase.from("parent_notifications").select("id,child_id,typed,starter,read,created_at").eq("parent_id", context.userId).order("created_at", { ascending: false }).order('id')),
   ]);
   if (ev.error || cr.error || del.error || no.error) throw new Error("We couldn’t load activity.");
   return { events: ev.data ?? [], creations: (cr.data ?? []) as Creation[], deleted: (del.data ?? []) as Creation[], notifications: no.data ?? [] };
 });
 export const studioActivityOptions = queryOptions({ queryKey: ["studio-activity"], queryFn: () => getStudioActivity() });
 
-export const restoreCreation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const restoreCreation = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("studio_creations").update({ deleted_at: null, updated_at: new Date().toISOString() }).eq("id", data.id).eq("parent_id", context.userId);
+    const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+    const { error } = await supabaseAdmin.from("studio_creations").update({ deleted_at: null, updated_at: new Date().toISOString() }).eq("id", data.id).eq("parent_id", context.userId);
     if (error) throw new Error("We couldn’t restore that.");
     return { ok: true };
   });
 
-export const purgeCreation = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const purgeCreation = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: own } = await context.supabase.from("studio_creations").select("id").eq("id", data.id).eq("parent_id", context.userId).not("deleted_at", "is", null).maybeSingle();
@@ -100,7 +108,7 @@ export const purgeCreation = createServerFn({ method: "POST" }).middleware([requ
     return { ok: true };
   });
 
-export const markNotificationRead = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const markNotificationRead = createServerFn({ method: "POST" }).middleware([requireParentDevice])
   .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await context.supabase.from("parent_notifications").update({ read: true }).eq("id", data.id).eq("parent_id", context.userId);

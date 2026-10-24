@@ -106,9 +106,11 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
     if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
     const looks = await s.guardChildText(context.supabase, context.userId, child, `${data.type}; ${data.personality}; ${data.summary}`, "character_details");
     if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply!, chips: looks.chips ?? [] };
-    const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: data.summary, images: [data.path] });
+    const { lockCharacter } = await import('./images.server');
+    const lock = await lockCharacter(context.userId,data.childId,{path:data.path,styleKey:data.styleKey,hint:`${data.name}, ${data.summary}`});
+    const id = await s.saveCreation(context.userId, { child_id: data.childId, kind: "character", title: data.name, body: lock.dna, images: [data.path,...lock.refs] });
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary } }).eq("id", id);
+    await supabaseAdmin.from("studio_creations").update({ style_key: data.styleKey, details: { type: data.type, personality: data.personality, summary: data.summary, dna:lock.dna, refs:lock.refs, model:lock.model } }).eq("id", id);
     return { ok: true as const, id };
   });
 
@@ -126,6 +128,9 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireSu
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
+    const { supabaseAdmin: a } = await import('@/integrations/supabase/client.server');
+    const { data: provenance } = await a.from('hero_portrait_provenance').select('style_key,model').eq('path',data.path).eq('parent_id',context.userId).eq('child_id',data.childId).maybeSingle();
+    if (!provenance || provenance.style_key !== data.styleKey) throw new Error('Choose a hero portrait made in this look.');
     const s = await import("@/lib/studio.server");
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
