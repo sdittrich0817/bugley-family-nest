@@ -46,8 +46,8 @@ export async function aiObject<T extends z.ZodTypeAny>(schema: T, instructions: 
     }
     return output;
   } catch (e) {
-    if (NoObjectGeneratedError.isInstance(e)) console.error("studio ai: no object", e.text?.slice(0, 200));
-    else console.error("studio ai failed", e);
+    if (NoObjectGeneratedError.isInstance(e)) console.error("studio ai: invalid structured response");
+    else console.error("studio ai: request failed");
     return null;
   }
 }
