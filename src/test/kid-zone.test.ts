@@ -7,4 +7,8 @@ describe("Kid Zone lock", () => {
   it("lets a locked device stay in the Kid Zone", () => { expect(kidZoneRedirect("/kids", true)).toBeNull(); });
   it("does nothing when unlocked", () => { expect(kidZoneRedirect("/settings", false)).toBeNull(); });
   it("does not treat look-alike paths as the Kid Zone", () => { expect(kidZoneRedirect("/kidsettings", true)).toBe("/kids"); });
+  it("allows the Parent Hub after verified unlock but blocks it while locked", () => {
+    expect(kidZoneRedirect("/hub", false)).toBeNull();
+    expect(kidZoneRedirect("/hub", true)).toBe("/kids");
+  });
 });
