@@ -38,8 +38,8 @@ function V3Page() {
     <div className="mx-auto max-w-3xl px-4 pb-32 pt-5">
       <ComicJourney child={child as SidekickChild} projectId={project} draftId={draft} characterId={character}
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
-        onDraft={id => void navigate({ to: "/kids/studio/v3", search: { draft: id }, replace: true })}
-        onBook={() => void navigate({ to: "/kids/studio" })}
+        onDraft={id => void navigate({ to: "/kids/studio/v3", search: id ? { draft: id } : {}, replace: true })}
+        onBook={id => void navigate({ to: "/kids/studio", search: { book: id } })}
         onExit={() => void navigate({ to: "/kids/studio" })} />
     </div>
   </div>;

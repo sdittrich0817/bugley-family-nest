@@ -126,6 +126,13 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     const g = await s.guardChildText(context.supabase, context.userId, child, text, "story");
     if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   }
+  if (!data.revision) {
+    if (p.kind === "picture") { p.workspace.originalIdea = words.slice(0, 600); p.body = words.slice(0, 600); }
+    else if (p.kind === "comic") item.description = words.slice(0, 600);
+    else { if (item.text !== words) item.description = ""; item.text = words; }
+    await persistWorkspace(context.userId, child.id, p);
+    Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id));
+  }
   let description = data.description || (p.kind === "story" ? item.description || words.slice(0, 600) : words.slice(0, 600));
   if (data.revision) {
     const { aiObject } = await import("./studio-ai.server");
@@ -148,9 +155,11 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (p.kind === "picture") {
       p.workspace.originalIdea = description; p.body = description; p.images = [result.path]; p.details.mode = "sketch"; p.details.upgradeState = "ready";
     } else {
-      Object.assign(item, replaceV3Art(item, result, description));
-      if (p.kind === "comic") { item.dialogueDone = false; item.layers = item.layers.filter((l: any) => l.type !== "speech"); }
-      else item.text = words;
+      const target = (p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages).find((x: any) => x.id === data.itemId);
+      if (!target) throw new Error("Your scene couldn’t be found.");
+      Object.assign(target, replaceV3Art(target, result, description));
+      if (p.kind === "comic") target.dialogueDone = false;
+      else target.text = words;
     }
     p.details.paintState = "done"; p.details.paintOp = data.op;
     await persistWorkspace(context.userId, child.id, p);
