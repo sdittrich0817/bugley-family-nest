@@ -164,6 +164,10 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op });
     if (!result.ok) throw new Error(result.reply);
     charged = true;
+    const { data: lockRow } = await a.from("studio_creations").select("details").eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();
+    const locked = lockRow?.details as any;
+    if (locked?.artLock) p.details.artLock = locked.artLock;
+    if (locked?.modelLock || result.lock) p.details.modelLock = locked?.modelLock ?? result.lock;
     if (p.kind === "picture") {
       p.workspace.originalIdea = description; p.body = description; p.images = [result.path]; p.details.mode = "sketch"; p.details.upgradeState = "ready";
     } else {
