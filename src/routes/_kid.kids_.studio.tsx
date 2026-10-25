@@ -76,7 +76,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
-  useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); if (view === "character") chat.say("Let’s invent a character! First, what kind?", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${band}`)}>
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
