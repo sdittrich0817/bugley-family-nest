@@ -5,7 +5,7 @@ import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
