@@ -154,7 +154,7 @@ export const heroIdeaCheck = createServerFn({ method: "POST" }).middleware([requ
 
 /** "That's my hero!": guards the words, runs Character Lock (reference sheet + DNA), saves to My Heroes. */
 export const saveHero = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
-  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(120), color: z.string().trim().min(1).max(80), special: z.string().trim().min(1).max(160), name: z.string().trim().min(1).max(40) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(160), color: z.string().trim().max(80).default(""), special: z.string().trim().min(1).max(160), personality: z.string().trim().max(80).default(""), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
     const { supabaseAdmin: a } = await import('@/integrations/supabase/client.server');
@@ -164,7 +164,7 @@ export const saveHero = createServerFn({ method: "POST" }).middleware([requireKi
     const child = await s.loadChild(context.supabase, context.userId, data.childId);
     const guard = await s.guardChildText(context.supabase, context.userId, child, data.name, "character_name");
     if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? 'Let’s try a made-up idea.', chips: guard.chips ?? [] };
-    const hint = `a ${data.kind}, mostly ${data.color}, special thing: ${data.special}`;
+    const hint = heroDescription({ ...data, name: "" }).replace(/^, /, "");
     const looks = await s.guardChildText(context.supabase, context.userId, child, hint, "character_details");
     if (looks.decision !== "allowed") return { ok: false as const, reply: looks.reply ?? 'Let’s try a made-up idea.', chips: looks.chips ?? [] };
     const { lockCharacter } = await import("@/lib/images.server");
