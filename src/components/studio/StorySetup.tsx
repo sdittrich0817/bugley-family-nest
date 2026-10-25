@@ -29,10 +29,17 @@ const PLACES: StepChoice[] = [
   { key: "sea", label: "An underwater village", emoji: "🐠" },
   { key: "space", label: "A cozy space station", emoji: "🚀" },
 ];
+const LENGTH_CHOICES: StepChoice[] = [
+  { key: "short", label: "A little one", emoji: "🌱" },
+  { key: "medium", label: "A middle one", emoji: "🌿" },
+  { key: "long", label: "A big one", emoji: "🌳" },
+];
 
 export function StorySetup({ child, chat, onCreate, kind = "story" }: { child: SidekickChild; chat: BugleyChat; onCreate: (r: SetupResult) => Promise<void>; kind?: "story" | "comic" }) {
   const comic = kind === "comic";
-  const [genre, setGenre] = useState<SetupResult["genre"] | null>(comic ? null : "Adventure");
+  const noun = comic ? "comic" : "story";
+  const total = comic ? 6 : 5;
+  const [genre, setGenre] = useState<SetupResult["genre"] | null>(null);
   const [problem, setProblem] = useState("");
   const [extra, setExtra] = useState<string[]>([]);
   const [role, setRole] = useState<HeroRole>("hero");
@@ -43,6 +50,7 @@ export function StorySetup({ child, chat, onCreate, kind = "story" }: { child: S
   const [picking, setPicking] = useState(false);
   const [place, setPlace] = useState("");
   const [problems, setProblems] = useState<string[]>([]);
+  const [length, setLength] = useState<StoryLength | null>(null);
   const [busy, setBusy] = useState(false);
   const { data: styles = [] } = useQuery(stylesOptions);
   const { data: cast = [], refetch } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
@@ -50,7 +58,7 @@ export function StorySetup({ child, chat, onCreate, kind = "story" }: { child: S
   useScrollTopOn(`${step}-${making}-${picking}-${genre}`);
   useEffect(() => {
     if (making) return;
-    chat.say(!genre ? "What kind of comic?" : step === 4 ? "Add a sidekick or villain?" : busy ? "Thinking about your adventure…" : step === 0 ? (comic ? "Pick your comic’s look!" : "Pick your story’s look!") : step === 1 ? "Who’s your hero?" : step === 2 ? `Where does ${hero?.name ?? "your hero"} live?` : "Uh-oh! What goes wrong?", []);
+    chat.say(!genre ? `What kind of ${noun}?` : step === 5 ? "Add a sidekick or villain?" : busy ? "Thinking about your adventure…" : step === 0 ? `Pick your ${noun}’s look!` : step === 1 ? "Who’s your hero?" : step === 2 ? `Where does ${hero?.name ?? "your hero"} live?` : step === 3 ? "Uh-oh! What goes wrong?" : `How big should your ${noun} be?`, []);
   }, [step, making, busy, genre]);
   async function choosePlace(text: string) {
     if (!hero || busy) return;
@@ -61,10 +69,10 @@ export function StorySetup({ child, chat, onCreate, kind = "story" }: { child: S
     } catch (e) { toast.error(e instanceof Error ? e.message : "Try another made-up place."); }
     finally { setBusy(false); }
   }
-  async function start(selectedProblem: string) {
+  async function start(selectedProblem: string, len: StoryLength | null = length) {
     if (!hero || busy) return;
     setBusy(true);
-    try { await onCreate({ title: comic ? "My new comic" : "My new story", genre: genre ?? "Adventure", styleKey: style, characterIds: [hero.id, ...extra], map: { hero: hero.name, place, problem: selectedProblem, want: "Find a way to help", ending: "The child decides" } }); }
+    try { await onCreate({ title: comic ? "My new comic" : "My new story", genre: genre ?? "Adventure", styleKey: style, characterIds: [hero.id, ...extra], length: len ?? defaultLength(child.age_band), map: { hero: hero.name, place, problem: selectedProblem, want: "Find a way to help", ending: "The child decides" } }); }
     catch (e) { toast.error(e instanceof Error ? e.message : "Your idea is still here. Try again."); }
     finally { setBusy(false); }
   }
