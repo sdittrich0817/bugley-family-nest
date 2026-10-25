@@ -61,10 +61,11 @@ export const upgradePicture = createServerFn({ method: "POST" }).middleware([req
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
     const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
-    const { data: row } = await context.supabase.from("studio_creations").select("id,kind,body,style_key,images,details").eq("id", data.previewId).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).maybeSingle();
+    const { data: row } = await context.supabase.from("studio_creations").select("id,kind,body,style_key,images,details,updated_at").eq("id", data.previewId).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).maybeSingle();
     if (!canUpgradePicture(row) || !row?.body || !row.style_key || !row.images?.[0]) return { ok: false as const, reply: "Pick a fresh preview first!" };
+    if ((row.details as any)?.paintState === "painting") return { ok: false as const, reply: "Your preview is still being painted." };
     const details = row.details as { characters: string[]; mode: string; pictureFlow: boolean; upgradeState: string };
-    const { data: claimed, error } = await a.from("studio_creations").update({ details: { ...details, upgradeState: "painting" } }).eq("id", row.id).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).contains("details", { mode: "sketch", pictureFlow: true, upgradeState: "ready" }).select("id").maybeSingle();
+    const { data: claimed, error } = await a.from("studio_creations").update({ details: { ...details, upgradeState: "painting" }, updated_at: new Date().toISOString() }).eq("id", row.id).eq("parent_id", context.userId).eq("child_id", data.childId).is("deleted_at", null).eq("updated_at", row.updated_at).contains("details", { mode: "sketch", pictureFlow: true, upgradeState: "ready" }).select("id").maybeSingle();
     if (error || !claimed) return { ok: false as const, reply: "That picture is already being painted. Your preview is safe!" };
     let painted = false;
     try {
@@ -72,13 +73,13 @@ export const upgradePicture = createServerFn({ method: "POST" }).middleware([req
       const r = await generateImage(context.supabase, context.userId, { childId: data.childId, description: row.body, styleKey: row.style_key, mode: "final", characterIds: details.characters ?? [], pictureFlow: true, previewPath: row.images[0] });
       if (!r.ok) { await a.from("studio_creations").update({ details }).eq("id", row.id); return r; }
       painted = true;
-      const { error: saveError } = await a.from("studio_creations").update({ images: [r.path, ...row.images], details: { ...details, mode: "final", upgradeState: "done" } }).eq("id", row.id);
+      const { error: saveError } = await a.from("studio_creations").update({ images: [r.path, ...row.images], details: { ...details, mode: "final", upgradeState: "done" }, updated_at: new Date().toISOString() }).eq("id", row.id);
       if (saveError) throw new Error("Your preview is saved, but the finished picture couldn’t be saved. Ask a grown-up.");
       return { ok: true as const, id: row.id, url: r.url };
     } catch (e) {
       if (painted) {
-        const { giftGlowServer } = await import("./glow.server");
-        await giftGlowServer(context.supabase, context.userId, data.childId, 2, "Refund: finished picture couldn’t save");
+        const { refundGlow } = await import("./glow.server");
+        await refundGlow(context.supabase, context.userId, data.childId, 2, "Refund: finished picture couldn’t save");
       }
       await a.from("studio_creations").update({ details }).eq("id", row.id);
       throw e;
