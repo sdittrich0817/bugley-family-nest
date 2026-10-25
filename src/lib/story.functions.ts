@@ -21,8 +21,8 @@ export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([re
   return { problems: problems.length === 3 ? problems : ["Something precious goes missing", "A surprise visitor arrives", "The lights go out"] };
 });
 /** Bugley's story plan: one hidden scene line per page/panel, saved as the project's outline. Free (no glow). */
-export const planOutline = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), kind: z.enum(["story", "comic"]), change: z.string().trim().max(200).optional() }).parse(i)).handler(async ({ data, context }) => {
-  if (!(await familyHasAccess(context.supabase, context.userId, data.environment ?? "sandbox"))) throw new Error("Ask a grown-up to open the Studio plan first.");
+export const planOutline = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), kind: z.enum(["story", "comic"]), environment: z.enum(["sandbox", "live"]), change: z.string().trim().max(200).optional() }).parse(i)).handler(async ({ data, context }) => {
+  if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
   if (data.change) {
