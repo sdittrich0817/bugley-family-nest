@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
-import { GENRES, storyMapSchema } from "./story";
+import { GENRES, LENGTHS, defaultLength, lengthBand, storyMapSchema } from "./story";
 import { ANGLE_PROMPT, comicPageSchema, layerSchema, movePage, newComicPage, readyToFinishComic, EMPTY_MAP, type ComicData, guidedComicPages, dialogueLayers } from "./comic";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
@@ -14,7 +14,7 @@ export const getComic = createServerFn({ method: "POST" }).middleware([requireKi
   return loadComic(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), length: z.enum(LENGTHS).optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -27,7 +27,8 @@ export const createComic = createServerFn({ method: "POST" }).middleware([requir
     const { data: cast } = await context.supabase.from("studio_creations").select("id").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).in("id", data.characterIds);
     if ((cast ?? []).length !== new Set(data.characterIds).size) throw new Error("Choose characters from your own My Cast.");
   }
-  const details: ComicData = { genre: data.genre, styleKey: data.styleKey, characterIds: [...new Set(data.characterIds)], map: EMPTY_MAP, pages: data.guided ? guidedComicPages(child.age_band) : [newComicPage("one")], finished: false, cover: null, ...(data.guided ? { guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } : {}) };
+  const length = data.length ?? defaultLength(child.age_band);
+  const details: ComicData = { genre: data.genre, styleKey: data.styleKey, characterIds: [...new Set(data.characterIds)], map: EMPTY_MAP, pages: data.guided ? guidedComicPages(lengthBand(length)) : [newComicPage("one")], finished: false, cover: null, ...(data.guided ? { guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), length, followups: [] } : {}) };
   const id = await s.saveCreation(context.userId, { child_id: child.id, kind: "comic", title: data.title });
   const { error } = await supabaseAdmin.from("studio_creations").update({ details: details as never, style_key: data.styleKey }).eq("id", id);
   if (error) throw new Error("We couldn’t start that comic.");

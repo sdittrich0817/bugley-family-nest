@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
-import { GENRES, storyMapSchema, pageSchema, EMPTY_MAP, newStoryPage, readyToFinish, type StoryData, guidedPages, storyBeats, needsStoryFollowup } from "./story";
+import { GENRES, LENGTHS, defaultLength, lengthBand, storyMapSchema, pageSchema, EMPTY_MAP, newStoryPage, readyToFinish, type StoryData, guidedPages, storyBeats, needsStoryFollowup } from "./story";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 export const storySetupIdeas = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), heroId: z.string().uuid(), place: z.string().trim().min(1).max(600), genre: z.enum(GENRES).optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
@@ -23,7 +23,7 @@ export const getStory = createServerFn({ method: "POST" }).middleware([requireKi
   const { loadStory } = await import("./story.server");
   return loadStory(context.supabase, context.userId, data.childId, data.id);
 });
-export const createStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
+export const createStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), length: z.enum(LENGTHS).optional(), environment: z.enum(["sandbox", "live"]) }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -36,7 +36,8 @@ export const createStory = createServerFn({ method: "POST" }).middleware([requir
     const { data: cast } = await context.supabase.from("studio_creations").select("id").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).in("id", data.characterIds);
     if ((cast ?? []).length !== new Set(data.characterIds).size) throw new Error("Choose characters from your own My Cast.");
   }
-  const details: StoryData = { genre: data.genre, styleKey: data.styleKey, characterIds: [...new Set(data.characterIds)], map: EMPTY_MAP, pages: data.guided ? guidedPages(child.age_band) : [newStoryPage()], finished: false, cover: null, ...(data.guided ? { guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), followups: [] } : {}) };
+  const length = data.length ?? defaultLength(child.age_band);
+  const details: StoryData = { genre: data.genre, styleKey: data.styleKey, characterIds: [...new Set(data.characterIds)], map: EMPTY_MAP, pages: data.guided ? guidedPages(lengthBand(length)) : [newStoryPage()], finished: false, cover: null, ...(data.guided ? { guidedBand: z.enum(["sprouts", "explorers", "builders"]).parse(child.age_band), length, followups: [] } : {}) };
   const id = await s.saveCreation(context.userId, { child_id: child.id, kind: "story", title: data.title });
   const { error } = await supabaseAdmin.from("studio_creations").update({ details: details as never, style_key: data.styleKey }).eq("id", id);
   if (error) throw new Error("We couldn’t start that story.");
