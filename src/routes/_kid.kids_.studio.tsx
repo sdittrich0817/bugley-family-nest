@@ -117,7 +117,7 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
   const navigate = useNavigate();
   // Things kids MAKE come first; characters (reused inside them) and PLAY sit below.
   return <div className="space-y-6">
-    <section className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-3")}>
+    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {(["comic", "story", "picture"] as const).map((k, i) => { const c = CREATE_CHOICES.find((x) => x.key === k)!; return <button key={k} onClick={() => onOpen(k)} style={{ animationDelay: `${i * 100}ms` }}
         className="studio-door-glow flex flex-col items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-primary bg-card pb-4 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
         {c.image && <img src={c.image} alt="" className="aspect-[4/3] w-full object-cover" />}
