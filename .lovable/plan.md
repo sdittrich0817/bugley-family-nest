@@ -4,7 +4,7 @@
 
 Replace the Create-side questionnaire with **one saved project workspace**. Keep the creation visible while the child imagines, adds characters, writes, draws and edits. **Imagine → Make → Finish** are orientation markers, not steps to complete in order.
 
-The smallest safe change is a shared workspace around the existing story, comic and picture services—not a new application or a replacement image pipeline. Prove the comic journey first, then extend it to storybooks and pictures. Games stay unchanged.
+Wrap existing creative services in one workspace; do not replace the app or image pipeline. Prove comics first, then storybooks and pictures. Games stay unchanged.
 
 ## 1. What currently fragments the journey
 
@@ -19,7 +19,7 @@ The smallest safe change is a shared workspace around the existing story, comic 
 
 ## 2. The workspace the child sees
 
-After choosing **Comic**, **Storybook** or **Picture**, the workspace opens immediately. The first screen belongs to that creation: an idea box, its output name and an empty canvas. Submitting an idea shows it on the canvas while safety checks and saving run; no drawing happens automatically.
+Choosing **Comic**, **Storybook** or **Picture** immediately opens its workspace: idea box, output name and blank canvas. Submitted words appear while safety checks and saving run; drawing is never automatic.
 
 Throughout the project:
 
@@ -70,15 +70,9 @@ Bugley proposes plans and short idea sparks; **the child still authors every sto
 
 ## 6. What is reused
 
-- Existing Bugley art, brand tokens, age skins, Glow display and voice controls.
-- Character interpretation, preview generation, approval, reference sets, DNA and consistency checks.
-- Story/comic creation, load, edit, outline, image-generation and finish/reopen services.
-- Comic panel/page rendering, bubble placement and text overlays; storybook readers.
-- Picture preview and upgrade services, retaining the saved-preview identity and current prices.
-- Existing creation storage, private image storage, family access, moderation, notifications and Glow accounting.
-- Album lifecycle, book/chapter conversion, Story Bible and parent-controlled print/export paths.
+Keep existing brand/age skins, Bugley and voice controls; character preview/approval, DNA and references; story/comic load/edit/planning and rendering; picture preview/upgrade; private creation/image storage, family access, safety/notifications and Glow; album lifecycle, book/chapter conversion, Story Bible and parent-controlled print/export.
 
-Existing question components may supply individual controls, but numbered screens will no longer define the journey. Old makers remain until their replacements and dependencies work.
+Question components can supply individual controls, but numbered screens no longer define the journey. Keep old makers until replacements and their dependencies work.
 
 ## 7. Risks and safeguards
 
@@ -95,24 +89,24 @@ Existing question components may supply individual controls, but numbered screen
 ## 8. Phased implementation and acceptance checks
 
 ### Milestone 1 — Shared workspace and durable comic draft
-Create the shared shell, typed project state, safe initial save, resume URL/identity and legacy adapters.
+Build the shared shell, typed state, safe initial save, resume identity/URL and legacy adapters.
 
-**Pass:** a comic opens before AI finishes; its original idea survives refresh; rejected input can be corrected; existing comics, stories, books and characters still open. No Glow spent by saving/resuming.
+**Pass:** the workspace opens before AI finishes; an idea survives refresh; rejected input can be corrected; existing creations still open; saving/resuming spends no Glow.
 
-### Milestone 2 — Complete continuous comic journey
-Integrate in-project characters, visible storyboard, explicit planning approval, independent writing/drawing, selected-panel edits, finish/reopen and complete revision restoration.
+### Milestone 2 — Complete comic journey
+Integrate in-project characters, visible storyboard, saved outline approval, independent writing/drawing, selected-panel edits, finish/reopen and complete revision restoration.
 
-**Pass:** the Pickles journey never leaves its comic; supplied facts are not requested again; approval attaches the character; changing panel four preserves panels one–three; resume preserves outline approval and reference revisions; real generated art reads back through the UI.
+**Pass:** Pickles never leaves his comic; supplied facts are not requested again; approval attaches the character; editing panel four preserves panels one–three; resume preserves approvals/reference revisions; generated art reads back through the UI.
 
 ### Milestone 3 — Storybooks and pictures
-Reuse the same shell and save/resume contract with kind-specific editors. Storybooks preserve exact child words and chapter continuity. Pictures take the shorter idea → preview → optional upgrade path and reopen for editing.
+Reuse the shell/save contract with kind-specific editors. Preserve exact story words, chapter continuity and the shorter picture preview/upgrade path; enable picture reopen/edit.
 
-**Pass:** old and new creations reopen; picture preview remains 1 Glow and upgrade 2 more; story writing remains free; book/print links remain compatible.
+**Pass:** old/new creations reopen; picture preview costs 1 Glow, upgrade 2 more; story writing is free; book/print links remain compatible.
 
 ### Milestone 4 — Refinement and regression
-Remove unused transitions only after replacement coverage. Test phone/tablet/laptop layouts, all established age bands, supported voice/read-aloud, save conflicts, family isolation, moderation, character locks, history and normal/error/retry Glow paths. Record actual timing.
+Remove obsolete transitions only after replacement coverage. Test phone/tablet/laptop, established age bands, supported voice/read-aloud, save conflicts, isolation, moderation, reference locks, history and normal/error/retry Glow paths. Record actual timings.
 
-**Pass:** real saved-project flows succeed end-to-end; no duplicate charges or unexpected automatic drawings; unrelated accounts, curriculum, Parent Hub, books and games remain intact. Report any device/provider or testing limitations rather than claiming unverified behavior.
+**Pass:** saved-project flows succeed end-to-end; no duplicate charges or automatic drawings; accounts, curriculum, Parent Hub, books and games remain intact. Report device/provider/testing limitations honestly.
 
 ## Approval boundary
 
