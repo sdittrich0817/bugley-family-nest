@@ -55,3 +55,4 @@
 - [x] Approved-fix regression check: 136 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.
 - [x] Studio Create redesign: character vault + 3-step hero builder with detail-check, child-chosen story/comic length, approved outlines, full version history with undo/reopen, actionable Bugley chips, glow idempotency + kind-aware refunds; 152 tests pass, typecheck clean.
 - [ ] Live-verify the new Studio create flow end-to-end in preview (blocked: Dawnie Dee’s secret numbers unknown; need them or permission to reset).
+- [x] Studio 2.1: idea box first, no per-page AI question swap, Comic/Story/Picture up front, timing logs

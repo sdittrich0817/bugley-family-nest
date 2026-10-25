@@ -19,8 +19,10 @@ export type HeroRole = "hero" | "sidekick" | "villain";
 const ROLE_Q: Record<HeroRole, string> = { hero: "Who’s our hero?", sidekick: "Who’s the sidekick?", villain: "Who’s the villain?" };
 const STEPS = 4;
 
-export function HeroBuilder({ child, chat, styleKey, role = "hero", onDone, onBack }: {
+export function HeroBuilder({ child, chat, styleKey, role = "hero", onDone, onBack, initialIdea = "", initialName = "" }: {
   child: SidekickChild; chat: BugleyChat; styleKey: string; role?: HeroRole; onDone: (id: string) => void; onBack: () => void;
+  /** Words the child already said in their opening idea; we start from these instead of asking again. */
+  initialIdea?: string; initialName?: string;
 }) {
   const [step, setStep] = useState(0);
   const [idea, setIdea] = useState("");
@@ -29,7 +31,7 @@ export function HeroBuilder({ child, chat, styleKey, role = "hero", onDone, onBa
   const [checking, setChecking] = useState(false);
   const [personality, setPersonality] = useState("");
   const [special, setSpecial] = useState("");
-  const [name, setName] = useState("");
+  const [name, setName] = useState(initialName.slice(0, 40));
   const [options, setOptions] = useState<{ path: string; url: string }[]>([]);
   const [mood, setMood] = useState<"flying" | "painting" | "celebrating">("flying");
   const [note, setNote] = useState<{ reply: string; chips: string[] } | null>(null);
@@ -49,6 +51,7 @@ export function HeroBuilder({ child, chat, styleKey, role = "hero", onDone, onBa
     } catch { setFollowup(null); setStep(1); }
     finally { setChecking(false); }
   }
+  useEffect(() => { const v = initialIdea.trim().slice(0, 160); if (v) { setIdea(v); void checkIdea(v, []); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const pickIdea = (text: string) => { const v = text.trim().slice(0, 160); if (!v) return; setIdea(v); setExtra([]); void checkIdea(v, []); };
   const pickExtra = (text: string) => { const v = text.trim().slice(0, 120); if (!v) return; const next = [...extra, v]; setExtra(next); void checkIdea(idea, next); };
 
