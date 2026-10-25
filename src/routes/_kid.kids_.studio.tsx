@@ -115,18 +115,16 @@ const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", create: "Choos
 function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
   const sprouts = child.age_band === "sprouts";
   const navigate = useNavigate();
-  const doors = [
-    { label: "CREATE", icon: Paintbrush, go: () => onOpen("create") },
-    { label: "PLAY", icon: Gamepad2, go: () => void navigate({ to: "/kids/studio/games" }) },
-  ];
+  // Things kids MAKE come first; characters (reused inside them) and PLAY sit below.
   return <div className="space-y-6">
-    <section className="grid gap-5 sm:grid-cols-2">
-      {doors.map(({ label, icon: Icon, go }, i) => <button key={label} onClick={go} style={{ animationDelay: `${i * 120}ms` }}
-        className={cn("studio-door-glow flex flex-col items-center justify-center gap-4 rounded-[2.5rem] border-4 border-primary bg-card p-8 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring", sprouts ? "min-h-[300px]" : "min-h-[260px]")}>
-        <span className="flex size-28 items-center justify-center rounded-full bg-primary text-primary-foreground"><Icon className="size-14" /></span>
-        <span className={cn("font-display tracking-wide", sprouts ? "text-5xl" : "text-4xl")}>{label}</span>
-      </button>)}
+    <section className={cn("grid gap-4", sprouts ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-3")}>
+      {(["comic", "story", "picture"] as const).map((k, i) => { const c = CREATE_CHOICES.find((x) => x.key === k)!; return <button key={k} onClick={() => onOpen(k)} style={{ animationDelay: `${i * 100}ms` }}
+        className="studio-door-glow flex flex-col items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-primary bg-card pb-4 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+        {c.image && <img src={c.image} alt="" className="aspect-[4/3] w-full object-cover" />}
+        <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>{k === "comic" ? "Make a Comic" : k === "story" ? "Make a Story" : "Make a Picture"}</span>
+      </button>; })}
     </section>
+    <div className="flex justify-center"><Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button></div>
     <CharacterVault child={child} onBuild={() => onOpen("character")} />
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
