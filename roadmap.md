@@ -61,6 +61,7 @@
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
 
 ## Create Studio V3 (comic journey) — built 2026-10-25
+- [ ] Review and approve character-first revision: bigger helping Bugley sitewide; new/saved character, freeform description with missing-detail probing, then picture/comic/story choice; title and chosen count, child-described panels, optional arc help and prompt-based image revisions (waiting for Shea's architecture approval).
 - New V3 comic experience at /kids/studio/v3 alongside the classic Studio (unchanged).
 - Spark → 4-scene storyboard → character approval → one-scene-at-a-time canvas → cover/finish.
 - Reuses workspace persistence, safety guards, Character Lock, Glow charging; no games changes.
