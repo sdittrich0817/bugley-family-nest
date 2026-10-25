@@ -47,3 +47,22 @@ export function beatQuestion(band: string, index: number, map: StoryData["map"])
 export function cleanSparks(chips: string[]) {
   return chips.map((s) => s.replace(/[.!?]/g, "").trim()).filter((s) => { const n = s.split(/\s+/).length; return n >= 2 && n <= 5; }).slice(0, 3);
 }
+/** What the Studio learned from a child's opening idea. Empty strings mean "not said yet; ask". */
+export type IdeaFacts = { genre: string; heroName: string; heroLooks: string; place: string; problem: string };
+/** Map an AI-read tone/genre word onto an allowed genre, or null so we ask. */
+export function ideaGenre(word: string): (typeof GENRES)[number] | null {
+  const w = word.trim().toLowerCase();
+  if (!w) return null;
+  const hit = GENRES.find((g) => g.toLowerCase() === w || g.toLowerCase().startsWith(w));
+  if (hit) return hit;
+  if (/funny|silly|goofy/.test(w)) return "Funny";
+  if (/spook|ghost|halloween/.test(w)) return "Spooky-Not-Scary";
+  if (/animal/.test(w)) return "Animal Tales";
+  if (/hero|super/.test(w)) return "Superhero";
+  return null;
+}
+/** Reuse an approved character whose name the child already said, instead of rebuilding them. */
+export function matchCastByName<T extends { id: string; title: string }>(cast: T[], name: string): T | undefined {
+  const n = name.trim().toLowerCase();
+  return n ? cast.find((c) => c.title.trim().toLowerCase() === n) : undefined;
+}
