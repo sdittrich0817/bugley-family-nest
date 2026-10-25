@@ -13,9 +13,9 @@ export function BugleyGuide({ child, chat }: { child: SidekickChild; chat: Bugle
   const sprouts = child.age_band === "sprouts";
   useEffect(()=>{if(sprouts&&!chat.busy&&last)speak(last);},[last,sprouts,chat.busy]);
   return <div className="relative flex items-start gap-3 sm:gap-4" aria-live="polite">
-    <div key={last} className="studio-guide-fly shrink-0">
-      {child.age_band === "builders" ? <BugleyMature variant="headphones" size={64} />
-        : <Bugley stage={child.bugley_stage} expression={chat.busy ? "thinking" : "happy"} glow size={sprouts ? 96 : 80} />}
+    <div key={last} className="bugley-companion studio-guide-fly shrink-0">
+      {child.age_band === "builders" ? <BugleyMature variant="headphones" size="100%" />
+        : <Bugley stage={child.bugley_stage} expression={chat.busy ? "thinking" : "happy"} glow size="100%" />}
     </div>
     <div className="min-w-0 flex-1 space-y-2 pt-1">
       <div key={last} className={cn("relative rounded-3xl rounded-tl-md bg-card px-4 py-3 font-semibold leading-snug shadow-soft animate-in fade-in slide-in-from-left-2 duration-300", sprouts ? "text-xl" : "text-lg")}>

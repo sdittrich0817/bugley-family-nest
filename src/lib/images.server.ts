@@ -139,7 +139,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; op?: string | undefined }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -173,6 +173,12 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   if (!style) return { ok: false, reply: "Pick a style first!" };
   if (!model) return { ok: false, reply: NOT_READY };
   const upgrade = input.pictureFlow === true && input.mode === "final" && !!input.previewPath;
+  if (input.editPath) {
+    if (!input.lockId || !input.editPath.startsWith(`${userId}/${child.id}/`) || input.editPath.includes("..")) return { ok: false, reply: "Choose your own saved scene." };
+    const { data: source } = await sb.from("studio_creations").select("images,details").eq("id", input.lockId).eq("parent_id", userId).eq("child_id", child.id).is("deleted_at", null).maybeSingle();
+    const paths = [...(source?.images ?? []), ...((source?.details as any)?.pages ?? []).flatMap((p: any) => p.panels ? p.panels.map((x: any) => x.image) : [p.image])];
+    if (!paths.includes(input.editPath) || !takesRefs(model, 1)) return { ok: false, reply: "Your saved scene couldn’t be used as a reference. Your picture is safe." };
+  }
   if (upgrade) {
     if (!input.previewPath?.startsWith(`${userId}/${child.id}/`) || !takesRefs(model, 1)) return { ok: false, reply: "My paintbrush needs matching-picture settings first. Your preview is safe!" };
     if (model.model === "google/nano-banana-pro") model = { ...model, settings: { ...model.settings, resolution: "4K", output_format: "png" } };
@@ -183,7 +189,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     const l = await loadLocked(sb, userId, child.id, ids, input.styleKey);
     if (!l) return { ok: false, reply: "Choose a hero with matching reference pictures in this look. Your words are safe." };
     locked = l;
-    if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
+    if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade || input.editPath ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
   }
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
@@ -196,9 +202,9 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     const idea = input.pictureFlow ? enrichPictureIdea(input.description) : input.description;
     const description = locked.length ? `${idea}. Featuring these characters looking EXACTLY as in the reference images and exactly as described (do not change their look unless the scene asks): ${dna}` : idea;
     const prompt = buildPrompt(style.recipe, description, input.mode);
-    const previewRefs = upgrade && input.previewPath ? await signPaths([input.previewPath]) : [];
+    const previewRefs = input.editPath ? await signPaths([input.editPath]) : upgrade && input.previewPath ? await signPaths([input.previewPath]) : [];
     const refs = [...previewRefs, ...locked.flatMap((c) => c.refs)];
-    const paintPrompt = upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
+    const paintPrompt = input.editPath ? `${prompt}. The first reference is the existing scene. Change ONLY what the scene instructions request; retain its composition, subjects, poses, details and colors wherever not changed. Other references lock the characters.` : upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
     // 4–6) model, safety, drift (up to 2 free retries; keep the best match)
     let best: { src: string; score: number } | null = null;
     const requestId = crypto.randomUUID();

@@ -84,7 +84,7 @@ function Panel({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
   const sprouts = child.age_band === "sprouts";
   return <div className="flex h-full min-h-0 flex-col">
     <div className="flex items-center gap-3 border-b border-border pb-3">
-      <BugleyFace child={child} size={56} thinking={chat.busy} />
+      <div className="studio-guide-fly"><BugleyFace child={child} size={96} thinking={chat.busy} /></div>
       <div><p className="font-display text-lg leading-tight">Bugley</p><p className="text-xs text-muted-foreground">Your AI helper (not a person!)</p></div>
     </div>
     <div className="min-h-0 flex-1 space-y-3 overflow-y-auto py-4" aria-live="polite">
@@ -106,8 +106,8 @@ function Panel({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
 export function Sidekick({ child, chat }: { child: SidekickChild; chat: BugleyChat; className?: string }) {
   const [open, setOpen] = useState(false);
   return <>
-    <button onClick={() => setOpen(true)} aria-label="Chat with Bugley" className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-card py-2 pl-2 pr-4 font-display shadow-glow ring-4 ring-primary/40 transition hover:scale-105">
-      <BugleyFace child={child} size={48} /><span>Chat</span>
+    <button onClick={() => setOpen(true)} aria-label="Chat with Bugley" className="fixed bottom-3 right-3 z-40 flex items-center gap-2 rounded-full bg-card py-1 pl-1 pr-3 font-display shadow-glow ring-4 ring-primary/40 transition hover:scale-105">
+      <div className="studio-guide-fly"><BugleyFace child={child} size={88} /></div><span>Chat</span>
     </button>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetContent side="bottom" className="flex h-[85vh] flex-col rounded-t-3xl">

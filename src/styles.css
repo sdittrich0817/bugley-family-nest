@@ -84,6 +84,8 @@
   --space-section: clamp(3.5rem, 8vw, 7rem);
   --space-gutter: clamp(1.25rem, 4vw, 2rem);
   --control-h: 2.75rem;
+  --bugley-help-size: 9rem;
+  --bugley-help-small: 6rem;
   --btn-radius: 9999px;
   --dusk: oklch(0.27 0.06 268);
   --bugley-pupil: oklch(0.2 0.05 268);
@@ -256,7 +258,7 @@
   position: absolute;
   left: 88%;
   top: 10%;
-  width: 10%;
+  width: 16%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   animation: home-bugley-flight 10s ease-in-out infinite;
@@ -316,6 +318,9 @@
   75% { transform: translate(4px, 5px) rotate(3deg); }
 }
 .studio-guide-fly { animation: studio-guide-swoop 0.7s ease-out both, studio-guide-hover 4s ease-in-out 0.7s infinite; }
+.bugley-companion { width: var(--bugley-help-size); height: var(--bugley-help-size); }
+.bugley-small-companion { width: var(--bugley-help-small); height: var(--bugley-help-small); }
+@media (max-width: 420px) { :root { --bugley-help-size: 7rem; --bugley-help-small: 5rem; } }
 @keyframes studio-cheer { 0%,100% { transform: translateY(0) scale(1); } 40% { transform: translateY(-22px) scale(1.12) rotate(-8deg); } 70% { transform: translateY(-6px) rotate(6deg); } }
 @keyframes studio-paint { 0%,100% { transform: rotate(-10deg) translateX(-6px); } 50% { transform: rotate(10deg) translateX(6px); } }
 @keyframes studio-paint-fill { from { width: 5%; } to { width: 95%; } }
@@ -350,7 +355,7 @@
 }
 @media (min-width: 600px) {
   .home-hero-art { width: max(100cqw, 149.057cqh); height: max(100cqh, 67.089cqw); }
-  .home-hero-window-bugley { left: 78%; top: 30%; width: 7%; animation-name: home-bugley-flight-wide; }
+  .home-hero-window-bugley { left: 78%; top: 30%; width: 11%; animation-name: home-bugley-flight-wide; }
   .home-hero-copy { justify-content: center; padding-block: 24px; }
   .home-hero-words { width: 40%; max-width: 448px; gap: 18px; }
   .home-hero-actions { flex-direction: column; align-items: flex-start; }
