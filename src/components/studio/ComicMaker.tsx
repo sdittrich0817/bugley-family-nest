@@ -162,7 +162,7 @@ export function PageGrid({ page, urls, selected, onSelect }: { page: ComicPage; 
 }
 
 type DragKind = "move" | "resize" | "tail";
-function PanelCanvas({ panel, url, aspect, editable, selected, onSelect, onLayers }: { panel: Panel; url?: string | undefined; aspect?: number; editable?: boolean; selected?: string | null; onSelect?: (id: string) => void; onLayers?: (l: Layer[]) => void }) {
+export function PanelCanvas({ panel, url, aspect, editable, selected, onSelect, onLayers }: { panel: Panel; url?: string | undefined; aspect?: number; editable?: boolean; selected?: string | null; onSelect?: (id: string) => void; onLayers?: (l: Layer[]) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
   function start(e: RPointerEvent, layer: Layer, kind: DragKind) {
@@ -214,7 +214,7 @@ function ComicCover({ comic, cast }: { comic: Comic; cast: { id: string; title: 
   </div>;
 }
 
-export function ComicReader({ comic, child, onBack }: { comic: Comic; child: SidekickChild; onBack?: (() => void) | undefined }) {
+export export function ComicReader({ comic, child, onBack }: { comic: Comic; child: SidekickChild; onBack?: (() => void) | undefined }) {
   const [page, setPage] = useState(-1);
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const current = comic.data.pages[page];
