@@ -5,6 +5,7 @@ import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
 import { BLOCK_REPLY, DEFAULT_CHIPS, findFamilyName, quickPersonalCheck, type GuardDecision } from "@/lib/studio-guard";
 import { storyCoachingInstructions } from "./story";
+import { bugleyActions } from "@/lib/studio-actions";
 
 type Sb = SupabaseClient<any>;
 async function admin() { return (await import("@/integrations/supabase/client.server")).supabaseAdmin; }
