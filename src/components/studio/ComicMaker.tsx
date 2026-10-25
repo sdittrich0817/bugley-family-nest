@@ -11,6 +11,8 @@ import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { askBugley } from "@/lib/studio.functions";
 import { createComic, editComic, getComic } from "@/lib/comic.functions";
+import { planOutline } from "@/lib/story.functions";
+import { OutlineScreen } from "./Outline";
 import { bookFromOneShot, startChapter, getBook } from "@/lib/book.functions";
 import { printMessage, printedPages } from "@/lib/book";
 import { comicBeats, comicQuestion, comicCells, comicPanelAspect, type Comic, type ComicPage, type Layer, type Layout, type Panel } from "@/lib/comic";
