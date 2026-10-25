@@ -39,7 +39,7 @@ export const createComic = createServerFn({ method: "POST" }).middleware([requir
 const browserPage = comicPageSchema.extend({ panels: z.array(z.object({ id: z.string().uuid(), description: z.string().max(600), angle: comicPageSchema.shape.panels.element.shape.angle, layers: z.array(layerSchema).max(12) })).min(1).max(6) });
 
 export const editComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({
-  action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers"]), environment: env,
+  action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers", "undo", "reopen"]), environment: env,
   map: storyMapSchema.optional(), page: browserPage.optional(), pageId: z.string().uuid().optional(), panelId: z.string().uuid().optional(), to: z.number().int().min(0).optional(), description: z.string().max(600).optional(), text: z.string().max(200).optional(), sfx: z.enum(["POW!", "WHOOSH!", "ZAP!", "SPLASH!"]).optional(), title: z.string().trim().min(1).max(80).optional(), layers: z.array(layerSchema).max(12).optional(),
 }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
@@ -47,7 +47,8 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   const { loadComic, persistComic } = await import("./comic.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const comic = await loadComic(context.supabase, context.userId, child.id, data.id);
-  if (comic.data.finished && !["dialogue", "layers"].includes(data.action)) throw new Error("This comic is finished. You can read it in your album.");
+  if (comic.data.finished && !["dialogue", "layers", "reopen"].includes(data.action)) throw new Error("This comic is finished. You can read it in your album.");
+  const { recordVersion, popVersion } = await import("./versions.server");
   const check = async (text: string) => {
     if (!text.trim()) return;
     const guard = await s.guardChildText(context.supabase, context.userId, child, text, "comic");
@@ -62,8 +63,17 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "panel" && panel) {
     if (!data.description?.trim()) throw new Error("Tell Bugley what happens.");
     await check(data.description);
-    if (panel.description !== data.description) { panel.image = null; panel.sketch = null; }
+    if (panel.description !== data.description) { await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image }); panel.image = null; panel.sketch = null; }
     panel.description = data.description;
+  } else if (data.action === "undo" && panel) {
+    const prior = await popVersion(context.userId, child.id, comic.id, panel.id);
+    if (!prior) throw new Error("Nothing to take back on this panel yet.");
+    await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image });
+    if (prior.text != null) panel.description = prior.text;
+    panel.image = prior.image ?? null;
+    if (prior.image) panel.dialogueDone = false;
+  } else if (data.action === "reopen") {
+    comic.data.finished = false;
   } else if (data.action === "dialogue" && panel) {
     await check(data.text ?? "");
     if (data.sfx) await check(data.sfx);
@@ -127,6 +137,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
     if (data.action === "cover") comic.data.cover = r.path;
     else if (panel && data.action === "sketch") { panel.sketch = r.path; panel.image = null; }
     else if (panel) {
+      if (panel.image) await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image });
       panel.image = r.path;
       if (comic.data.guidedBand) {
         const { placeComicBubble } = await import("./comic.server");
