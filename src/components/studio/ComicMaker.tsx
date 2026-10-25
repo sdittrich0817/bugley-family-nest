@@ -214,7 +214,7 @@ function ComicCover({ comic, cast }: { comic: Comic; cast: { id: string; title: 
   </div>;
 }
 
-export export function ComicReader({ comic, child, onBack }: { comic: Comic; child: SidekickChild; onBack?: (() => void) | undefined }) {
+export function ComicReader({ comic, child, onBack }: { comic: Comic; child: SidekickChild; onBack?: (() => void) | undefined }) {
   const [page, setPage] = useState(-1);
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const current = comic.data.pages[page];

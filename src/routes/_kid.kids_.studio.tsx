@@ -66,6 +66,7 @@ const CREATE_CHOICES: StepChoice[] = [
 ];
 
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
+  const navigate = useNavigate();
   const band = child.age_band;
   const sprouts = band === "sprouts";
   const search = Route.useSearch();
@@ -102,12 +103,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
       {!["create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
-          : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
+          : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); if (v === "picture") setPictureId(null); setInBook(false); setView(v); }} />
           : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />
           : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
-          : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
-          : view === "comic" ? <ComicMaker child={child} chat={chat} comicId={comicId} onComic={setComicId} onDirty={setStoryDirty} />
           : <Album onPicture={(id) => { setPictureId(id); setView("picture"); }} child={child} onStory={(id) => { setStoryId(id); setView("story"); }} onComic={(id) => { setComicId(id); setView("comic"); }} onBook={(id) => { setBookId(id); setView("book"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />
@@ -124,7 +123,7 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
   // Things kids MAKE come first; characters (reused inside them) and PLAY sit below.
   return <div className="space-y-6">
     <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {(["comic", "story", "picture"] as const).map((k, i) => { const c = CREATE_CHOICES.find((x) => x.key === k)!; return <button key={k} onClick={() => onOpen(k)} style={{ animationDelay: `${i * 100}ms` }}
+      {(["comic", "story", "picture"] as const).map((k, i) => { const c = CREATE_CHOICES.find((x) => x.key === k); if (!c) return null; return <button key={k} onClick={() => onOpen(k)} style={{ animationDelay: `${i * 100}ms` }}
         className="studio-door-glow flex flex-col items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-primary bg-card pb-4 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
         {c.image && <img src={c.image} alt="" className="aspect-[4/3] w-full object-cover" />}
         <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>{k === "comic" ? "Make a Comic" : k === "story" ? "Make a Story" : "Make a Picture"}</span>
