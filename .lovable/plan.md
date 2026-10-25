@@ -76,15 +76,15 @@ Question components can supply individual controls, but numbered screens no long
 
 ## 7. Risks and safeguards
 
-- **Draft compatibility:** current readers expect fully shaped story/comic details. Introduce backward-compatible, versioned workspace metadata and kind-specific draft readers before saving incomplete projects. Do not feed draft payloads directly to legacy production/print parsers.
-- **Data changes:** prefer additive JSON metadata in existing creation records; no new projects table or new creation kind is currently justified. Full history may need an additive migration for complete snapshots and non-destructive restore. Review that migration before applying it; do not rewrite historical creations.
-- **Full history:** extend rather than assume existing undo covers everything. Preserve scene text, dialogue/layers, cast/reference revisions, outline and relevant metadata. Restore becomes a new revision; protected image/model locks are never weakened.
-- **Cast and visual locks:** current creation services cap cast at three and books support at most three locked characters. Keep those limits; validate attachments server-side. Preserve book-wide style/model locks and reference provenance. A newly approved reference does not retroactively redraw art.
-- **Safety and access:** all new child-text paths retain moderation, parent notifications and verified child/family ownership. Unsafe input gets a recoverable correction in the same workspace. No direct browser writes or new upload/camera features.
-- **Glow:** no price, allowance, reset or chargeable-action changes. No drawing on workspace open, autosave, resume or character selection. Preserve operation IDs across retries, existing refunds and generation claims; keeping a workspace visible must not cause duplicate requests.
-- **Generation limitations:** retain fail-closed image and drift checks. Audit and report provider/time-out/idempotency gaps before claiming dependable multi-panel generation. Never weaken checks to make the journey appear smoother.
-- **Age bands:** preserve Sprouts 5–6, Explorers 7–9 and Builders 10–12. The brief's 5–7 / 8–10 / 11–12 ranges describe guidance intent, not a change to established family placement.
-- **Performance:** measure idea-to-visible-workspace, safe save, interpretation and generation separately. Faster orientation is not evidence that AI generation itself is faster.
+- **Draft compatibility:** existing readers expect production-ready details. Add versioned, kind-specific draft metadata/readers before saving incomplete projects; preserve legacy content and print parsers. Reuse existing creation kinds/records, not a new projects table.
+- **Migration:** additive JSON metadata should cover drafts. Complete history may require an additive migration for full snapshots; inspect before applying, without rewriting historical creations.
+- **History:** current undo is incomplete/destructive. Include dialogue/layers, cast/reference revisions, outlines and scene content; restoring creates a new revision and never weakens protected art/model locks.
+- **Cast/locks:** current services cap cast at three; books support three locked characters. Preserve those limits, book-wide visual locks and reference provenance. Attachments require server validation; new references do not retroactively redraw art.
+- **Safety/access:** retain moderation, parent notifications and child/family ownership on every new path. Unsafe ideas remain correctable within the workspace. No direct browser writes, uploads or camera features.
+- **Glow:** no changes to prices, allowances, resets or chargeable actions. No generation on open/save/resume/selection. Keep retry operation IDs, generation claims and refunds; a persistent screen must not duplicate requests.
+- **Provider limits:** retain fail-closed image/drift checks. Report timeout or idempotency gaps before promising reliable multi-panel generation; never weaken checks for smoothness.
+- **Age bands:** retain Sprouts 5–6, Explorers 7–9, Builders 10–12. The brief's different ranges inform guidance, not family placement changes.
+- **Performance:** measure visible workspace, safe save, interpretation and generation separately. Faster orientation does not prove faster AI.
 
 ## 8. Phased implementation and acceptance checks
 
