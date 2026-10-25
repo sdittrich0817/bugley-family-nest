@@ -14,6 +14,7 @@ import { createComic, editComic, getComic } from "@/lib/comic.functions";
 import { bookFromOneShot, startChapter, getBook } from "@/lib/book.functions";
 import { printMessage, printedPages } from "@/lib/book";
 import { comicBeats, comicQuestion, comicCells, comicPanelAspect, type Comic, type ComicPage, type Layer, type Layout, type Panel } from "@/lib/comic";
+import { beatBandOf } from "@/lib/story";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
