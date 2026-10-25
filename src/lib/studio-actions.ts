@@ -15,7 +15,7 @@ export type StudioActionId = keyof typeof STUDIO_ACTIONS;
 
 const INTENTS: [RegExp, StudioActionId][] = [
   [/\b(new|make|create|another)\b.*\b(character|hero|creature|monster|robot|animal)\b/, "open:character_new"],
-  [/\b(character|hero)s?\b/, "open:characters"],
+  [/\b(characters?|heros?|heroes)\b/, "open:characters"],
   [/\b(draw|paint|picture|sketch|art)\b/, "open:picture"],
   [/\bcomic\b/, "open:comic"],
   [/\b(story|stories|tale|book)\b/, "open:story"],
