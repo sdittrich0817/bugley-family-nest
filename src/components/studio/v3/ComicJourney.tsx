@@ -1,293 +1,124 @@
-// Create Studio V3 — one continuous comic journey: Spark → Adventure → Characters → Scenes → Finish.
-// Child-facing orchestration only; all saving, safety, Character Lock and Glow charging stay in existing services.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Heart, Pencil, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ArrowRight, BookOpen, Check, History, Lightbulb, Mic, Paintbrush, Plus, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Bugley } from "@/components/brand/Bugley";
-import { GlowMeter } from "@/components/studio/GlowMeter";
-import { ComicReader, PanelCanvas } from "@/components/studio/ComicMaker";
-import type { SidekickChild } from "@/components/studio/Sidekick";
-import { startV3Comic, proposeComicArc, reviseComicScene } from "@/lib/v3.functions";
-import { getWorkspace, updateWorkspace } from "@/lib/workspace.functions";
-import { getComic, editComic } from "@/lib/comic.functions";
-import { listCast, makeHeroOptions, saveHero } from "@/lib/images.functions";
+import { Textarea } from "@/components/ui/textarea";
+import { GlowMeter } from "../GlowMeter";
+import { ComicReader, PanelCanvas } from "../ComicMaker";
+import { StoryReader } from "../StoryMaker";
+import { useVoiceInput, type SidekickChild } from "../Sidekick";
+import { BugleyCompanion } from "./BugleyCompanion";
+import { getV3CharacterDraft, saveV3CharacterDraft, readV3Character, startV3Creation, helpV3Scene, paintV3Scene } from "@/lib/v3.functions";
+import { getWorkspace, updateWorkspace, workspaceHistory, restoreWorkspace } from "@/lib/workspace.functions";
+import { listCast, stylesOptions, makeHeroOptions, saveHero, upgradePicture, type CastMember } from "@/lib/images.functions";
+import { editComic } from "@/lib/comic.functions";
+import { editStory } from "@/lib/story.functions";
+import { bookFromOneShot } from "@/lib/book.functions";
 import { getChildGlow } from "@/lib/glow.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
-import { comicPanelAspect, type Comic } from "@/lib/comic";
-import { cn } from "@/lib/utils";
+import { comicPanelAspect } from "@/lib/comic";
+import { STYLE_THUMBS } from "@/lib/style-thumbs";
+import { useScrollTopOn } from "@/lib/scroll";
+import type { OutputKind, WorkspaceProject } from "@/lib/workspace";
 
-const SCENE_COST = 3; // existing "final picture" Glow cost
-const PREVIEW_COST = 1; // existing hero-options Glow cost
-
-type Phase = "spark" | "story" | "characters" | "scenes" | "done";
-
-function phaseOf(comic: Comic | null): Phase {
-  if (!comic) return "spark";
-  if (comic.data.finished) return "done";
-  if (!comic.data.workspace?.outlineApproved) return "story";
-  if (!comic.data.characterIds.length) return "characters";
-  return "scenes";
-}
-
-export function ComicJourney({ child, projectId, onExit }: { child: SidekickChild; projectId?: string | undefined; onExit: () => void }) {
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-  const env = getStripeEnvironment();
-  const load = useServerFn(getComic);
-  const openWorkspace = useServerFn(getWorkspace);
-  const { data: glow, refetch: refetchGlow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
-  const sprouts = child.age_band === "sprouts";
-
-  // Resume an existing V3 comic.
-  useEffect(() => {
-    if (!projectId || comic) return;
-    void (async () => {
-      try {
-        const ws = await openWorkspace({ data: { childId: child.id, id: projectId } });
-        if (!ws.workspace.v3) { setNote("That comic opens in the classic Studio."); return; }
-        setComic(await load({ data: { childId: child.id, id: projectId } }));
-      } catch (e) { setNote(e instanceof Error ? e.message : "We couldn’t open that comic."); }
-    })();
-  }, [projectId, comic, child.id, load, openWorkspace]);
-
-  const phase = phaseOf(comic);
-  const refresh = async (id: string) => { const c = await load({ data: { childId: child.id, id } }); setComic(c); return c; };
-  const fail = (e: unknown) => setNote(e instanceof Error ? e.message : "Oops! Your work is saved. Try again.");
-
-  return <div className="space-y-6">
-    <div className="flex items-center justify-between gap-3">
-      <Button variant="ghost" onClick={onExit}><ArrowLeft className="size-5" />Studio</Button>
-      {comic && <span className="font-display text-lg truncate">{comic.title}</span>}
-      {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}
-    </div>
-    {note && <p role="alert" className="rounded-2xl bg-destructive/10 px-4 py-2 font-semibold text-destructive">{note}</p>}
-    {phase === "spark" && <Spark child={child} busy={busy} onStart={async (idea) => {
-      setBusy(true); setNote("");
-      try {
-        const ws = await startV3Comic({ data: { childId: child.id, id: crypto.randomUUID(), idea, environment: env } });
-        setComic(await load({ data: { childId: child.id, id: ws.id } }));
-      } catch (e) { fail(e); } finally { setBusy(false); }
-    }} />}
-    {phase === "story" && comic && <Storyboard child={child} comic={comic} busy={busy} setBusy={setBusy} onNote={setNote} onChange={setComic} onError={fail} />}
-    {phase === "characters" && comic && <MeetCharacters child={child} comic={comic} busy={busy} setBusy={setBusy} onNote={setNote} onChange={setComic} onError={fail} onGlow={() => void refetchGlow()} />}
-    {phase === "scenes" && comic && <Scenes child={child} comic={comic} busy={busy} setBusy={setBusy} onNote={setNote} onChange={setComic} onError={fail} onGlow={() => void refetchGlow()} />}
-    {phase === "done" && comic && <div className="space-y-4">
-      <BugleySays child={child} text="You made a whole comic!" expression="celebrating" />
-      <ComicReader comic={comic} child={child} />
-      <div className="flex justify-center"><Button variant="secondary" onClick={async () => { setBusy(true); try { setComic(await editComic({ data: { childId: child.id, id: comic.id, action: "reopen", environment: env } })); } catch (e) { fail(e); } finally { setBusy(false); } }}><Pencil className="size-4" />Keep working on it</Button></div>
-    </div>}
-    {sprouts && phase !== "done" && <p className="text-center text-sm text-muted-foreground">Bugley saves everything for you.</p>}
-  </div>;
-}
-
-/** Bugley's short, deterministic guidance — no AI call for routine transitions. */
-function BugleySays({ child, text, expression = "happy" }: { child: SidekickChild; text: string; expression?: "happy" | "curious" | "thinking" | "celebrating" }) {
-  return <div className="flex items-center gap-3 rounded-3xl bg-card p-4 shadow-soft">
-    <Bugley stage={child.bugley_stage} expression={expression} size={56} />
-    <p className={cn("font-display", child.age_band === "sprouts" ? "text-2xl" : "text-xl")}>{text}</p>
-  </div>;
-}
-
-/** Moment 1 — The Spark. */
-function Spark({ child, busy, onStart }: { child: SidekickChild; busy: boolean; onStart: (idea: string) => void }) {
-  const [idea, setIdea] = useState("");
-  const sprouts = child.age_band === "sprouts";
-  return <div className="space-y-6">
-    <BugleySays child={child} text="What’s your comic about?" expression="curious" />
-    <Textarea autoFocus value={idea} maxLength={600} disabled={busy} onChange={(e) => setIdea(e.target.value)}
-      placeholder={sprouts ? "A dragon who loves pizza…" : "A purple dragon named Pickles is scared of flying…"}
-      aria-label="Your comic idea" className={cn("min-h-32 rounded-3xl border-4 border-primary/40 bg-card", sprouts ? "text-2xl p-6" : "text-xl p-5")} />
-    <Button size="lg" disabled={busy || idea.trim().length < 3} onClick={() => onStart(idea.trim())} className={cn("w-full rounded-full", sprouts && "h-16 text-2xl")}>
-      <Sparkles className="size-5" />{busy ? "Bugley is listening…" : "Let’s make it!"}
-    </Button>
-  </div>;
-}
-
-/** Moment 2 — The Adventure: four storyboard cards, approve or change one scene. */
-function Storyboard({ child, comic, busy, setBusy, onNote, onChange, onError }: { child: SidekickChild; comic: Comic; busy: boolean; setBusy: (b: boolean) => void; onNote: (n: string) => void; onChange: (c: Comic) => void; onError: (e: unknown) => void }) {
-  const propose = useServerFn(proposeComicArc);
-  const revise = useServerFn(reviseComicScene);
-  const update = useServerFn(updateWorkspace);
-  const asked = useRef(false);
-  const [editing, setEditing] = useState<number | null>(null);
-  const [request, setRequest] = useState("");
-  const outline: string[] = comic.data.outline ?? [];
-  const hero = comic.data.map.hero || "your hero";
-
-  useEffect(() => {
-    if (outline.length === 4 || asked.current) return;
-    asked.current = true;
-    setBusy(true);
-    void propose({ data: { childId: child.id, id: comic.id } })
-      .then(async () => onChange(await getComic({ data: { childId: child.id, id: comic.id } })))
-      .catch(onError)
-      .finally(() => setBusy(false));
-  }, [outline.length, child.id, comic.id, propose, onChange, onError, setBusy]);
-
-  if (outline.length !== 4) return <div className="space-y-4"><BugleySays child={child} text={`Bugley is imagining an adventure for ${hero}…`} expression="thinking" /><div className="grid grid-cols-2 gap-3">{[0, 1, 2, 3].map(i => <div key={i} className="aspect-[4/3] animate-pulse rounded-3xl bg-muted" />)}</div></div>;
-
-  return <div className="space-y-5">
-    <BugleySays child={child} text={`I have an idea for ${hero}’s adventure! What do you think?`} expression="curious" />
-    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {outline.map((line, i) => {
-        const [title, ...rest] = line.split(" — ");
-        return <li key={i} className="rounded-3xl border-2 border-border bg-card p-4 shadow-soft">
-          <p className="text-sm font-semibold text-muted-foreground">Scene {i + 1}</p>
-          <p className="font-display text-lg">{title}</p>
-          <p className="mt-1 text-sm">{rest.join(" — ")}</p>
-          {editing === i
-            ? <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); void (async () => {
-                setBusy(true); onNote("");
-                try { await revise({ data: { childId: child.id, id: comic.id, updatedAt: comic.updatedAt, scene: i, request } }); onChange(await getComic({ data: { childId: child.id, id: comic.id } })); setEditing(null); setRequest(""); }
-                catch (err) { onError(err); } finally { setBusy(false); }
-              })(); }}>
-                <Textarea autoFocus value={request} maxLength={300} disabled={busy} onChange={(e) => setRequest(e.target.value)} placeholder="Make it funnier…" aria-label={`Change scene ${i + 1}`} className="min-h-20 rounded-2xl" />
-                <div className="flex gap-2"><Button size="sm" disabled={busy || request.trim().length < 2}>Change it</Button><Button size="sm" variant="ghost" type="button" onClick={() => setEditing(null)}>Never mind</Button></div>
-              </form>
-            : <Button size="sm" variant="ghost" className="mt-2" disabled={busy} onClick={() => { setEditing(i); setRequest(""); }}><Pencil className="size-4" />Change something</Button>}
-        </li>;
-      })}
-    </ul>
-    <Button size="lg" disabled={busy} className="w-full rounded-full" onClick={() => void (async () => {
-      setBusy(true); onNote("");
-      try { await update({ data: { childId: child.id, id: comic.id, updatedAt: comic.updatedAt, environment: getStripeEnvironment(), outlineApproved: true } }); onChange(await getComic({ data: { childId: child.id, id: comic.id } })); }
-      catch (e) { onError(e); } finally { setBusy(false); }
-    })()}><Heart className="size-5" />I love it!</Button>
-  </div>;
-}
-
-/** Moment 3 — Meet the Characters: reuse an approved character or preview a new one from facts already given. */
-function MeetCharacters({ child, comic, busy, setBusy, onNote, onChange, onError, onGlow }: { child: SidekickChild; comic: Comic; busy: boolean; setBusy: (b: boolean) => void; onNote: (n: string) => void; onChange: (c: Comic) => void; onError: (e: unknown) => void; onGlow: () => void }) {
-  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
-  const facts = comic.data.workspace?.facts;
-  const [name, setName] = useState(facts?.heroName || comic.data.map.hero || "");
-  const [kind, setKind] = useState(facts?.heroLooks || "");
+type CharacterFacts = { name: string; kind: string; color: string; special: string; personality: string; question: string; ideas: string[] };
+export function ComicJourney({ child, projectId, draftId, characterId, onProject, onDraft, onBook, onExit }: { child: SidekickChild; projectId?: string | undefined; draftId?: string | undefined; characterId?: string | undefined; onProject: (id: string) => void; onDraft: (id: string) => void; onBook: (id: string) => void; onExit: () => void }) {
+  const [project, setProject] = useState<WorkspaceProject | null>(null);
+  const [branch, setBranch] = useState<"entry" | "new" | "existing" | "output" | "setup">("entry");
+  const [hero, setHero] = useState<CastMember | null>(null);
+  const [description, setDescription] = useState("");
+  const [style, setStyle] = useState("cartoon");
+  const [facts, setFacts] = useState<CharacterFacts | null>(null);
+  const [followup, setFollowup] = useState("");
   const [options, setOptions] = useState<{ path: string; url?: string }[]>([]);
-  const paint = useServerFn(makeHeroOptions);
-  const approve = useServerFn(saveHero);
-  const update = useServerFn(updateWorkspace);
-  const named = useMemo(() => cast.find(m => name && m.title.toLowerCase() === name.toLowerCase()), [cast, name]);
-
-  async function attach(id: string) {
-    setBusy(true); onNote("");
-    try { await update({ data: { childId: child.id, id: comic.id, updatedAt: comic.updatedAt, environment: getStripeEnvironment(), characterIds: [id] } }); onChange(await getComic({ data: { childId: child.id, id: comic.id } })); }
-    catch (e) { onError(e); } finally { setBusy(false); }
-  }
-  async function preview() {
-    setBusy(true); onNote("");
-    try {
-      const r = await paint({ data: { childId: child.id, styleKey: comic.data.styleKey, name, kind, special: "", personality: "", color: "", environment: getStripeEnvironment(), op: crypto.randomUUID() } });
-      if (!r.ok) { onNote(r.reply); return; }
-      setOptions(r.options); onGlow();
-    } catch (e) { onError(e); } finally { setBusy(false); }
-  }
-  async function choose(path: string) {
-    setBusy(true); onNote("");
-    try {
-      const r = await approve({ data: { childId: child.id, path, styleKey: comic.data.styleKey, name, kind, special: "", personality: "", color: "" } });
-      if (!r.ok) { onNote(r.reply); return; }
-      await attach(r.id);
-    } catch (e) { onError(e); } finally { setBusy(false); }
-  }
-
-  return <div className="space-y-5">
-    <BugleySays child={child} text={named ? `Is this ${name}?` : `Let’s see what ${name || "your hero"} looks like!`} expression="curious" />
-    {named && <button disabled={busy} onClick={() => void attach(named.id)} className="flex w-full items-center gap-4 rounded-3xl border-4 border-primary bg-card p-4 text-left shadow-soft transition hover:shadow-glow">
-      {named.url ? <img src={named.url} alt={named.title} className="size-20 rounded-2xl object-cover" /> : <span className="text-4xl">🐾</span>}
-      <span className="font-display text-xl">Use {named.title}!</span>
-    </button>}
-    {!named && <div className="space-y-4 rounded-3xl bg-card p-5 shadow-soft">
-      <label className="block space-y-1 font-semibold">Name<Input value={name} maxLength={40} disabled={busy} onChange={(e) => { setName(e.target.value); setOptions([]); }} aria-label="Character name" /></label>
-      <label className="block space-y-1 font-semibold">What do they look like?<Input value={kind} maxLength={160} disabled={busy} onChange={(e) => { setKind(e.target.value); setOptions([]); }} aria-label="Character appearance" placeholder="A purple dragon with tiny wings" /></label>
-      <Button disabled={busy || !name.trim() || kind.trim().length < 2} onClick={() => void preview()}>{busy ? "Painting previews…" : `See ${name || "them"} · ${PREVIEW_COST} Glow`}</Button>
-      <div className="grid grid-cols-3 gap-2">{options.map((o, i) => <button key={o.path} disabled={busy} onClick={() => void choose(o.path)} className="rounded-2xl border-4 border-transparent transition hover:border-primary focus-visible:border-primary">
-        <img src={o.url} alt={`${name} preview ${i + 1}`} className="aspect-square w-full rounded-xl object-contain" />
-        <span className="block py-1 text-center text-sm font-semibold">That’s {name}!</span>
-      </button>)}</div>
-    </div>}
-    {cast.filter(m => m.id !== named?.id).length > 0 && <details className="rounded-3xl bg-card p-4 shadow-soft"><summary className="cursor-pointer font-semibold">Or pick from My Characters</summary>
-      <ul className="mt-3 grid grid-cols-3 gap-2">{cast.filter(m => m.id !== named?.id).map(m => <li key={m.id}><button disabled={busy} onClick={() => void attach(m.id)} className="w-full rounded-2xl border-2 border-border p-1 text-center hover:border-primary">
-        {m.url ? <img src={m.url} alt={m.title} className="aspect-square w-full rounded-xl object-cover" /> : <span className="flex aspect-square items-center justify-center text-3xl">🐾</span>}
-        <span className="block truncate text-sm font-semibold">{m.title}</span>
-      </button></li>)}</ul>
-    </details>}
+  const [kind, setKind] = useState<OutputKind>("comic");
+  const [title, setTitle] = useState(""); const [count, setCount] = useState(4);
+  const [at, setAt] = useState(0); const [text, setText] = useState(""); const [dialogue, setDialogue] = useState("");
+  const [revision, setRevision] = useState(""); const [changing, setChanging] = useState(false);
+  const [help, setHelp] = useState<{ question: string; ideas: string[] } | null>(null);
+  const [busy, setBusy] = useState(""); const [note, setNote] = useState("");
+  const [adding, setAdding] = useState(false); const [versions, setVersions] = useState<{ id: string; created_at: string }[] | null>(null);
+  const draftKey = useRef(draftId); const startKey = useRef<string | null>(null); const running = useRef(false);
+  const env = getStripeEnvironment(); const qc = useQueryClient();
+  const load = useServerFn(getWorkspace), update = useServerFn(updateWorkspace), start = useServerFn(startV3Creation);
+  const readCharacter = useServerFn(readV3Character), paintHero = useServerFn(makeHeroOptions), approve = useServerFn(saveHero);
+  const saveDraft = useServerFn(saveV3CharacterDraft), loadDraft = useServerFn(getV3CharacterDraft);
+  const coach = useServerFn(helpV3Scene), paint = useServerFn(paintV3Scene), comicEdit = useServerFn(editComic), storyEdit = useServerFn(editStory);
+  const history = useServerFn(workspaceHistory), restore = useServerFn(restoreWorkspace), book = useServerFn(bookFromOneShot), upgrade = useServerFn(upgradePicture);
+  const { data: cast = [], refetch: refreshCast } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  const { data: styles = [] } = useQuery(stylesOptions);
+  const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
+  useEffect(() => { if (projectId) void load({ data: { childId: child.id, id: projectId } }).then(setProject).catch(e => setNote(e.message)); }, [projectId, child.id]);
+  useEffect(() => { if (draftId && !projectId) { draftKey.current = draftId; setBranch("new"); void loadDraft({ data: { childId: child.id, id: draftId } }).then(d => { setDescription(d.description); setStyle(d.styleKey); }).catch(e => setNote(e.message)); } }, [draftId, projectId]);
+  useEffect(() => { if (characterId && !projectId) { const c = cast.find(c => c.id === characterId); if (c) { setHero(c); setBranch("output"); } } }, [characterId, cast, projectId]);
+  const items: any[] = project?.kind === "comic" ? project.details.pages.flatMap((p: any) => p.panels.map((panel: any, index: number) => ({ ...panel, pageId: p.id, page: p, index }))) : project?.details.pages ?? [];
+  const item = items[at]; const selectedIds: string[] = project?.details.characterIds ?? project?.details.characters ?? [];
+  useEffect(() => { setText(project?.kind === "picture" ? project.workspace.originalIdea : project?.kind === "comic" ? item?.description ?? "" : item?.text ?? ""); setDialogue(item?.layers?.find((l: any) => l.type === "speech")?.text ?? ""); setChanging(false); setRevision(""); setHelp(null); }, [project?.id, project?.updatedAt, at]);
+  useScrollTopOn(`${branch}-${at}-${project?.details.finished}`);
+  async function run(label: string, fn: () => Promise<void>) { if (running.current) return; running.current = true; setBusy(label); setNote(""); try { await fn(); } catch(e) { setNote(e instanceof Error ? e.message : "Your ideas are still here. Try again."); } finally { running.current = false; setBusy(""); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); void qc.invalidateQueries({ queryKey: ["album", child.id] }); } }
+  const id = () => { if (!project) throw new Error("Open your creation first."); return { childId: child.id, id: project.id, environment: env }; };
+  const reload = async () => { if (project) setProject(await load({ data: { childId: child.id, id: project.id } })); };
+  async function attach(c: CastMember) { if (!project) { setHero(c); setBranch("output"); onDraft(""); return; } await run("Meeting your character…", async () => { setProject(await update({ data: { ...id(), updatedAt: project.updatedAt, characterIds: [...new Set([...selectedIds, c.id])] } })); setAdding(false); }); }
+  async function checkCharacter(value: string, wantsHelp = false) { await run("Imagining your character…", async () => {
+    draftKey.current ??= crypto.randomUUID();
+    if (!adding) { await saveDraft({ data: { childId: child.id, id: draftKey.current, description: value, styleKey: style, environment: env } }); onDraft(draftKey.current); }
+    setDescription(value); setOptions([]); setFacts(await readCharacter({ data: { childId: child.id, description: value, help: wantsHelp } })); setFollowup("");
+  }); }
+  async function previews() { if (!facts) return; await run("Painting your character…", async () => { const r = await paintHero({ data: { childId: child.id, styleKey: adding && project ? project.styleKey : style, ...facts, environment: env, op: crypto.randomUUID() } }); if (!r.ok) throw new Error(r.reply); setOptions(r.options); }); }
+  async function choose(path: string) { if (!facts) return; await run("Getting your character ready…", async () => { const r = await approve({ data: { childId: child.id, path, styleKey: adding && project ? project.styleKey : style, ...facts } }); if (!r.ok) throw new Error(r.reply); const refreshed = await refreshCast(); const c = refreshed.data?.find(c => c.id === r.id); if (!c) throw new Error("Your character saved. Open My Characters to choose them."); if (project) { setProject(await update({ data: { ...id(), updatedAt: project.updatedAt, characterIds: [...new Set([...selectedIds, c.id])] } })); setAdding(false); } else { setHero(c); setBranch("output"); onDraft(""); } setOptions([]); }); }
+  async function saveWords() { if (!project || !item || !text.trim()) return; if (project.kind === "comic") await comicEdit({ data: { ...id(), action: "panel", pageId: item.pageId, panelId: item.id, description: text } }); else await storyEdit({ data: { ...id(), action: "page", page: { id: item.id, step: item.step, text, description: text === item.text ? item.description ?? "" : "", chapter: item.chapter ?? "" } } }); await reload(); }
+  async function draw() { if (!project) return; await run("Painting your scene…", async () => {
+    if (!changing && !help) { const checked = await coach({ data: { ...id(), text: text.slice(0, 600), help: false } }); if (checked.question) { setHelp(checked); return; } }
+    setProject(await paint({ data: { ...id(), updatedAt: project.updatedAt, itemId: item?.id, text, revision: changing ? revision : undefined, op: crypto.randomUUID() } }));
+  }); }
+  useEffect(() => {
+    if (!project || project.details.finished || busy || changing || !text.trim()) return;
+    const saved = project.kind === "picture" ? project.workspace.originalIdea : project.kind === "comic" ? item?.description : item?.text;
+    if (text === saved) return;
+    const timer = setTimeout(() => void run("Keeping your words…", async () => {
+      if (project.kind === "picture") setProject(await update({ data: { ...id(), updatedAt: project.updatedAt, idea: text } }));
+      else await saveWords();
+    }), 2200);
+    return () => clearTimeout(timer);
+  }, [text, project?.updatedAt, busy, changing, at]);
+  const voice = useVoiceInput(t => { if (branch === "new" || adding) { if (facts?.question) setFollowup(v => `${v} ${t}`.trim().slice(0, 300)); else { setDescription(v => `${v} ${t}`.trim().slice(0, 600)); setFacts(null); } } else if (changing) setRevision(v => `${v} ${t}`.trim().slice(0, 600)); else setText(v => `${v} ${t}`.trim().slice(0, project?.kind === "story" ? 20000 : 600)); });
+  const newCharacter = <div className="space-y-4">
+    <BugleyCompanion child={child} busy={!!busy} text={busy || facts?.question || (options.length ? `Which one is ${facts?.name}?` : "Tell me about your character!")} />
+    <Textarea aria-label="Describe your character" maxLength={600} rows={4} value={description} disabled={!!busy} placeholder="Super Ted is a golden dog with floppy ears and a red superhero cape…" onChange={e => { setDescription(e.target.value); setFacts(null); setOptions([]); }} className="text-lg" />
+    {facts?.question && <form className="space-y-3" onSubmit={e => { e.preventDefault(); void checkCharacter(`${description}; ${followup}`.slice(0, 600)); }}><Input aria-label="Tell Bugley more about your character" value={followup} maxLength={300} disabled={!!busy} onChange={e => setFollowup(e.target.value)} /><Button disabled={!!busy || !followup.trim()}>Tell Bugley<ArrowRight /></Button></form>}
+    {!adding && <details><summary className="cursor-pointer font-semibold">Character art style</summary><div className="mt-3 grid grid-cols-3 gap-2">{styles.map(s => <Button key={s.key} variant={style === s.key ? "secondary" : "outline"} aria-pressed={style === s.key} disabled={!!busy} className="h-auto min-w-0 flex-col whitespace-normal p-2" onClick={() => { setStyle(s.key); setOptions([]); }}>{STYLE_THUMBS[s.key] && <img src={STYLE_THUMBS[s.key]} alt="" className="aspect-square w-full object-cover rounded-lg" />}<span>{s.name}</span></Button>)}</div></details>}
+    <div className="flex flex-wrap gap-2">{!facts && <Button disabled={!!busy || description.trim().length < 2} onClick={() => void checkCharacter(description)}>Meet my character<ArrowRight /></Button>}{facts && !facts.question && <Button disabled={!!busy} onClick={() => void previews()}><Paintbrush />{options.length ? "Try again" : `Build ${facts.name}`} · 1 Glow</Button>}<Button variant="ghost" disabled={!!busy || description.trim().length < 2} onClick={() => void checkCharacter(description, true)}><Lightbulb />Help me think</Button>{voice.supported && <Button variant="outline" size="icon" aria-label="Say your character idea" onClick={voice.start}><Mic /></Button>}</div>
+    {facts?.ideas.map(idea => <Button key={idea} variant="outline" disabled={!!busy} onClick={() => void checkCharacter(`${description}; ${idea}`.slice(0, 600))}>{idea}</Button>)}
+    <div className="grid grid-cols-3 gap-3">{options.map((o, i) => <Button key={o.path} aria-label={`Choose character preview ${i + 1}`} disabled={!!busy} variant="outline" className="h-auto min-w-0 flex-col whitespace-normal p-2" onClick={() => void choose(o.path)}><img src={o.url} alt={`${facts?.name} option ${i + 1}`} className="aspect-square w-full object-contain" /><span>That’s {facts?.name}!</span></Button>)}</div>
   </div>;
-}
-
-/** Moment 4 — The Creative Canvas: one scene at a time, draw → words → next. */
-function Scenes({ child, comic, busy, setBusy, onNote, onChange, onError, onGlow }: { child: SidekickChild; comic: Comic; busy: boolean; setBusy: (b: boolean) => void; onNote: (n: string) => void; onChange: (c: Comic) => void; onError: (e: unknown) => void; onGlow: () => void }) {
-  const edit = useServerFn(editComic);
-  const page = comic.data.pages[0];
-  const panels = page?.panels ?? [];
-  const current = panels.findIndex(p => !p.image);
-  const [selected, setSelected] = useState<number | null>(null);
-  const [words, setWords] = useState("");
-  const [changing, setChanging] = useState(false);
-  const [changeText, setChangeText] = useState("");
-  const at = selected ?? (current === -1 ? panels.length - 1 : current);
-  const panel = panels[at];
-  const hero = comic.data.map.hero || "your hero";
-  const allDrawn = current === -1;
-  const drawn = panels.filter(p => p.image).length;
-  useEffect(() => { setWords(""); setChanging(false); setChangeText(""); }, [at]);
-
-  if (!page || !panel) return null;
-  const run = async (fn: () => Promise<Comic>) => { setBusy(true); onNote(""); try { onChange(await fn()); onGlow(); } catch (e) { onError(e); } finally { setBusy(false); } };
-  const draw = () => run(() => edit({ data: { childId: child.id, id: comic.id, action: "final", pageId: page.id, panelId: panel.id, environment: getStripeEnvironment(), op: crypto.randomUUID() } }));
-  const saveWords = (text: string) => run(() => edit({ data: { childId: child.id, id: comic.id, action: "dialogue", pageId: page.id, panelId: panel.id, text, environment: getStripeEnvironment() } }));
-  const changeScene = () => run(async () => { const c = await edit({ data: { childId: child.id, id: comic.id, action: "panel", pageId: page.id, panelId: panel.id, description: changeText, environment: getStripeEnvironment() } }); setChanging(false); return c; });
-  const cover = () => run(() => edit({ data: { childId: child.id, id: comic.id, action: "cover", description: `${comic.title} cover`, environment: getStripeEnvironment(), op: crypto.randomUUID() } }));
-  const finish = () => run(() => edit({ data: { childId: child.id, id: comic.id, action: "finish", environment: getStripeEnvironment() } }));
-
-  return <div className="space-y-5">
-    <BugleySays child={child} expression={panel.image ? "celebrating" : "happy"}
-      text={allDrawn ? "Every scene is drawn!" : panel.image ? "What a scene!" : `Ready to bring Scene ${at + 1} to life?`} />
-    <p className="text-center font-display text-xl">Scene {at + 1} of {panels.length} <span className="text-sm font-normal text-muted-foreground">· {drawn} of {panels.length} drawn</span></p>
-    <div className="flex justify-center gap-2">{panels.map((p, i) => <button key={p.id} onClick={() => setSelected(i)} aria-label={`Scene ${i + 1}${p.image ? ", drawn" : ""}`}
-      className={cn("size-4 rounded-full transition", i === at ? "bg-primary scale-125" : p.image ? "bg-primary/50" : "bg-border")} />)}</div>
-
-    <div className="rounded-3xl bg-card p-5 shadow-soft space-y-4">
-      <p className="font-display text-lg">{panel.description.split(":")[0]}</p>
-      <p className="text-muted-foreground">{panel.description.split(":").slice(1).join(":").trim()}</p>
-      {panel.image
-        ? <PanelCanvas panel={panel} url={comic.urls[panel.image]} aspect={comicPanelAspect(page, at)} editable={false} />
-        : <div className="flex aspect-[4/3] items-center justify-center rounded-2xl border-4 border-dashed border-primary/40 bg-primary/5 text-6xl" aria-hidden>✨</div>}
-
-      {changing
-        ? <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); void changeScene(); }}>
-            <Textarea autoFocus value={changeText} maxLength={600} disabled={busy} onChange={(e) => setChangeText(e.target.value)} placeholder="Make the sky nighttime…" aria-label="Change this scene" className="min-h-20 rounded-2xl" />
-            <div className="flex gap-2"><Button size="sm" disabled={busy || changeText.trim().length < 3}>Change it</Button><Button size="sm" variant="ghost" type="button" onClick={() => setChanging(false)}>Never mind</Button></div>
-            <p className="text-xs text-muted-foreground">Changing the scene means drawing it again · {SCENE_COST} Glow.</p>
-          </form>
-        : !panel.image
-          ? <div className="flex flex-col gap-2">
-              <Button size="lg" disabled={busy} onClick={() => void draw()} className="rounded-full">{busy ? "Bugley is painting…" : `Draw this scene · ${SCENE_COST} Glow`}</Button>
-              <Button variant="ghost" disabled={busy} onClick={() => { setChanging(true); setChangeText(panel.description); }}>Change the scene</Button>
-            </div>
-          : <div className="space-y-3">
-              {!panel.dialogueDone && <div className="space-y-2">
-                <p className="font-semibold">What does {hero} say?</p>
-                <Input value={words} maxLength={200} disabled={busy} onChange={(e) => setWords(e.target.value)} placeholder="I can do it!" aria-label="Words for this scene" />
-                <div className="flex gap-2"><Button disabled={busy} onClick={() => void saveWords(words)}>Add words</Button><Button variant="ghost" disabled={busy} onClick={() => void saveWords("")}>No words needed</Button></div>
-              </div>}
-              <div className="flex flex-col gap-2">
-                {!allDrawn && (panel.dialogueDone || child.age_band === "sprouts") && <Button size="lg" disabled={busy} onClick={() => setSelected(current)} className="rounded-full">Love it! Next scene</Button>}
-                <Button variant="ghost" disabled={busy} onClick={() => { setChanging(true); setChangeText(panel.description); }}>Change something</Button>
-              </div>
-            </div>}
-    </div>
-
-    {allDrawn && <div className="rounded-3xl bg-card p-5 shadow-soft space-y-3 text-center">
-      <p className="font-display text-2xl">Your comic is ready to finish!</p>
-      {comic.data.cover
-        ? <><img src={comic.urls[comic.data.cover]} alt="Comic cover" className="mx-auto aspect-[4/3] max-w-xs rounded-2xl object-cover" /><Button size="lg" disabled={busy} onClick={() => void finish()} className="rounded-full">Finish my comic!</Button></>
-        : <Button size="lg" disabled={busy} onClick={() => void cover()} className="rounded-full">{busy ? "Painting the cover…" : `Make the cover · ${SCENE_COST} Glow`}</Button>}
-    </div>}
-  </div>;
+  const castPicker = <div className="space-y-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{cast.filter(c => !project || c.styleKey === project.styleKey).map(c => <Button key={c.id} aria-label={`Choose ${c.title}`} variant="outline" disabled={!!busy || selectedIds.includes(c.id)} className="h-auto min-w-0 flex-col whitespace-normal rounded-lg p-3" onClick={() => void attach(c)}><img src={c.url} alt={c.title} className="aspect-square w-full object-contain rounded-lg" /><span className="font-display text-lg">{c.title}</span></Button>)}</div>{!cast.length && <p>No characters yet.</p>}<Button variant="secondary" onClick={() => { setBranch("new"); draftKey.current = undefined; setDescription(""); setFacts(null); setOptions([]); }}><Plus />Make a new character</Button></div>;
+  return <section className="space-y-5">
+    <header className="flex items-center justify-between gap-3"><Button variant="ghost" disabled={!!busy} onClick={() => { if (adding) { setAdding(false); setBranch("entry"); } else if (!project && branch !== "entry") setBranch("entry"); else onExit(); }}><ArrowLeft />Studio</Button>{glow && <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} />}</header>
+    {note && <div role="alert" className="border-l-4 border-destructive pl-3 text-destructive">{note}<Button variant="ghost" onClick={() => void run("Opening saved work…", reload)}>Reopen saved work</Button></div>}
+    {!project ? <>
+      {branch === "entry" && <><BugleyCompanion child={child} text="Who shall we create with?" /><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Button size="lg" className="h-20 whitespace-normal text-xl" onClick={() => { draftKey.current = undefined; setFacts(null); setDescription(""); setBranch("new"); }}><Sparkles />Make a new character</Button><Button variant="secondary" size="lg" className="h-20 text-xl" onClick={() => setBranch("existing")}><Users />My Characters</Button></div></>}
+      {branch === "new" && newCharacter}
+      {branch === "existing" && <><BugleyCompanion child={child} text="Who’s coming on this adventure?" />{castPicker}</>}
+      {branch === "output" && hero && <><BugleyCompanion child={child} text={`What shall we make with ${hero.title}?`} /><img src={hero.url} alt={hero.title} className="mx-auto size-40 object-contain" /><div className="grid grid-cols-3 gap-2">{(["picture", "comic", "story"] as const).map(k => <Button key={k} variant="secondary" className="h-20 flex-col text-lg" onClick={() => { setKind(k); setCount(k === "story" ? 5 : 4); setTitle(""); startKey.current = null; setBranch("setup"); }}>{k === "picture" ? <Paintbrush /> : k === "comic" ? <Sparkles /> : <BookOpen />}{k === "picture" ? "Picture" : k === "comic" ? "Comic" : "Story"}</Button>)}</div></>}
+      {branch === "setup" && hero && <><BugleyCompanion child={child} text={kind === "picture" ? "What will you call your picture?" : "What’s the name of your adventure?"} /><form className="space-y-4" onSubmit={e => { e.preventDefault(); void run("Opening your adventure…", async () => { startKey.current ??= crypto.randomUUID(); const p = await start({ data: { childId: child.id, id: startKey.current, kind, title, count: kind === "picture" ? 1 : count, characterId: hero.id, environment: env } }); setProject(p); onProject(p.id); }); }}><label className="block space-y-2 font-semibold">{kind === "picture" ? "Picture name" : "Story name"}<Input aria-label="Story name" value={title} maxLength={80} disabled={!!busy} onChange={e => setTitle(e.target.value)} required /></label>{kind !== "picture" && <label className="block space-y-2 font-semibold">How many {kind === "comic" ? "panels" : "pages"}?<Input type="number" aria-label={kind === "comic" ? "Number of panels" : "Number of pages"} min={kind === "story" ? 5 : 1} max={12} value={count} disabled={!!busy} onChange={e => setCount(Number(e.target.value))} /><span className="text-sm text-muted-foreground">{kind === "comic" ? `1–12 panels · ${Math.ceil(count / 4)} comic ${count > 4 ? "pages" : "page"}` : "5–12 pages"}</span></label>}<Button disabled={!!busy || !title.trim() || count < (kind === "story" ? 5 : 1) || count > 12}>Let’s make it!<ArrowRight /></Button></form></>}
+    </> : <>
+      <h1 className="break-words text-3xl">{project.title}</h1>
+      <div className="flex flex-wrap items-center gap-2">{cast.filter(c => selectedIds.includes(c.id)).map(c => <div key={c.id} className="flex items-center gap-2"><img src={c.url} alt={c.title} className="size-14 object-contain" /><span className="font-semibold">{c.title}</span></div>)}<Button variant="ghost" disabled={!!busy || selectedIds.length >= (project.kind === "picture" ? 1 : 3) || !!project.details.bookId} onClick={() => { setAdding(true); setBranch("existing"); }}><Plus />Character</Button><Button variant="ghost" disabled={!!busy} onClick={() => void run("Opening earlier work…", async () => setVersions(await history({ data: id() })))}><History />Earlier work</Button></div>
+      {versions && <div className="space-y-2 border-y border-border py-3">{versions.map(v => <div key={v.id} className="flex justify-between gap-2"><span>{new Date(v.created_at).toLocaleString()}</span><Button variant="outline" disabled={!!busy} onClick={() => void run("Opening earlier work…", async () => { setProject(await restore({ data: { ...id(), updatedAt: project.updatedAt, versionId: v.id } })); setVersions(null); setAt(0); })}>Use this version</Button></div>)}{versions.length === 0 && <p>No earlier work yet.</p>}{versions.length >= 30 && <Button variant="ghost" disabled={!!busy} onClick={() => void run("Opening older work…", async () => { const last = versions.at(-1); if (last) setVersions([...versions, ...await history({ data: { ...id(), before: last.created_at } })]); })}>Older work</Button>}<Button variant="ghost" onClick={() => setVersions(null)}>Done</Button></div>}
+      {adding ? <>{branch === "new" ? newCharacter : castPicker}<Button variant="ghost" onClick={() => setAdding(false)}>Back to my creation</Button></> : project.details.finished ? <><BugleyCompanion child={child} text="You made a whole adventure!" />{project.kind === "comic" ? <ComicReader child={child} comic={{ id: project.id, title: project.title, updatedAt: project.updatedAt, data: project.details, urls: project.urls, versions: {} }} /> : <StoryReader child={child} story={{ id: project.id, title: project.title, updatedAt: project.updatedAt, data: project.details, urls: project.urls, versions: {} }} />}<div className="flex flex-wrap gap-2"><Button variant="secondary" onClick={() => void run("Opening your adventure…", async () => { if (project.kind === "comic") await comicEdit({ data: { ...id(), action: "reopen" } }); else await storyEdit({ data: { ...id(), action: "reopen" } }); await reload(); })}>Keep working on it</Button><Button variant="outline" onClick={() => void run("Opening your book…", async () => { const b = await book({ data: { childId: child.id, creationId: project.id, environment: env } }); onBook(b.id); })}><BookOpen />Make a book</Button></div></> : <>
+        <BugleyCompanion child={child} busy={!!busy} text={busy || help?.question || (changing ? "What should I change in this picture?" : project.kind === "picture" ? "Where is your character? What are they doing?" : `What happens on ${project.kind === "comic" ? "panel" : "page"} ${at + 1}?`)} />
+        {project.kind !== "picture" && <nav aria-label="Your scenes" className="flex flex-wrap gap-2">{items.map((p, i) => <Button key={p.id} size="icon" variant={at === i ? "secondary" : "outline"} disabled={!!busy} aria-label={`${project.kind === "comic" ? "Panel" : "Page"} ${i + 1}${p.image ? ", drawn" : ""}`} aria-pressed={at === i} onClick={() => void run("Keeping your words…", async () => { if (text.trim() && text !== (project.kind === "comic" ? item?.description : item?.text)) await saveWords(); setAt(i); })}>{i + 1}{p.image && <Check className="size-3" />}</Button>)}</nav>}
+        {(project.kind === "picture" ? project.images[0] : item?.image) && <div className="mx-auto max-w-xl">{project.kind === "comic" ? <PanelCanvas panel={item} url={project.urls[item.image]} aspect={comicPanelAspect(item.page, item.index)} editable={false} /> : <img src={project.urls[project.kind === "picture" ? project.images[0] : item.image]} alt={project.kind === "picture" ? project.workspace.originalIdea : item.text} className="max-h-96 w-full object-contain" />}</div>}
+        {changing ? <Textarea aria-label="What should change in the picture" value={revision} maxLength={600} rows={3} disabled={!!busy} onChange={e => setRevision(e.target.value)} placeholder="Make the sky nighttime, but keep everything else…" /> : <Textarea aria-label={project.kind === "story" ? "Your story words" : "Describe this scene"} value={text} maxLength={project.kind === "story" ? 20000 : 600} rows={4} disabled={!!busy} onChange={e => { setText(e.target.value); }} placeholder={project.kind === "story" ? "Your story, in your own words…" : "Ted zooms over a snowy forest. He spots a tiny fox waving below…"} className="text-lg" />}
+        {help?.ideas.map(idea => <p key={idea} className="font-semibold text-muted-foreground">✦ {idea}</p>)}
+        <div className="flex flex-wrap gap-2"><Button disabled={!!busy || !text.trim() || (changing && !revision.trim())} onClick={() => void draw()}><Paintbrush />{changing ? "Make this change" : help?.question ? "Draw with my details" : item?.image || project.images[0] ? "Draw again" : "Draw this scene"} · {project.kind === "picture" ? "1" : "3"} Glow</Button>{voice.supported && <Button variant="outline" size="icon" aria-label="Say your scene" onClick={voice.start}><Mic /></Button>}{changing ? <Button variant="ghost" onClick={() => setChanging(false)}>Never mind</Button> : <><Button variant="ghost" disabled={!!busy} onClick={() => void run("Thinking of a few sparks…", async () => setHelp(await coach({ data: { ...id(), text: text.slice(0, 600), help: true } })))}><Lightbulb />Help with my adventure</Button>{(item?.image || project.images[0]) && <Button variant="ghost" disabled={!!busy} onClick={() => { setChanging(true); setRevision(""); setHelp(null); }}>Change something</Button>}</>}</div>
+        {project.kind === "comic" && item?.image && <div className="space-y-2"><p className="font-semibold">What do they say?</p><Input aria-label="Words for this panel" value={dialogue} maxLength={200} disabled={!!busy} onChange={e => setDialogue(e.target.value)} /><div className="flex flex-wrap gap-2"><Button variant="secondary" disabled={!!busy} onClick={() => void run("Adding your speech…", async () => { await comicEdit({ data: { ...id(), action: "dialogue", pageId: item.pageId, panelId: item.id, text: dialogue } }); await reload(); })}>Add words</Button><Button variant="ghost" disabled={!!busy} onClick={() => void run("Keeping your scene…", async () => { await comicEdit({ data: { ...id(), action: "dialogue", pageId: item.pageId, panelId: item.id, text: "" } }); await reload(); })}>No words needed</Button></div></div>}
+        {project.kind === "picture" && project.details.mode === "sketch" && <Button variant="secondary" disabled={!!busy} onClick={() => void run("Finishing your picture…", async () => { const r = await upgrade({ data: { childId: child.id, previewId: project.id, environment: env } }); if (!r.ok) throw new Error(r.reply); await reload(); })}><Sparkles />Make it awesome · 2 more Glow</Button>}
+        {item?.image && at < items.length - 1 && <Button disabled={!!busy} onClick={() => void run("Keeping your scene…", async () => { if (project.kind === "comic" && !item.dialogueDone) await comicEdit({ data: { ...id(), action: "dialogue", pageId: item.pageId, panelId: item.id, text: dialogue } }); await reload(); setAt(at + 1); })}>Love it! Next {project.kind === "comic" ? "panel" : "page"}<ArrowRight /></Button>}
+        {project.kind !== "picture" && items.every(p => p.image) && <div className="space-y-3 border-t border-border pt-5"><h2 className="text-2xl">Your adventure is ready!</h2>{project.details.cover && <img src={project.urls[project.details.cover]} alt="Your cover" className="mx-auto max-h-64 object-contain" />}<Button disabled={!!busy} onClick={() => void run(project.details.cover ? "Finishing your adventure…" : "Painting the cover…", async () => { const action = project.details.cover ? "finish" : "cover"; if (project.kind === "comic") { for (const p of items.filter(p => !p.dialogueDone)) await comicEdit({ data: { ...id(), action: "dialogue", pageId: p.pageId, panelId: p.id, text: p.id === item?.id ? dialogue : "" } }); await comicEdit({ data: { ...id(), action, description: `${project.title}: ${items[0]?.description || items[0]?.text}`, op: crypto.randomUUID() } }); } else await storyEdit({ data: { ...id(), action, description: `${project.title}: ${items[0]?.description || items[0]?.text}`.slice(0, 600), op: crypto.randomUUID() } }); await reload(); })}>{project.details.cover ? "Finish my adventure!" : "Make the cover · 3 Glow"}</Button></div>}
+      </>}
+    </>}
+  </section>;
 }

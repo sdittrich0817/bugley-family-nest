@@ -122,7 +122,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireK
     if (!page) throw new Error("We couldn’t find that page.");
     if (data.page.chapter && child.age_band !== "builders") throw new Error("Chapter names are for Builders.");
     for (const key of ["text", "description", "chapter"] as const) if (data.page[key] !== page[key]) await check(data.page[key]);
-    if (data.page.text !== page.text) { await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description }); page.image = null; }
+    if (data.page.text !== page.text) { await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description }); if (!story.data.workspace?.v3) page.image = null; }
     Object.assign(page, data.page);
   } else if (data.action === "undo") {
     const page = story.data.pages.find((p) => p.id === data.pageId);

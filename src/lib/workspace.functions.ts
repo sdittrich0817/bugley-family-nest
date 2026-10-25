@@ -69,7 +69,7 @@ export const updateWorkspace = createServerFn({ method: "POST" }).middleware([re
   assertWorkspaceIdle(project.details);
   const check = async (text: string) => { if (!text.trim()) return; const g = await s.guardChildText(context.supabase, context.userId, child, text, "story"); if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up idea."); };
   if (data.title) { await check(data.title); project.title = data.title; }
-  if (data.idea && data.idea !== project.workspace.originalIdea) { await check(data.idea); project.workspace.originalIdea = data.idea; project.workspace.facts = undefined; project.workspace.outlineApproved = false; if (project.kind === "picture") { project.body = data.idea; invalidatePicture(project); } }
+  if (data.idea && data.idea !== project.workspace.originalIdea) { await check(data.idea); project.workspace.originalIdea = data.idea; project.workspace.facts = undefined; project.workspace.outlineApproved = false; if (project.kind === "picture") { project.body = data.idea; if (!project.workspace.v3) invalidatePicture(project); } }
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   if (data.styleKey && data.styleKey !== project.styleKey) {
     if (project.details.artLock || project.details.modelLock || project.details.bookId || project.images.length || (project.details.characterIds ?? project.details.characters ?? []).length) throw new Error("This look is locked to your characters and drawings.");

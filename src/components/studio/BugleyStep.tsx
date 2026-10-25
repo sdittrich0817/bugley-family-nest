@@ -56,8 +56,8 @@ export function BugleyStep({ child, question, choices, onChoose, onOwnIdea, onBa
     </div>
 
     {!bare && <div className="flex items-start gap-3" aria-live="polite">
-      <div key={line + mood} className={cn("shrink-0", cheer || mood === "celebrating" ? "studio-bugley-cheer" : mood === "painting" ? "studio-bugley-paint" : "studio-guide-fly")}>
-        {band === "builders" ? <BugleyMature variant="headphones" size={64} /> : <Bugley stage={child.bugley_stage} expression={expression} glow size={sprouts ? 88 : 72} />}
+      <div key={line + mood} className={cn("bugley-companion shrink-0", cheer || mood === "celebrating" ? "studio-bugley-cheer" : mood === "painting" ? "studio-bugley-paint" : "studio-guide-fly")}>
+        {band === "builders" ? <BugleyMature variant="headphones" size="100%" /> : <Bugley stage={child.bugley_stage} expression={expression} glow size="100%" />}
       </div>
       <div key={line} className={cn("relative mt-1 rounded-3xl rounded-tl-md bg-card px-4 py-3 font-display leading-snug shadow-soft animate-in fade-in slide-in-from-left-2 duration-300", sprouts ? "text-2xl" : "text-xl")}>
         {line}

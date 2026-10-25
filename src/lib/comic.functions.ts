@@ -63,7 +63,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "panel" && panel) {
     if (!data.description?.trim()) throw new Error("Tell Bugley what happens.");
     await check(data.description);
-    if (panel.description !== data.description) { await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image }); panel.image = null; panel.sketch = null; }
+    if (panel.description !== data.description) { await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image }); if (!comic.data.workspace?.v3) { panel.image = null; panel.sketch = null; } }
     panel.description = data.description;
   } else if (data.action === "undo" && panel) {
     const prior = await popVersion(context.userId, child.id, comic.id, panel.id);
@@ -121,7 +121,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "sketch" || data.action === "final" || data.action === "cover") {
     const panel = comic.data.pages[pageIndex]?.panels.find((p) => p.id === data.panelId);
     if (data.action !== "cover" && !panel) throw new Error("Pick a panel first.");
-    if (data.action === "final" && !panel?.sketch && !comic.data.guidedBand) throw new Error("Sketch it first, then make it final.");
+    if (data.action === "final" && !panel?.sketch && !comic.data.guidedBand && !comic.data.workspace?.v3) throw new Error("Sketch it first, then make it final.");
     let description = data.action === "cover" ? data.description : panel ? `${ANGLE_PROMPT[panel.angle]}${panel.description}` : "";
     if (comic.data.guidedBand) {
       const { planComicPicture } = await import("./comic.server");
