@@ -123,8 +123,38 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
         <span className={cn("font-display tracking-wide", sprouts ? "text-5xl" : "text-4xl")}>{label}</span>
       </button>)}
     </section>
+    <CharacterVault child={child} onBuild={() => onOpen("character")} />
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
+}
+
+/** My Characters: the child's vault of approved heroes, reusable in every picture, story and comic. */
+function CharacterVault({ child, onBuild }: { child: SidekickChild; onBuild: () => void }) {
+  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  return <section className="space-y-3">
+    <h2 className="font-display text-2xl">My Characters</h2>
+    <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+      {cast.map((m) => <li key={m.id} className="overflow-hidden rounded-3xl border-2 border-border bg-card text-center shadow-soft">
+        {m.url ? <img src={m.url} alt={m.title} loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>🐾</span>}
+        <span className="block truncate px-2 py-1.5 text-sm font-semibold">{m.title}</span>
+      </li>)}
+      <li><button onClick={onBuild} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+        <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>
+        Build a character
+      </button></li>
+    </ul>
+  </section>;
+}
+
+/** Vault character building: pick a look, then the three-step builder. */
+function CharacterFlow({ child, chat, onDone, onBack }: { child: SidekickChild; chat: ReturnType<typeof useBugleyChat>; onDone: () => void; onBack: () => void }) {
+  const [style, setStyle] = useState<string | null>(null);
+  const { data: styles = [] } = useQuery(stylesOptions);
+  useEffect(() => { if (!style) chat.say("Let’s invent a character! First, pick a look.", []); }, [style]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!style) return <BugleyStep child={child} bare question="Pick a look for your character!" allowOwnIdea={false} onBack={onBack}
+    choices={styles.map((s) => ({ key: s.key, label: s.name, image: STYLE_THUMBS[s.key] }))}
+    onChoose={(c) => setStyle(c.key)} />;
+  return <HeroBuilder child={child} chat={chat} styleKey={style} role="hero" onBack={() => setStyle(null)} onDone={onDone} />;
 }
 
 const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Heroes", game: "Games" };
