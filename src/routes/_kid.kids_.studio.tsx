@@ -1,3 +1,5 @@
+import { z } from "zod";
+import { CreativeWorkspace } from "@/components/studio/CreativeWorkspace";
 import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
@@ -35,6 +37,7 @@ export const Route = createFileRoute("/_kid/kids_/studio")({
     { property: "og:title", content: "Bugley’s Studio · Kid Zone" }, { property: "og:description", content: "Make pictures, stories, comics and games with Bugley." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
+  validateSearch: z.object({ project: z.string().uuid().optional(), kind: z.enum(["comic", "story", "picture"]).optional() }),
   loader: ({ context }) => context.queryClient.ensureQueryData(familyOptions),
   component: StudioPage,
 });
@@ -65,16 +68,19 @@ const CREATE_CHOICES: StepChoice[] = [
 function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
-  const [view, setView] = useState<View>("home"); useScrollTopOn(view);
-  const [storyId, setStoryId] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const [view, setView] = useState<View>(search.project ? search.kind ?? "comic" : "home"); useScrollTopOn(view);
+  const [pictureId, setPictureId] = useState<string | null>(search.kind === "picture" ? search.project ?? null : null);
+  const [storyId, setStoryId] = useState<string | null>(search.kind === "story" ? search.project ?? null : null);
   const [storyDirty, setStoryDirty] = useState(false);
-  const [comicId, setComicId] = useState<string | null>(null);
+  const [comicId, setComicId] = useState<string | null>(search.kind === "comic" || !search.kind ? search.project ?? null : null);
   const [bookId, setBookId] = useState<string | null>(null);
   const [inBook, setInBook] = useState(false);
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
   const greeting = `Hi ${child.nickname}! Want to create something or play a game?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined, (a) => {
     const v = a.action === "open:album" ? "album" : a.action === "open:picture" ? "picture" : a.action === "open:story" ? "story" : a.action === "open:comic" ? "comic" : "character";
+    if (["story", "comic", "picture"].includes(view)) { if (a.action === "open:characters" || a.action === "open:character_new") document.querySelector<HTMLButtonElement>("[data-workspace-characters]")?.click(); return; }
     if (v === "story") setStoryId(null); if (v === "comic") setComicId(null);
     setInBook(false); setView(v as View);
   });
@@ -93,16 +99,16 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
       </div>
     </header>
     <div className="mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-5">
-      {view !== "create" && <BugleyGuide child={child} chat={chat} />}
+      {!["create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
           : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
-          : view === "picture" ? <PictureMaker child={child} chat={chat} />
+          : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />
           : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
           : view === "comic" ? <ComicMaker child={child} chat={chat} comicId={comicId} onComic={setComicId} onDirty={setStoryDirty} />
-          : <Album child={child} onStory={(id) => { setStoryId(id); setView("story"); }} onComic={(id) => { setComicId(id); setView("comic"); }} onBook={(id) => { setBookId(id); setView("book"); }} />}
+          : <Album onPicture={(id) => { setPictureId(id); setView("picture"); }} child={child} onStory={(id) => { setStoryId(id); setView("story"); }} onComic={(id) => { setComicId(id); setView("comic"); }} onBook={(id) => { setBookId(id); setView("book"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />
     </div>
@@ -161,7 +167,7 @@ function CharacterFlow({ child, chat, onDone, onBack }: { child: SidekickChild; 
 
 const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Heroes", game: "Games" };
 
-function Album({ child, onStory, onComic, onBook }: { child: SidekickChild; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
+function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id: string) => void; child: SidekickChild; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const qc = useQueryClient();
   const key = ["album", child.id];
   const { data: items = [], isLoading } = useQuery({ queryKey: key, queryFn: () => listAlbum({ data: { childId: child.id } }) });
@@ -194,15 +200,15 @@ function Album({ child, onStory, onComic, onBook }: { child: SidekickChild; onSt
           <p className="font-display text-xl">{items.length ? "Nothing here yet!" : "Your album is waiting for its first creation."}</p>
           <p className="text-muted-foreground">Everything you make in the Studio saves here by itself.</p>
         </div>
-      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} onBook={onBook} childId={child.id} />)}</ul>
+      : mode === "grid" ? <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">{shown.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} onBook={onBook} onPicture={onPicture} childId={child.id} />)}</ul>
       : <div className="space-y-6">{projects.map(([name, list]) => <section key={name} className="rounded-3xl bg-card p-5 shadow-soft">
           <h2 className="text-xl">{name} <span className="text-sm font-normal text-muted-foreground">· {list.length} {list.length === 1 ? "piece" : "pieces"}</span></h2>
-          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} onBook={onBook} childId={child.id} />)}</ul>
+          <ul className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">{list.map((c) => <CreationCard key={c.id} c={c} onUpdate={update} onStory={onStory} onComic={onComic} onBook={onBook} onPicture={onPicture} childId={child.id} />)}</ul>
         </section>)}</div>}
   </div>;
 }
 
-function CreationCard({ c, onUpdate, onStory, onComic, onBook, childId }: { childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
+function CreationCard({ c, onUpdate, onStory, onComic, onBook, onPicture, childId }: { onPicture: (id: string) => void; childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
   const [confirm, setConfirm] = useState(false);
@@ -213,6 +219,7 @@ function CreationCard({ c, onUpdate, onStory, onComic, onBook, childId }: { chil
       <button onClick={() => onUpdate(c.id, { favorite: !c.favorite })} aria-label={c.favorite ? "Unfavorite" : "Favorite"} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/85"><Heart className={cn("size-5", c.favorite && "fill-current text-destructive")} /></button>
     </div>
     <div className="p-3">
+      {c.kind === "picture" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onPicture(c.id)}><Paintbrush />Open picture</Button>}
       {c.kind === "story" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onStory(c.id)}><BookOpen />Open story</Button>}
       {c.kind === "comic" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onComic(c.id)}><LayoutGrid />Open comic</Button>}
       {c.kind === "game" && <Link to="/kids/studio/games" search={{ game: c.id }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground"><Gamepad2 className="size-4" />Open game</Link>}
