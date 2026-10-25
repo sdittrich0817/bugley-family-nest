@@ -54,12 +54,13 @@ export const proposeComicArc = createServerFn({ method: "POST" }).middleware([re
     JSON.stringify({ idea: project.workspace.originalIdea, age: child.age }),
   );
   if (!out) throw new Error("Bugley couldn’t imagine the story just now. Your idea is saved — try again.");
+  const scenes = out.scenes.slice(0, 4);
   project.workspace.facts = { genre: out.genre, heroName: out.heroName, heroLooks: out.heroLooks, place: "", problem: out.problem };
   project.details.genre = ideaGenre(out.genre) ?? "Adventure";
   project.details.map = { ...project.details.map, hero: out.heroName, problem: out.problem };
-  project.details.outline = out.scenes.map(sc => `${sc.title} — ${sc.description}`);
+  project.details.outline = scenes.map(sc => `${sc.title} — ${sc.description}`);
   const panels = project.details.pages[0]?.panels ?? [];
-  out.scenes.forEach((sc, i) => { if (panels[i] && !panels[i].image) panels[i].description = `${sc.title}: ${sc.description}`; });
+  scenes.forEach((sc, i) => { if (panels[i] && !panels[i].image) panels[i].description = `${sc.title}: ${sc.description}`; });
   await persistWorkspace(context.userId, child.id, project);
   return loadWorkspace(context.supabase, context.userId, child.id, data.id);
 });
