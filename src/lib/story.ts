@@ -14,7 +14,7 @@ export const pageSchema = z.object({ id: z.string().uuid(), step: z.enum(STORY_S
 export const storySchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(pageSchema), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), length: z.enum(LENGTHS).optional(), outline: z.array(z.string().max(200)).max(12).optional(), followups: z.array(z.string()).optional() });
 export type StoryData = z.infer<typeof storySchema>;
 export type StoryPage = z.infer<typeof pageSchema>;
-export type Story = { id: string; title: string; updatedAt: string; data: StoryData; urls: Record<string, string> };
+export type Story = { id: string; title: string; updatedAt: string; data: StoryData; urls: Record<string, string>; versions: Record<string, number> };
 export const EMPTY_MAP: StoryData["map"] = { hero: "", want: "", place: "", problem: "", ending: "" };
 export function newStoryPage(step: StoryPage["step"] = "Beginning"): StoryPage { return { id: crypto.randomUUID(), step, text: "", description: "", chapter: "", image: null }; }
 export function readyToFinish(story: StoryData) { return STORY_STEPS.every((step) => story.pages.some((p) => p.step === step && p.text.trim())) && story.pages.every((p) => p.text.trim() && p.image) && (!!story.cover || !!story.bookId); }

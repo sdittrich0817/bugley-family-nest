@@ -12,7 +12,9 @@ export async function loadComic(sb: SupabaseClient<any>, userId: string, childId
   if (!parsed.success) throw new Error("That comic isn’t ready to open here yet.");
   const paths = [...parsed.data.pages.flatMap((p) => p.panels.flatMap((x) => [x.sketch, x.image].filter((v): v is string => !!v))), ...(parsed.data.cover ? [parsed.data.cover] : [])];
   const urls = await signPaths(paths);
-  return { id: data.id, title: data.title, updatedAt: data.updated_at, data: parsed.data, urls: Object.fromEntries(paths.map((p, i) => [p, urls[i] ?? ""])) };
+  const { versionCounts } = await import("./versions.server");
+  const versions = await versionCounts(userId, childId, id);
+  return { id: data.id, title: data.title, updatedAt: data.updated_at, data: parsed.data, urls: Object.fromEntries(paths.map((p, i) => [p, urls[i] ?? ""])), versions };
 }
 
 export async function persistComic(userId: string, childId: string, comic: Comic) {
