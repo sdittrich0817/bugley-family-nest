@@ -859,6 +859,27 @@ export type Database = {
           },
         ]
       }
+      glow_ops: {
+        Row: {
+          child_id: string
+          created_at: string
+          op: string
+          result: Json
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          op: string
+          result: Json
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          op?: string
+          result?: Json
+        }
+        Relationships: []
+      }
       hero_portrait_provenance: {
         Row: {
           child_id: string
@@ -1868,10 +1889,24 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      glow_spend: {
-        Args: { _child: string; _kind: string; _reason: string }
+      glow_refund: {
+        Args: { _amount: number; _child: string; _reason: string }
         Returns: Json
       }
+      glow_spend:
+        | {
+            Args: { _child: string; _kind: string; _reason: string }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _child: string
+              _kind: string
+              _op?: string
+              _reason: string
+            }
+            Returns: Json
+          }
       glow_status: { Args: { _child: string }; Returns: Json }
       has_active_subscription: {
         Args: { check_env?: string; user_uuid: string }
