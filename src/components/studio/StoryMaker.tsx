@@ -108,7 +108,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
       let next = await edit({ data: { childId: child.id, id: story.id, environment: env, action: "title", title } });
       setStory(next);
       if (!next.data.cover && !next.data.bookId) {
-        next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover" } }); setStory(next);
+        next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover", op: crypto.randomUUID() } }); setStory(next);
       }
       next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "finish" } });
       setStory(next); setPendingTitle(""); chat.say("Your choices made a whole story. You’re the author!", []);
