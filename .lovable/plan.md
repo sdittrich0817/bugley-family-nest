@@ -53,16 +53,16 @@ Use existing optimistic concurrency protection; reconcile conflicts by stable ID
 
 ## 5. Comic journey, beginning to end
 
-1. **Choose Comic:** the workspace opens instantly, with an idea box and blank storyboard.
-2. **Describe the idea:** “A purple dragon named Pickles who is scared of flying.” Show those words immediately; safely save and interpret them without asking again for purple, dragon or Pickles.
-3. **Meet Pickles:** select an existing character or preview and approve Pickles inside the workspace. Style has a changeable default before art locking.
-4. **Shape the adventure:** show optional, editable storyboard suggestions. The child chooses the direction and length. Missing essentials get focused help, not a full questionnaire.
-5. **Write and draw:** the child writes scene descriptions and dialogue. Save the words first; generate selected ready panels only after showing the actual existing Glow cost. Keep the storyboard visible while drawings arrive. Any multi-panel generation is bounded, resumable and charged through existing per-image rules.
-6. **Edit freely:** select any panel, change words, reposition bubbles, change a scene or regenerate its art. Untouched panels remain intact. Add approved characters without resetting the comic. Paid redraws are explicit; text edits are free.
-7. **Review and finish:** preview the comic, name it, and explicitly approve any chargeable cover generation. Finish is a saved status, not a permanent lock on editing.
-8. **Return or grow:** reopen this comic or use the existing book/next-issue path. Preserve chapter links, cast, visual locks and continuity.
+1. **Choose Comic:** open its idea box and blank storyboard immediately.
+2. **Describe Pickles:** display “A purple dragon named Pickles who is scared of flying,” then safely save/interpret without asking those facts again.
+3. **Meet Pickles:** select an existing character or preview/approve him in-project. Style has a changeable default before art locking.
+4. **Shape the adventure:** review/edit suggested storyboard ideas and choose length. Ask only for missing essentials.
+5. **Write and draw:** save the child's scenes/dialogue first. Explicitly generate selected ready panels at existing displayed costs; keep the storyboard visible. Multi-panel work is bounded and resumable through existing per-image charging.
+6. **Edit:** select any panel; change words, bubbles or scene; explicitly pay for redraws. Preserve untouched panels and allow approved character additions without reset.
+7. **Finish:** preview/name the comic; confirm any paid cover. Finish remains reversible.
+8. **Return or grow:** reopen or use existing book/next-issue paths, preserving chapter links, visual locks and continuity.
 
-Bugley proposes plans and short idea sparks; **the child still authors every story sentence, scene and line of dialogue**. Approving an AI storyboard never silently inserts AI-written story text.
+Bugley offers plans/sparks; **the child authors every sentence, scene and dialogue line**. Approving a storyboard never silently inserts AI-written story text.
 
 ## 6. What is reused
 
