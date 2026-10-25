@@ -176,6 +176,13 @@
       "when": 1792875356699,
       "tag": "0024_kid_daily_time",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792937349611,
+      "tag": "0025_studio_versions",
+      "breakpoints": true
     }
   ]
 }
