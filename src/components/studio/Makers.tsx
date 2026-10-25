@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Mic, RefreshCw, Sparkles, Wand2 } from "lucide-react";
-import { toast } from "sonner";
-import { listCast, makeCharacterPortrait, makePicture, upgradePicture, saveCharacter, stylesOptions } from "@/lib/images.functions";
+import { RefreshCw, Sparkles } from "lucide-react";
+import { listCast, makePicture, upgradePicture, stylesOptions } from "@/lib/images.functions";
 import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
-import { useVoiceInput, type BugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
-import { ChoiceTile, StepDots, StepNav } from "@/components/studio/Guided";
+import type { BugleyChat, SidekickChild } from "@/components/studio/Sidekick";
 import { Button } from "@/components/ui/button";
 import { BugleyStep } from "./BugleyStep";
-import { Bugley } from "@/components/brand/Bugley";
 import { cn } from "@/lib/utils";
 import { SafeRetry } from './SafeRetry';
-
-const chip = "rounded-full border-2 border-border bg-card px-4 py-2 font-semibold transition hover:border-primary";
-const chipOn = "border-primary bg-primary text-primary-foreground";
 
 export function StylePicker({ value, onChange }: { value: string; onChange: (k: string) => void }) {
   const { data: styles = [] } = useQuery(stylesOptions);
@@ -27,13 +21,6 @@ export function StylePicker({ value, onChange }: { value: string; onChange: (k: 
       <span className="block px-2 py-1.5 text-sm font-semibold leading-tight">{s.name}</span>
     </Button>)}
     {styles.length>3&&<Button variant="outline" onClick={()=>setPage((page+1)%Math.ceil(styles.length/3))}>More looks</Button>}
-  </div>;
-}
-
-function Working({ child, label }: { child: SidekickChild; label: string }) {
-  return <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-3xl bg-muted">
-    <Bugley stage={child.bugley_stage} expression="thinking" glow size={110} />
-    <p className="animate-pulse font-display text-lg">{label}</p>
   </div>;
 }
 
