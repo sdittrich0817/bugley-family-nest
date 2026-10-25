@@ -83,3 +83,7 @@ export const unlockKidParentPin=createServerFn({method:'POST'}).inputValidator((
 export const resetKidPlayer=createServerFn({method:'POST'}).handler(async()=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(d){const {error}=await (await s.admin()).from('kid_devices').update({child_id:null,child_verified_at:null,parent_unlocked_until:null}).eq('id',d.id).is('revoked_at',null);if(error)throw new Error('Couldn’t switch players.');}return {ok:true};
 });
+export const forgetInvalidKidDevice=createServerFn({method:'POST'}).handler(async()=>{
+  const s=await import('./kid-device.server');if(await s.resolveDevice())throw new Error('Enter your parent PIN first.');
+  const {setResponseHeader,getRequest}=await import('@tanstack/react-start/server');const secure=new URL(getRequest().url).protocol==='https:'?'; Secure':'';setResponseHeader('Set-Cookie',`bugley_kids=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure}`);return {ok:true};
+});
