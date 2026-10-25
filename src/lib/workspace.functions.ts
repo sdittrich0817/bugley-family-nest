@@ -4,7 +4,9 @@ import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, EMPTY_MAP, guidedPages, defaultLength, lengthBand, ideaGenre } from "./story";
 import { guidedComicPages } from "./comic";
-import { EMPTY_FACTS, resizeWorkspace } from "./workspace";
+import { EMPTY_FACTS, resizeWorkspace, assertWorkspaceIdle, invalidatePicture, workspaceSchema } from "./workspace";
+import { storySchema } from "./story";
+import { comicSchema } from "./comic";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 const environment = z.enum(["sandbox", "live"]);
@@ -64,9 +66,10 @@ export const updateWorkspace = createServerFn({ method: "POST" }).middleware([re
   const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
   const project = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
   if (project.updatedAt !== data.updatedAt) throw new Error("Your creation changed in another window. Reopen it; your words are still here.");
+  assertWorkspaceIdle(project.details);
   const check = async (text: string) => { if (!text.trim()) return; const g = await s.guardChildText(context.supabase, context.userId, child, text, "story"); if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up idea."); };
   if (data.title) { await check(data.title); project.title = data.title; }
-  if (data.idea && data.idea !== project.workspace.originalIdea) { await check(data.idea); project.workspace.originalIdea = data.idea; project.workspace.facts = undefined; project.workspace.outlineApproved = false; if (project.kind === "picture") project.body = data.idea; }
+  if (data.idea && data.idea !== project.workspace.originalIdea) { await check(data.idea); project.workspace.originalIdea = data.idea; project.workspace.facts = undefined; project.workspace.outlineApproved = false; if (project.kind === "picture") { project.body = data.idea; invalidatePicture(project); } }
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   if (data.styleKey && data.styleKey !== project.styleKey) {
     if (project.details.artLock || project.details.modelLock || project.details.bookId || project.images.length || (project.details.characterIds ?? project.details.characters ?? []).length) throw new Error("This look is locked to your characters and drawings.");
@@ -75,6 +78,7 @@ export const updateWorkspace = createServerFn({ method: "POST" }).middleware([re
   }
   if (data.characterIds) {
     const ids = [...new Set(data.characterIds)]; if (project.kind === "picture" && ids.length > 1) throw new Error("Choose one character for your picture.");
+    if (project.kind === "picture" && JSON.stringify(ids) !== JSON.stringify(project.details.characters ?? [])) invalidatePicture(project);
     if (project.details.bookId) throw new Error("Add your new character from My Book so every chapter stays together.");
     if (ids.length) {
       const { data: rows } = await context.supabase.from("studio_creations").select("id,title,style_key,details,updated_at").eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").is("deleted_at", null).in("id", ids);
@@ -113,15 +117,22 @@ export const restoreWorkspace = createServerFn({ method: "POST" }).middleware([r
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error("Ask a grown-up to open your Studio plan.");
   const { loadWorkspace, persistWorkspace } = await import("./workspace.server"); const p = await loadWorkspace(context.supabase, context.userId, data.childId, data.id);
   if (p.updatedAt !== data.updatedAt) throw new Error("Reopen your creation first; it changed in another window.");
+  assertWorkspaceIdle(p.details);
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const { data: row } = await a.from("studio_project_history").select("snapshot").eq("id", data.versionId).eq("creation_id", p.id).eq("parent_id", context.userId).eq("child_id", data.childId).maybeSingle();
   if (!row) throw new Error("That version couldn’t open.");
   const snap = row.snapshot as any;
   if (!snap.details) throw new Error("That version was still being started. Choose a later version.");
+  if (p.kind === "comic") comicSchema.parse(snap.details);
+  if (p.kind === "story") storySchema.parse(snap.details);
+  if (snap.details.workspace) workspaceSchema.parse(snap.details.workspace);
+  const paths = [...(snap.images ?? []), snap.details.cover, ...(snap.details.pages ?? []).flatMap((page: any) => page.panels ? page.panels.flatMap((panel: any) => [panel.image, panel.sketch]) : [page.image]), ...(snap.details.workspace?.characterDraft?.options ?? []).map((o: any) => o.path)].filter(Boolean);
+  if (paths.some((path: unknown) => typeof path !== "string" || !path.startsWith(`${context.userId}/${data.childId}/`) || path.includes(".."))) throw new Error("That version’s drawings couldn’t be verified.");
   const lockedStyle = p.details.artLock || p.details.modelLock || p.details.bookId || (p.details.characterIds ?? p.details.characters ?? []).length;
   if (lockedStyle && snap.style_key !== p.styleKey) throw new Error("That version used a different look. Your locked drawings are safe.");
   p.title = snap.title; p.body = snap.body; p.images = snap.images ?? [];
   p.details = { ...snap.details, ...(p.details.artLock ? { artLock: p.details.artLock } : {}), ...(p.details.modelLock ? { modelLock: p.details.modelLock } : {}), ...(p.details.bookId ? { bookId: p.details.bookId } : {}) };
   p.workspace = (await import("./workspace")).workspaceOf(p.details, p.body ?? ""); p.styleKey = snap.style_key ?? p.styleKey;
+  if (p.kind === "picture") { p.details.paintState = "done"; p.details.upgradeState = p.details.mode === "final" ? "done" : "ready"; delete p.details.paintOp; }
   await persistWorkspace(context.userId, data.childId, p); return loadWorkspace(context.supabase, context.userId, data.childId, p.id);
 });

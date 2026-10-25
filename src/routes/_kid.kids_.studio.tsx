@@ -78,6 +78,10 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const [bookId, setBookId] = useState<string | null>(null);
   const [inBook, setInBook] = useState(false);
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
+  useEffect(() => {
+    const id = view === "comic" ? comicId : view === "story" ? storyId : view === "picture" ? pictureId : null;
+    if (id && (view === "comic" || view === "story" || view === "picture") && (search.project !== id || search.kind !== view)) void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true });
+  }, [view, comicId, storyId, pictureId, search.project, search.kind, navigate]);
   const greeting = `Hi ${child.nickname}! Want to create something or play a game?`;
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined, (a) => {
     const v = a.action === "open:album" ? "album" : a.action === "open:picture" ? "picture" : a.action === "open:story" ? "story" : a.action === "open:comic" ? "comic" : "character";

@@ -40,7 +40,7 @@ export function movePage<T>(pages: T[], from: number, to: number) {
   const next = [...pages]; const [p] = next.splice(from, 1); if (p === undefined) return pages; next.splice(to, 0, p); return next;
 }
 export function readyToFinishComic(c: ComicData) {
-  return Object.values(c.map).every((v) => v.trim()) && (!!c.cover || !!c.bookId) && c.pages.every((p) => p.panels.every((panel) => !!panel.image && (!c.guidedBand || panel.dialogueDone)));
+  return (!!c.workspace || Object.values(c.map).every((v) => v.trim())) && (!!c.cover || !!c.bookId) && c.pages.every((p) => p.panels.every((panel) => !!panel.image && (!c.guidedBand || panel.dialogueDone)));
 }
 export function comicCoachingInstructions() {
   return `Comic coaching: guide a strong opening, a problem, action, a big moment and a payoff or punchline. Hide the beat names. Layouts and camera angles are chosen behind the scenes, never ask the child to choose a layout or angle. Close-ups for feelings, wide shots for action. Ask one gentle clarity or continuity question once; the child decides. Never write their scene or dialogue. Offer 3 sparks of 2–5 words, not complete sentences. After painting ask what the hero says; skipping is fine. Preset sound effects are allowed. You are an AI helper, not a person; never ask for personal details.`;
