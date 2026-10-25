@@ -70,6 +70,14 @@ export const readV3Character = createServerFn({ method: "POST" }).middleware([re
   const out = await aiObject(z.object({ name: z.string().max(40), kind: z.string().max(160), color: z.string().max(80), special: z.string().max(160), personality: z.string().max(80), question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3) }),
     `Read this child's original character description. Extract ONLY stated facts into name (invented character name, never child's real name), kind (species/type AND appearance), color, special (clothes/accessories/markings), personality. Empty strings for unstated facts. Ask ONE short question for the most important missing fact: invented name, species/type, or visible appearance. If an outfit/accessory is mentioned but unclear, probe it; don't require clothing for animals/creatures or invent it. Explicit no-clothes is complete. Don't require personality or a special item. Return question empty if enough to paint. ${data.help ? "Offer up to three optional 2–5-word idea sparks. End the question with Your call!" : "Return ideas empty; the child didn't request suggestions."} Never write story prose.`, JSON.stringify({ description: data.description, age: child.age }));
   if (!out) throw new Error("Bugley couldn’t check that just now. Your description is still here.");
+  if (!out.name.trim()) out.question = "What’s your character’s made-up name?";
+  else if (!out.kind.trim()) out.question = "What kind of creature is your character?";
+  if (!data.help) out.ideas = [];
+  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+  if (g.eventId) {
+    const { error } = await a.from("studio_events").update({ reply: out.question || "Your character is ready to paint." }).eq("id", g.eventId).eq("parent_id", context.userId);
+    if (error) throw new Error("Bugley’s question couldn’t save. Try again.");
+  }
   return out;
 });
 
@@ -97,14 +105,18 @@ export const startV3Creation = createServerFn({ method: "POST" }).middleware([re
 export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ text: z.string().max(600), help: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const p = await (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
-  if (data.text.trim()) {
-    const g = await s.guardChildText(context.supabase, context.userId, child, data.text, "story");
-    if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
-  }
+  const g = await s.guardChildText(context.supabase, context.userId, child, data.text.trim() || "Help with my adventure", "story");
+  if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   const { aiObject } = await import("./studio-ai.server");
   const out = await aiObject(z.object({ question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3) }),
     `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, previous: p.details.pages, text: data.text, age: child.age }));
   if (!out) throw new Error("Bugley couldn’t help just now. Your words are still here.");
+  if (!data.help) out.ideas = [];
+  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+  if (g.eventId) {
+    const { error } = await a.from("studio_events").update({ reply: [out.question, ...out.ideas].filter(Boolean).join(" · ") || "Your scene has enough detail." }).eq("id", g.eventId).eq("parent_id", context.userId);
+    if (error) throw new Error("Bugley’s help couldn’t save. Try again.");
+  }
   return out;
 });
 
@@ -152,6 +164,10 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op });
     if (!result.ok) throw new Error(result.reply);
     charged = true;
+    const { data: lockRow } = await a.from("studio_creations").select("details").eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();
+    const locked = lockRow?.details as any;
+    if (locked?.artLock) p.details.artLock = locked.artLock;
+    if (locked?.modelLock || result.lock) p.details.modelLock = locked?.modelLock ?? result.lock;
     if (p.kind === "picture") {
       p.workspace.originalIdea = description; p.body = description; p.images = [result.path]; p.details.mode = "sketch"; p.details.upgradeState = "ready";
     } else {

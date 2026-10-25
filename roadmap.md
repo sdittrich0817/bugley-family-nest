@@ -61,9 +61,8 @@
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
 
 ## Create Studio V3 (comic journey) — built 2026-10-25
-- [ ] Review and approve character-first revision: bigger helping Bugley sitewide; new/saved character, freeform description with missing-detail probing, then picture/comic/story choice; title and chosen count, child-described panels, optional arc help and prompt-based image revisions (waiting for Shea's architecture approval).
-- New V3 comic experience at /kids/studio/v3 alongside the classic Studio (unchanged).
-- Spark → 4-scene storyboard → character approval → one-scene-at-a-time canvas → cover/finish.
-- Reuses workspace persistence, safety guards, Character Lock, Glow charging; no games changes.
-- Verified live as Dawnie: idea → Pickles arc → existing-character reuse → Scene 1 drawn (3 Glow), scenes 2–4 untouched.
-- Open: full finish/cover run, storybook + picture V3 (Phase 7), voice input in the spark box.
+- [x] Approved character-first revision: larger shared helping Bugley and homepage flying character; new/saved character, freeform missing-detail probing, optional sparks, portrait approval then picture/comic/story chooser; selected character/style carried through, title/count and sequential child descriptions, targeted reference-based redraws preserving original art on failure.
+- [x] Connect Studio home to revised Create, route saved V3 album entries back to V3, resume character drafts, history pagination, and link book continuation; legacy readers and games remain compatible.
+- [x] Live existing-character comic: Pickles → chosen one-panel comic → drawing → skip speech → cover → finish → refresh/readback, no browser errors and no 695px overflow. Used normal 6 Glow, Dawnie now at 0; test comic and text drafts remain in album.
+- [x] Live text checks: incomplete dog description asks missing name; full original Super Ted description is accepted and draft restores; seven-page story keeps exact whitespace/spelling after refresh; picture scene restores; 390px/695px no overflow. Later text checks used authenticated parent access after child-login attempt cooldown, not a fresh child-login claim. 55 relevant tests pass; build OK.
+- [ ] Live new portrait approval, art revisions, story illustrations/finish and picture generation/upgrade (blocked: 0 existing family Glow; no top-up permitted). Voice control is present where browser speech recognition is supported; physical microphone behavior remains unverified.
