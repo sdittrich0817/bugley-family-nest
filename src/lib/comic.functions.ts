@@ -63,7 +63,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "panel" && panel) {
     if (!data.description?.trim()) throw new Error("Tell Bugley what happens.");
     await check(data.description);
-    if (panel.description !== data.description) { await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image }); panel.image = null; panel.sketch = null; }
+    if (panel.description !== data.description) { await recordVersion(context.userId, child.id, comic.id, panel.id, { text: panel.description, image: panel.image }); if (!comic.data.workspace?.v3) { panel.image = null; panel.sketch = null; } }
     panel.description = data.description;
   } else if (data.action === "undo" && panel) {
     const prior = await popVersion(context.userId, child.id, comic.id, panel.id);

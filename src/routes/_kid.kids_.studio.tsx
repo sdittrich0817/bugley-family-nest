@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getWorkspace } from "@/lib/workspace.functions";
 import { CreativeWorkspace } from "@/components/studio/CreativeWorkspace";
 import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -37,7 +38,7 @@ export const Route = createFileRoute("/_kid/kids_/studio")({
     { property: "og:title", content: "Bugley’s Studio · Kid Zone" }, { property: "og:description", content: "Make pictures, stories, comics and games with Bugley." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
-  validateSearch: z.object({ project: z.string().uuid().optional(), kind: z.enum(["comic", "story", "picture"]).optional() }),
+  validateSearch: z.object({ project: z.string().uuid().optional(), kind: z.enum(["comic", "story", "picture"]).optional(), book: z.string().uuid().optional() }),
   loader: ({ context }) => context.queryClient.ensureQueryData(familyOptions),
   component: StudioPage,
 });
@@ -70,13 +71,21 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
   const search = Route.useSearch();
-  const [view, setView] = useState<View>(search.project ? search.kind ?? "comic" : "home"); useScrollTopOn(view);
+  const [view, setView] = useState<View>(search.book ? "book" : search.project ? search.kind ?? "comic" : "home"); useScrollTopOn(view);
   const [pictureId, setPictureId] = useState<string | null>(search.kind === "picture" ? search.project ?? null : null);
   const [storyId, setStoryId] = useState<string | null>(search.kind === "story" ? search.project ?? null : null);
   const [storyDirty, setStoryDirty] = useState(false);
   const [comicId, setComicId] = useState<string | null>(search.kind === "comic" || !search.kind ? search.project ?? null : null);
-  const [bookId, setBookId] = useState<string | null>(null);
+  const [bookId, setBookId] = useState<string | null>(search.book ?? null);
   const [inBook, setInBook] = useState(false);
+  const openSaved = async (kind: "comic" | "story" | "picture", id: string) => {
+    try {
+      const p = await getWorkspace({ data: { childId: child.id, id } });
+      if (p.workspace.v3) { void navigate({ to: "/kids/studio/v3", search: { project: id } }); return; }
+      if (kind === "comic") setComicId(id); else if (kind === "story") setStoryId(id); else setPictureId(id);
+      setView(kind);
+    } catch(e) { toast.error(e instanceof Error ? e.message : "That creation couldn’t open."); }
+  };
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
   useEffect(() => {
     const id = view === "comic" ? comicId : view === "story" ? storyId : view === "picture" ? pictureId : null;
@@ -111,7 +120,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
           : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />
           : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
-          : <Album onPicture={(id) => { setPictureId(id); setView("picture"); }} child={child} onStory={(id) => { setStoryId(id); setView("story"); }} onComic={(id) => { setComicId(id); setView("comic"); }} onBook={(id) => { setBookId(id); setView("book"); }} />}
+          : <Album onPicture={(id) => void openSaved("picture", id)} child={child} onStory={(id) => void openSaved("story", id)} onComic={(id) => void openSaved("comic", id)} onBook={(id) => { setBookId(id); setView("book"); }} />}
       </main>
       <Sidekick child={child} chat={chat} />
     </div>
@@ -126,18 +135,11 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
   const navigate = useNavigate();
   // Things kids MAKE come first; characters (reused inside them) and PLAY sit below.
   return <div className="space-y-6">
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {(["comic", "story", "picture"] as const).map((k, i) => { const c = CREATE_CHOICES.find((x) => x.key === k); if (!c) return null; return <button key={k} onClick={() => onOpen(k)} style={{ animationDelay: `${i * 100}ms` }}
-        className="studio-door-glow flex flex-col items-center gap-3 overflow-hidden rounded-[2rem] border-4 border-primary bg-card pb-4 shadow-soft transition animate-in fade-in zoom-in-95 fill-mode-both hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-        {c.image && <img src={c.image} alt="" className="aspect-[4/3] w-full object-cover" />}
-        <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>{k === "comic" ? "Make a Comic" : k === "story" ? "Make a Story" : "Make a Picture"}</span>
-      </button>; })}
-    </section>
+    <section className="space-y-4"><div className="grid grid-cols-3 gap-3">{CREATE_CHOICES.map(c => <img key={c.key} src={c.image} alt={c.label} className="aspect-[4/3] w-full rounded-lg object-cover" />)}</div><Button size="lg" className="h-16 w-full text-xl" onClick={() => void navigate({ to: "/kids/studio/v3" })}><Sparkles />Let’s create!</Button></section>
     <div className="flex flex-col items-center gap-3">
-      <Button size="lg" onClick={() => void navigate({ to: "/kids/studio/v3" })} className="rounded-full"><Sparkles className="size-5" />Try the new Comic Maker!</Button>
       <Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button>
     </div>
-    <CharacterVault child={child} onBuild={() => onOpen("character")} />
+    <CharacterVault child={child} onBuild={() => void navigate({ to: "/kids/studio/v3" })} />
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
 }
