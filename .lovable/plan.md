@@ -8,14 +8,13 @@ Wrap existing creative services in one workspace; do not replace the app or imag
 
 ## 1. What currently fragments the journey
 
-- **The project begins too late.** The opening idea, recognized details and character choices remain temporary until story/comic setup is complete. Leaving or refreshing during setup can lose them.
-- **Character creation already returns to the same setup**, and can receive the opening idea's name and appearance. However, it replaces the entire screen, so the comic disappears while the child builds a character. The standalone character path returns home.
-- **Idea-first still becomes a questionnaire.** Style, hero, missing place/problem, length and additional cast are controlled by numbered setup states. Hero building still asks personality, special detail and name even when some information was supplied earlier.
-- **The outline is a separate screen**, not an evolving storyboard that remains available while making panels.
-- **Making is panel-by-panel or page-by-page.** Saving a scene can immediately trigger review and paid illustration. A general busy state replaces the creation with a waiting screen.
-- **Studio suggestions can switch tools.** Starting a story/comic via a suggestion clears its selected ID rather than acting on the current project.
-- **Saved creations reopen, but unfinished setup does not.** Pictures also have temporary setup state; generated pictures save, but the current album lacks an editable picture reopen path.
-- **History is narrower than previously described.** Current snapshots hold text, image and description—not complete project changes or all comic layers. Undo removes a history entry. That is not full, non-destructive version history.
+- Opening ideas and setup choices are temporary; the project is saved only after setup completes.
+- Character creation already returns to the same setup and accepts supplied name/appearance, but replaces the screen and hides the comic. Standalone character creation returns home.
+- Idea-first still becomes numbered style/hero/place/problem/length/cast questions. Hero building asks personality, accessories and name even when details already exist.
+- Outlines are separate screens, not persistent storyboards. Production is page/panel-by-page/panel; saving words can automatically trigger review and paid art, while busy screens hide the creation.
+- Studio suggestion actions can switch tools and clear selected creation IDs.
+- Saved creations reopen, but setup drafts do not; pictures lack an editable album reopen path.
+- History is not yet full: snapshots store text/image/description, omit complete layers/project changes, and undo removes an entry.
 
 ## 2. The workspace the child sees
 
@@ -46,14 +45,11 @@ Characters can be added during Make. Changing an approved appearance creates a n
 
 ## 4. Save and resume
 
-Use the existing creation record as the project's identity, including before the first drawing. Save the original safe idea, recognized facts, current activity, approved cast, visual selection, outline approval and stable page/panel IDs.
+Use the existing creation record as durable identity before drawing. Save the safe original idea, recognized facts, activity, cast/reference versions, visual selection, outline approval and stable page/panel IDs.
 
-- Autosave guarded creative edits independently of drawing; saving, planning, character selection and text editing remain free.
-- A refresh or tomorrow's visit reopens the same project from My Creations, including pre-drawing drafts.
-- Persist character-editor inputs and generated preview references where safe so returning does not require repeating details or paying again just to see an existing preview.
-- Keep one durable authoritative project; temporary editor input and loading state are not a second project.
-- Preserve optimistic save protection. A stale window reloads/reconciles by page/panel ID rather than overwriting someone else's newer edits.
-- Save outline approval explicitly. Resume must not silently skip an unapproved storyboard.
+Autosave guarded edits separately from drawing. My Creations and the resume URL reopen the same draft tomorrow, including character-editor inputs and safe preview references. Only confirmed saves say “Saved.” Failed saves retain local input and offer retry.
+
+Use existing optimistic concurrency protection; reconcile conflicts by stable IDs, never overwrite newer work with stale whole-project state. Keep one authoritative project, not independent copies inside each editor. Resume must preserve pending storyboard approval.
 
 ## 5. Comic journey, beginning to end
 
