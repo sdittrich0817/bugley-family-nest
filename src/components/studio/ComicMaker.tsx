@@ -36,7 +36,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley);
   const convert = useServerFn(bookFromOneShot), chapter = useServerFn(startChapter), loadBook = useServerFn(getBook);
   const qc = useQueryClient(); const env = getStripeEnvironment();
-  const band = comic?.data.guidedBand ?? child.age_band;
+  const band = beatBandOf(comic?.data ?? {}, child.age_band);
   const flat = comic?.data.pages.flatMap((page) => page.panels.map((panel, i) => ({ page, panel, i }))) ?? [];
   const current = flat[at]; const panel = current?.panel; const ending = !!comic && at >= flat.length;
   useScrollTopOn(`${comic?.id}-${at}-${mode}-${busy}-${ending}`);

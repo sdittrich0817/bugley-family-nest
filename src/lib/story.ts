@@ -7,6 +7,8 @@ export const LENGTHS = ["short", "medium", "long"] as const;
 export type StoryLength = (typeof LENGTHS)[number];
 export const lengthBand = (l: StoryLength) => l === "short" ? "sprouts" : l === "long" ? "builders" : "explorers";
 export const defaultLength = (band: string): StoryLength => band === "sprouts" ? "short" : band === "builders" ? "long" : "medium";
+/** Which beat list drives page questions: the chosen length, falling back to the age band for older projects. */
+export const beatBandOf = (data: { guidedBand?: string; length?: StoryLength }, fallback: string) => lengthBand(data.length ?? defaultLength(data.guidedBand ?? fallback));
 export const storyMapSchema = z.object({ hero: z.string().max(600), want: z.string().max(600), place: z.string().max(600), problem: z.string().max(600), ending: z.string().max(600) });
 export const pageSchema = z.object({ id: z.string().uuid(), step: z.enum(STORY_STEPS), text: z.string().max(20000), description: z.string().max(600), chapter: z.string().max(120), image: z.string().nullable() });
 export const storySchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(pageSchema), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), length: z.enum(LENGTHS).optional(), followups: z.array(z.string()).optional() });

@@ -11,7 +11,7 @@ import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { askBugley } from "@/lib/studio.functions";
 import { createStory, editStory, getStory } from "@/lib/story.functions";
 import { bookFromOneShot, startChapter } from "@/lib/book.functions";
-import { beatQuestion, storyBeats, type Story } from "@/lib/story";
+import { beatBandOf, beatQuestion, storyBeats, type Story } from "@/lib/story";
 import { controlsOptions } from "@/lib/hub.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
@@ -33,7 +33,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   const convert = useServerFn(bookFromOneShot), chapter = useServerFn(startChapter);
   const qc = useQueryClient();
   const { data: controls } = useQuery(controlsOptions);
-  const band = story?.data.guidedBand ?? child.age_band;
+  const band = beatBandOf(story?.data ?? {}, child.age_band);
   const page = story?.data.pages[index];
   const ending = !!story && index >= story.data.pages.length;
   const env = getStripeEnvironment();
