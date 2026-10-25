@@ -130,8 +130,13 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   if (comicId && !comic) return <BugleyStep child={child} bare question="Opening your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
   if (!comic) return <StorySetup kind="comic" child={child} chat={chat} onCreate={async (r) => {
     const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, length: r.length, environment: env } });
-    const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } }); setComic(next); setAt(0); onComic(next.id); refresh();
+    let next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
+    try { await plan({ data: { childId: child.id, id: next.id, kind: "comic", environment: env } }); next = await load({ data: { childId: child.id, id: next.id } }); setShowOutline(true); } catch { /* planning is a bonus; the comic works without it */ }
+    setComic(next); setAt(0); onComic(next.id); refresh();
   }} />;
+  if (showOutline && comic?.data.outline?.length) return <OutlineScreen child={child} chat={chat} outline={comic.data.outline} noun="comic" busy={planBusy}
+    onChange={async (note) => { setPlanBusy(true); try { await plan({ data: { childId: child.id, id: comic.id, kind: "comic", environment: env, change: note } }); setComic(await load({ data: { childId: child.id, id: comic.id } })); } catch (e) { toast.error(e instanceof Error ? e.message : "Try again."); } finally { setPlanBusy(false); } }}
+    onGo={() => { setShowOutline(false); chat.say("Panel 1! What happens first, in your words?", []); }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
   const count = bookPages ?? printedPages(comic.data.pages.length, false);
   if (comic.data.finished) return <div className="space-y-6"><ComicReader comic={comic} child={child} /><p className="text-center font-display text-xl">{printMessage("comic", count)}</p><Button size="lg" onClick={() => void nextIssue()}><BookOpen />{comic.data.bookId ? "Make the next issue?" : "Want to make Issue 2?"}</Button></div>;

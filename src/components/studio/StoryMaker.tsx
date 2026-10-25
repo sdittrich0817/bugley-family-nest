@@ -9,7 +9,8 @@ import { BugleyStep } from "./BugleyStep";
 import { StorySetup } from "./StorySetup";
 import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { askBugley } from "@/lib/studio.functions";
-import { createStory, editStory, getStory } from "@/lib/story.functions";
+import { createStory, editStory, getStory, planOutline } from "@/lib/story.functions";
+import { OutlineScreen } from "./Outline";
 import { bookFromOneShot, startChapter } from "@/lib/book.functions";
 import { beatBandOf, beatQuestion, storyBeats, type Story } from "@/lib/story";
 import { controlsOptions } from "@/lib/hub.functions";
@@ -29,7 +30,9 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   const [answer, setAnswer] = useState("");
   const [spelling, setSpelling] = useState("");
   const [pendingTitle, setPendingTitle] = useState("");
-  const create = useServerFn(createStory), edit = useServerFn(editStory), load = useServerFn(getStory), ask = useServerFn(askBugley);
+  const [showOutline, setShowOutline] = useState(false);
+  const [planBusy, setPlanBusy] = useState(false);
+  const create = useServerFn(createStory), edit = useServerFn(editStory), load = useServerFn(getStory), ask = useServerFn(askBugley), plan = useServerFn(planOutline);
   const convert = useServerFn(bookFromOneShot), chapter = useServerFn(startChapter);
   const qc = useQueryClient();
   const { data: controls } = useQuery(controlsOptions);
@@ -124,9 +127,13 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   if (storyId && !story) return <BugleyStep child={child} bare question="Opening your story…" choices={[]} mood="painting" allowOwnIdea={false} onChoose={() => {}} />;
   if (!story) return <StorySetup child={child} chat={chat} onCreate={async (r) => {
     const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, length: r.length, environment: env } });
-    const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
+    let next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
+    try { await plan({ data: { childId: child.id, id: next.id, kind: "story", environment: env } }); next = await load({ data: { childId: child.id, id: next.id } }); setShowOutline(true); } catch { /* planning is a bonus; the story works without it */ }
     setStory(next); setIndex(0); onStory(next.id); refresh();
   }} />;
+  if (showOutline && story?.data.outline?.length) return <OutlineScreen child={child} chat={chat} outline={story.data.outline} noun="story" busy={planBusy}
+    onChange={async (note) => { setPlanBusy(true); try { await plan({ data: { childId: child.id, id: story.id, kind: "story", environment: env, change: note } }); setStory(await load({ data: { childId: child.id, id: story.id } })); } catch (e) { toast.error(e instanceof Error ? e.message : "Try again."); } finally { setPlanBusy(false); } }}
+    onGo={() => { setShowOutline(false); chat.say(`Page 1! ${beatQuestion(band, 0, story.data.map)}`, []); }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your adventure…" choices={[]} mood="painting" allowOwnIdea={false} onChoose={() => {}} />;
   if (story.data.finished) return <div className="space-y-6"><StoryReader story={story} child={child} /><div className="studio-bugley-cheer flex flex-wrap justify-center gap-3"><Button size="lg" onClick={() => void continueChapter()}><BookOpen />{story.data.bookId ? "Write the next chapter?" : "Want to write Chapter 2?"}</Button></div></div>;
   if (ending) return <div className="space-y-4"><BugleyStep child={child} bare question="What’s your story called?" choices={titles.map((t, i) => ({ key: `${i}`, label: t, emoji: "📖" }))} onBack={() => setIndex(story.data.pages.length - 1)} onChoose={(c) => void finish(c.label)} onOwnIdea={(t) => void finish(t)} />{pendingTitle && <Button onClick={() => void finish(pendingTitle)}>Try my cover again · 3 glow</Button>}</div>;
