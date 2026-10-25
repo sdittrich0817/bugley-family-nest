@@ -7,9 +7,9 @@ describe("Bugley's actionable suggestions", () => {
     expect(bugleyActions("show me my heroes").map((a) => a.action)).toContain("open:characters");
   });
   it("offers the right maker for pictures, stories and comics", () => {
-    expect(bugleyActions("I want to draw a dragon")[0].action).toBe("open:picture");
-    expect(bugleyActions("let's make a comic!")[0].action).toBe("open:comic");
-    expect(bugleyActions("can we write a story")[0].action).toBe("open:story");
+    expect(bugleyActions("I want to draw a dragon")[0]!.action).toBe("open:picture");
+    expect(bugleyActions("let's make a comic!")[0]!.action).toBe("open:comic");
+    expect(bugleyActions("can we write a story")[0]!.action).toBe("open:story");
   });
   it("never returns more than two actions and only allow-listed ids", () => {
     const acts = bugleyActions("draw a character for my comic story album");
