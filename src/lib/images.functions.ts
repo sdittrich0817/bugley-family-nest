@@ -7,7 +7,7 @@ import { familyHasAccess } from "@/lib/billing.functions";
 import { canUpgradePicture } from "./picture";
 
 export type ArtStyle = { key: string; name: string; description: string };
-export type CastMember = { id: string; title: string; url: string; details: { type?: string; personality?: string; summary?: string } | null };
+export type CastMember = { styleKey: string; id: string; title: string; url: string; details: { type?: string; personality?: string; summary?: string } | null };
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
@@ -26,10 +26,10 @@ export const stylesOptions = queryOptions({ queryKey: ["art-styles"], queryFn: (
 export const listCast = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { data: rows } = await context.supabase.from("studio_creations").select("id,title,images,details").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).order("created_at", { ascending: false });
+    const { data: rows } = await context.supabase.from("studio_creations").select("id,title,images,details,style_key").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).order("created_at", { ascending: false });
     const { signPaths } = await import("@/lib/images.server");
     const urls = await signPaths((rows ?? []).map((r: any) => r.images?.[0] ?? ""));
-    return (rows ?? []).map((r: any, i) => ({ id: r.id, title: r.title, url: urls[i] ?? "", details: r.details })) as CastMember[];
+    return (rows ?? []).map((r: any, i) => ({ styleKey: r.style_key, id: r.id, title: r.title, url: urls[i] ?? "", details: r.details })) as CastMember[];
   });
 
 const genInput = z.object({

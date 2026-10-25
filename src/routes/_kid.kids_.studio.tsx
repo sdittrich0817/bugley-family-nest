@@ -93,7 +93,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
         {view !== "home"
-          ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); if (inBook && (view === "story" || view === "comic")) { setView("book"); } else { setInBook(false); setView("home"); } }}><ArrowLeft className="size-5" />{inBook && (view === "story" || view === "comic") ? "My book" : "Studio"}</Button>
+          ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); if (inBook && (view === "story" || view === "comic")) { setView("book"); } else { setInBook(false); setView("home"); void navigate({ to: "/kids/studio", search: {}, replace: true }); } }}><ArrowLeft className="size-5" />{inBook && (view === "story" || view === "comic") ? "My book" : "Studio"}</Button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
         <span className="flex items-center gap-2">{view === "home" && <Button variant="ghost" onClick={() => setView("album")}><Library className="size-5" />My Album</Button>}</span>
         {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}

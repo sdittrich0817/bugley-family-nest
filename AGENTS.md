@@ -34,5 +34,5 @@
 - Subdirectories may have their own `AGENTS.md` (see `src/lib/AGENTS.md` for Studio makers and books); read it before changing files there.
 - Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
 - Child avatars are code-drawn bug portraits (`BugAvatar`) built from allow-listed parts stored in `children.bug`; kids build them in the Kid Zone (parts picker or words that AI maps to parts, guarded first), parents never pick. Why: safe, consistent, no generated images or uploads.
-- Studio makers use sequential questions with opt-in typed/spoken answers; one route-level `BugleyGuide` uses `chat.say`. Why: simple creation that keeps exact child words.
+- Studio Create uses one CreativeWorkspace with server-owned creation identity and inline activities; legacy makers remain for compatibility. Why: creation stays visible and resumable without replacing audited art services.
 - Studio routine choices advance locally with prepared lines; AI only for open-ended help, the guarded idea read, outlines and art. Why: no waiting on AI rephrasing.
