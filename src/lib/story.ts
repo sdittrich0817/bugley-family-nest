@@ -2,9 +2,14 @@ import { z } from "zod";
 
 export const GENRES = ["Superhero", "Adventure", "Mystery", "Fantasy", "Space", "Animal Tales", "Funny", "Spooky-Not-Scary", "Sports", "Friendship"] as const;
 export const STORY_STEPS = ["Beginning", "Problem", "Trying", "Big Moment", "Ending"] as const;
+/** Child-chosen length: drives page/panel count. Age band still drives coaching tone. */
+export const LENGTHS = ["short", "medium", "long"] as const;
+export type StoryLength = (typeof LENGTHS)[number];
+export const lengthBand = (l: StoryLength) => l === "short" ? "sprouts" : l === "long" ? "builders" : "explorers";
+export const defaultLength = (band: string): StoryLength => band === "sprouts" ? "short" : band === "builders" ? "long" : "medium";
 export const storyMapSchema = z.object({ hero: z.string().max(600), want: z.string().max(600), place: z.string().max(600), problem: z.string().max(600), ending: z.string().max(600) });
 export const pageSchema = z.object({ id: z.string().uuid(), step: z.enum(STORY_STEPS), text: z.string().max(20000), description: z.string().max(600), chapter: z.string().max(120), image: z.string().nullable() });
-export const storySchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(pageSchema), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), followups: z.array(z.string()).optional() });
+export const storySchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(pageSchema), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), length: z.enum(LENGTHS).optional(), followups: z.array(z.string()).optional() });
 export type StoryData = z.infer<typeof storySchema>;
 export type StoryPage = z.infer<typeof pageSchema>;
 export type Story = { id: string; title: string; updatedAt: string; data: StoryData; urls: Record<string, string> };
