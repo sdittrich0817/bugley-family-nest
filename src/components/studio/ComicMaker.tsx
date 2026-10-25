@@ -129,7 +129,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   }
   if (comicId && !comic) return <BugleyStep child={child} bare question="Opening your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
   if (!comic) return <StorySetup kind="comic" child={child} chat={chat} onCreate={async (r) => {
-    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, environment: env } });
+    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, length: r.length, environment: env } });
     const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } }); setComic(next); setAt(0); onComic(next.id); refresh();
   }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
