@@ -59,11 +59,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     const defaultSparks = storyBeats(band)[index]?.sparks ?? ["A new adventure", "A clever choice", "A happy surprise"];
     setQuestion(defaultQ); setSparks(defaultSparks); setAnswer(""); setSpelling(""); setFollowup(""); setEditing(false);
     chat.say(`Page ${index + 1}! ${defaultQ}`, []);
-    void ask({ data: { childId: child.id, storyId: story.id, pageId: page.id, purpose: "step", context: "Story Maker", source: "chip", environment: env, text: "Ask the next question for this saved story page and give short idea sparks. Do not write my story." } }).then((r) => {
-      if (!active || r.blocked) return;
-      if (r.reply) { setQuestion(r.reply); chat.say(r.reply, []); }
-      if (r.chips.length === 3) setSparks(r.chips);
-    }).catch(() => {});
+    // Ready question only: no AI call per page. "I'm stuck" in the Bugley bar asks for help on demand.
     return () => { active = false; };
   }, [story?.id, index]); // Saved pages remain the hidden memory; never feed sparks into page text.
   useEffect(() => {

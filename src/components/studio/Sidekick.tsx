@@ -31,7 +31,9 @@ export function useBugleyChat(child: SidekickChild, context: string, opening: st
     setMessages((m) => [...m, { from: "kid", text: t }]);
     setChips([]); setActions([]); setBusy(true);
     try {
+      const t0 = performance.now();
       const r = await askBugley({ data: { childId: child.id, text: t, source, context, storyId, comicId, environment: getStripeEnvironment() } });
+      console.info(`[studio-timing] askBugley ${context} ${Math.round(performance.now() - t0)}ms`);
       setMessages((m) => [...m, { from: "bugley", text: r.reply }]);
       setChips(r.chips);
       setActions("actions" in r && Array.isArray(r.actions) ? r.actions.filter((a) => a.action in STUDIO_ACTIONS) : []);

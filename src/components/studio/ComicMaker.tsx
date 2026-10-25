@@ -66,11 +66,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
     setSparks(comicBeats(band)[at]?.sparks ?? ["A clever plan", "A big surprise", "A happy ending"]);
     chat.say(recap || (state === "speech" ? `What does ${comic.data.map.hero} say?` : `Panel ${at + 1}! ${q}`), []);
     let active = true;
-    if (state === "scene") void ask({ data: { childId: child.id, comicId: comic.id, panelId: current.panel.id, pageId: current.page.id, purpose: "step", context: "Comic Maker", source: "chip", environment: env, text: "Ask one question for my next comic panel with short idea sparks. Never write my scene." } }).then((r) => {
-      if (!active || r.blocked) return;
-      if (r.reply && !recap) { setQuestion(r.reply); chat.say(r.reply, []); }
-      if (r.chips.length === 3) setSparks(r.chips);
-    }).catch(() => {});
+    // Ready question only: no AI call per panel; Bugley helps when the child asks.
     return () => { active = false; };
   }, [comic?.id, at]);
   useEffect(() => {
