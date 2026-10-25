@@ -53,6 +53,6 @@ export function WorkspaceCharacter({ child, project, onSave, onAttach }: { child
     </div></details>
     {note && <p role="alert" className="font-semibold text-destructive">{note}</p>}
     <div className="flex flex-wrap gap-2"><Button disabled={busy || !name.trim() || kind.trim().length < 2} onClick={() => void preview()}>{busy ? "Meeting your character…" : options.length ? "New previews · 1 Glow" : "See previews · 1 Glow"}</Button><Button variant="ghost" disabled={busy} onClick={() => void onSave(draft())}>Save these details</Button></div>
-    <div className="grid grid-cols-3 gap-2">{options.map((o, i) => <Button variant="outline" key={o.path} disabled={busy} onClick={() => void choose(o.path)} className="h-auto flex-col whitespace-normal p-2"><img src={o.url} alt={`${name} preview ${i + 1}`} className="aspect-square w-full object-contain" /><span>That’s {name}!</span></Button>)}</div>
+    <div className="grid grid-cols-3 gap-2">{options.map((o, i) => <Button variant="outline" key={o.path} disabled={busy} onClick={() => void choose(o.path)} className="h-auto min-w-0 flex-col rounded-lg whitespace-normal p-2"><img src={o.url} alt={`${name} preview ${i + 1}`} className="aspect-square w-full object-contain" /><span>That’s {name}!</span></Button>)}</div>
   </div>;
 }

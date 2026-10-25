@@ -57,4 +57,4 @@
 - [ ] Live-verify the new Studio create flow end-to-end in preview (blocked: Dawnie Dee’s secret numbers unknown; need them or permission to reset).
 - [x] Studio 2.1: idea box first, no per-page AI question swap, Comic/Story/Picture up front, timing logs
 - [x] Studio 2.2: review current architecture and propose one persistent creative workspace; no application or family-data changes.
-- [ ] Studio 2.2 implementation: unified workspace, comic journey, storybook/picture adapters and regression checks (blocked: architecture proposal awaits Shea's approval).
+- [ ] Studio 2.2 implementation approved: finish unified workspace, comic journey, storybook/picture adapters and regression checks; saved comic/character/first art verified, history restoration and phone layout checks underway.
