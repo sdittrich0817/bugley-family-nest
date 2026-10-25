@@ -83,13 +83,14 @@ export const createStory = createServerFn({ method: "POST" }).middleware([requir
   return loadStory(context.supabase, context.userId, child.id, id);
 });
 
-export const editStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional() }).parse(i)).handler(async ({ data, context }) => {
+export const editStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review", "undo", "reopen"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const { loadStory, persistStory } = await import("./story.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const story = await loadStory(context.supabase, context.userId, child.id, data.id);
-  if (story.data.finished) throw new Error("This story is finished. You can read it in your album.");
+  if (story.data.finished && data.action !== "reopen") throw new Error("This story is finished. You can read it in your album.");
+  const { recordVersion, popVersion } = await import("./versions.server");
   const check = async (text: string) => {
     if (!text.trim()) return;
     const guard = await s.guardChildText(context.supabase, context.userId, child, text, "story");
@@ -105,8 +106,19 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireK
     if (!page) throw new Error("We couldn’t find that page.");
     if (data.page.chapter && child.age_band !== "builders") throw new Error("Chapter names are for Builders.");
     for (const key of ["text", "description", "chapter"] as const) if (data.page[key] !== page[key]) await check(data.page[key]);
-    if (data.page.text !== page.text) page.image = null;
+    if (data.page.text !== page.text) { await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description }); page.image = null; }
     Object.assign(page, data.page);
+  } else if (data.action === "undo") {
+    const page = story.data.pages.find((p) => p.id === data.pageId);
+    if (!page) throw new Error("We couldn’t find that page.");
+    const prior = await popVersion(context.userId, child.id, story.id, page.id);
+    if (!prior) throw new Error("Nothing to take back on this page yet.");
+    await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description });
+    if (prior.text != null) page.text = prior.text;
+    page.image = prior.image ?? null;
+    if (prior.description != null) page.description = prior.description;
+  } else if (data.action === "reopen") {
+    story.data.finished = false;
   } else if (data.action === "title") {
     if (!data.title) throw new Error("Choose a title first.");
     await check(data.title); story.title = data.title;
