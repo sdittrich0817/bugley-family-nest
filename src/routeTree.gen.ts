@@ -44,6 +44,7 @@ import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 import { Route as KidKidsInstallRouteImport } from './routes/_kid.kids_.install'
 import { Route as KidKidsStudioRouteImport } from './routes/_kid.kids_.studio'
 import { Route as KidKidsStudioGamesRouteImport } from './routes/_kid.kids_.studio_.games'
+import { Route as KidKidsStudioV3RouteImport } from './routes/_kid.kids_.studio_.v3'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -219,6 +220,11 @@ const KidKidsStudioGamesRoute = KidKidsStudioGamesRouteImport.update({
   path: '/kids/studio/games',
   getParentRoute: () => KidRoute,
 } as any)
+const KidKidsStudioV3Route = KidKidsStudioV3RouteImport.update({
+  id: '/kids_/studio_/v3',
+  path: '/kids/studio/v3',
+  getParentRoute: () => KidRoute,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -260,6 +266,7 @@ export interface FileRoutesByFullPath {
   '/kids/install': typeof KidKidsInstallRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
+  '/kids/studio/v3': typeof KidKidsStudioV3Route
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/kids/install': typeof KidKidsInstallRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
+  '/kids/studio/v3': typeof KidKidsStudioV3Route
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/_kid/kids_/install': typeof KidKidsInstallRoute
   '/_kid/kids_/studio': typeof KidKidsStudioRoute
   '/_kid/kids_/studio_/games': typeof KidKidsStudioGamesRoute
+  '/_kid/kids_/studio_/v3': typeof KidKidsStudioV3Route
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/kids/install'
     | '/kids/studio'
     | '/kids/studio/games'
+    | '/kids/studio/v3'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/kids/install'
     | '/kids/studio'
     | '/kids/studio/games'
+    | '/kids/studio/v3'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/_kid/kids_/install'
     | '/_kid/kids_/studio'
     | '/_kid/kids_/studio_/games'
+    | '/_kid/kids_/studio_/v3'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -725,6 +737,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KidKidsStudioGamesRouteImport
       parentRoute: typeof KidRoute
     }
+    '/_kid/kids_/studio_/v3': {
+      id: '/_kid/kids_/studio_/v3'
+      path: '/kids/studio/v3'
+      fullPath: '/kids/studio/v3'
+      preLoaderRoute: typeof KidKidsStudioV3RouteImport
+      parentRoute: typeof KidRoute
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -763,6 +782,7 @@ interface KidRouteChildren {
   KidKidsInstallRoute: typeof KidKidsInstallRoute
   KidKidsStudioRoute: typeof KidKidsStudioRoute
   KidKidsStudioGamesRoute: typeof KidKidsStudioGamesRoute
+  KidKidsStudioV3Route: typeof KidKidsStudioV3Route
 }
 
 const KidRouteChildren: KidRouteChildren = {
@@ -770,6 +790,7 @@ const KidRouteChildren: KidRouteChildren = {
   KidKidsInstallRoute: KidKidsInstallRoute,
   KidKidsStudioRoute: KidKidsStudioRoute,
   KidKidsStudioGamesRoute: KidKidsStudioGamesRoute,
+  KidKidsStudioV3Route: KidKidsStudioV3Route,
 }
 
 const KidRouteWithChildren = KidRoute._addFileChildren(KidRouteChildren)

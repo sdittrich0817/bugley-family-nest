@@ -59,3 +59,10 @@
 - [x] Studio 2.2: review current architecture and propose one persistent creative workspace; no application or family-data changes.
 - [x] Studio 2.2 approved workspace: durable idea-first comic/storybook/picture, inline characters, explicit drawing, contextual Bugley, length choices, history restore and picture editing. Verified approved Pickles/first comic drawing, dialogue restore, exact story words after refresh, picture preview + upgrade readback, phone no overflow; 164 tests pass and build OK. Test projects remain in the album; normal Glow balance moved from 26 to 16 during generation checks.
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
+
+## Create Studio V3 (comic journey) — built 2026-10-25
+- New V3 comic experience at /kids/studio/v3 alongside the classic Studio (unchanged).
+- Spark → 4-scene storyboard → character approval → one-scene-at-a-time canvas → cover/finish.
+- Reuses workspace persistence, safety guards, Character Lock, Glow charging; no games changes.
+- Verified live as Dawnie: idea → Pickles arc → existing-character reuse → Scene 1 drawn (3 Glow), scenes 2–4 untouched.
+- Open: full finish/cover run, storybook + picture V3 (Phase 7), voice input in the spark box.

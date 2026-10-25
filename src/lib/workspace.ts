@@ -4,6 +4,7 @@ import { guidedComicPages } from "./comic";
 
 export const workspaceSchema = z.object({
   version: z.literal(1), originalIdea: z.string().max(600),
+  v3: z.literal(true).optional(),
   activity: z.enum(["imagine", "make", "finish"]).default("imagine"),
   outlineApproved: z.boolean().default(false),
   facts: z.object({ genre: z.string(), heroName: z.string(), heroLooks: z.string(), place: z.string(), problem: z.string() }).optional(),

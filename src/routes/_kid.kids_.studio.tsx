@@ -133,7 +133,10 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
         <span className={cn("font-display", sprouts ? "text-3xl" : "text-2xl")}>{k === "comic" ? "Make a Comic" : k === "story" ? "Make a Story" : "Make a Picture"}</span>
       </button>; })}
     </section>
-    <div className="flex justify-center"><Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button></div>
+    <div className="flex flex-col items-center gap-3">
+      <Button size="lg" onClick={() => void navigate({ to: "/kids/studio/v3" })} className="rounded-full"><Sparkles className="size-5" />Try the new Comic Maker!</Button>
+      <Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button>
+    </div>
     <CharacterVault child={child} onBuild={() => onOpen("character")} />
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
