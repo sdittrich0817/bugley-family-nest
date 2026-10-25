@@ -121,7 +121,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "sketch" || data.action === "final" || data.action === "cover") {
     const panel = comic.data.pages[pageIndex]?.panels.find((p) => p.id === data.panelId);
     if (data.action !== "cover" && !panel) throw new Error("Pick a panel first.");
-    if (data.action === "final" && !panel?.sketch && !comic.data.guidedBand) throw new Error("Sketch it first, then make it final.");
+    if (data.action === "final" && !panel?.sketch && !comic.data.guidedBand && !comic.data.workspace?.v3) throw new Error("Sketch it first, then make it final.");
     let description = data.action === "cover" ? data.description : panel ? `${ANGLE_PROMPT[panel.angle]}${panel.description}` : "";
     if (comic.data.guidedBand) {
       const { planComicPicture } = await import("./comic.server");
