@@ -24,7 +24,7 @@ import { useScrollTopOn } from "@/lib/scroll";
 import type { OutputKind, WorkspaceProject } from "@/lib/workspace";
 
 type CharacterFacts = { name: string; kind: string; color: string; special: string; personality: string; question: string; ideas: string[] };
-export function ComicJourney({ child, projectId, draftId, characterId, onProject, onDraft, onBook, onExit }: { child: SidekickChild; projectId?: string; draftId?: string; characterId?: string; onProject: (id: string) => void; onDraft: (id: string) => void; onBook: (id: string) => void; onExit: () => void }) {
+export function ComicJourney({ child, projectId, draftId, characterId, onProject, onDraft, onBook, onExit }: { child: SidekickChild; projectId?: string | undefined; draftId?: string | undefined; characterId?: string | undefined; onProject: (id: string) => void; onDraft: (id: string) => void; onBook: (id: string) => void; onExit: () => void }) {
   const [project, setProject] = useState<WorkspaceProject | null>(null);
   const [branch, setBranch] = useState<"entry" | "new" | "existing" | "output" | "setup">("entry");
   const [hero, setHero] = useState<CastMember | null>(null);
