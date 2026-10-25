@@ -1659,6 +1659,41 @@ export type Database = {
           },
         ]
       }
+      studio_project_history: {
+        Row: {
+          child_id: string
+          created_at: string
+          creation_id: string
+          id: string
+          parent_id: string
+          snapshot: Json
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          creation_id: string
+          id?: string
+          parent_id: string
+          snapshot: Json
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          creation_id?: string
+          id?: string
+          parent_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_project_history_creation_id_fkey"
+            columns: ["creation_id"]
+            isOneToOne: false
+            referencedRelation: "studio_creations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       studio_versions: {
         Row: {
           child_id: string

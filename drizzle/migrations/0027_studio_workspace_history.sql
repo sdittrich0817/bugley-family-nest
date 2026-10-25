@@ -1,0 +1,7 @@
+CREATE TABLE public.studio_project_history (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), creation_id uuid NOT NULL REFERENCES public.studio_creations(id) ON DELETE CASCADE, parent_id uuid NOT NULL, child_id uuid NOT NULL, snapshot jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now());
+GRANT ALL ON public.studio_project_history TO service_role;
+ALTER TABLE public.studio_project_history ENABLE ROW LEVEL SECURITY;
+CREATE INDEX studio_project_history_creation ON public.studio_project_history(creation_id, created_at DESC);
+CREATE FUNCTION public.snapshot_studio_project() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ BEGIN IF OLD.kind IN ('comic','story','picture') AND (OLD.details IS DISTINCT FROM NEW.details OR OLD.title IS DISTINCT FROM NEW.title OR OLD.body IS DISTINCT FROM NEW.body OR OLD.images IS DISTINCT FROM NEW.images) THEN INSERT INTO public.studio_project_history(creation_id,parent_id,child_id,snapshot) VALUES(OLD.id,OLD.parent_id,OLD.child_id,jsonb_build_object('title',OLD.title,'details',OLD.details,'body',OLD.body,'images',OLD.images,'style_key',OLD.style_key)); END IF; RETURN NEW; END; $$;
+REVOKE ALL ON FUNCTION public.snapshot_studio_project() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER snapshot_studio_project_before_update BEFORE UPDATE ON public.studio_creations FOR EACH ROW EXECUTE FUNCTION public.snapshot_studio_project();
