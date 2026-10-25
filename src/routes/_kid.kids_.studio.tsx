@@ -15,10 +15,13 @@ import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio
 import { BugleyGuide } from "@/components/studio/Guided";
 import { BugleyStep, type StepChoice } from "@/components/studio/BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
-import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
+import { PictureMaker } from "@/components/studio/Makers";
 import { StoryMaker } from "@/components/studio/StoryMaker";
 import { ComicMaker } from "@/components/studio/ComicMaker";
 import { BookBuilder } from "@/components/studio/BookBuilder";
+import { HeroBuilder } from "@/components/studio/HeroBuilder";
+import { listCast, stylesOptions } from "@/lib/images.functions";
+import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { bookFromOneShot } from "@/lib/book.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -91,7 +94,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
           : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
-          : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
+          : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
           : view === "comic" ? <ComicMaker child={child} chat={chat} comicId={comicId} onComic={setComicId} onDirty={setStoryDirty} />
