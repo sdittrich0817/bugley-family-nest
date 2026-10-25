@@ -151,7 +151,7 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireK
     if (!result.ok) throw new Error(result.reply);
     if (result.lock && !("bookId" in story.data && story.data.bookId)) story.data.modelLock ??= result.lock;
     if (data.action === "cover") story.data.cover = result.path;
-    else if (page) page.image = result.path;
+    else if (page) { if (page.image) await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description }); page.image = result.path; }
   } else if (data.action === "finish") {
     if (!readyToFinish(story.data)) throw new Error("Give every part your words, every page a picture, and your story a cover first.");
     story.data.finished = true;
