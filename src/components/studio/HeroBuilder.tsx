@@ -55,7 +55,7 @@ export function HeroBuilder({ child, chat, styleKey, role = "hero", onDone, onBa
   async function paint(n = name) {
     setStep(3); setMood("painting"); setNote(null); chat.say("Mixing the colors...");
     try {
-      const r = await makeHeroOptions({ data: { ...base, name: n, environment: getStripeEnvironment() } });
+      const r = await makeHeroOptions({ data: { ...base, name: n, environment: getStripeEnvironment(), op: crypto.randomUUID() } });
       if (r.ok) { setOptions(r.options); setMood("flying"); chat.say(`Which one is ${n}?`); }
       else { setMood("flying"); setNote({ reply: r.reply, chips: "chips" in r ? r.chips ?? [] : [] }); chat.say(r.reply); }
     } catch { setMood("flying"); setNote({ reply: "Oops, my paintbrush slipped! Try again?", chips: [] }); }

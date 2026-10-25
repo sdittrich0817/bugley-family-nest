@@ -89,7 +89,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   }
   async function paint(next: Comic) {
     if (!current) return;
-    const painted = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "final", pageId: current.page.id, panelId: current.panel.id } });
+    const painted = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "final", pageId: current.page.id, panelId: current.panel.id, op: crypto.randomUUID() } });
     setComic(painted); setMode("speech"); setDraft(""); chat.say(`What does ${painted.data.map.hero} say?`, []);
   }
   async function scene(text: string) {
@@ -117,7 +117,7 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
     if (!comic) return;
     await run(async () => {
       let next = await edit({ data: { childId: child.id, id: comic.id, environment: env, action: "title", title } }); setComic(next);
-      if (!next.data.cover && !next.data.bookId) { next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover" } }); setComic(next); }
+      if (!next.data.cover && !next.data.bookId) { next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover", op: crypto.randomUUID() } }); setComic(next); }
       next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "finish" } }); setComic(next); chat.say("You made a comic! Every panel was your idea.", []);
     });
   }
