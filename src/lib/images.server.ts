@@ -139,7 +139,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; op?: string }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; op?: string | undefined }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -235,7 +235,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
 }
 
 /** Hero Builder step 6: three hero options in one go for one glow. Nothing is saved to the album until the child picks one. */
-export async function generateHeroOptions(sb: Sb, userId: string, input: { childId: string; styleKey: string; description: string; op?: string }) {
+export async function generateHeroOptions(sb: Sb, userId: string, input: { childId: string; styleKey: string; description: string; op?: string | undefined }) {
   const child = await loadChild(sb, userId, input.childId);
   const guard = await guardChildText(sb, userId, child, input.description, "character");
   if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
