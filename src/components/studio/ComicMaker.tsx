@@ -34,7 +34,9 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   const [titles, setTitles] = useState<string[]>([]);
   const [recap, setRecap] = useState("");
   const [bookPages, setBookPages] = useState<number | null>(null);
-  const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley);
+  const [showOutline, setShowOutline] = useState(false);
+  const [planBusy, setPlanBusy] = useState(false);
+  const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley), plan = useServerFn(planOutline);
   const convert = useServerFn(bookFromOneShot), chapter = useServerFn(startChapter), loadBook = useServerFn(getBook);
   const qc = useQueryClient(); const env = getStripeEnvironment();
   const band = beatBandOf(comic?.data ?? {}, child.age_band);
