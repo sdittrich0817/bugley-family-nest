@@ -41,6 +41,7 @@ import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/
 import { Route as KidKidsRouteImport } from './routes/_kid.kids'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
+import { Route as KidKidsInstallRouteImport } from './routes/_kid.kids_.install'
 import { Route as KidKidsStudioRouteImport } from './routes/_kid.kids_.studio'
 import { Route as KidKidsStudioGamesRouteImport } from './routes/_kid.kids_.studio_.games'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -203,6 +204,11 @@ const ResourcesSlugRoute = ResourcesSlugRouteImport.update({
   path: '/resources/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KidKidsInstallRoute = KidKidsInstallRouteImport.update({
+  id: '/kids_/install',
+  path: '/kids/install',
+  getParentRoute: () => KidRoute,
+} as any)
 const KidKidsStudioRoute = KidKidsStudioRouteImport.update({
   id: '/kids_/studio',
   path: '/kids/studio',
@@ -251,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
+  '/kids/install': typeof KidKidsInstallRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
+  '/kids/install': typeof KidKidsInstallRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -324,6 +332,7 @@ export interface FileRoutesById {
   '/_kid/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
+  '/_kid/kids_/install': typeof KidKidsInstallRoute
   '/_kid/kids_/studio': typeof KidKidsStudioRoute
   '/_kid/kids_/studio_/games': typeof KidKidsStudioGamesRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -361,6 +370,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/resources/$slug'
     | '/resources/'
+    | '/kids/install'
     | '/kids/studio'
     | '/kids/studio/games'
     | '/api/public/payments/webhook'
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/resources/$slug'
     | '/resources'
+    | '/kids/install'
     | '/kids/studio'
     | '/kids/studio/games'
     | '/api/public/payments/webhook'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/_kid/kids'
     | '/resources/$slug'
     | '/resources/'
+    | '/_kid/kids_/install'
     | '/_kid/kids_/studio'
     | '/_kid/kids_/studio_/games'
     | '/api/public/payments/webhook'
@@ -692,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_kid/kids_/install': {
+      id: '/_kid/kids_/install'
+      path: '/kids/install'
+      fullPath: '/kids/install'
+      preLoaderRoute: typeof KidKidsInstallRouteImport
+      parentRoute: typeof KidRoute
+    }
     '/_kid/kids_/studio': {
       id: '/_kid/kids_/studio'
       path: '/kids/studio'
@@ -741,12 +760,14 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface KidRouteChildren {
   KidKidsRoute: typeof KidKidsRoute
+  KidKidsInstallRoute: typeof KidKidsInstallRoute
   KidKidsStudioRoute: typeof KidKidsStudioRoute
   KidKidsStudioGamesRoute: typeof KidKidsStudioGamesRoute
 }
 
 const KidRouteChildren: KidRouteChildren = {
   KidKidsRoute: KidKidsRoute,
+  KidKidsInstallRoute: KidKidsInstallRoute,
   KidKidsStudioRoute: KidKidsStudioRoute,
   KidKidsStudioGamesRoute: KidKidsStudioGamesRoute,
 }
