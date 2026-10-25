@@ -124,7 +124,7 @@ export function StorySetup({ child, chat, onCreate, kind = "story" }: { child: S
     </div>
   </div>;
   if (busy) return <BugleyStep child={child} bare question="Thinking about your adventure…" choices={[]} allowOwnIdea={false} onChoose={() => {}} mood="painting" />;
-  if (making) return <HeroBuilder child={child} chat={chat} styleKey={style} role={role} initialIdea={role === "hero" ? seed?.looks : ""} initialName={role === "hero" ? seed?.name : ""} onBack={() => { setMaking(false); setSeed(null); setStep(1); }} onDone={async (id) => {
+  if (making) return <HeroBuilder child={child} chat={chat} styleKey={style} role={role} initialIdea={role === "hero" ? seed?.looks ?? "" : ""} initialName={role === "hero" ? seed?.name ?? "" : ""} onBack={() => { setMaking(false); setSeed(null); setStep(1); }} onDone={async (id) => {
     const result = await refetch(); const found = result.data?.find((c) => c.id === id);
     if (!found) { toast.error("Your hero is saved. Choose them from My Heroes."); setMaking(false); setPicking(true); return; }
     if (role === "hero") { const h = { id, name: found.title }; setHero(h); setSeed(null); afterHero(h); } else { setExtra((ids) => [...new Set([...ids, id])].slice(0, 2)); setStep(4); } setMaking(false);
