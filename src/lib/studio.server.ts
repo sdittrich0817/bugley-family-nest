@@ -84,8 +84,8 @@ export async function bugleyReply(child: { nickname: string; age_band: string },
 Where the child is: ${context}. Picture Maker, Character Creator, Story Maker and Comic Maker are ready; Games are ready to play. ${storyCoachingInstructions(child.age_band)} In the Comic Maker: ${comicCoachingInstructions()} In the Picture Maker, coach the description with ONE question that makes it richer (time of day, what's in the background, colors, weather, feelings). In the Character Creator, ask about looks, clothes, colors or one special detail. Never describe the picture for them.
 Also give exactly 3 short (max 6 words) reply chips the child could tap next.`;
   const out = await aiObject(replySchema, instructions, text);
-  if (!out) return { reply: "Hmm, my glow flickered! Can you tell me that again?", chips: ["Tell me a fun fact", "Give me an idea"] };
-  return { reply: out.reply.slice(0, 500), chips: out.chips.map((c) => c.slice(0, 50)).filter(Boolean).slice(0, 3) };
+  if (!out) return { reply: "Hmm, my glow flickered! Can you tell me that again?", chips: ["Tell me a fun fact", "Give me an idea"], actions };
+  return { reply: out.reply.slice(0, 500), chips: out.chips.map((c) => c.slice(0, 50)).filter(Boolean).slice(0, 3), actions };
 }
 
 /** For future makers: save a creation after its text has passed the guard. */
