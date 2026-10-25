@@ -35,6 +35,7 @@ export const listCast = createServerFn({ method: "POST" }).middleware([requireKi
 const genInput = z.object({
   childId: z.string().uuid(), environment: env, styleKey: z.string().max(40),
   description: z.string().trim().min(3).max(600), characterIds: z.array(z.string().uuid()).max(4).default([]),
+  op: z.string().max(64).optional(),
 });
 
 /** Picture Maker: saved one-glow preview. Legacy final calls retain their three-glow cost. */
@@ -121,11 +122,11 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
 
 /** Hero Builder: three hero options for one glow. */
 export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
-  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(160), color: z.string().trim().max(80).default(""), special: z.string().trim().min(1).max(160), personality: z.string().trim().max(80).default(""), name: z.string().trim().min(1).max(40) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(160), color: z.string().trim().max(80).default(""), special: z.string().trim().min(1).max(160), personality: z.string().trim().max(80).default(""), name: z.string().trim().min(1).max(40), op: z.string().max(64).optional() }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
     const { generateHeroOptions } = await import("@/lib/images.server");
-    return generateHeroOptions(context.supabase, context.userId, { childId: data.childId, styleKey: data.styleKey, description: heroDescription(data) });
+    return generateHeroOptions(context.supabase, context.userId, { childId: data.childId, styleKey: data.styleKey, description: heroDescription(data), op: data.op });
   });
 
 /** Builds the portrait prompt from whatever details the child gave; empty parts are skipped. */

@@ -40,7 +40,7 @@ const browserPage = comicPageSchema.extend({ panels: z.array(z.object({ id: z.st
 
 export const editComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({
   action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers", "undo", "reopen"]), environment: env,
-  map: storyMapSchema.optional(), page: browserPage.optional(), pageId: z.string().uuid().optional(), panelId: z.string().uuid().optional(), to: z.number().int().min(0).optional(), description: z.string().max(600).optional(), text: z.string().max(200).optional(), sfx: z.enum(["POW!", "WHOOSH!", "ZAP!", "SPLASH!"]).optional(), title: z.string().trim().min(1).max(80).optional(), layers: z.array(layerSchema).max(12).optional(),
+  map: storyMapSchema.optional(), page: browserPage.optional(), pageId: z.string().uuid().optional(), panelId: z.string().uuid().optional(), to: z.number().int().min(0).optional(), description: z.string().max(600).optional(), text: z.string().max(200).optional(), sfx: z.enum(["POW!", "WHOOSH!", "ZAP!", "SPLASH!"]).optional(), title: z.string().trim().min(1).max(80).optional(), layers: z.array(layerSchema).max(12).optional(), op: z.string().max(64).optional(),
 }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
   const s = await import("./studio.server");
@@ -131,7 +131,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
     }
     if (!description || description.length < 3) throw new Error("Describe what happens first.");
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op });
     if (!r.ok) throw new Error(r.reply);
     if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;
