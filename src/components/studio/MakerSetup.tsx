@@ -9,12 +9,12 @@ import { ChoiceTile, GENRE_EMOJI, StepDots, StepNav, field } from "./Guided";
 import { useVoiceInput, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast, stylesOptions } from "@/lib/images.functions";
 import { STYLE_THUMBS } from "@/lib/style-thumbs";
-import { GENRES, EMPTY_MAP } from "@/lib/story";
+import { GENRES, EMPTY_MAP, type StoryLength } from "@/lib/story";
 import { useScrollTopOn } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 
 type MapKey = keyof typeof EMPTY_MAP;
-export type SetupResult = { title: string; genre: (typeof GENRES)[number]; styleKey: string; characterIds: string[]; map: typeof EMPTY_MAP };
+export type SetupResult = { title: string; genre: (typeof GENRES)[number]; styleKey: string; characterIds: string[]; length: StoryLength; map: typeof EMPTY_MAP };
 
 const STYLE_ORDER = ["cartoon", "storybook", "classic_comic", "watercolor", "crayon", "clay", "pixel_art", "paper_cutout"];
 function castChoices(count: number, canPick: boolean): StepChoice[] {
@@ -85,6 +85,6 @@ export function MakerSetup({ child, chat, kind, mapLabels, defaultStyle, onCreat
         {voice.supported && <button type="button" onClick={voice.start} aria-label="Say your answer" className={cn("absolute bottom-3 right-3 flex size-12 items-center justify-center rounded-full bg-secondary", voice.listening && "animate-pulse bg-primary")}><Mic className="size-6" /></button>}</div>
       <button onClick={() => void chat.send(`I'm making a ${genre ?? ""} ${noun}. Help me think about: ${mapLabels[mapKey]}`, "chip")} disabled={chat.busy} className="mx-auto flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"><Sparkles className="size-4" />I’m stuck. Ask me a question, Bugley!</button>
       <StepNav onBack={back} busy={busy} canNext={!!map[mapKey].trim()} nextLabel={step === total - 1 ? (busy ? "Starting…" : `Start my ${noun}!`) : "Next"}
-        onNext={step < total - 1 ? next : async () => { if (!genre) { setStep(0); return; } setBusy(true); try { await onCreate({ title, genre, styleKey, characterIds: picked, map }); } finally { setBusy(false); } }} /></>}
+        onNext={step < total - 1 ? next : async () => { if (!genre) { setStep(0); return; } setBusy(true); try { await onCreate({ title, genre, styleKey, characterIds: picked, length: "medium", map }); } finally { setBusy(false); } }} /></>}
   </div>;
 }

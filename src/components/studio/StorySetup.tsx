@@ -11,6 +11,7 @@ import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
 import { COMIC_GENRES } from "@/lib/comic";
+import { defaultLength, type StoryLength } from "@/lib/story";
 import type { SetupResult } from "./MakerSetup";
 
 import genre0 from "@/assets/illustrations/comic-genre-0.jpg";

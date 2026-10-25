@@ -123,7 +123,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   }
   if (storyId && !story) return <BugleyStep child={child} bare question="Opening your story…" choices={[]} mood="painting" allowOwnIdea={false} onChoose={() => {}} />;
   if (!story) return <StorySetup child={child} chat={chat} onCreate={async (r) => {
-    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, environment: env } });
+    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, length: r.length, environment: env } });
     const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
     setStory(next); setIndex(0); onStory(next.id); refresh();
   }} />;
