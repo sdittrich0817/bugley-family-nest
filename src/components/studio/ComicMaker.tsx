@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, BookOpen, MessageCircle, Pencil, RefreshCw, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, MessageCircle, Pencil, RefreshCw, Undo2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
