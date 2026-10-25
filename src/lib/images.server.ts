@@ -187,9 +187,9 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   }
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
-  const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch");
+  const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch", input.op);
   if (!charge.ok) return { ok: false, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
-  const refund = () => giftGlowServer(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
+  const refund = () => refundGlow(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
   try {
     // 3) server-built prompt; Character DNA inserted word for word
     const dna = locked.map((c) => `${c.title} — ${c.dna}`).join(" | ");
