@@ -31,5 +31,6 @@ export const requireKidOrParentAuth = createMiddleware({type:'function'}).inputV
   }
   const childId=data&&typeof data==='object'&&'childId' in data&&typeof data.childId==='string'?data.childId:result.kidChildId;
   if(childId){const a=await s.admin();const {data:allowed,error}=await a.rpc('tick_kid_time',{_child:childId,_parent:result.userId});if(error||!allowed)throw new Error('Time for a break! Ask your grown-up.');}
+  if(result.kidDeviceId){const {familyHasAccess}=await import('./billing.functions');const env=data&&typeof data==='object'&&'environment' in data&&data.environment==='live'?'live':'sandbox';if(!await familyHasAccess(result.supabase,result.userId,env))throw new Error('Bugley is taking a little nap. Ask your grown-up!');}
   return next({context:result});
 });

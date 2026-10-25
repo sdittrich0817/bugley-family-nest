@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireKidOrParentAuth } from './kid-device-auth';
 import { resolveOrCreateCustomer } from "./billing.functions";
 import { addressSchema, canPrint, freeCreditAvailable, paddedPageCount, priceOrder, SHIPPING_LEVELS, type PrintFormat } from "./print";
 import { requireParentDevice } from './parent-device.functions';
@@ -18,7 +19,7 @@ async function formats(): Promise<PrintFormat[]> {
 }
 
 /** Kid side: asks the parent to print a book that meets the minimum. */
-export const requestPrint = createServerFn({ method: "POST" }).middleware([requireSupabaseAuth])
+export const requestPrint = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
   .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bookId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { loadBook } = await import("./book.server");
