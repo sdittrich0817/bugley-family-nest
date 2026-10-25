@@ -58,7 +58,7 @@ export function PictureMaker({ child, chat }: { child: SidekickChild; chat: Bugl
     try {
       const r = upgrade && result
         ? await upgradePicture({ data: { childId: child.id, environment: getStripeEnvironment(), previewId: result.id } })
-        : await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: selectedStyle, description: text, characterIds: selectedHero ? [selectedHero] : [], mode: "sketch" } });
+        : await makePicture({ data: { childId: child.id, environment: getStripeEnvironment(), styleKey: selectedStyle, description: text, characterIds: selectedHero ? [selectedHero] : [], mode: "sketch", op: crypto.randomUUID() } });
       if (r.ok) {
         setResult({ id: r.id, url: r.url, final: upgrade });
         chat.say(upgrade ? "Wow! Your awesome picture is saved in My Album." : "Ta-da! Your preview is saved in My Album. Want to make it awesome?", []);

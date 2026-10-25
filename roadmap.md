@@ -53,3 +53,5 @@
 - [x] Remove duplicate Kid Zone page lock and defer parent redirects until server mode is checked; 7 targeted tests pass, wrong password stays blocked, build OK.
 - [ ] Confirm successful password exit to Parent Hub in Shea's preview (blocked: no parent password available for a real successful-password check).
 - [x] Approved-fix regression check: 136 tests pass; live name/school/address/hometown alerts saved (4 events/4 notifications), unsafe/copyright redirected, original Moon/Zippy idea allowed, safe Creature Lab turn completed; three screen widths showed no horizontal overflow.
+- [x] Studio Create redesign: character vault + 3-step hero builder with detail-check, child-chosen story/comic length, approved outlines, full version history with undo/reopen, actionable Bugley chips, glow idempotency + kind-aware refunds; 152 tests pass, typecheck clean.
+- [ ] Live-verify the new Studio create flow end-to-end in preview (blocked: Dawnie Dee’s secret numbers unknown; need them or permission to reset).

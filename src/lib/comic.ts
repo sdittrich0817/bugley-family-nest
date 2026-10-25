@@ -18,7 +18,7 @@ export type ComicData = z.infer<typeof comicSchema>;
 export type ComicPage = z.infer<typeof comicPageSchema>;
 export type Panel = z.infer<typeof panelSchema>;
 export type Layer = z.infer<typeof layerSchema>;
-export type Comic = { id: string; title: string; updatedAt: string; data: ComicData; urls: Record<string, string> };
+export type Comic = { id: string; title: string; updatedAt: string; data: ComicData; urls: Record<string, string>; versions: Record<string, number> };
 export { EMPTY_MAP };
 
 export const newPanel = (): Panel => ({ id: crypto.randomUUID(), description: "", angle: "", sketch: null, image: null, layers: [] });

@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
-import { chargeGlow, giftGlowServer } from "@/lib/glow.server";
+import { chargeGlow, refundGlow } from "@/lib/glow.server";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
@@ -139,7 +139,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; op?: string | undefined }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -187,9 +187,9 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   }
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
-  const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch");
+  const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch", input.op);
   if (!charge.ok) return { ok: false, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
-  const refund = () => giftGlowServer(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
+  const refund = () => refundGlow(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
   try {
     // 3) server-built prompt; Character DNA inserted word for word
     const dna = locked.map((c) => `${c.title} — ${c.dna}`).join(" | ");
@@ -235,7 +235,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
 }
 
 /** Hero Builder step 6: three hero options in one go for one glow. Nothing is saved to the album until the child picks one. */
-export async function generateHeroOptions(sb: Sb, userId: string, input: { childId: string; styleKey: string; description: string }) {
+export async function generateHeroOptions(sb: Sb, userId: string, input: { childId: string; styleKey: string; description: string; op?: string | undefined }) {
   const child = await loadChild(sb, userId, input.childId);
   const guard = await guardChildText(sb, userId, child, input.description, "character");
   if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
@@ -246,7 +246,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   ]);
   if (!style) return { ok: false as const, reply: "Pick a style first!" };
   if (!model) return { ok: false as const, reply: NOT_READY };
-  const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options");
+  const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
   const results = await Promise.allSettled([0, 1, 2].map(async () => {
@@ -259,7 +259,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   }));
   const paths = results.flatMap((r) => r.status === "fulfilled" ? [r.value] : []);
   if (!paths.length) {
-    await giftGlowServer(sb, userId, child.id, charge.cost ?? 1, "Refund: hero didn’t work").catch(() => {});
+    await refundGlow(sb, userId, child.id, charge.cost ?? 1, "Refund: hero didn’t work").catch(() => {});
     return { ok: false as const, reply: "Oops, my paintbrush slipped! Your glow is back. Try again?" };
   }
   const urls = await signPaths(paths);

@@ -73,7 +73,11 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const [inBook, setInBook] = useState(false);
   const openChapter = (kind: "story" | "comic", id: string) => { setInBook(true); if (kind === "story") { setStoryId(id); setView("story"); } else { setComicId(id); setView("comic"); } };
   const greeting = `Hi ${child.nickname}! Want to create something or play a game?`;
-  const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
+  const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined, (a) => {
+    const v = a.action === "open:album" ? "album" : a.action === "open:picture" ? "picture" : a.action === "open:story" ? "story" : a.action === "open:comic" ? "comic" : "character";
+    if (v === "story") setStoryId(null); if (v === "comic") setComicId(null);
+    setInBook(false); setView(v as View);
+  });
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
   useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps

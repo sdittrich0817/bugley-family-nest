@@ -83,7 +83,7 @@ export const createStory = createServerFn({ method: "POST" }).middleware([requir
   return loadStory(context.supabase, context.userId, child.id, id);
 });
 
-export const editStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review", "undo", "reopen"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional() }).parse(i)).handler(async ({ data, context }) => {
+export const editStory = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ action: z.enum(["map", "page", "add", "illustrate", "cover", "finish", "title", "review", "undo", "reopen"]), environment: z.enum(["sandbox", "live"]), map: storyMapSchema.optional(), page: pageSchema.omit({ image: true }).optional(), pageId: z.string().uuid().optional(), description: z.string().trim().max(600).optional(), title: z.string().trim().min(1).max(80).optional(), op: z.string().max(64).optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error("Ask a grown-up to open the Studio plan first.");
   const s = await import("./studio.server");
   const { loadStory, persistStory } = await import("./story.server");
@@ -147,11 +147,11 @@ export const editStory = createServerFn({ method: "POST" }).middleware([requireK
     }
     if (!description || description.length < 3) throw new Error("Bugley couldn’t plan that picture yet. Your words are saved; try again.");
     const { generateImage } = await import("./images.server");
-    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true, lockId: story.id });
+    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: story.data.styleKey, characterIds: story.data.characterIds, mode: "final", requireReferences: true, lockId: story.id, op: data.op });
     if (!result.ok) throw new Error(result.reply);
     if (result.lock && !("bookId" in story.data && story.data.bookId)) story.data.modelLock ??= result.lock;
     if (data.action === "cover") story.data.cover = result.path;
-    else if (page) page.image = result.path;
+    else if (page) { if (page.image) await recordVersion(context.userId, child.id, story.id, page.id, { text: page.text, image: page.image, description: page.description }); page.image = result.path; }
   } else if (data.action === "finish") {
     if (!readyToFinish(story.data)) throw new Error("Give every part your words, every page a picture, and your story a cover first.");
     story.data.finished = true;

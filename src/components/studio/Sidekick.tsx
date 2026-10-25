@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { askBugley } from "@/lib/studio.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
+import { STUDIO_ACTIONS, type StudioAction } from "@/lib/studio-actions";
 
 export type SidekickChild = { id: string; nickname: string; age_band: string; bugley_stage: BugleyStage };
 type Msg = { from: "bugley" | "kid"; text: string };
@@ -18,20 +19,22 @@ export function speak(text: string) {
 }
 
 /** Shared Bugley conversation used by the prompt bar and the sidekick panel. */
-export function useBugleyChat(child: SidekickChild, context: string, opening: string, openingChips: string[], storyId?: string, comicId?: string) {
+export function useBugleyChat(child: SidekickChild, context: string, opening: string, openingChips: string[], storyId?: string, comicId?: string, onAction?: (a: StudioAction) => void) {
   const [messages, setMessages] = useState<Msg[]>([{ from: "bugley", text: opening }]);
   const [chips, setChips] = useState(openingChips);
+  const [actions, setActions] = useState<StudioAction[]>([]);
   const [busy, setBusy] = useState(false);
   const readAloud = child.age_band === "sprouts";
   const send = useCallback(async (text: string, source: "prompt_bar" | "sidekick" | "chip" = "sidekick") => {
     const t = text.trim();
     if (!t || busy) return;
     setMessages((m) => [...m, { from: "kid", text: t }]);
-    setChips([]); setBusy(true);
+    setChips([]); setActions([]); setBusy(true);
     try {
       const r = await askBugley({ data: { childId: child.id, text: t, source, context, storyId, comicId, environment: getStripeEnvironment() } });
       setMessages((m) => [...m, { from: "bugley", text: r.reply }]);
       setChips(r.chips);
+      setActions("actions" in r && Array.isArray(r.actions) ? r.actions.filter((a) => a.action in STUDIO_ACTIONS) : []);
       if (readAloud) speak(r.reply);
     } catch {
       setMessages((m) => [...m, { from: "bugley", text: "Hmm, my glow flickered! Let’s try that again." }]);
@@ -40,9 +43,10 @@ export function useBugleyChat(child: SidekickChild, context: string, opening: st
   const say = useCallback((text: string, next?: string[]) => {
     setMessages((m) => [...m, { from: "bugley", text }]);
     if (next) setChips(next);
+    setActions([]);
     if (readAloud) speak(text);
   }, [readAloud]);
-  return { messages, chips, busy, send, say, readAloud };
+  return { messages, chips, actions, busy, send, say, readAloud, onAction };
 }
 export type BugleyChat = ReturnType<typeof useBugleyChat>;
 
@@ -86,6 +90,7 @@ function Panel({ child, chat }: { child: SidekickChild; chat: BugleyChat }) {
       {chat.busy && <div className="flex w-16 gap-1 rounded-2xl bg-primary/20 px-4 py-3" aria-label="Bugley is thinking">{[0, 1, 2].map((d) => <span key={d} className="size-2 animate-bounce rounded-full bg-foreground/50" style={{ animationDelay: `${d * 120}ms` }} />)}</div>}
       <div ref={end} />
     </div>
+    {chat.actions.length > 0 && chat.onAction && <div className="flex flex-wrap gap-2 pb-2">{chat.actions.map((a) => <button key={a.action} onClick={() => chat.onAction!(a)} className={cn("rounded-full bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground shadow-glow transition hover:scale-105", sprouts && "px-4 py-2.5 text-base")}>{a.label} →</button>)}</div>}
     {chat.chips.length > 0 && <div className="flex flex-wrap gap-2 pb-3">{chat.chips.map((c) => <button key={c} onClick={() => void chat.send(c, "chip")} className={cn("rounded-full border-2 border-primary bg-card px-3 py-1.5 text-sm font-semibold transition hover:bg-primary hover:text-primary-foreground", sprouts && "px-4 py-2.5 text-base")}>{c}</button>)}</div>}
     <form onSubmit={(e) => { e.preventDefault(); void chat.send(text); setText(""); }} className="flex items-center gap-2">
       <input value={text} onChange={(e) => setText(e.target.value)} maxLength={600} placeholder="Ask Bugley…" aria-label="Ask Bugley something" className="h-11 min-w-0 flex-1 rounded-full border-2 border-border bg-background px-4 outline-none focus:border-primary" />

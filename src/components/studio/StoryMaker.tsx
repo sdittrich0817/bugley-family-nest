@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, BookOpen, Pencil, RefreshCw, Volume2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, Pencil, RefreshCw, Undo2, Volume2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Bugley } from "@/components/brand/Bugley";
@@ -81,7 +81,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     finally { setBusy(false); refresh(); }
   }
   async function paint(current: Story) {
-    const next = await edit({ data: { childId: child.id, id: current.id, environment: env, action: "illustrate", pageId: current.data.pages[index]?.id } });
+    const next = await edit({ data: { childId: child.id, id: current.id, environment: env, action: "illustrate", pageId: current.data.pages[index]?.id, op: crypto.randomUUID() } });
     setStory(next); setEditing(false); setFollowup(""); setAnswer("");
     chat.say("Your words brought this page to life!", []);
   }
@@ -108,7 +108,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
       let next = await edit({ data: { childId: child.id, id: story.id, environment: env, action: "title", title } });
       setStory(next);
       if (!next.data.cover && !next.data.bookId) {
-        next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover" } }); setStory(next);
+        next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "cover", op: crypto.randomUUID() } }); setStory(next);
       }
       next = await edit({ data: { childId: child.id, id: next.id, environment: env, action: "finish" } });
       setStory(next); setPendingTitle(""); chat.say("Your choices made a whole story. You’re the author!", []);
@@ -135,7 +135,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     onChange={async (note) => { setPlanBusy(true); try { await plan({ data: { childId: child.id, id: story.id, kind: "story", environment: env, change: note } }); setStory(await load({ data: { childId: child.id, id: story.id } })); } catch (e) { toast.error(e instanceof Error ? e.message : "Try again."); } finally { setPlanBusy(false); } }}
     onGo={() => { setShowOutline(false); chat.say(`Page 1! ${beatQuestion(band, 0, story.data.map)}`, []); }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your adventure…" choices={[]} mood="painting" allowOwnIdea={false} onChoose={() => {}} />;
-  if (story.data.finished) return <div className="space-y-6"><StoryReader story={story} child={child} /><div className="studio-bugley-cheer flex flex-wrap justify-center gap-3"><Button size="lg" onClick={() => void continueChapter()}><BookOpen />{story.data.bookId ? "Write the next chapter?" : "Want to write Chapter 2?"}</Button></div></div>;
+  if (story.data.finished) return <div className="space-y-6"><StoryReader story={story} child={child} /><div className="studio-bugley-cheer flex flex-wrap justify-center gap-3"><Button variant="secondary" size="lg" onClick={() => void run(async () => { const next = await edit({ data: { childId: child.id, id: story.id, environment: env, action: "reopen" } }); setStory(next); setIndex(Math.max(0, next.data.pages.length - 1)); chat.say("Your story is open again — change anything you like!", []); })}><Pencil />Keep working on it</Button><Button size="lg" onClick={() => void continueChapter()}><BookOpen />{story.data.bookId ? "Write the next chapter?" : "Want to write Chapter 2?"}</Button></div></div>;
   if (ending) return <div className="space-y-4"><BugleyStep child={child} bare question="What’s your story called?" choices={titles.map((t, i) => ({ key: `${i}`, label: t, emoji: "📖" }))} onBack={() => setIndex(story.data.pages.length - 1)} onChoose={(c) => void finish(c.label)} onOwnIdea={(t) => void finish(t)} />{pendingTitle && <Button onClick={() => void finish(pendingTitle)}>Try my cover again · 3 glow</Button>}</div>;
   if (!page) return null;
   const back = index > 0 ? () => setIndex(index - 1) : undefined;
@@ -143,7 +143,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
   if (page.text && page.image && !editing) return <div className="space-y-5">
     <p className="text-center text-sm text-muted-foreground">Page {index + 1} / {story.data.pages.length} · Saved</p>
     <OpenStoryPage story={story} index={index} child={child} />
-    <div className="flex justify-center gap-3"><Button variant="ghost" size="sm" onClick={() => { setEditing(true); setAnswer(page.text); }}><Pencil />Change words</Button><Button variant="ghost" size="sm" onClick={() => void run(() => paint(story))}><RefreshCw />New picture · 3 glow</Button></div>
+    <div className="flex flex-wrap justify-center gap-3"><Button variant="ghost" size="sm" onClick={() => { setEditing(true); setAnswer(page.text); }}><Pencil />Change words</Button><Button variant="ghost" size="sm" onClick={() => void run(() => paint(story))}><RefreshCw />New picture · 3 glow</Button>{(story.versions[page.id] ?? 0) > 0 && <Button variant="ghost" size="sm" onClick={() => void run(async () => { const next = await edit({ data: { childId: child.id, id: story.id, environment: env, action: "undo", pageId: page.id } }); setStory(next); chat.say("Took that back! Your earlier page is here.", []); })}><Undo2 />Take that back</Button>}</div>
     <div className="flex justify-between gap-3"><Button variant="ghost" disabled={!index} onClick={back}><ArrowLeft />Back</Button><Button onClick={() => setIndex(index + 1)}>{index + 1 === story.data.pages.length ? "The end!" : "Next page"}<ArrowRight /></Button></div>
   </div>;
   return <div className="space-y-4">
