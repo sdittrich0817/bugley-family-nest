@@ -22,7 +22,7 @@ export const paintWorkspacePicture = createServerFn({ method: "POST" }).middlewa
     if (error) throw new Error("Your picture couldn’t save. Your Glow will be returned.");
     return loadWorkspace(context.supabase, context.userId, data.childId, p.id);
   } catch (e) {
-    if (charged) await (await import("./glow.server")).refundGlow(context.userId, data.childId, "sketch", data.op);
+    if (charged) await (await import("./glow.server")).refundGlow(context.supabase, context.userId, data.childId, 1, "Refund: picture could not save");
     await a.from("studio_creations").update({ details: { ...p.details, paintState: "failed" } }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", data.childId);
     throw e;
   }
