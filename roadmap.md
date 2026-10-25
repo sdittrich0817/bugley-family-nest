@@ -1,5 +1,8 @@
 - [x] Restore a visible home-page login at small screen widths; verified at 695×594 that it opens /login.
-- [ ] Build Bugley Kids installation/offline support, trusted device setup and pairing, parent PIN/revocation, and device-lock guides (new uploaded brief).
+- [x] Implement Bugley Kids manifest/generated preview-safe worker, public Kids entry, private device/pair/PIN records, selected-child authorization, revocation and daily-time heartbeat, settings and illustrated installation/device-lock guides. Local parent session is removed when trusting this device; PIN permits navigation only, normal parent sign-in still protects Hub.
+- [ ] Verify successful trusted-device setup, QR/short-code approval and redemption, child login and PIN exit end-to-end (blocked: available parent session is Kid-Zone locked, no successful parent password/PIN available; no device/PIN records created).
+- [ ] Verify published installation/offline startup and real phone/tablet behavior (blocked: not published on user request, no physical devices; preview intentionally has no service worker).
+- [x] Kids follow-up checks: 144 tests pass; invalid pairing rejected, untrusted Kids entry asks a grown-up, wrong parent exit password rejected, offline message shown, no preview worker, 4 widths have no overflow for tested public pairing and existing player/exit screens; build OK. No family Glow spent.
 - [x] Add verified parent signup, adult attestation, profiles and timestamped consent.
 - [x] Add login, forgot/reset password and private parent account page.
 - [x] Replace waitlist actions with real account navigation; preserve waitlist data.
