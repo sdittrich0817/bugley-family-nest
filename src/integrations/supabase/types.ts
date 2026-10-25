@@ -1638,6 +1638,50 @@ export type Database = {
           },
         ]
       }
+      studio_versions: {
+        Row: {
+          child_id: string
+          created_at: string
+          creation_id: string
+          description: string | null
+          id: string
+          image: string | null
+          page_key: string
+          parent_id: string
+          text: string | null
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          creation_id: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          page_key: string
+          parent_id: string
+          text?: string | null
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          creation_id?: string
+          description?: string | null
+          id?: string
+          image?: string | null
+          page_key?: string
+          parent_id?: string
+          text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "studio_versions_creation_id_fkey"
+            columns: ["creation_id"]
+            isOneToOne: false
+            referencedRelation: "studio_creations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null

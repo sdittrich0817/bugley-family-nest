@@ -11,9 +11,12 @@ import { speak, type BugleyChat, type SidekickChild } from "./Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { askBugley } from "@/lib/studio.functions";
 import { createComic, editComic, getComic } from "@/lib/comic.functions";
+import { planOutline } from "@/lib/story.functions";
+import { OutlineScreen } from "./Outline";
 import { bookFromOneShot, startChapter, getBook } from "@/lib/book.functions";
 import { printMessage, printedPages } from "@/lib/book";
 import { comicBeats, comicQuestion, comicCells, comicPanelAspect, type Comic, type ComicPage, type Layer, type Layout, type Panel } from "@/lib/comic";
+import { beatBandOf } from "@/lib/story";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
@@ -33,10 +36,12 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   const [titles, setTitles] = useState<string[]>([]);
   const [recap, setRecap] = useState("");
   const [bookPages, setBookPages] = useState<number | null>(null);
-  const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley);
+  const [showOutline, setShowOutline] = useState(false);
+  const [planBusy, setPlanBusy] = useState(false);
+  const create = useServerFn(createComic), edit = useServerFn(editComic), load = useServerFn(getComic), ask = useServerFn(askBugley), plan = useServerFn(planOutline);
   const convert = useServerFn(bookFromOneShot), chapter = useServerFn(startChapter), loadBook = useServerFn(getBook);
   const qc = useQueryClient(); const env = getStripeEnvironment();
-  const band = comic?.data.guidedBand ?? child.age_band;
+  const band = beatBandOf(comic?.data ?? {}, child.age_band);
   const flat = comic?.data.pages.flatMap((page) => page.panels.map((panel, i) => ({ page, panel, i }))) ?? [];
   const current = flat[at]; const panel = current?.panel; const ending = !!comic && at >= flat.length;
   useScrollTopOn(`${comic?.id}-${at}-${mode}-${busy}-${ending}`);
@@ -128,9 +133,14 @@ export function ComicMaker({ child, chat, comicId, onComic, onDirty }: { child: 
   }
   if (comicId && !comic) return <BugleyStep child={child} bare question="Opening your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
   if (!comic) return <StorySetup kind="comic" child={child} chat={chat} onCreate={async (r) => {
-    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, environment: env } });
-    const next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } }); setComic(next); setAt(0); onComic(next.id); refresh();
+    const made = await create({ data: { childId: child.id, title: r.title, genre: r.genre, styleKey: r.styleKey, characterIds: r.characterIds, guided: true, length: r.length, environment: env } });
+    let next = await edit({ data: { childId: child.id, id: made.id, environment: env, action: "map", map: r.map } });
+    try { await plan({ data: { childId: child.id, id: next.id, kind: "comic", environment: env } }); next = await load({ data: { childId: child.id, id: next.id } }); setShowOutline(true); } catch { /* planning is a bonus; the comic works without it */ }
+    setComic(next); setAt(0); onComic(next.id); refresh();
   }} />;
+  if (showOutline && comic?.data.outline?.length) return <OutlineScreen child={child} chat={chat} outline={comic.data.outline} noun="comic" busy={planBusy}
+    onChange={async (note) => { setPlanBusy(true); try { await plan({ data: { childId: child.id, id: comic.id, kind: "comic", environment: env, change: note } }); setComic(await load({ data: { childId: child.id, id: comic.id } })); } catch (e) { toast.error(e instanceof Error ? e.message : "Try again."); } finally { setPlanBusy(false); } }}
+    onGo={() => { setShowOutline(false); chat.say("Panel 1! What happens first, in your words?", []); }} />;
   if (busy) return <BugleyStep child={child} bare question="Painting your comic…" choices={[]} allowOwnIdea={false} mood="painting" onChoose={() => {}} />;
   const count = bookPages ?? printedPages(comic.data.pages.length, false);
   if (comic.data.finished) return <div className="space-y-6"><ComicReader comic={comic} child={child} /><p className="text-center font-display text-xl">{printMessage("comic", count)}</p><Button size="lg" onClick={() => void nextIssue()}><BookOpen />{comic.data.bookId ? "Make the next issue?" : "Want to make Issue 2?"}</Button></div>;

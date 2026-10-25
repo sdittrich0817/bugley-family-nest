@@ -15,10 +15,13 @@ import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio
 import { BugleyGuide } from "@/components/studio/Guided";
 import { BugleyStep, type StepChoice } from "@/components/studio/BugleyStep";
 import { Bugley } from "@/components/brand/Bugley";
-import { CharacterCreator, PictureMaker } from "@/components/studio/Makers";
+import { PictureMaker } from "@/components/studio/Makers";
 import { StoryMaker } from "@/components/studio/StoryMaker";
 import { ComicMaker } from "@/components/studio/ComicMaker";
 import { BookBuilder } from "@/components/studio/BookBuilder";
+import { HeroBuilder } from "@/components/studio/HeroBuilder";
+import { listCast, stylesOptions } from "@/lib/images.functions";
+import { STYLE_THUMBS } from "@/lib/style-thumbs";
 import { bookFromOneShot } from "@/lib/book.functions";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -73,7 +76,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined);
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
-  useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); if (view === "character") chat.say("Let’s invent a character! First, what kind?", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (view === "home") chat.say(greeting, []); if (view === "album") chat.say("Here’s everything you’ve made!", []); }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${band}`)}>
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
@@ -91,7 +94,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
           : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); setInBook(false); setView(v); }} />
           : view === "picture" ? <PictureMaker child={child} chat={chat} />
-          : view === "character" ? <CharacterCreator child={child} chat={chat} onDone={() => setView("album")} />
+          : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
           : view === "story" ? <StoryMaker child={child} chat={chat} storyId={storyId} onStory={setStoryId} onDirty={setStoryDirty} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
           : view === "comic" ? <ComicMaker child={child} chat={chat} comicId={comicId} onComic={setComicId} onDirty={setStoryDirty} />
@@ -120,8 +123,38 @@ function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View)
         <span className={cn("font-display tracking-wide", sprouts ? "text-5xl" : "text-4xl")}>{label}</span>
       </button>)}
     </section>
+    <CharacterVault child={child} onBuild={() => onOpen("character")} />
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
+}
+
+/** My Characters: the child's vault of approved heroes, reusable in every picture, story and comic. */
+function CharacterVault({ child, onBuild }: { child: SidekickChild; onBuild: () => void }) {
+  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  return <section className="space-y-3">
+    <h2 className="font-display text-2xl">My Characters</h2>
+    <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+      {cast.map((m) => <li key={m.id} className="overflow-hidden rounded-3xl border-2 border-border bg-card text-center shadow-soft">
+        {m.url ? <img src={m.url} alt={m.title} loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>🐾</span>}
+        <span className="block truncate px-2 py-1.5 text-sm font-semibold">{m.title}</span>
+      </li>)}
+      <li><button onClick={onBuild} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+        <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>
+        Build a character
+      </button></li>
+    </ul>
+  </section>;
+}
+
+/** Vault character building: pick a look, then the three-step builder. */
+function CharacterFlow({ child, chat, onDone, onBack }: { child: SidekickChild; chat: ReturnType<typeof useBugleyChat>; onDone: () => void; onBack: () => void }) {
+  const [style, setStyle] = useState<string | null>(null);
+  const { data: styles = [] } = useQuery(stylesOptions);
+  useEffect(() => { if (!style) chat.say("Let’s invent a character! First, pick a look.", []); }, [style]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!style) return <BugleyStep child={child} bare question="Pick a look for your character!" allowOwnIdea={false} onBack={onBack}
+    choices={styles.map((s) => ({ key: s.key, label: s.name, image: STYLE_THUMBS[s.key] }))}
+    onChoose={(c) => setStyle(c.key)} />;
+  return <HeroBuilder child={child} chat={chat} styleKey={style} role="hero" onBack={() => setStyle(null)} onDone={onDone} />;
 }
 
 const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Heroes", game: "Games" };

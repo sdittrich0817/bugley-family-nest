@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { GENRES, storyMapSchema, EMPTY_MAP, storyBeats, type StoryBeat } from "./story";
+import { GENRES, LENGTHS, storyMapSchema, EMPTY_MAP, storyBeats, type StoryBeat } from "./story";
 
 export const LAYOUTS = { one: 1, two: 2, three: 3, four: 4, six: 6 } as const;
 export type Layout = keyof typeof LAYOUTS;
@@ -13,7 +13,7 @@ const pct = z.number().min(0).max(100);
 export const layerSchema = z.object({ id: z.string().uuid(), type: z.enum(LAYER_TYPES), text: z.string().max(200), x: pct, y: pct, w: z.number().min(8).max(100), h: z.number().min(6).max(100), tx: pct, ty: pct });
 export const panelSchema = z.object({ id: z.string().uuid(), description: z.string().max(600), angle: z.enum(ANGLES), sketch: z.string().nullable(), image: z.string().nullable(), layers: z.array(layerSchema).max(12), dialogueDone: z.boolean().optional(), bubblePlacement: z.object({ x: pct, y: pct, w: pct, h: pct, tx: pct, ty: pct }).optional() });
 export const comicPageSchema = z.object({ id: z.string().uuid(), layout: z.enum(Object.keys(LAYOUTS) as [Layout, ...Layout[]]), panels: z.array(panelSchema).min(1).max(6), widePanelId: z.string().uuid().optional() });
-export const comicSchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(comicPageSchema).min(1), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), followups: z.array(z.string()).optional() });
+export const comicSchema = z.object({ genre: z.enum(GENRES), styleKey: z.string(), characterIds: z.array(z.string().uuid()), modelLock: z.any().optional(), map: storyMapSchema, pages: z.array(comicPageSchema).min(1), finished: z.boolean(), cover: z.string().nullable(), bookId: z.string().uuid().optional(), guidedBand: z.enum(["sprouts", "explorers", "builders"]).optional(), length: z.enum(LENGTHS).optional(), outline: z.array(z.string().max(200)).max(12).optional(), followups: z.array(z.string()).optional() });
 export type ComicData = z.infer<typeof comicSchema>;
 export type ComicPage = z.infer<typeof comicPageSchema>;
 export type Panel = z.infer<typeof panelSchema>;
