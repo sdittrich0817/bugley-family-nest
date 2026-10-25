@@ -121,7 +121,7 @@ export const saveCharacter = createServerFn({ method: "POST" }).middleware([requ
 
 /** Hero Builder: three hero options for one glow. */
 export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
-  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), environment: env, styleKey: z.string().max(40), kind: z.string().trim().min(1).max(120), color: z.string().trim().min(1).max(80), special: z.string().trim().min(1).max(160), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) return { ok: false as const, reply: "I’m taking a little nap right now. Ask a grown-up!" };
     const { generateHeroOptions } = await import("@/lib/images.server");
@@ -130,7 +130,7 @@ export const makeHeroOptions = createServerFn({ method: "POST" }).middleware([re
 
 /** "That's my hero!": guards the words, runs Character Lock (reference sheet + DNA), saves to My Heroes. */
 export const saveHero = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
-  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(60), color: z.string().trim().min(1).max(40), special: z.string().trim().min(1).max(60), name: z.string().trim().min(1).max(40) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), path: z.string().max(200), styleKey: z.string().max(40), kind: z.string().trim().min(1).max(120), color: z.string().trim().min(1).max(80), special: z.string().trim().min(1).max(160), name: z.string().trim().min(1).max(40) }).parse(i))
   .handler(async ({ data, context }) => {
     if (!data.path.startsWith(`${context.userId}/${data.childId}/`) || data.path.includes("..")) throw new Error("That picture isn’t yours.");
     const { supabaseAdmin: a } = await import('@/integrations/supabase/client.server');
