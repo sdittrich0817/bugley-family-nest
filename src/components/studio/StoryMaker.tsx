@@ -81,7 +81,7 @@ export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: 
     finally { setBusy(false); refresh(); }
   }
   async function paint(current: Story) {
-    const next = await edit({ data: { childId: child.id, id: current.id, environment: env, action: "illustrate", pageId: current.data.pages[index]?.id } });
+    const next = await edit({ data: { childId: child.id, id: current.id, environment: env, action: "illustrate", pageId: current.data.pages[index]?.id, op: crypto.randomUUID() } });
     setStory(next); setEditing(false); setFollowup(""); setAnswer("");
     chat.say("Your words brought this page to life!", []);
   }
