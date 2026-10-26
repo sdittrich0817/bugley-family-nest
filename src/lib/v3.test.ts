@@ -34,3 +34,9 @@ describe("character-first Create rules", () => {
     expect(next[1]).toEqual(pages[1]);
   });
 });
+import { v3Details as details2 } from "./v3";
+import { test as t2, expect as e2 } from "vitest";
+t2("comic keeps the child's chosen comic type", () => {
+  e2((details2("comic", 4, { id: "c", title: "Mayo", styleKey: "cartoon" }, "Mystery") as any).genre).toBe("Mystery");
+  e2((details2("comic", 4, { id: "c", title: "Mayo", styleKey: "cartoon" }) as any).genre).toBe("Adventure");
+});

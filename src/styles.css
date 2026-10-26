@@ -418,3 +418,29 @@
   font-family: var(--font-sfx);
   letter-spacing: 0.04em;
 }
+/* Bugley wanders across the companion row */
+@keyframes bugley-wander {
+  0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+  20% { transform: translate(28%, -14%) rotate(6deg); }
+  40% { transform: translate(55%, 6%) rotate(-3deg); }
+  60% { transform: translate(30%, -10%) rotate(8deg) scaleX(-1); }
+  80% { transform: translate(8%, 8%) rotate(-6deg) scaleX(-1); }
+}
+.bugley-wander { animation: bugley-wander 9s ease-in-out infinite; }
+@keyframes bugley-loop {
+  0% { transform: translate(-60%, 0) rotate(-10deg); }
+  25% { transform: translate(0, -18%) rotate(8deg); }
+  50% { transform: translate(60%, 0) rotate(-6deg) scaleX(-1); }
+  75% { transform: translate(0, 14%) rotate(6deg) scaleX(-1); }
+  100% { transform: translate(-60%, 0) rotate(-10deg); }
+}
+.bugley-loop { animation: bugley-loop 5s ease-in-out infinite; }
+@keyframes bugley-glow-pulse { 0%,100% { filter: drop-shadow(0 0 12px var(--primary)); } 50% { filter: drop-shadow(0 0 36px var(--primary)) brightness(1.1); } }
+.bugley-thinking-glow { animation: bugley-glow-pulse 1.4s ease-in-out infinite; }
+@keyframes sparkle-twinkle { 0%,100% { transform: scale(0.3) rotate(0); opacity: 0; } 50% { transform: scale(1.2) rotate(90deg); opacity: 1; } }
+.sparkle-twinkle { animation: sparkle-twinkle 1.8s ease-in-out infinite; }
+@keyframes step-enter { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.step-enter { animation: step-enter 0.35s ease-out both; }
+@keyframes confetti-fall { 0% { transform: translateY(-20vh) rotate(0); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0.6; } }
+.confetti-piece { animation: confetti-fall 3.2s ease-in forwards; }
+@media (prefers-reduced-motion: reduce) { .bugley-wander, .bugley-loop, .bugley-thinking-glow, .sparkle-twinkle, .step-enter, .confetti-piece { animation: none; } }

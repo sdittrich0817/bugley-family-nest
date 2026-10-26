@@ -1,3 +1,4 @@
+import { COMIC_GENRES } from "./comic";
 // Create Studio V3: one idea → four-scene comic arc → one scene at a time.
 // Reuses workspace persistence, safety guards, Character Lock and Glow charging.
 import { createServerFn } from "@tanstack/react-start";
@@ -81,7 +82,7 @@ export const readV3Character = createServerFn({ method: "POST" }).middleware([re
   return out;
 });
 
-export const startV3Creation = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ kind: z.enum(["comic", "story", "picture"]), title: z.string().trim().min(1).max(80), count: v3Count, characterId: z.string().uuid(), environment }).parse(i)).handler(async ({ data, context }) => {
+export const startV3Creation = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ kind: z.enum(["comic", "story", "picture"]), title: z.string().trim().min(1).max(80), count: v3Count, characterId: z.string().uuid(), genre: z.enum(COMIC_GENRES).optional(), environment }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const g = await s.guardChildText(context.supabase, context.userId, child, data.title, "story_title");
@@ -94,7 +95,7 @@ export const startV3Creation = createServerFn({ method: "POST" }).middleware([re
     if (existing.parent_id !== context.userId || existing.child_id !== child.id || existing.kind !== data.kind) throw new Error("Choose your own creation.");
     return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
   }
-  const details = v3Details(data.kind, data.count, { id: hero.id, title: hero.title, styleKey: hero.style_key });
+  const details = v3Details(data.kind, data.count, { id: hero.id, title: hero.title, styleKey: hero.style_key }, data.genre);
   details.workspace.castVersions = { [hero.id]: hero.updated_at };
   const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: data.kind, title: data.title, body: "", style_key: hero.style_key, details: details as never });
   if (error) throw new Error("Your creation couldn’t start. Your character is safe.");
@@ -152,6 +153,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (!out) throw new Error("Bugley couldn’t plan that change. Your original picture is safe.");
     description = out.description;
   }
+  if (p.kind === "comic") description = `${description}`.slice(0, 480) + " Comic panel composition: leave clear open background space across the top quarter for a speech bubble; keep every face and head in the lower part of the frame.";
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const claimedAt = new Date().toISOString();
   const { data: claim } = await a.from("studio_creations").update({ details: { ...p.details, paintState: "painting", paintOp: data.op }, updated_at: claimedAt }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("updated_at", p.updatedAt).select("id").maybeSingle();
