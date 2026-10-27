@@ -38,7 +38,7 @@ export const Route = createFileRoute("/_kid/kids_/studio")({
     { property: "og:title", content: "Bugley’s Studio · Kid Zone" }, { property: "og:description", content: "Make pictures, stories, comics and games with Bugley." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
-  validateSearch: z.object({ project: z.string().uuid().optional(), kind: z.enum(["comic", "story", "picture"]).optional(), book: z.string().uuid().optional() }),
+  validateSearch: z.object({ project: z.string().uuid().optional(), kind: z.enum(["comic", "story", "picture"]).optional(), book: z.string().uuid().optional(), album: z.boolean().optional() }),
   loader: ({ context }) => context.queryClient.ensureQueryData(familyOptions),
   component: StudioPage,
 });
@@ -71,7 +71,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const band = child.age_band;
   const sprouts = band === "sprouts";
   const search = Route.useSearch();
-  const [view, setView] = useState<View>(search.book ? "book" : search.project ? search.kind ?? "comic" : "home"); useScrollTopOn(view);
+  const [view, setView] = useState<View>(search.album ? "album" : search.book ? "book" : search.project ? search.kind ?? "comic" : "home"); useScrollTopOn(view);
   const [pictureId, setPictureId] = useState<string | null>(search.kind === "picture" ? search.project ?? null : null);
   const [storyId, setStoryId] = useState<string | null>(search.kind === "story" ? search.project ?? null : null);
   const [storyDirty, setStoryDirty] = useState(false);

@@ -40,6 +40,7 @@ function V3Page() {
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
         onDraft={id => void navigate({ to: "/kids/studio/v3", search: id ? { draft: id } : {}, replace: true })}
         onBook={id => void navigate({ to: "/kids/studio", search: { book: id } })}
+        onLibrary={() => void navigate({ to: "/kids/studio", search: { album: true } })}
         onExit={() => void navigate({ to: "/kids/studio" })} />
     </div>
   </div>;
