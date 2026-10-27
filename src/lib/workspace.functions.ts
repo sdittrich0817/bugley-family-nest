@@ -7,6 +7,7 @@ import { guidedComicPages } from "./comic";
 import { EMPTY_FACTS, resizeWorkspace, assertWorkspaceIdle, invalidatePicture, workspaceSchema } from "./workspace";
 import { storySchema } from "./story";
 import { comicSchema } from "./comic";
+import { setPictureComplete } from "./picture";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 const environment = z.enum(["sandbox", "live"]);
@@ -14,6 +15,15 @@ export const getWorkspace = createServerFn({ method: "POST" }).middleware([requi
   const { loadChild } = await import("./studio.server");
   await loadChild(context.supabase, context.userId, data.childId);
   return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, data.childId, data.id);
+});
+export const completePicture = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ updatedAt: z.string(), finished: z.boolean() }).parse(i)).handler(async ({ data, context }) => {
+  await (await import("./studio.server")).loadChild(context.supabase, context.userId, data.childId);
+  const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
+  const project = await loadWorkspace(context.supabase, context.userId, data.childId, data.id);
+  if (project.updatedAt !== data.updatedAt) throw new Error("Your picture changed in another window. Reopen it first.");
+  setPictureComplete(project, data.finished);
+  await persistWorkspace(context.userId, data.childId, project);
+  return loadWorkspace(context.supabase, context.userId, data.childId, data.id);
 });
 export const startWorkspace = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), kind: z.enum(["comic", "story", "picture"]), idea: z.string().trim().min(3).max(600), environment }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error("Ask a grown-up to open your Studio plan.");
