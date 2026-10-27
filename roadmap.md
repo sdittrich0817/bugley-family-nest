@@ -67,4 +67,4 @@
 - [x] Live text checks: incomplete dog description asks missing name; full original Super Ted description is accepted and draft restores; seven-page story keeps exact whitespace/spelling after refresh; picture scene restores; 390px/695px no overflow. Later text checks used authenticated parent access after child-login attempt cooldown, not a fresh child-login claim. 55 relevant tests pass; build OK.
 - [ ] Live new portrait approval, art revisions, story illustrations/finish and picture generation/upgrade (blocked: 0 existing family Glow; no top-up permitted). Voice control is present where browser speech recognition is supported; physical microphone behavior remains unverified.
 
-- [ ] Add picture completion, celebration, and library readback without requiring more Glow.
+- [x] Add picture completion, celebration, and library readback without requiring more Glow. Verified Dawnie’s existing “Bodhi flying” picture finishes, survives refresh, appears once in My Album, and reopens complete; 20 relevant tests pass.
