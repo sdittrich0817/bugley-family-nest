@@ -124,7 +124,7 @@ export const listInProgress = createServerFn({ method: "POST" }).middleware([req
     if (error) throw new Error("We couldn’t open your saved work.");
     const open = (rows ?? []).filter((r: any) => r.details?.workspace?.v3 && !r.details?.finished).slice(0, 12).map((r: any) => {
       const art: string[] = r.kind === "comic" ? (r.details.pages ?? []).flatMap((p: any) => (p.panels ?? []).map((x: any) => x.image)).filter(Boolean) : r.kind === "story" ? (r.details.pages ?? []).map((p: any) => p.image).filter(Boolean) : r.images ?? [];
-      return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: r.title as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? []) as string[], art: art[art.length - 1] as string | undefined };
+      return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: r.title as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? r.details.characters ?? []) as string[], art: art[art.length - 1] as string | undefined };
     });
     const { signPaths } = await import("@/lib/images.server");
     const paths = open.map(o => o.art).filter((p): p is string => !!p && !p.startsWith("http"));
