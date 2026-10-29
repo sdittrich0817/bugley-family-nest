@@ -5,12 +5,12 @@ import { DeleteCreationButton } from "@/components/studio/DeleteCreationButton";
 import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
-import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
+import { kidFamilyOptions as familyOptions, useStudioPlayer } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
-import { getActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
+import { type Band } from "@/lib/kid-zone";
 import { listAlbum, listInProgress, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
 import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
@@ -47,16 +47,12 @@ export const Route = createFileRoute("/_kid/kids_/studio")({
 function StudioPage() {
   const { data } = useSuspenseQuery(familyOptions);
   const navigate = useNavigate();
-  const [childId, setChildId] = useState<string | null>(null);
-  useEffect(() => {
-    setKidZoneLocked(true);
-    const id = getActivePlayer();
-    if (!id || !data.children.some((c) => c.id === id)) void navigate({ to: "/kids", replace: true });
-    else setChildId(id);
-  }, [data.children, navigate]);
+  const onMissing = useCallback(() => { void navigate({ to: "/kids", replace: true }); }, [navigate]);
+  const { childId, error } = useStudioPlayer(data.children, onMissing);
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   useEffect(() => { if (billing && !billing.active) void navigate({ to: "/kids", replace: true }); }, [billing, navigate]);
   const child = data.children.find((c) => c.id === childId);
+  if (error) return <p role="alert" className="p-6">{error}</p>;
   if (!child) return null;
   return <Studio child={child as SidekickChild & { age_band: Band }} />;
 }
