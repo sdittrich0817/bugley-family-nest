@@ -37,3 +37,4 @@
 - Create V3 keeps separate character drafts and outputs in existing records; picture completion uses owned workspace saves with no art charge and links to My Album. Why: durable work without duplicate entries.
 - Studio choices use prepared lines; image outages retry once. Why: avoid waits and repeat failures.
 - Delete controls share confirmation and owned soft deletion. Why: easy cleanup with parent recovery.
+- Comic slideshows render saved panels through the same PanelCanvas as comic readers; playback waits for image loading, pauses on manual navigation and stops at the last slide. Why: keep artwork and dialogue together without skipped slides or surprise wrapping.
