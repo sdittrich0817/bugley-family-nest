@@ -175,7 +175,8 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     } else {
       const target = (p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages).find((x: any) => x.id === data.itemId);
       if (!target) throw new Error("Your scene couldn’t be found.");
-      Object.assign(target, replaceV3Art(target, result, description));
+      // Comic panel descriptions are the child's own scene words; never replace them with hidden drawing instructions.
+      Object.assign(target, replaceV3Art(target, result, p.kind === "comic" ? target.description : description));
       if (p.kind === "comic") target.dialogueDone = false;
       else target.text = words;
     }
