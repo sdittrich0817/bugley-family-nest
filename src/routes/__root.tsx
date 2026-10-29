@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { isKidZoneLocked, isKidZonePath, kidZoneRedirect, subscribeKidZone, setKidZoneLocked } from "@/lib/kid-zone";
+import { isKidZoneLocked, isKidZonePath, isKidZoneRecoveryPath, kidZoneRedirect, subscribeKidZone, setKidZoneLocked } from "@/lib/kid-zone";
 import { getDeviceMode, lockKidDevice } from '@/lib/parent-device.functions';
 import { useParentSession } from '@/components/site/ParentSession';
 import { scrollToTop } from "@/lib/scroll";
@@ -152,8 +152,8 @@ function KidZoneShell() {
   const [checkedPath,setCheckedPath]=useState('');
   const [deviceChecked,setDeviceChecked]=useState(false);
   useEffect(()=>{void registerKidsWorker();},[]);
-  useEffect(()=>{let active=true;void kidDeviceStatus().then(d=>{if(!active)return;if(d.trusted){setKidZoneLocked(!d.parentUnlocked);if((!d.parentUnlocked&&!isKidZonePath(pathname))||pathname==='/')void navigate({to:'/kids',replace:true});}else if(d.invalid&&isKidZonePath(pathname)){setKidZoneLocked(false);void navigate({to:'/kids-entry',replace:true});}setDeviceChecked(true);}).catch(()=>{if(active)setDeviceChecked(true);});return()=>{active=false;};},[pathname,navigate]);
-  useEffect(()=>{if(!user){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){if(isKidZoneLocked()){setCheckedPath(pathname);void lockKidDevice().catch(()=>{});return;}setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
+  useEffect(()=>{let active=true;void kidDeviceStatus().then(d=>{if(!active)return;if(d.trusted){setKidZoneLocked(!d.parentUnlocked);if(kidZoneRedirect(pathname,!d.parentUnlocked)||pathname==='/')void navigate({to:'/kids',replace:true});}else if(d.invalid&&isKidZonePath(pathname)){setKidZoneLocked(false);void navigate({to:'/kids-entry',replace:true});}setDeviceChecked(true);}).catch(()=>{if(active)setDeviceChecked(true);});return()=>{active=false;};},[pathname,navigate]);
+  useEffect(()=>{if(!user||isKidZoneRecoveryPath(pathname)){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){if(isKidZoneLocked()){setCheckedPath(pathname);void lockKidDevice().catch(()=>{});return;}setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   // Do not redirect using stale browser state while the server check is pending.
   const target = checkedPath === pathname ? kidZoneRedirect(pathname, locked) : null;
