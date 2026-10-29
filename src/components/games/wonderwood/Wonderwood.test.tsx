@@ -15,6 +15,6 @@ describe("Wonderwood adventure", () => {
     act(() => vi.advanceTimersByTime(ROUND_MS));
     expect(screen.getByRole("heading", { name: "Time for a rest" })).toBeDefined();
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Berry", exact: true })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Berry$/ })).toBeNull();
   });
 });
