@@ -137,7 +137,7 @@ export async function paintBugAvatar(sb: Sb, userId: string, childId: string, wo
     const { count } = await a.from('bug_avatar_attempts').select('op', { count: 'exact', head: true }).eq('child_id', childId).eq('status', 'complete');
     return { ok: true as const, bug: { ...bug, imagePath: path, imageUrl: url }, completed: count ?? 0, nextCost: avatarCost(count ?? 0) };
   } catch (e) {
-    const { error: refundError } = await a.rpc('finish_bug_avatar', { _child: childId, _parent: userId, _op: op, _path: null, _bug: {} });
+    const { error: refundError } = await a.rpc('finish_bug_avatar', { _child: childId, _parent: userId, _op: op, _path: '', _bug: {} });
     if (refundError) throw new Error('Couldn’t restore your try. Ask your grown-up.');
     return { ok: false as const, reply: e instanceof Error ? e.message : 'Couldn’t draw your bug. Your try is back.' };
   }
