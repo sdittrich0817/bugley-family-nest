@@ -32,12 +32,12 @@ const ART={say_see:sayArt,creature_lab:creatureArt,story_blanks:storyArt,doodle_
 type Kid=SidekickChild;
 type Session=Awaited<ReturnType<typeof startPlay>> & { kid:Kid };
 type Result={kid:Kid;score:number;bonus:number};
-export function PlayStudio({child,family,builder}:{child:Kid;family:Kid[];builder?:React.ReactNode}) {
+export function PlayStudio({child,family,builder,start,onExit}:{child:Kid;family:Kid[];builder?:React.ReactNode;start?:PlayKey;onExit?:()=>void}) {
  const qc=useQueryClient(),environment=getStripeEnvironment();
  const {data,error,refetch}=useQuery({queryKey:['play-home',child.id],queryFn:()=>getPlayHome({data:{childId:child.id,environment}})});
  const {data:shelf}=useQuery({queryKey:['dash-shelf',child.id],queryFn:()=>getDashShelf({data:{childId:child.id,environment}})});
  const [dash,setDash]=useState<DashConfig|undefined>(),[heroId,setHeroId]=useState<string|undefined>(),[remixId,setRemixId]=useState<string|undefined>();
- const [game,setGame]=useState<PlayKey|null>(null),[sessions,setSessions]=useState<Session[]>([]),[turn,setTurn]=useState(0),[results,setResults]=useState<Result[]>([]),[finished,setFinished]=useState(false),[pass,setPass]=useState(false),[picked,setPicked]=useState<string[]>([child.id]),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
+ const [game,setGame]=useState<PlayKey|null>(start??null),[sessions,setSessions]=useState<Session[]>([]),[turn,setTurn]=useState(0),[results,setResults]=useState<Result[]>([]),[finished,setFinished]=useState(false),[pass,setPass]=useState(false),[picked,setPicked]=useState<string[]>([child.id]),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
  useScrollTopOn(`${game}|${sessions.length}|${turn}|${finished}`);
  const stickers=[...STARTER_STICKERS,...STARTER_CREATURES,...(data?.stickers??[])];
  const refresh=async()=>{await qc.invalidateQueries({queryKey:['play-home',child.id]});await qc.invalidateQueries({queryKey:['glow']});await qc.invalidateQueries({queryKey:['dash-shelf',child.id]});};
@@ -46,7 +46,7 @@ export function PlayStudio({child,family,builder}:{child:Kid;family:Kid[];builde
  const first=who[0];if(!first)throw new Error('Choose a player.');next.push({...await startPlay({data:{childId:first.id,game,environment,dash,heroId:pass?undefined:heroId,remixId}}),kid:first});setSessions(next);setTurn(0);setResults([]);setFinished(false);
  }catch(e){setMessage(e instanceof Error?e.message:'Couldn’t start.');}finally{setBusy(false);}}
  async function done(r:{score:number;bonus:number}){const current=sessions[turn];if(!current||!game)return;const all=[...results,{...r,kid:current.kid}];setResults(all);const who=pass?family.filter(k=>picked.includes(k.id)&&playAllowed(game,k.age_band as any)):[child];const next=who[turn+1];if(next){setBusy(true);try{const s={...await startPlay({data:{childId:next.id,game,environment,dash,remixId}}),kid:next};setSessions([...sessions,s]);setTurn(turn+1);}catch(e){setMessage(e instanceof Error?e.message:'Couldn’t start the next turn.');setFinished(true);}finally{setBusy(false);}}else{setFinished(true);refresh();}}
- function home(){setGame(null);setRemixId(undefined);setSessions([]);setResults([]);setFinished(false);setMessage('');refresh();}
+ function home(){if(onExit){refresh();onExit();return;}setGame(null);setRemixId(undefined);setSessions([]);setResults([]);setFinished(false);setMessage('');refresh();}
  if(finished&&game)return <div className="mx-auto max-w-2xl space-y-6 py-6 text-center"><Bugley stage={child.bugley_stage} expression="celebrating" glow size={120}/><h1 className="text-4xl">That was awesome!</h1>{results.map(r=><div key={r.kid.id} className="border-b border-border py-4"><h2 className="text-xl">{r.kid.nickname}</h2><p className="mt-2 flex justify-center gap-2 font-display text-3xl"><Star className="size-8 fill-primary text-primary"/>{r.score} stars</p>{r.score>0&&<p className="mt-2 flex justify-center gap-2 text-sm"><Trophy className="size-4"/>{badgeForPlay(game)}</p>}{r.bonus>0&&<p className="mt-2 font-semibold">+{r.bonus} bonus glow!</p>}</div>)}<div className="bg-play-mint p-5"><p className="text-xs font-bold uppercase">Bugley’s secret</p><p className="mt-2 font-display text-xl">{PLAY_GAMES[game].secret}</p><Button variant="ghost" size="icon" aria-label="Read Bugley’s secret" onClick={()=>speak(PLAY_GAMES[game].secret)}><Volume2/></Button></div><Button size="lg" onClick={home}>Back to PLAY</Button>{message&&<p role="alert">{message}</p>}</div>;
  const current=sessions[turn];
  if(current&&game&&['bugley_guesses','mystery_manor','glow_dash'].includes(game))return <ExtraRound key={current.id} session={current} game={game} stickers={stickers} onDone={r=>void done(r)} handoff={pass}/>;

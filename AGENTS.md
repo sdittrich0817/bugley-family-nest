@@ -39,3 +39,4 @@
 - Studio choices use prepared lines; image outages retry once. Why: avoid waits and repeat failures.
 - Delete controls share confirmation and owned soft deletion. Why: easy cleanup with parent recovery.
 - Comic slideshows render saved panels through the same PanelCanvas as comic readers; playback waits for image loading, pauses on manual navigation and stops at the last slide. Why: keep artwork and dialogue together without skipped slides or surprise wrapping.
+- The Games page is the arcade (`src/components/games/arcade/`); games are listed as data in `src/lib/arcade.ts`, new client games keep levels/parts as data (`maze.ts`, `creatures.ts`) and existing server-graded PLAY games open through PlayStudio's `start`/`onExit`. Arcade play never charges Glow. Why: Part 2 can clone game configurations without rewriting games.
