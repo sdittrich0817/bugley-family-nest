@@ -4,9 +4,13 @@ const listeners = new Set<() => void>();
 export function isKidZonePath(pathname: string) {
   return pathname === "/kids" || pathname.startsWith("/kids/");
 }
-/** Where a locked device may go: any non-Kid-Zone path is sent back to /kids. */
+/** Recovery screens contain no parent data and must remain reachable when entry fails. */
+export function isKidZoneRecoveryPath(pathname: string) {
+  return pathname === "/kids-entry" || pathname === "/login" || pathname === "/pair";
+}
+/** A lock blocks parent content, never the sign-in/device recovery screens. */
 export function kidZoneRedirect(pathname: string, locked: boolean) {
-  return locked && !isKidZonePath(pathname) ? "/kids" : null;
+  return locked && !isKidZonePath(pathname) && !isKidZoneRecoveryPath(pathname) ? "/kids" : null;
 }
 export function isKidZoneLocked() {
   if (typeof window === "undefined") return false;
