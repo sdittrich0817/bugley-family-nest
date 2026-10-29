@@ -34,7 +34,7 @@ function MazeRun({ childId, band, stage, index, onNext, onMenu }: { childId: str
       return next;
     });
   }, [level, won]);
-  useEffect(() => { if (at === level.exit && won === null) { const stars = mazeStars(level, moves, got.length); setWon(stars); setBurst(at); updateProgress(childId, (p) => unlockLevel(recordBest(p, 'cosmic_maze', (p.best.cosmic_maze ?? 0) + 0 > index * 3 + stars ? p.best.cosmic_maze ?? 0 : index * 3 + stars), 'cosmic_maze', index + 1)); } }, [at, level, moves, got.length, won, childId, index]);
+  useEffect(() => { if (at === level.exit && won === null) { const stars = mazeStars(level, moves, got.length); setWon(stars); setBurst(at); updateProgress(childId, (p) => unlockLevel(recordBest(p, 'cosmic_maze', index * 3 + stars), 'cosmic_maze', index + 1)); } }, [at, level, moves, got.length, won, childId, index]);
   useEffect(() => { const k = (e: KeyboardEvent) => { const d = KEYS[e.key]; if (d) { e.preventDefault(); go(d); } }; window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k); }, [go]);
   const S = 10, x = (c: number) => (c % level.w) * S, y = (c: number) => Math.floor(c / level.w) * S;
   const near = (c: number) => Math.abs((c % level.w) - (at % level.w)) + Math.abs(Math.floor(c / level.w) - Math.floor(at / level.w)) <= (band === 'builders' ? 2 : 3);
