@@ -8,6 +8,7 @@ import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
 import { imageFileType, MAX_IMAGE_BYTES, allowedImageContentType } from './image-file';
+import { avatarCost, type BugConfig } from './bug-avatar';
 
 type Sb = SupabaseClient<any>;
 export type ImageMode = "sketch" | "final" | "character";
@@ -107,6 +108,39 @@ export async function signPaths(paths: string[]) {
   if (!paths.length) return [] as string[];
   const { data } = await (await admin()).storage.from(BUCKET).createSignedUrls(paths, 3600);
   return (data ?? []).map((d) => d.signedUrl ?? "");
+}
+
+/** Fixed, child-owned avatar path; quota, payment and completion are serialized in the database. */
+export async function paintBugAvatar(sb: Sb, userId: string, childId: string, words: string, bug: BugConfig, op: string) {
+  const child = await loadChild(sb, userId, childId);
+  const guard = await guardChildText(sb, userId, child, words, 'avatar');
+  if (guard.decision !== 'allowed') return { ok: false as const, reply: guard.reply ?? 'Let’s try a different bug idea.' };
+  const a = await admin();
+  const { data: style } = await a.from('art_styles').select('recipe').eq('key', 'cartoon').eq('active', true).maybeSingle();
+  const model = await loadModel('hero') ?? await loadModel('character');
+  if (!style || !model) return { ok: false as const, reply: NOT_READY };
+  const { data: claim, error } = await a.rpc('claim_bug_avatar', { _child: childId, _parent: userId, _op: op });
+  if (error) throw new Error('Couldn’t check your free tries. Please try again.');
+  const claimed = claim as { ok: boolean; reason?: string };
+  if (!claimed.ok) return { ok: false as const, reply: claimed.reason === 'not_enough' ? 'You need 1 Glow for another bug picture.' : claimed.reason === 'family_limit' ? FAMILY_LIMIT : 'Your bug picture is already being made. Please wait.' };
+  try {
+    const parts = Object.entries(bug).filter(([key]) => key !== 'imagePath' && key !== 'imageUrl').map(([k,v]) => `${k}: ${v}`).join(', ');
+    const prompt = buildPrompt(style.recipe, `An original friendly cartoon BUG or spider, never a human or famous character. Bold expressive cartoon, not babyish. Square profile portrait with the entire bug centered, large readable eyes and face, plain bright background. Child's idea: ${words}. Base bug parts: ${parts}. Only insect/spider subjects; any other subject is interpreted as bug costume or gear.`, 'character');
+    const src = await replicateRun(model, prompt, []);
+    if (!await imageIsSafe(src)) throw new Error('Bugley couldn’t safely use that picture. Your try is back.');
+    const path = await store(src, userId, childId);
+    const [url] = await signPaths([path]);
+    if (!url) throw new Error('Couldn’t open the picture.');
+    const clean = Object.fromEntries(Object.entries(bug).filter(([k]) => k !== 'imagePath' && k !== 'imageUrl'));
+    const { data: saved, error: saveError } = await a.rpc('finish_bug_avatar', { _child: childId, _parent: userId, _op: op, _path: path, _bug: clean });
+    if (saveError || !saved) throw new Error('Couldn’t save your bug picture.');
+    const { count } = await a.from('bug_avatar_attempts').select('op', { count: 'exact', head: true }).eq('child_id', childId).eq('status', 'complete');
+    return { ok: true as const, bug: { ...bug, imagePath: path, imageUrl: url }, completed: count ?? 0, nextCost: avatarCost(count ?? 0) };
+  } catch (e) {
+    const { error: refundError } = await a.rpc('finish_bug_avatar', { _child: childId, _parent: userId, _op: op, _path: null, _bug: {} });
+    if (refundError) throw new Error('Couldn’t restore your try. Ask your grown-up.');
+    return { ok: false as const, reply: e instanceof Error ? e.message : 'Couldn’t draw your bug. Your try is back.' };
+  }
 }
 
 type Locked = { title: string; dna: string; refs: string[] };
