@@ -115,3 +115,19 @@ export const markNotificationRead = createServerFn({ method: "POST" }).middlewar
     await context.supabase.from("parent_notifications").update({ read: true }).eq("id", data.id).eq("parent_id", context.userId);
     return { ok: true };
   });
+
+/** Unfinished pictures, comics and stories (newest first) so a child can pick up where they left off. */
+export const listInProgress = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth])
+  .inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.from("studio_creations").select("id,kind,title,updated_at,images,details").eq("child_id", data.childId).eq("parent_id", context.userId).is("deleted_at", null).in("kind", ["picture", "comic", "story"]).order("updated_at", { ascending: false }).limit(40);
+    if (error) throw new Error("We couldn’t open your saved work.");
+    const open = (rows ?? []).filter((r: any) => r.details?.workspace?.v3 && !r.details?.finished).slice(0, 12).map((r: any) => {
+      const art: string[] = r.kind === "comic" ? (r.details.pages ?? []).flatMap((p: any) => (p.panels ?? []).map((x: any) => x.image)).filter(Boolean) : r.kind === "story" ? (r.details.pages ?? []).map((p: any) => p.image).filter(Boolean) : r.images ?? [];
+      return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: r.title as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? r.details.characters ?? []) as string[], art: art[art.length - 1] as string | undefined };
+    });
+    const { signPaths } = await import("@/lib/images.server");
+    const paths = open.map(o => o.art).filter((p): p is string => !!p && !p.startsWith("http"));
+    const urls = await signPaths(paths); const map = new Map(paths.map((p, i) => [p, urls[i] ?? ""]));
+    return open.map(o => ({ ...o, art: o.art ? map.get(o.art) ?? o.art : undefined }));
+  });

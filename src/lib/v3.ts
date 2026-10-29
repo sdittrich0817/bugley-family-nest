@@ -16,7 +16,7 @@ export function v3StoryPages(count: number) {
 }
 export function v3Details(kind: "comic" | "story" | "picture", count: number, character: { id: string; title: string; styleKey: string }, genre = "Adventure") {
   const workspace = { version: 1, v3: true, originalIdea: "", activity: "make", outlineApproved: true, castVersions: {} };
-  if (kind === "picture") return { workspace, characters: [character.id], mode: "draft", pictureFlow: true };
+  if (kind === "picture") return { workspace, genre, characters: [character.id], mode: "draft", pictureFlow: true };
   return { workspace, genre, styleKey: character.styleKey, characterIds: [character.id], map: { hero: character.title, want: "", place: "", problem: "", ending: "" }, pages: kind === "comic" ? v3ComicPages(count) : v3StoryPages(count), finished: false, cover: null, followups: [] };
 }
 /** Commit a replacement only after the audited image service succeeds. Story words are never changed. */

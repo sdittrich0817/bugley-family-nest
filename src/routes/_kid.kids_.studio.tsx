@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
 import { getActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
-import { listAlbum, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
+import { listAlbum, listInProgress, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
 import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { GlowMeter } from "@/components/studio/GlowMeter";
@@ -130,36 +130,24 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
 type View = "home" | "create" | "album" | "picture" | "character" | "story" | "comic" | "book";
 const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", create: "Choosing what to create", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker", book: "Book Builder" };
 
-function StudioHome({ child, onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
-  const sprouts = child.age_band === "sprouts";
+function StudioHome({ child, onOpen: _onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
   const navigate = useNavigate();
-  // Things kids MAKE come first; characters (reused inside them) and PLAY sit below.
-  return <div className="space-y-6">
-    <section className="space-y-4"><div className="grid grid-cols-3 gap-3">{CREATE_CHOICES.map(c => <img key={c.key} src={c.image} alt={c.label} className="aspect-[4/3] w-full rounded-lg object-cover" />)}</div><Button size="lg" className="h-16 w-full text-xl" onClick={() => void navigate({ to: "/kids/studio/v3" })}><Sparkles />Let’s create!</Button></section>
-    <div className="flex flex-col items-center gap-3">
-      <Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button>
-    </div>
-    <CharacterVault child={child} onBuild={() => void navigate({ to: "/kids/studio/v3" })} />
+  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
+  // Continue first, then "pick a character to start creating", then PLAY.
+  return <div className="space-y-8">
+    {open.length > 0 && <section className="space-y-3"><h2 className="font-display text-2xl">Keep working</h2><ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">{open.slice(0, 8).map(w => <li key={w.id}><button onClick={() => void navigate({ to: "/kids/studio/v3", search: { project: w.id } })} className="w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">{w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}<span className="block truncate px-3 pt-2 font-display">{w.title}</span><span className="block px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind} · tap to continue</span></button></li>)}</ul></section>}
+    <section className="space-y-3"><h2 className="font-display text-2xl">Let’s create! Who’s starring?</h2><p className="text-muted-foreground">Tap a character to make a picture, comic or story with them.</p>
+      <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
+        <li><button onClick={() => void navigate({ to: "/kids/studio/v3" })} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card p-2 text-center font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring"><span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>New character</button></li>
+        {cast.map((m) => <li key={m.id}><button onClick={() => void navigate({ to: "/kids/studio/v3", search: { character: m.id } })} className="w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-center shadow-soft transition hover:-translate-y-0.5 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+          {m.url ? <img src={m.url} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>🐾</span>}
+          <span className="block truncate px-2 py-1.5 text-sm font-semibold">{m.title}</span>
+        </button></li>)}
+      </ul></section>
+    <div className="flex flex-col items-center gap-3"><Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button></div>
     <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
   </div>;
-}
-
-/** My Characters: the child's vault of approved heroes, reusable in every picture, story and comic. */
-function CharacterVault({ child, onBuild }: { child: SidekickChild; onBuild: () => void }) {
-  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
-  return <section className="space-y-3">
-    <h2 className="font-display text-2xl">My Characters</h2>
-    <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-      {cast.map((m) => <li key={m.id} className="overflow-hidden rounded-3xl border-2 border-border bg-card text-center shadow-soft">
-        {m.url ? <img src={m.url} alt={m.title} loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>🐾</span>}
-        <span className="block truncate px-2 py-1.5 text-sm font-semibold">{m.title}</span>
-      </li>)}
-      <li><button onClick={onBuild} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-        <span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>
-        Build a character
-      </button></li>
-    </ul>
-  </section>;
 }
 
 /** Vault character building: pick a look, then the three-step builder. */
