@@ -35,5 +35,5 @@
 - Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
 - Child avatars retain allow-listed parts in children.bug with optional server-saved private image paths; AI bug portraits use images.server and atomic service-only attempt claims/completion, with signed URLs added only to owned family reads. Why: kids can draw their own safe bug without client-controlled quota, charges or foreign image paths.
 - Create V3 keeps separate character drafts and outputs in existing records; picture completion uses owned workspace saves with no art charge and links to My Album. Why: durable work without duplicate entries.
-- Studio choices use prepared lines. Why: no AI wait.
+- Studio choices use prepared lines; image outages retry once. Why: avoid waits and repeat failures.
 - Delete controls share confirmation and owned soft deletion. Why: easy cleanup with parent recovery.

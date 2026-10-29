@@ -76,7 +76,14 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
   async function saveWords() { if (!project || !item || !text.trim()) return; if (project.kind === "comic") await comicEdit({ data: { ...id(), action: "panel", pageId: item.pageId, panelId: item.id, description: text } }); else await storyEdit({ data: { ...id(), action: "page", page: { id: item.id, step: item.step, text, description: text === item.text ? item.description ?? "" : "", chapter: item.chapter ?? "" } } }); await reload(); }
   async function draw() { if (!project) return; await run("Painting your scene…", async () => {
     if (!changing && !help) { const checked = await coach({ data: { ...id(), text: text.slice(0, 600), help: false } }); if (checked.question) { setHelp(checked); return; } }
-    const next = await paint({ data: { ...id(), updatedAt: (projectRef.current ?? project).updatedAt, itemId: item?.id, text, revision: changing ? revision : undefined, op: crypto.randomUUID() } });
+    let next: WorkspaceProject;
+    try { next = await paint({ data: { ...id(), updatedAt: (projectRef.current ?? project).updatedAt, itemId: item?.id, text, revision: changing ? revision : undefined, op: crypto.randomUUID() } }); }
+    catch (error) {
+      // Failed painting updates the saved version. Refresh it without resetting
+      // the child's scene or requested change, so their next attempt is valid.
+      try { const saved = await load({ data: { childId: child.id, id: project.id } }); skipSync.current = true; setProject(saved); } catch { /* Keep the original art and words visible. */ }
+      throw error;
+    }
     const nextItems: any[] = next.kind === "comic" ? next.details.pages.flatMap((p: any) => p.panels) : next.details.pages ?? [];
     const path = next.kind === "picture" ? next.images[0] : nextItems.find(x => x.id === item?.id)?.image;
     const url = path && next.urls[path];

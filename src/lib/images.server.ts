@@ -9,6 +9,7 @@ import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
 import { imageFileType, MAX_IMAGE_BYTES, allowedImageContentType } from './image-file';
 import { avatarCost, type BugConfig } from './bug-avatar';
+import { ImageServiceError, imageServiceFailure } from './image-failure';
 
 type Sb = SupabaseClient<any>;
 export type ImageMode = "sketch" | "final" | "character";
@@ -42,7 +43,18 @@ const takesRefs = (m: ModelRow, n: number) => {
   return !!s.reference_field && (m.supports_reference ?? true) && !(s.reference_single && n > 1);
 };
 
-async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
+export async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await replicateOnce(model, prompt, refs); }
+    catch (error) {
+      if (!(error instanceof ImageServiceError) || !error.retryable || attempt >= 1) throw error;
+      console.warn('replicate transient failure: one delayed recovery attempt', model.model);
+      await new Promise(resolve => setTimeout(resolve, error.retryAfterMs + Math.floor(Math.random() * 500)));
+    }
+  }
+}
+
+async function replicateOnce(model: ModelRow, prompt: string, refs: string[]) {
   const lovable = process.env["LOVABLE_API_KEY"], key = process.env["REPLICATE_API_KEY"];
   if (!lovable || !key) throw new Error("Image making isn’t set up yet.");
   const headers = { Authorization: `Bearer ${lovable}`, "X-Connection-Api-Key": key, "Content-Type": "application/json", Prefer: "wait=55" };
@@ -53,18 +65,17 @@ async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
   const url = model.version ? `${GW}/predictions` : `${GW}/models/${model.model}/predictions`;
   const body = model.version ? { version: model.version, input } : { input };
   const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
-  if (res.status === 402) { console.error("replicate: no credit"); throw new Error("Bugley’s paint box is empty right now. A grown-up needs to check the Studio account."); }
-  if (!res.ok) { console.error(`replicate create [${res.status}]`, (await res.text()).slice(0, 500)); throw new Error("Bugley couldn’t paint that one."); }
+  if (!res.ok) { const detail = (await res.text()).slice(0, 500); console.error(`replicate create [${res.status}]`, detail); throw imageServiceFailure(res.status, detail, res.headers.get('retry-after')); }
   let pred = (await res.json()) as { id: string; status: string; output?: unknown; error?: unknown };
   for (let i = 0; i < 40 && !["succeeded", "failed", "canceled"].includes(pred.status); i++) {
     await new Promise((r) => setTimeout(r, i < 5 ? 2000 : 4000));
     const p = await fetch(`${GW}/predictions/${pred.id}`, { headers });
-    if (!p.ok) { console.error(`replicate poll [${p.status}]`, (await p.text()).slice(0, 300)); continue; }
+    if (!p.ok) { const detail = (await p.text()).slice(0, 300); console.error(`replicate poll [${p.status}]`, detail); if (p.status === 429 || p.status >= 500) continue; throw imageServiceFailure(p.status, detail); }
     pred = await p.json();
   }
-  if (pred.status !== "succeeded") { console.error("replicate result", pred.status, pred.error); throw new Error("Bugley couldn’t paint that one."); }
+  if (pred.status !== "succeeded") { console.error("replicate result", pred.status, pred.error); throw imageServiceFailure(0, typeof pred.error === 'string' ? pred.error : ''); }
   const out = Array.isArray(pred.output) ? pred.output[0] : pred.output;
-  if (typeof out !== "string") throw new Error("Bugley couldn’t paint that one.");
+  if (typeof out !== "string") throw imageServiceFailure(0);
   return out;
 }
 
