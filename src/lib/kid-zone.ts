@@ -31,5 +31,20 @@ export const BAND_COPY = {
 export type Band = keyof typeof BAND_COPY;
 // The child currently playing on this device (per browser tab session). Server functions still check family ownership.
 const PLAYER_KEY = "bugley-kid-player";
-export function getActivePlayer() { return typeof window === "undefined" ? null : window.sessionStorage.getItem(PLAYER_KEY); }
-export function setActivePlayer(id: string | null) { if (id) window.sessionStorage.setItem(PLAYER_KEY, id); else window.sessionStorage.removeItem(PLAYER_KEY); }
+// A signed-in child stays chosen on this device for a few hours so new tabs/reloads don't ask "Who's playing?" again.
+const PLAYER_TTL = 4 * 60 * 60 * 1000;
+export function getActivePlayer() {
+  if (typeof window === "undefined") return null;
+  const tab = window.sessionStorage.getItem(PLAYER_KEY);
+  if (tab) return tab;
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(PLAYER_KEY) ?? "null") as { id: string; at: number } | null;
+    if (saved && Date.now() - saved.at < PLAYER_TTL) { window.sessionStorage.setItem(PLAYER_KEY, saved.id); return saved.id; }
+  } catch { /* ignore */ }
+  window.localStorage.removeItem(PLAYER_KEY);
+  return null;
+}
+export function setActivePlayer(id: string | null) {
+  if (id) { window.sessionStorage.setItem(PLAYER_KEY, id); window.localStorage.setItem(PLAYER_KEY, JSON.stringify({ id, at: Date.now() })); }
+  else { window.sessionStorage.removeItem(PLAYER_KEY); window.localStorage.removeItem(PLAYER_KEY); }
+}
