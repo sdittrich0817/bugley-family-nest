@@ -11,7 +11,7 @@ export function buildMaze(w: number, h: number, seed: number, gemCount: number):
   const rand = rng(seed), cells = new Array(w * h).fill(0), seen = new Array(w * h).fill(false), stack = [0];
   seen[0] = true;
   while (stack.length) {
-    const c = stack[stack.length - 1], x = c % w, y = Math.floor(c / w);
+    const c = stack[stack.length - 1]!, x = c % w, y = Math.floor(c / w);
     const opts = (Object.keys(STEP) as Dir[]).filter((d) => { const nx = x + STEP[d][0], ny = y + STEP[d][1]; return nx >= 0 && ny >= 0 && nx < w && ny < h && !seen[ny * w + nx]; });
     if (!opts.length) { stack.pop(); continue; }
     const d = opts[Math.floor(rand() * opts.length)]!, n = (y + STEP[d][1]) * w + x + STEP[d][0];

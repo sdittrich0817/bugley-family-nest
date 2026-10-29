@@ -26,7 +26,7 @@ export function secretFor(c: Creature) { return SECRETS.find((s) => (Object.keys
 const A = { round: 'Bubbo', tall: 'Stilto', long: 'Noodl', blob: 'Gloop' }, B = { ears: 'whisk', horns: 'horn', antennae: 'zap', beak: 'peep' }, C = { none: 'y', feather: 'flap', butterfly: 'flutter', bat: 'swoop', fish: 'fin', dragon: 'scale', fluffy: 'puff' } as Record<string, string>;
 export function creatureName(c: Creature) { return secretFor(c)?.name ?? `${A[c.body]}-${B[c.head]}${c.wings !== 'none' ? C[c.wings] : C[c.tail]}`; }
 export function randomCreature(r = Math.random): Creature {
-  const pick = <T,>(a: readonly T[]) => a[Math.floor(r() * a.length)];
+  const pick = <T,>(a: readonly T[]) => a[Math.floor(r() * a.length)]!;
   return { body: pick(PARTS.body), head: pick(PARTS.head), wings: pick(PARTS.wings), tail: pick(PARTS.tail), pattern: pick(PARTS.pattern), color: pick(PARTS.color) };
 }
 export const TOTAL_COMBOS = Object.values(PARTS).reduce((n, a) => n * a.length, 1);

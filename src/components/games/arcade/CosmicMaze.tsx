@@ -9,7 +9,7 @@ import space from '@/assets/games/cosmic-maze.jpg';
 type Band = 'sprouts' | 'explorers' | 'builders';
 const KEYS: Record<string, Dir> = { ArrowUp: 'N', w: 'N', ArrowDown: 'S', s: 'S', ArrowLeft: 'W', a: 'W', ArrowRight: 'E', d: 'E' };
 
-export function CosmicMaze({ childId, band, stage }: { childId: string; band: Band; stage: React.ComponentProps<typeof Bugley>['stage'] }) {
+export function CosmicMaze({ childId, band, stage }: { childId: string; band: Band; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']> }) {
   const [unlocked, setUnlocked] = useState(0);
   const [index, setIndex] = useState<number | null>(null);
   useEffect(() => { setUnlocked(readProgress(childId).level.cosmic_maze ?? 0); }, [childId]);
@@ -20,7 +20,7 @@ export function CosmicMaze({ childId, band, stage }: { childId: string; band: Ba
   return <MazeRun key={index} childId={childId} band={band} stage={stage} index={index} onNext={() => { setUnlocked((u) => Math.max(u, index + 1)); setIndex(index + 1 < MAZE_WORLDS.length ? index + 1 : null); }} onMenu={() => setIndex(null)} />;
 }
 
-function MazeRun({ childId, band, stage, index, onNext, onMenu }: { childId: string; band: Band; stage: React.ComponentProps<typeof Bugley>['stage']; index: number; onNext: () => void; onMenu: () => void }) {
+function MazeRun({ childId, band, stage, index, onNext, onMenu }: { childId: string; band: Band; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; index: number; onNext: () => void; onMenu: () => void }) {
   const level = useMemo(() => mazeLevel(index, band), [index, band]);
   const [at, setAt] = useState(0), [moves, setMoves] = useState(0), [got, setGot] = useState<number[]>([]), [bump, setBump] = useState(0), [burst, setBurst] = useState<number | null>(null), [won, setWon] = useState<number | null>(null);
   const start = useRef<{ x: number; y: number } | null>(null);

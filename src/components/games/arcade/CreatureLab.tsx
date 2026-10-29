@@ -52,7 +52,7 @@ export function CreatureArt({ c, size = 260, className }: { c: Creature; size?: 
 }
 
 const START: Creature = { body: 'round', head: 'ears', wings: 'none', tail: 'none', pattern: 'plain', color: '2' };
-export function CreatureLab({ childId, stage, band }: { childId: string; stage: React.ComponentProps<typeof Bugley>['stage']; band: string }) {
+export function CreatureLab({ childId, stage, band }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string }) {
   const [c, setC] = useState<Creature>(START), [found, setFound] = useState<string[]>([]), [pop, setPop] = useState(0), [news, setNews] = useState<string | null>(null), [slot, setSlot] = useState<Slot>('head');
   useEffect(() => { setFound(readProgress(childId).found); }, [childId]);
   function change(next: Creature) {
