@@ -69,4 +69,4 @@
 
 - [x] Add picture completion, celebration, and library readback without requiring more Glow. Verified Dawnie’s existing “Bodhi flying” picture finishes, survives refresh, appears once in My Album, and reopens complete; 20 relevant tests pass.
 - [x] Create Studio feedback round (Oct 29): smooth page changes, clearer character start, picked-character highlight, hero assumed in scenes, quiet autosave, scroll-to-top while working, print-ready explained, player remembered, home character cards + Keep working, genre for all kinds, free cover from own art, type/tap panel count, no old-picture flash.
-- [ ] AI-generated bug profile avatars with better templates (waiting on Shea: Glow cost and whether parents approve generated avatars).
+- [ ] AI-generated bug profile avatars with better templates: two free AI attempts per child, then Glow (waiting on Shea: parent approval requirement and Glow price after the two free attempts).
