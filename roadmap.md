@@ -72,3 +72,4 @@
 - [x] AI-generated bug profile avatars: two free successful AI attempts per child, then 1 Glow each; no parent approval. Private saved images, atomic attempt claims and failed-try refunds; seven relevant tests pass and build OK. Live Dawnie first free picture saved and survived refresh; one free try remains. Paid third attempt is unit-checked, not live-generated.
 - [x] Add visible confirmed deletion in My Album, Keep working and open Create projects using existing recoverable deletion; live Dawnie confirmation and cancel verified, nine regression tests pass, build OK.
 - [ ] Verify temporary draft deletion end-to-end (blocked: repeated child sign-in did not reach the album; no existing creations deleted).
+- [ ] Fix Marilu panel-change failures: distinguish drawing-service reasons, one delayed transient retry without extra Glow, and preserve edits with a fresh saved version after failure; run regressions and verify a live revision.
