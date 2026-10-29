@@ -191,3 +191,17 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   }
 });
 
+
+/** Free cover: reuse one of the child's own drawn scenes as the cover (no new art, no Glow). */
+export const chooseV3Cover = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ itemId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+  const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
+  const p = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
+  if (p.kind === "picture" || p.details.finished) throw new Error("Open your creation to keep working first.");
+  const items: any[] = p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages ?? [];
+  const image = items.find(x => x.id === data.itemId)?.image;
+  if (!image) throw new Error("Draw that scene first.");
+  p.details.cover = image;
+  await persistWorkspace(context.userId, child.id, p);
+  return loadWorkspace(context.supabase, context.userId, child.id, p.id);
+});
