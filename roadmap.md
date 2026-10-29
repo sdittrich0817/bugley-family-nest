@@ -68,3 +68,5 @@
 - [ ] Live new portrait approval, art revisions, story illustrations/finish and picture generation/upgrade (blocked: 0 existing family Glow; no top-up permitted). Voice control is present where browser speech recognition is supported; physical microphone behavior remains unverified.
 
 - [x] Add picture completion, celebration, and library readback without requiring more Glow. Verified Dawnie’s existing “Bodhi flying” picture finishes, survives refresh, appears once in My Album, and reopens complete; 20 relevant tests pass.
+- [x] Create Studio feedback round (Oct 29): smooth page changes, clearer character start, picked-character highlight, hero assumed in scenes, quiet autosave, scroll-to-top while working, print-ready explained, player remembered, home character cards + Keep working, genre for all kinds, free cover from own art, type/tap panel count, no old-picture flash.
+- [ ] AI-generated bug profile avatars with better templates (waiting on Shea: Glow cost and whether parents approve generated avatars).
