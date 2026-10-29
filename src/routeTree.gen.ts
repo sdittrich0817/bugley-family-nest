@@ -17,6 +17,7 @@ import { Route as BrandRouteImport } from './routes/brand'
 import { Route as CoOpsRouteImport } from './routes/co-ops'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as GamePlaygroundRouteImport } from './routes/game-playground'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as KidsEntryRouteImport } from './routes/kids-entry'
 import { Route as LearningRouteImport } from './routes/learning'
@@ -83,6 +84,11 @@ const ContactRoute = ContactRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamePlaygroundRoute = GamePlaygroundRouteImport.update({
+  id: '/game-playground',
+  path: '/game-playground',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -239,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/game-playground': typeof GamePlaygroundRoute
   '/how-it-works': typeof HowItWorksRoute
   '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
@@ -276,6 +283,7 @@ export interface FileRoutesByTo {
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/game-playground': typeof GamePlaygroundRoute
   '/how-it-works': typeof HowItWorksRoute
   '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/co-ops': typeof CoOpsRoute
   '/contact': typeof ContactRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/game-playground': typeof GamePlaygroundRoute
   '/how-it-works': typeof HowItWorksRoute
   '/kids-entry': typeof KidsEntryRoute
   '/learning': typeof LearningRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/co-ops'
     | '/contact'
     | '/forgot-password'
+    | '/game-playground'
     | '/how-it-works'
     | '/kids-entry'
     | '/learning'
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/co-ops'
     | '/contact'
     | '/forgot-password'
+    | '/game-playground'
     | '/how-it-works'
     | '/kids-entry'
     | '/learning'
@@ -431,6 +442,7 @@ export interface FileRouteTypes {
     | '/co-ops'
     | '/contact'
     | '/forgot-password'
+    | '/game-playground'
     | '/how-it-works'
     | '/kids-entry'
     | '/learning'
@@ -471,6 +483,7 @@ export interface RootRouteChildren {
   CoOpsRoute: typeof CoOpsRoute
   ContactRoute: typeof ContactRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GamePlaygroundRoute: typeof GamePlaygroundRoute
   HowItWorksRoute: typeof HowItWorksRoute
   KidsEntryRoute: typeof KidsEntryRoute
   LearningRoute: typeof LearningRoute
@@ -546,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/game-playground': {
+      id: '/game-playground'
+      path: '/game-playground'
+      fullPath: '/game-playground'
+      preLoaderRoute: typeof GamePlaygroundRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -804,6 +824,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoOpsRoute: CoOpsRoute,
   ContactRoute: ContactRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GamePlaygroundRoute: GamePlaygroundRoute,
   HowItWorksRoute: HowItWorksRoute,
   KidsEntryRoute: KidsEntryRoute,
   LearningRoute: LearningRoute,

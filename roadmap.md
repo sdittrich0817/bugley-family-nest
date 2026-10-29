@@ -77,6 +77,7 @@
 - [x] Fix Marilu panel-change failures: observed provider E004 temporary outage; clear service-specific reasons, one delayed transient retry within the original Glow charge, fresh saved version after failure preserving edits. 13 tests pass; live panel 2 requested castles/ferries/flying animals/gardens/waterfalls revision saved with paintState done and new image, build OK.
 
 ## Games 2.0 Part 1
+- [x] Build isolated Wonderwood at /game-playground with generated woodland art and sprites, real local example-learning AI, mistake correction, picnic finale, optional read-aloud and a four-minute bound. Full browser round/replay and 390/894px layouts checked; no family data, Glow or existing game changes.
 - [x] Arcade home, Glow Dash visual upgrade, new Creature Lab, Cosmic Maze (first playtest batch)
 - [ ] Ocean Quest, Dragon Catch, Memory Meadow — blocked on Shea's feedback on the first three
 - [ ] Wave 2 and Part 2 — blocked on explicit approval

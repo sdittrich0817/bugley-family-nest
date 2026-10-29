@@ -48,6 +48,9 @@
   --color-leaf-foreground: var(--leaf-foreground);
   --color-play-coral: var(--play-coral);
   --color-play-mint: var(--play-mint);
+  --color-wood-ink: var(--wood-ink);
+  --color-wood-paper: var(--wood-paper);
+  --color-wood-green: var(--wood-green);
   --color-dash-night: var(--dash-night);
   --color-glow: var(--glow);
   --color-dusk: var(--dusk);
@@ -77,6 +80,12 @@
 }
 
 :root {
+  --wood-ink: oklch(0.29 0.06 165);
+  --wood-paper: oklch(0.99 0.008 100);
+  --wood-green: oklch(0.48 0.11 160);
+  --wood-shade: oklch(0.22 0.05 165 / 0.48);
+  --wood-shadow: 0 10px 35px oklch(0.22 0.05 165 / 0.23);
+  --wood-outline: oklch(1 0 0 / 0.65);
   --radius: 1rem;
   --play-coral: oklch(0.72 0.17 20);
   --play-mint: oklch(0.94 0.045 165);
@@ -469,3 +478,137 @@
 @utility arcade-burst { animation: arcade-burst 0.6s ease-out forwards; transform-box: fill-box; transform-origin: center; }
 @utility arcade-wiggle { animation: arcade-wiggle 0.5s ease-in-out; transform-box: fill-box; transform-origin: center bottom; }
 @utility arcade-drift { animation: arcade-drift 40s linear infinite; }
+
+/* Isolated Wonderwood game. All palette and surface treatments stay here. */
+.wonderwood { position: relative; min-height: 660px; height: 100svh; overflow: hidden; background: var(--wood-green); --foreground: var(--wood-ink); --card: var(--wood-paper); --secondary: var(--leaf); --border: var(--wood-outline); }
+.ww-world { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ww-header { position: absolute; z-index: 5; inset: 0 0 auto; display: flex; align-items: center; gap: 16px; height: 76px; padding: 0 28px; background: var(--wood-paper); border-bottom: 1px solid var(--wood-outline); }
+.ww-wordmark { font-family: var(--font-display); font-size: 19px; line-height: 1.1; }
+.ww-edition { font-family: var(--font-sans); display: block; font-size: 9px; margin-top: 5px; }
+.ww-lab-label { font-size: 10px; font-weight: 600; padding-left: 12px; border-left: 1px solid var(--border); }
+.ww-intro { position: absolute; left: 7%; top: 22%; z-index: 2; color: var(--wood-paper); text-shadow: 0 2px 12px var(--wood-shade); }
+.ww-eyebrow { display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; }
+.ww-intro h1 { font-size: 54px; margin-top: 20px; line-height: 1.1; }
+.ww-intro p { font-size: 18px; line-height: 1.6; margin: 20px 0 25px; }
+.ww-start { min-width: 200px; text-shadow: none; }
+.ww-intro-note { display: block; font-size: 12px; margin-top: 18px; }
+.ww-sprig { position: absolute; width: 230px; height: 270px; left: 32%; bottom: 185px; z-index: 2; display: flex; flex-direction: column; align-items: center; }
+.ww-sprig img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 16px 12px var(--wood-shade)); animation: ww-bob 3s ease-in-out infinite; }
+.ww-sprig-welcome { width: 360px; height: 390px; left: auto; right: 12%; bottom: 140px; }
+.ww-name { flex-shrink: 0; display: block; background: var(--wood-paper); color: var(--wood-ink); border: 2px solid var(--wood-outline); box-shadow: var(--wood-shadow); padding: 8px 20px; border-radius: 8px; font-family: var(--font-display); font-size: 14px; transform: rotate(-3deg); }
+.ww-welcome-guide { position: absolute; bottom: 25px; left: 7%; right: 7%; max-width: 550px; display: flex; align-items: center; gap: 8px; padding: 0 18px 0 0; background: var(--wood-paper); border-radius: 8px; box-shadow: var(--wood-shadow); }
+.ww-welcome-guide svg { flex-shrink: 0; }
+.ww-welcome-guide p { font-size: 15px; font-weight: 500; line-height: 1.5; }
+.ww-chapters { position: absolute; top: 94px; left: 50%; transform: translateX(-50%); z-index: 3; display: flex; gap: 6px; padding: 7px; background: var(--wood-paper); border-radius: 8px; box-shadow: var(--wood-shadow); white-space: nowrap; }
+.ww-chapter { display: flex; gap: 8px; align-items: center; padding: 7px 12px; font-size: 12px; color: var(--muted-foreground); }
+.ww-chapter span { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: var(--leaf); color: var(--wood-ink); }
+.ww-chapter-active { background: var(--leaf); color: var(--wood-ink); border-radius: 6px; }
+.ww-chapter-active span { background: var(--wood-green); color: var(--wood-paper); }
+.ww-journal { position: absolute; top: 175px; left: 28px; width: 230px; padding: 22px; background: var(--wood-paper); border: 1px solid var(--wood-outline); border-radius: 8px; box-shadow: var(--wood-shadow); z-index: 2; }
+.ww-journal h2 { font-size: 23px; margin-top: 13px; }
+.ww-journal p { font-size: 13px; line-height: 1.6; margin-top: 12px; }
+.ww-examples { border-top: 1px solid var(--border); padding-top: 14px; margin-top: 18px; font-size: 11px; font-weight: 600; }
+.ww-mini { width: 34px !important; height: 34px !important; margin-top: 8px; }
+.ww-journal-bottom { font-size: 9px; display: block; margin-top: 18px; color: var(--muted-foreground); }
+.ww-discovery { position: absolute; left: 62%; bottom: 205px; width: 230px; height: 240px; translate: -50% 0; display: flex; flex-direction: column; align-items: center; z-index: 2; animation: step-enter .4s ease-out both; }
+.ww-item { object-fit: contain; user-select: none; }
+.ww-discovery > .ww-item { width: 180px; height: 180px; filter: drop-shadow(0 14px 10px var(--wood-shade)); animation: ww-bob 3.7s ease-in-out infinite; }
+.ww-discovery-label { background: var(--wood-paper); color: var(--wood-ink); font-size: 10px; font-weight: 600; padding: 7px 12px; border-radius: 6px; }
+.ww-guess { display: flex; gap: 6px; align-items: center; background: var(--wood-paper); padding: 10px 14px; border-radius: 8px; font-size: 12px; box-shadow: var(--wood-shadow); }
+.ww-guide { position: absolute; z-index: 4; bottom: 22px; left: 50%; transform: translateX(-50%); width: min(760px, calc(100% - 48px)); min-height: 140px; display: flex; align-items: center; gap: 10px; background: var(--wood-paper); border: 2px solid var(--wood-outline); border-radius: 8px; padding: 14px 24px 14px 6px; box-shadow: var(--wood-shadow); }
+.ww-bugley { flex-shrink: 0; animation: ww-bob 4s ease-in-out infinite; }
+.ww-guide-content { flex: 1; min-width: 0; }
+.ww-guide-name { font-size: 9px; font-weight: 600; color: var(--wood-green); }
+.ww-guide p { font-family: var(--font-display); font-size: 17px; line-height: 1.45; margin-top: 5px; }
+.ww-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.ww-actions button { min-width: 115px; }
+.ww-basket { display: flex; gap: 8px; align-items: center; font-size: 12px; font-weight: 600; }
+.ww-snacks { position: absolute; bottom: 220px; right: 8%; display: flex; gap: 12px; z-index: 3; }
+.ww-snack { width: 125px; height: 155px; display: flex; flex-direction: column; gap: 0; border-radius: 8px; padding: 8px; box-shadow: var(--wood-shadow); position: relative; }
+.ww-snack .ww-item { width: 105px; height: 110px; }
+.ww-snack span { font-size: 11px; }
+.ww-snack-check { position: absolute; top: 8px; right: 8px; }
+.ww-award { position: absolute; top: 31%; right: 12%; text-align: center; color: var(--wood-paper); text-shadow: 0 3px 12px var(--wood-shade); z-index: 3; }
+.ww-award h1 { font-size: 48px; margin: 12px 0; }
+.ww-award p { font-size: 17px; }
+.ww-award > span { display: inline-flex; align-items: center; gap: 8px; background: var(--wood-paper); color: var(--wood-ink); text-shadow: none; border-radius: 8px; padding: 10px 18px; margin-top: 20px; font-size: 13px; font-weight: 600; }
+.ww-award-stars { display: flex; justify-content: center; gap: 8px; color: var(--primary); }
+.ww-award-stars svg { width: 32px; height: 32px; fill: currentColor; }
+.ww-sprig-celebrate img { animation: studio-cheer 1.3s ease-in-out infinite; }
+.ww-pause { position: absolute; inset: 0; z-index: 10; background: var(--wood-shade); backdrop-filter: blur(5px); display: grid; place-items: center; padding: 20px; }
+.ww-pause > div { max-width: 380px; background: var(--wood-paper); border-radius: 8px; padding: 28px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.ww-pause h2 { font-size: 25px; }
+@keyframes ww-bob { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+@media (min-width: 1100px) and (min-height: 900px) {
+  .ww-intro { top: 27%; }
+  .ww-sprig-welcome { bottom: 22%; width: 430px; height: 480px; }
+  .ww-sprig:not(.ww-sprig-welcome) { bottom: 30%; width: 300px; height: 350px; }
+  .ww-discovery { bottom: 31%; width: 290px; height: 300px; }
+  .ww-discovery > .ww-item { width: 240px; height: 240px; }
+  .ww-snacks { bottom: 33%; }
+  .ww-guide { bottom: 7%; }
+}
+@media (max-height: 700px) and (min-width: 650px) {
+  .wonderwood { min-height: 540px; }
+  .ww-header { height: 60px; }
+  .ww-chapters { top: 72px; }
+  .ww-intro { top: 20%; }
+  .ww-intro h1 { font-size: 40px; margin-top: 12px; }
+  .ww-intro p { margin: 12px 0 18px; font-size: 16px; }
+  .ww-sprig-welcome { width: 270px; height: 310px; right: 8%; bottom: 120px; }
+  .ww-welcome-guide { bottom: 15px; }
+  .ww-journal { top: 145px; width: 190px; padding: 16px; left: 18px; }
+  .ww-journal h2 { font-size: 20px; }
+  .ww-sprig:not(.ww-sprig-welcome) { width: 175px; height: 210px; left: 28%; bottom: 170px; }
+  .ww-discovery { bottom: 170px; height: 205px; left: 65%; }
+  .ww-discovery > .ww-item { width: 150px; height: 150px; }
+  .ww-guide { bottom: 14px; min-height: 130px; }
+  .ww-snacks { bottom: 180px; right: 4%; gap: 8px; }
+  .ww-snack { width: 105px; height: 135px; }
+  .ww-snack .ww-item { width: 88px; height: 90px; }
+  .ww-award { right: 8%; top: 30%; }
+  .ww-award h1 { font-size: 36px; }
+}
+@media (max-width: 649px) {
+  .wonderwood { min-height: 760px; }
+  .ww-header { height: 65px; padding-inline: 12px; gap: 6px; }
+  .ww-wordmark { font-size: 15px; }
+  .ww-edition { font-size: 8px; }
+  .ww-lab-label { display: none; }
+  .ww-world { object-position: 55% center; }
+  .ww-intro { top: 100px; left: 24px; right: 24px; }
+  .ww-intro h1 { font-size: 36px; margin-top: 12px; }
+  .ww-intro p { font-size: 15px; margin: 12px 0 16px; }
+  .ww-intro-note { margin-top: 10px; }
+  .ww-sprig-welcome { width: 215px; height: 250px; right: 8%; bottom: 140px; }
+  .ww-welcome-guide { bottom: 18px; left: 14px; right: 14px; }
+  .ww-welcome-guide svg { width: 85px; height: 85px; }
+  .ww-welcome-guide p { font-size: 13px; }
+  .ww-chapters { top: 78px; width: calc(100% - 24px); justify-content: space-between; gap: 0; }
+  .ww-chapter { flex-direction: column; gap: 4px; font-size: 10px; padding: 5px 7px; }
+  .ww-journal { top: 160px; left: 16px; right: 16px; width: auto; padding: 12px 16px; }
+  .ww-journal h2 { font-size: 20px; margin-top: 8px; }
+  .ww-journal p { font-size: 12px; margin-top: 6px; }
+  .ww-examples { padding-top: 7px; margin-top: 7px; display: flex; align-items: center; justify-content: space-between; }
+  .ww-mini { width: 24px !important; height: 24px !important; margin-top: 0; }
+  .ww-journal-bottom, .ww-journal > .ww-eyebrow { display: none; }
+  .ww-sprig:not(.ww-sprig-welcome) { left: 4%; bottom: 240px; width: 150px; height: 185px; }
+  .ww-name { font-size: 11px; padding: 6px 10px; }
+  .ww-discovery { left: 73%; bottom: 248px; width: 160px; height: 190px; }
+  .ww-discovery > .ww-item { width: 145px; height: 145px; }
+  .ww-guess { font-size: 10px; padding: 8px; gap: 4px; }
+  .ww-guess svg { display: none; }
+  .ww-guide { width: calc(100% - 24px); bottom: 16px; gap: 0; align-items: flex-start; padding: 16px 16px 16px 0; min-height: 190px; }
+  .ww-bugley { width: 80px; height: 95px; }
+  .ww-guide p { font-size: 15px; }
+  .ww-actions { gap: 6px; }
+  .ww-actions button { min-width: 85px; padding-inline: 12px; font-size: 12px; }
+  .ww-snacks { bottom: 230px; left: 14px; right: 14px; gap: 7px; justify-content: center; }
+  .ww-snack { width: 100px; height: 130px; }
+  .ww-snack .ww-item { width: 82px; height: 88px; }
+  .ww-award { top: 315px; right: 16px; width: 200px; }
+  .ww-award h1 { font-size: 30px; }
+  .ww-award p { font-size: 13px; }
+  .ww-award > span { font-size: 11px; padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .ww-sprig img, .ww-discovery, .ww-discovery > .ww-item, .ww-bugley { animation: none; } }
