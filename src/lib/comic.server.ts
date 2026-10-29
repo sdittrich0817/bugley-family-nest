@@ -56,7 +56,7 @@ export async function placeComicBubble(path: string, hero: string, page: ComicPa
   const aspect = comicPanelAspect(page, index);
   const pct = z.number().min(0).max(100);
   const out = await aiObject(z.object({ x: pct, y: pct, w: z.number().min(25).max(55), h: z.number().min(18).max(35), tx: pct, ty: pct }),
-    `Inspect this comic image and choose a speech bubble rectangle in clear empty space, away from every face. Coordinates are percentages of the displayed panel (top-left origin). The picture is center-cropped to aspect ratio ${aspect}; compensate for that crop when giving coordinates. The bubble tail must point at the visible mouth of the main hero ${hero}. Prefer a top corner if empty. Never return a rectangle overlapping a face.`, "Choose bubble bounds and speaker mouth.", url);
+    `Inspect this comic image and choose a speech bubble rectangle in clear empty space, away from every face. Coordinates are percentages of the displayed panel (top-left origin). The picture is center-cropped to aspect ratio ${aspect}; compensate for that crop when giving coordinates. The bubble tail points toward the main hero ${hero} but must stop short of them: choose a tail target in empty space just beside or above the hero, never on their face, head or body. Prefer a top corner if empty. Never return a rectangle overlapping a face.`, "Choose bubble bounds and a tail target near the speaker.", url);
   if (!out) return { x: 4, y: 4, w: 44, h: 25, tx: 50, ty: 55 };
   return { ...out, x: Math.min(out.x, 100 - out.w), y: Math.min(out.y, 100 - out.h) };
 }

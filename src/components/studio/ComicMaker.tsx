@@ -184,8 +184,8 @@ export function PanelCanvas({ panel, url, aspect, editable, selected, onSelect, 
     <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
       {panel.layers.map((l) => {
         l = shrinkLayer(l); const cx = l.x + l.w / 2, cy = l.y + l.h / 2;
-        if (l.type === "speech") return <g key={l.id}>{[0.55, 0.75, 0.92].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={1.5 - i * 0.4} ry={1.5 - i * 0.4} className="fill-card stroke-foreground" strokeWidth={1} vectorEffect="non-scaling-stroke" />)}</g>;
-        if (l.type === "thought") return <g key={l.id}>{[0.62, 0.8, 0.94].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={2.4 - i * 0.6} ry={2.4 - i * 0.6} className="fill-card stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />)}</g>;
+        if (l.type === "speech") return <g key={l.id}>{[0.35, 0.5, 0.65].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={1.5 - i * 0.4} ry={1.5 - i * 0.4} className="fill-card stroke-foreground" strokeWidth={1} vectorEffect="non-scaling-stroke" />)}</g>;
+        if (l.type === "thought") return <g key={l.id}>{[0.4, 0.55, 0.7].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={2.4 - i * 0.6} ry={2.4 - i * 0.6} className="fill-card stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />)}</g>;
         return null;
       })}
     </svg>
