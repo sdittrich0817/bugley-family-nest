@@ -10,6 +10,7 @@
 <!-- LOVABLE:END -->
 
 ## Project rules
+- Wonderwood is a public, noindex, full-screen experiment at /game-playground with a local ml-knn model and ephemeral progress; it reads no family data, grants no rewards, and leaves existing games and Kid Zone authorization unchanged. Why: iterate safely without account lockouts or production gameplay changes.
 - Site shell (header, footer, waitlist modal provider) lives in `src/routes/__root.tsx`; pages render only their own content. Why: one shell, no duplication.
 - Nav link lists live in `src/lib/nav.ts`; every entry must have a matching route file. Why: no broken links.
 - Brand tokens (colors, fonts, spacing, radii, glow) live only in `src/styles.css`; components use semantic classes and cva variants. Why: consistent theming.

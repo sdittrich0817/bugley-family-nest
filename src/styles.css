@@ -48,6 +48,9 @@
   --color-leaf-foreground: var(--leaf-foreground);
   --color-play-coral: var(--play-coral);
   --color-play-mint: var(--play-mint);
+  --color-wood-ink: var(--wood-ink);
+  --color-wood-paper: var(--wood-paper);
+  --color-wood-green: var(--wood-green);
   --color-dash-night: var(--dash-night);
   --color-glow: var(--glow);
   --color-dusk: var(--dusk);
@@ -77,6 +80,12 @@
 }
 
 :root {
+  --wood-ink: oklch(0.29 0.06 165);
+  --wood-paper: oklch(0.99 0.008 100);
+  --wood-green: oklch(0.48 0.11 160);
+  --wood-shade: oklch(0.22 0.05 165 / 0.48);
+  --wood-shadow: 0 10px 35px oklch(0.22 0.05 165 / 0.23);
+  --wood-outline: oklch(1 0 0 / 0.65);
   --radius: 1rem;
   --play-coral: oklch(0.72 0.17 20);
   --play-mint: oklch(0.94 0.045 165);

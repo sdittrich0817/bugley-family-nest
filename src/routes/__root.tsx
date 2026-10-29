@@ -152,11 +152,11 @@ function KidZoneShell() {
   const [checkedPath,setCheckedPath]=useState('');
   const [deviceChecked,setDeviceChecked]=useState(false);
   useEffect(()=>{void registerKidsWorker();},[]);
-  useEffect(()=>{let active=true;void kidDeviceStatus().then(d=>{if(!active)return;if(d.trusted){setKidZoneLocked(!d.parentUnlocked);if(kidZoneRedirect(pathname,!d.parentUnlocked)||pathname==='/')void navigate({to:'/kids',replace:true});}else if(d.invalid&&isKidZonePath(pathname)){setKidZoneLocked(false);void navigate({to:'/kids-entry',replace:true});}setDeviceChecked(true);}).catch(()=>{if(active)setDeviceChecked(true);});return()=>{active=false;};},[pathname,navigate]);
-  useEffect(()=>{if(!user||isKidZoneRecoveryPath(pathname)){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){if(isKidZoneLocked()){setCheckedPath(pathname);void lockKidDevice().catch(()=>{});return;}setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
+  useEffect(()=>{if(pathname==='/game-playground')return;let active=true;void kidDeviceStatus().then(d=>{if(!active)return;if(d.trusted){setKidZoneLocked(!d.parentUnlocked);if(kidZoneRedirect(pathname,!d.parentUnlocked)||pathname==='/')void navigate({to:'/kids',replace:true});}else if(d.invalid&&isKidZonePath(pathname)){setKidZoneLocked(false);void navigate({to:'/kids-entry',replace:true});}setDeviceChecked(true);}).catch(()=>{if(active)setDeviceChecked(true);});return()=>{active=false;};},[pathname,navigate]);
+  useEffect(()=>{if(pathname==='/game-playground')return;if(!user||isKidZoneRecoveryPath(pathname)){setCheckedPath(pathname);return;}let active=true;const check=async()=>{if(isKidZonePath(pathname)){if(isKidZoneLocked()){setCheckedPath(pathname);void lockKidDevice().catch(()=>{});return;}setKidZoneLocked(true);await lockKidDevice();if(active)setCheckedPath(pathname);return;}const mode=await getDeviceMode();if(!active)return;setKidZoneLocked(mode.locked);if(mode.locked){void navigate({to:'/kids',replace:true});}else setCheckedPath(pathname);};void check().catch(()=>{if(active)void navigate({to:'/kids',replace:true});});return()=>{active=false;};},[pathname,user?.id]);
   const locked = useSyncExternalStore(subscribeKidZone, isKidZoneLocked, () => false);
   // Do not redirect using stale browser state while the server check is pending.
-  const target = checkedPath === pathname ? kidZoneRedirect(pathname, locked) : null;
+  const target = pathname !== '/game-playground' && checkedPath === pathname ? kidZoneRedirect(pathname, locked) : null;
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
   // Every new page starts at the top once it has finished loading and drawing.
   // Links to a #section still jump there, and Back/Forward keep their old spot.
@@ -174,6 +174,8 @@ function KidZoneShell() {
     const offResolved = router.subscribe("onResolved", toTop);
     return () => { offResolved(); window.removeEventListener("popstate", onPop); };
   }, [router]);
+  // The public game experiment has no family reads, rewards, or private state.
+  if (pathname === '/game-playground') return <main><Outlet /></main>;
   if (target || (user && checkedPath!==pathname) || !deviceChecked) return <div className="flex min-h-screen items-center justify-center"><Bugley stage="scout" expression="happy" glow size={120}/></div>;
   if (isKidZonePath(pathname) || pathname==='/kids-entry' || pathname==='/pair') return <main className="min-h-screen"><KidsConnectivity><Outlet /></KidsConnectivity></main>;
   if (pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
