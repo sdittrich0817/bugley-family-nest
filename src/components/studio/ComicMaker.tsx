@@ -183,23 +183,23 @@ export function PanelCanvas({ panel, url, aspect, editable, selected, onSelect, 
     {url ? <img src={url} alt={panel.description || "Comic panel"} className="absolute inset-0 size-full object-cover" draggable={false} /> : <p className="absolute inset-0 flex items-center justify-center p-2 text-center text-[6cqmin] text-muted-foreground">{panel.description || "Empty panel"}</p>}
     <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
       {panel.layers.map((l) => {
-        const cx = l.x + l.w / 2, cy = l.y + l.h / 2, b = Math.min(l.w, l.h) / 5;
+        l = shrinkLayer(l); const cx = l.x + l.w / 2, cy = l.y + l.h / 2, b = Math.min(l.w, l.h) / 5;
         if (l.type === "speech") return <polygon key={l.id} points={`${cx - b},${cy} ${cx + b},${cy} ${l.tx},${l.ty}`} className="fill-card stroke-foreground" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />;
         if (l.type === "thought") return <g key={l.id}>{[0.62, 0.8, 0.94].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={2.4 - i * 0.6} ry={2.4 - i * 0.6} className="fill-card stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />)}</g>;
         return null;
       })}
     </svg>
-    {panel.layers.map((l) => <div key={l.id} onPointerDown={(e) => start(e, l, "move")}
+    {panel.layers.map((raw) => { const l = shrinkLayer(raw); return <div key={l.id} onPointerDown={(e) => start(e, raw, "move")}
       className={cn("absolute flex items-center justify-center overflow-hidden text-center leading-tight text-foreground", editable && "cursor-move touch-none",
         l.type === "speech" && "rounded-[50%] border-2 border-foreground bg-card px-[6%] font-comic",
         l.type === "thought" && "rounded-[45%] border-2 border-dashed border-foreground bg-card px-[6%] font-comic",
         l.type === "caption" && "rounded-sm border-2 border-foreground bg-secondary px-[3%] font-comic text-secondary-foreground",
         l.type === "sfx" && "font-sfx text-primary [paint-order:stroke_fill] [-webkit-text-stroke:0.6cqmin_var(--foreground)]",
         selected === l.id && "outline-dashed outline-2 outline-primary")}
-      style={{ left: `${l.x}%`, top: `${l.y}%`, width: `${l.w}%`, height: `${l.h}%`, fontSize: `${Math.min(l.h * 0.55, l.w / Math.max(3, l.text.length) * (l.type === "sfx" ? 1.6 : 3))}cqh` }}>
+      style={{ left: `${l.x}%`, top: `${l.y}%`, width: `${l.w}%`, height: `${l.h}%`, fontSize: `${Math.min(l.h * 0.45, l.w / Math.max(3, l.text.length) * (l.type === "sfx" ? 1.4 : 2.4))}cqh` }}>
       <span className="break-words">{l.text || (editable ? "…" : "")}</span>
-      {editable && selected === l.id && <span onPointerDown={(e) => start(e, l, "resize")} aria-label="Resize" className="absolute bottom-0 right-0 size-4 cursor-se-resize rounded-tl bg-primary" />}
-    </div>)}
+      {editable && selected === l.id && <span onPointerDown={(e) => start(e, raw, "resize")} aria-label="Resize" className="absolute bottom-0 right-0 size-4 cursor-se-resize rounded-tl bg-primary" />}
+    </div>; })}
     {editable && panel.layers.filter((l) => l.id === selected && (l.type === "speech" || l.type === "thought")).map((l) => <span key={l.id} onPointerDown={(e) => start(e, l, "tail")} aria-label="Point the tail"
       className="absolute size-5 -translate-x-1/2 -translate-y-1/2 cursor-crosshair rounded-full border-2 border-foreground bg-primary" style={{ left: `${l.tx}%`, top: `${l.ty}%` }} />)}
   </div>;
@@ -227,4 +227,11 @@ export function ComicReader({ comic, child, onBack }: { comic: Comic; child: Sid
     <div className="flex items-center justify-between gap-3"><Button variant="outline" aria-label="Previous page" disabled={page < 0} onClick={() => setPage(page - 1)}><ArrowLeft /></Button><span className="text-sm">{page < 0 ? "Cover" : `${page + 1} / ${comic.data.pages.length}`}</span><Button variant="outline" aria-label="Next page" disabled={page >= comic.data.pages.length - 1} onClick={() => setPage(page + 1)}><ArrowRight /></Button></div>
     <p className="text-center text-sm text-muted-foreground">{comic.data.pages.length} {comic.data.pages.length === 1 ? "page" : "pages"} toward a printed comic book.</p>
   </div>;
+}
+
+/** Speech, thought and caption boxes display at 70% of their saved size (centered), so words never crowd the art. */
+export function shrinkLayer<T extends { type: string; x: number; y: number; w: number; h: number }>(l: T, scale = 0.7): T {
+  if (l.type === "sfx") return l;
+  const w = l.w * scale, h = l.h * scale;
+  return { ...l, x: l.x + (l.w - w) / 2, y: l.y + (l.h - h) / 2, w, h };
 }
