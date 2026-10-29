@@ -153,7 +153,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (!out) throw new Error("Bugley couldn’t plan that change. Your original picture is safe.");
     description = out.description;
   }
-  if (p.kind === "comic") description = `${description}`.slice(0, 480) + " Comic panel composition: leave clear open background space across the top quarter for a speech bubble; keep every face and head in the lower part of the frame.";
+  if (p.kind === "comic") description = `${description}`.slice(0, 480) + " One single seamless full-bleed illustration filling the whole frame: no panel borders, frames, gutters, strips, split panels or empty boxes. Let natural open scenery such as sky, wall or ceiling sit above the characters, with faces in the lower two-thirds.";
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const claimedAt = new Date().toISOString();
   const { data: claim } = await a.from("studio_creations").update({ details: { ...p.details, paintState: "painting", paintOp: data.op }, updated_at: claimedAt }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("updated_at", p.updatedAt).select("id").maybeSingle();
