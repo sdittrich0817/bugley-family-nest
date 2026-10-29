@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { getWorkspace } from "@/lib/workspace.functions";
 import { CreativeWorkspace } from "@/components/studio/CreativeWorkspace";
+import { DeleteCreationButton } from "@/components/studio/DeleteCreationButton";
 import { useScrollTopOn } from "@/lib/scroll";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Trash2, Users } from "lucide-react";
+import { ArrowLeft, BookOpen, Paintbrush, Gamepad2, Heart, Image as ImageIcon, LayoutGrid, Library, Pencil, Sparkles, Users } from "lucide-react";
 import { toast } from "sonner";
 import { kidFamilyOptions as familyOptions } from "@/lib/kid-family";
 import { getChildGlow } from "@/lib/glow.functions";
@@ -136,7 +137,7 @@ function StudioHome({ child, onOpen: _onOpen }: { child: SidekickChild; onOpen: 
   const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
   // Continue first, then "pick a character to start creating", then PLAY.
   return <div className="space-y-8">
-    {open.length > 0 && <section className="space-y-3"><h2 className="font-display text-2xl">Keep working</h2><ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">{open.slice(0, 8).map(w => <li key={w.id}><button onClick={() => void navigate({ to: "/kids/studio/v3", search: { project: w.id } })} className="w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">{w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}<span className="block truncate px-3 pt-2 font-display">{w.title}</span><span className="block px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind} · tap to continue</span></button></li>)}</ul></section>}
+    {open.length > 0 && <section className="space-y-3"><h2 className="font-display text-2xl">Keep working</h2><ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">{open.slice(0, 8).map(w => <li key={w.id}><Button variant="outline" onClick={() => void navigate({ to: "/kids/studio/v3", search: { project: w.id } })} className="h-auto w-full flex-col items-stretch gap-0 overflow-hidden rounded-3xl border-2 border-border bg-card p-0 text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary">{w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}<span className="block truncate px-3 pt-2 font-display">{w.title}</span><span className="block px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind} · tap to continue</span></Button><DeleteCreationButton childId={child.id} id={w.id} title={w.title} /></li>)}</ul></section>}
     <section className="space-y-3"><h2 className="font-display text-2xl">Let’s create! Who’s starring?</h2><p className="text-muted-foreground">Tap a character to make a picture, comic or story with them.</p>
       <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
         <li><button onClick={() => void navigate({ to: "/kids/studio/v3" })} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card p-2 text-center font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring"><span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>New character</button></li>
@@ -207,7 +208,6 @@ function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id:
 function CreationCard({ c, onUpdate, onStory, onComic, onBook, onPicture, childId }: { onPicture: (id: string) => void; childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
-  const [confirm, setConfirm] = useState(false);
   return <li className="group overflow-hidden rounded-3xl border border-border bg-card shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift animate-in fade-in duration-300">
     <div className="relative aspect-square bg-muted">
       {c.images[0] ? <img src={c.images[0]} alt={c.title} loading="lazy" className="size-full object-cover" /> : <p className="line-clamp-6 p-4 text-sm text-muted-foreground">{c.body ?? ""}</p>}
@@ -229,8 +229,7 @@ function CreationCard({ c, onUpdate, onStory, onComic, onBook, onPicture, childI
         <span className="text-xs">{new Date(c.created_at).toLocaleDateString()}</span>
         <span className="flex gap-1">
           <button onClick={() => setEditing(true)} aria-label="Rename" className="rounded-full p-1.5 hover:bg-muted"><Pencil className="size-4" /></button>
-          {confirm ? <button onClick={() => onUpdate(c.id, { remove: true })} className="rounded-full bg-destructive px-2 text-xs font-semibold text-destructive-foreground">Sure?</button>
-            : <button onClick={() => setConfirm(true)} onBlur={() => setConfirm(false)} aria-label="Delete" className="rounded-full p-1.5 hover:bg-muted"><Trash2 className="size-4" /></button>}
+          <DeleteCreationButton childId={childId} id={c.id} title={c.title} />
         </span>
       </div>
     </div>
