@@ -183,8 +183,8 @@ export function PanelCanvas({ panel, url, aspect, editable, selected, onSelect, 
     {url ? <img src={url} alt={panel.description || "Comic panel"} className="absolute inset-0 size-full object-cover" draggable={false} /> : <p className="absolute inset-0 flex items-center justify-center p-2 text-center text-[6cqmin] text-muted-foreground">{panel.description || "Empty panel"}</p>}
     <svg className="pointer-events-none absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
       {panel.layers.map((l) => {
-        l = shrinkLayer(l); const cx = l.x + l.w / 2, cy = l.y + l.h / 2, b = Math.min(l.w, l.h) / 5;
-        if (l.type === "speech") return <polygon key={l.id} points={`${cx - b},${cy} ${cx + b},${cy} ${l.tx},${l.ty}`} className="fill-card stroke-foreground" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />;
+        l = shrinkLayer(l); const cx = l.x + l.w / 2, cy = l.y + l.h / 2;
+        if (l.type === "speech") return <g key={l.id}>{[0.55, 0.75, 0.92].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={1.5 - i * 0.4} ry={1.5 - i * 0.4} className="fill-card stroke-foreground" strokeWidth={1} vectorEffect="non-scaling-stroke" />)}</g>;
         if (l.type === "thought") return <g key={l.id}>{[0.62, 0.8, 0.94].map((t, i) => <ellipse key={t} cx={cx + (l.tx - cx) * t} cy={cy + (l.ty - cy) * t} rx={2.4 - i * 0.6} ry={2.4 - i * 0.6} className="fill-card stroke-foreground" strokeWidth={1.5} vectorEffect="non-scaling-stroke" />)}</g>;
         return null;
       })}
