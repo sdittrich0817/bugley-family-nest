@@ -61,7 +61,7 @@
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
 
 ## Create Studio V3 (comic journey) — built 2026-10-25
-- [ ] Keep finished-work returns in Studio without re-entry; add Create some more and verify saved Marilu navigation.
+- [x] Add Back to Studio and Create some more; shared player restoration and trusted fallback tested (17 tests), navigation and unchanged finished Marilu verified using authenticated parent’s owned child. Fresh child PIN sign-in failed during verification, so child-authenticated repeat remains unverified; build OK.
 - [x] Fix shared comic slideshow advances and preserve in-picture speech bubbles; Marilu manual/automatic playback and 894×594 display verified, 15 regression tests pass, build OK; saved artwork and words unchanged.
 - [x] Approved character-first revision: larger shared helping Bugley and homepage flying character; new/saved character, freeform missing-detail probing, optional sparks, portrait approval then picture/comic/story chooser; selected character/style carried through, title/count and sequential child descriptions, targeted reference-based redraws preserving original art on failure.
 - [x] Connect Studio home to revised Create, route saved V3 album entries back to V3, resume character drafts, history pagination, and link book continuation; legacy readers and games remain compatible.
