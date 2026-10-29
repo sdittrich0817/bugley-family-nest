@@ -27,7 +27,7 @@ export function newLayer(type: Layer["type"]): Layer {
   const base = { id: crypto.randomUUID(), type, text: "" };
   if (type === "caption") return { ...base, x: 3, y: 3, w: 50, h: 14, tx: 0, ty: 0 };
   if (type === "sfx") return { ...base, x: 30, y: 40, w: 40, h: 18, tx: 0, ty: 0 };
-  return { ...base, x: 50, y: 6, w: 42, h: 22, tx: 60, ty: 50 };
+  return { ...base, x: 50, y: 6, w: 42, h: 22, tx: 64, ty: 62 };
 }
 /** Changing layout keeps existing panels in order, adding blanks or trimming from the end. */
 export function setLayout(page: ComicPage, layout: Layout): ComicPage {
