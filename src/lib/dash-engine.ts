@@ -19,8 +19,8 @@ export function createDash(config:DashConfig){
   checkpoint=100+Math.floor(Math.max(0,x-100)/1800)*1800;
   for(let i=0;i<obstacles.length;i++){const o=obstacles[i];if(!o)continue;
    if(!collected.has(i)&&Math.abs(x-o.orbX)<36&&Math.abs(y-240)<65){collected.add(i);orbs++;}
-   if(config.pads&&Math.abs(x-(o.x-100))<12&&y>280){Matter.Body.setVelocity(player,{x:speed,y:-13});jumps=1;}
-   if(!shield&&Math.abs(x-o.x)<35&&y>272){hits++;Matter.Body.setPosition(player,{x:checkpoint,y:270});Matter.Body.setVelocity(player,{x:speed,y:0});shield=120;jumps=0;break;}
+   if(config.pads&&Math.abs(x-(o.x-100))<12&&y>280){Matter.Body.setVelocity(player,{x:speed,y:-15});jumps=1;}
+   if(!shield&&Math.abs(x-o.x)<22&&y>285){hits++;Matter.Body.setPosition(player,{x:checkpoint,y:270});Matter.Body.setVelocity(player,{x:speed,y:0});shield=120;jumps=0;break;}
   }
  }
  function view(){return {x:player.position.x,y:player.position.y,tick,orbs,hits,checkpoint,shield,collected};}
