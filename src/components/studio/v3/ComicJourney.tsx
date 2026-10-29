@@ -18,6 +18,7 @@ import { editComic } from "@/lib/comic.functions";
 import { editStory } from "@/lib/story.functions";
 import { bookFromOneShot } from "@/lib/book.functions";
 import { getChildGlow } from "@/lib/glow.functions";
+import { listAlbum } from "@/lib/studio.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { comicPanelAspect, COMIC_GENRES } from "@/lib/comic";
 import { STYLE_THUMBS } from "@/lib/style-thumbs";
@@ -41,7 +42,7 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
   const [help, setHelp] = useState<{ question: string; ideas: string[] } | null>(null);
   const [busy, setBusy] = useState(""); const [note, setNote] = useState("");
   const [adding, setAdding] = useState(false); const [versions, setVersions] = useState<{ id: string; created_at: string }[] | null>(null);
-  const draftKey = useRef(draftId); const startKey = useRef<string | null>(null); const running = useRef(false);
+  const draftKey = useRef(draftId); const startKey = useRef<string | null>(null); const running = useRef(false); const skipSync = useRef(false); const [picked, setPicked] = useState<string | null>(null);
   const env = getStripeEnvironment(); const qc = useQueryClient();
   const load = useServerFn(getWorkspace), update = useServerFn(updateWorkspace), start = useServerFn(startV3Creation);
   const readCharacter = useServerFn(readV3Character), paintHero = useServerFn(makeHeroOptions), approve = useServerFn(saveHero);
@@ -57,9 +58,9 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
   useEffect(() => { if (characterId && !projectId) { const c = cast.find(c => c.id === characterId); if (c) { setHero(c); setBranch("output"); } } }, [characterId, cast, projectId]);
   const items: any[] = project?.kind === "comic" ? project.details.pages.flatMap((p: any) => p.panels.map((panel: any, index: number) => ({ ...panel, pageId: p.id, page: p, index }))) : project?.details.pages ?? [];
   const item = items[at]; const selectedIds: string[] = project?.details.characterIds ?? project?.details.characters ?? [];
-  useEffect(() => { setText(project?.kind === "picture" ? project.workspace.originalIdea : project?.kind === "comic" ? item?.description ?? "" : item?.text ?? ""); setDialogue(item?.layers?.find((l: any) => l.type === "speech")?.text ?? ""); setChanging(false); setRevision(""); setHelp(null); }, [project?.id, project?.updatedAt, at]);
+  useEffect(() => { if (skipSync.current) { skipSync.current = false; return; } setText(project?.kind === "picture" ? project.workspace.originalIdea : project?.kind === "comic" ? item?.description ?? "" : item?.text ?? ""); setDialogue(item?.layers?.find((l: any) => l.type === "speech")?.text ?? ""); setChanging(false); setRevision(""); setHelp(null); }, [project?.id, project?.updatedAt, at]);
   useScrollTopOn(`${branch}-${at}-${project?.details.finished}`);
-  async function run(label: string, fn: () => Promise<void>) { if (running.current) return; running.current = true; setBusy(label); setNote(""); try { await fn(); } catch(e) { setNote(e instanceof Error ? e.message : "Your ideas are still here. Try again."); } finally { running.current = false; setBusy(""); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); void qc.invalidateQueries({ queryKey: ["album", child.id] }); } }
+  async function run(label: string, fn: () => Promise<void>) { if (running.current) return; running.current = true; setBusy(label); setNote(""); window.scrollTo({ top: 0, behavior: "smooth" }); try { await fn(); } catch(e) { setNote(e instanceof Error ? e.message : "Your ideas are still here. Try again."); } finally { running.current = false; setBusy(""); void qc.invalidateQueries({ queryKey: ["glow", child.id] }); void qc.invalidateQueries({ queryKey: ["album", child.id] }); } }
   const id = () => { if (!project) throw new Error("Open your creation first."); return { childId: child.id, id: project.id, environment: env }; };
   const reload = async () => { if (project) setProject(await load({ data: { childId: child.id, id: project.id } })); };
   async function attach(c: CastMember) { if (!project) { setHero(c); setBranch("output"); onDraft(""); return; } await run("Meeting your character…", async () => { setProject(await update({ data: { ...id(), updatedAt: project.updatedAt, characterIds: [...new Set([...selectedIds, c.id])] } })); setAdding(false); }); }
@@ -73,16 +74,27 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
   async function saveWords() { if (!project || !item || !text.trim()) return; if (project.kind === "comic") await comicEdit({ data: { ...id(), action: "panel", pageId: item.pageId, panelId: item.id, description: text } }); else await storyEdit({ data: { ...id(), action: "page", page: { id: item.id, step: item.step, text, description: text === item.text ? item.description ?? "" : "", chapter: item.chapter ?? "" } } }); await reload(); }
   async function draw() { if (!project) return; await run("Painting your scene…", async () => {
     if (!changing && !help) { const checked = await coach({ data: { ...id(), text: text.slice(0, 600), help: false } }); if (checked.question) { setHelp(checked); return; } }
-    setProject(await paint({ data: { ...id(), updatedAt: project.updatedAt, itemId: item?.id, text, revision: changing ? revision : undefined, op: crypto.randomUUID() } }));
+    const next = await paint({ data: { ...id(), updatedAt: project.updatedAt, itemId: item?.id, text, revision: changing ? revision : undefined, op: crypto.randomUUID() } });
+    const nextItems: any[] = next.kind === "comic" ? next.details.pages.flatMap((p: any) => p.panels) : next.details.pages ?? [];
+    const path = next.kind === "picture" ? next.images[0] : nextItems.find(x => x.id === item?.id)?.image;
+    const url = path && next.urls[path];
+    // Keep Bugley's drawing screen up until the new picture is fully loaded, so the old one never flashes back.
+    if (url) await new Promise<void>(done => { const img = new Image(); img.onload = img.onerror = () => done(); img.src = url; setTimeout(done, 15000); });
+    setProject(next);
   }); }
   useEffect(() => {
     if (!project || project.details.finished || busy || changing || !text.trim()) return;
     const saved = project.kind === "picture" ? project.workspace.originalIdea : project.kind === "comic" ? item?.description : item?.text;
     if (text === saved) return;
-    const timer = setTimeout(() => void run("Keeping your words…", async () => {
-      if (project.kind === "picture") setProject(await update({ data: { ...id(), updatedAt: project.updatedAt, idea: text } }));
-      else await saveWords();
-    }), 2200);
+    // Quiet save: no busy message, the box stays open and the child's typing is never interrupted.
+    const timer = setTimeout(() => { if (running.current) return; void (async () => {
+      try {
+        let next: WorkspaceProject;
+        if (project.kind === "picture") next = await update({ data: { ...id(), updatedAt: project.updatedAt, idea: text } });
+        else { if (project.kind === "comic") await comicEdit({ data: { ...id(), action: "panel", pageId: item.pageId, panelId: item.id, description: text } }); else await storyEdit({ data: { ...id(), action: "page", page: { id: item.id, step: item.step, text, description: text === item.text ? item.description ?? "" : "", chapter: item.chapter ?? "" } } }); next = await load({ data: { childId: child.id, id: project.id } }); }
+        skipSync.current = true; setProject(next);
+      } catch { /* the next save or button press tries again */ }
+    })(); }, 2500);
     return () => clearTimeout(timer);
   }, [text, project?.updatedAt, busy, changing, at]);
   const voice = useVoiceInput(t => { if (branch === "new" || adding) { if (facts?.question) setFollowup(v => `${v} ${t}`.trim().slice(0, 300)); else { setDescription(v => `${v} ${t}`.trim().slice(0, 600)); setFacts(null); } } else if (changing) setRevision(v => `${v} ${t}`.trim().slice(0, 600)); else setText(v => `${v} ${t}`.trim().slice(0, project?.kind === "story" ? 20000 : 600)); });
@@ -97,7 +109,7 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
     <div className="grid grid-cols-3 gap-3">{options.map((o, i) => <Button key={o.path} aria-label={`Choose character preview ${i + 1}`} disabled={!!busy} variant="outline" className="h-auto min-w-0 flex-col whitespace-normal p-2" onClick={() => void choose(o.path)}><img src={o.url} alt={`${facts?.name} option ${i + 1}`} className="aspect-square w-full object-contain" /><span>That’s {facts?.name}!</span></Button>)}</div>
     {options.length > 0 && <form className="step-enter space-y-2 rounded-2xl border-2 border-border bg-card p-3" onSubmit={e => { e.preventDefault(); void previews(heroChange); }}><label className="block font-display text-lg">Not quite right? Tell Bugley what to change<Textarea aria-label="What should change about your character" rows={2} maxLength={120} value={heroChange} disabled={!!busy} onChange={e => setHeroChange(e.target.value)} placeholder="Make all the other chickens look different from each other…" className="mt-2" /></label><Button variant="secondary" disabled={!!busy || !heroChange.trim()}><Paintbrush />Change it · 1 Glow</Button></form>}
   </div>;
-  const castPicker = <div className="space-y-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{cast.filter(c => !project || c.styleKey === project.styleKey).map(c => <Button key={c.id} aria-label={`Choose ${c.title}`} variant="outline" disabled={!!busy || selectedIds.includes(c.id)} className="h-auto min-w-0 flex-col whitespace-normal rounded-lg p-3" onClick={() => void attach(c)}><img src={c.url} alt={c.title} className="aspect-square w-full object-contain rounded-lg" /><span className="font-display text-lg">{c.title}</span></Button>)}</div>{!cast.length && <p>No characters yet.</p>}<Button variant="secondary" onClick={() => { setBranch("new"); draftKey.current = undefined; setDescription(""); setFacts(null); setOptions([]); }}><Plus />Make a new character</Button></div>;
+  const castPicker = <div className="space-y-4"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{cast.filter(c => !project || c.styleKey === project.styleKey).map(c => <Button key={c.id} aria-label={`Choose ${c.title}`} variant="outline" aria-pressed={picked === c.id} disabled={!!busy || !!picked || selectedIds.includes(c.id)} className={`relative h-auto min-w-0 flex-col whitespace-normal rounded-lg p-3 transition ${picked === c.id ? "scale-105 border-4 border-primary shadow-glow" : picked ? "opacity-40" : ""}`} onClick={() => { setPicked(c.id); setTimeout(() => { void attach(c).finally(() => setPicked(null)); }, 350); }}>{picked === c.id && <span className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground"><Check className="size-5" /></span>}<img src={c.url} alt={c.title} className="aspect-square w-full object-contain rounded-lg" /><span className="font-display text-lg">{c.title}</span></Button>)}</div>{!cast.length && <p>No characters yet.</p>}<Button variant="secondary" onClick={() => { setBranch("new"); draftKey.current = undefined; setDescription(""); setFacts(null); setOptions([]); }}><Plus />Make a new character</Button></div>;
   const allArt = (project?.kind === "picture" ? project.images.map(path => project.urls[path]) : items.filter(p => p.image).map(p => project?.urls[p.image])).filter(Boolean) as string[];
   return <section className="space-y-5">
     {busy.startsWith("Painting") && <BugleyMagic child={child} label={busy.replace("…", "!")} />}
@@ -106,7 +118,7 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
     <header className="flex items-center justify-between gap-3"><Button variant="ghost" disabled={!!busy} onClick={() => { if (adding) { setAdding(false); setBranch("entry"); } else if (!project && branch !== "entry") setBranch("entry"); else onExit(); }}><ArrowLeft />Studio</Button>{glow && <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} />}</header>
     {note && <div role="alert" className="border-l-4 border-destructive pl-3 text-destructive">{note}<Button variant="ghost" onClick={() => void run("Opening saved work…", reload)}>Reopen saved work</Button></div>}
     {!project ? <>
-      {branch === "entry" && <div key="entry" className="step-enter space-y-3"><BugleyCompanion child={child} text="Who shall we create with?" /><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Button size="lg" className="h-20 whitespace-normal text-xl" onClick={() => { draftKey.current = undefined; setFacts(null); setDescription(""); setBranch("new"); }}><Sparkles />Make a new character</Button><Button variant="secondary" size="lg" className="h-20 text-xl" onClick={() => setBranch("existing")}><Users />My Characters</Button></div></div>}
+      {branch === "entry" && <div key="entry" className="step-enter space-y-3"><BugleyCompanion child={child} text="Every picture, comic and story starts with a character!" hint="Bring a brand-new character to life, or pick one you already made. Then you'll choose to make a picture, a comic or a story with them." /><div className="grid grid-cols-1 gap-3 sm:grid-cols-2"><Button size="lg" className="h-auto min-h-24 flex-col gap-1 whitespace-normal py-4 text-xl" onClick={() => { draftKey.current = undefined; setFacts(null); setDescription(""); setBranch("new"); }}><span className="flex items-center gap-2"><Sparkles />Bring a new character to life</span><span className="text-sm font-semibold opacity-80">Describe them and Bugley draws them</span></Button><Button variant="secondary" size="lg" className="h-auto min-h-24 flex-col gap-1 whitespace-normal py-4 text-xl" disabled={!cast.length} onClick={() => setBranch("existing")}><span className="flex items-center gap-2"><Users />Choose one of my characters</span><span className="text-sm font-semibold opacity-80">{cast.length ? `${cast.length} ready to create with` : "None yet, make your first!"}</span></Button></div></div>}
       {branch === "new" && newCharacter}
       {branch === "existing" && <><BugleyCompanion child={child} text="Who’s coming on this adventure?" />{castPicker}</>}
       {branch === "output" && hero && <><BugleyCompanion child={child} text={`What shall we make with ${hero.title}?`} /><img src={hero.url} alt={hero.title} className="mx-auto size-40 object-contain" /><div className="grid grid-cols-3 gap-2">{(["picture", "comic", "story"] as const).map(k => <Button key={k} variant="secondary" className="h-20 flex-col text-lg" onClick={() => { setKind(k); setCount(k === "story" ? 5 : 4); setTitle(""); startKey.current = null; setBranch("setup"); }}>{k === "picture" ? <Paintbrush /> : k === "comic" ? <Sparkles /> : <BookOpen />}{k === "picture" ? "Picture" : k === "comic" ? "Comic" : "Story"}</Button>)}</div></>}
