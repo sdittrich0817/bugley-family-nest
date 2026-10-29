@@ -22,10 +22,20 @@ export function DeleteCreationButton({ childId, id, title, disabled, beforeDelet
       await beforeDelete?.();
       const result = await remove({ data: { childId, id, remove: true } });
       if (!result.ok) throw new Error("We couldn’t delete that. Try again.");
-      await Promise.all(["album", "in-progress", "cast", "studio-activity"].map(key => qc.invalidateQueries({ queryKey: key === "studio-activity" ? [key] : [key, childId] })));
+      // A pre-delete read may still be running. Stop it before removing the
+      // saved row locally so stale results cannot put the card back.
+      const keys = ["album", "in-progress", "cast"].map(key => [key, childId]);
+      await Promise.all(keys.map(queryKey => qc.cancelQueries({ queryKey })));
+      for (const queryKey of keys) {
+        qc.setQueryData<{ id: string }[]>(queryKey, rows => rows?.filter(row => row.id !== id));
+      }
       setOpen(false);
       toast.success("Deleted. Your grown-up can bring it back from the Parent Hub.");
       onDeleted?.();
+      // Closing and navigation must not wait for unrelated image/list reads.
+      for (const queryKey of [...keys, ["studio-activity"]]) {
+        void qc.invalidateQueries({ queryKey }).catch(() => {});
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We couldn’t delete that. Try again.");
     } finally { setBusy(false); }
