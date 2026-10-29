@@ -1,9 +1,8 @@
 import { z } from "zod";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { kidFamilyOptions as familyOptions, kidPlanOptions as billingOptions } from "@/lib/kid-family";
-import { getActivePlayer } from "@/lib/kid-zone";
+import { useCallback, useEffect } from "react";
+import { kidFamilyOptions as familyOptions, kidPlanOptions as billingOptions, useStudioPlayer } from "@/lib/kid-family";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { ComicJourney } from "@/components/studio/v3/ComicJourney";
 import type { SidekickChild } from "@/components/studio/Sidekick";
@@ -24,24 +23,22 @@ function V3Page() {
   const { data } = useSuspenseQuery(familyOptions);
   const navigate = useNavigate();
   const { project, draft, character } = Route.useSearch();
-  const [childId, setChildId] = useState<string | null>(null);
-  useEffect(() => {
-    const id = getActivePlayer();
-    if (!id || !data.children.some((c) => c.id === id)) void navigate({ to: "/kids", replace: true });
-    else setChildId(id);
-  }, [data.children, navigate]);
+  const onMissing = useCallback(() => { void navigate({ to: "/kids", replace: true }); }, [navigate]);
+  const { childId, error } = useStudioPlayer(data.children, onMissing);
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   useEffect(() => { if (billing && !billing.active) void navigate({ to: "/kids", replace: true }); }, [billing, navigate]);
   const child = data.children.find((c) => c.id === childId);
+  if (error) return <p role="alert" className="p-6">{error}</p>;
   if (!child) return null;
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${child.age_band}`)}>
     <div className="mx-auto max-w-3xl px-4 pb-32 pt-5">
-      <ComicJourney child={child as SidekickChild} projectId={project} draftId={draft} characterId={character}
+      <ComicJourney key={project ?? draft ?? character ?? "new"} child={child as SidekickChild} projectId={project} draftId={draft} characterId={character}
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
         onDraft={id => void navigate({ to: "/kids/studio/v3", search: id ? { draft: id } : {}, replace: true })}
         onBook={id => void navigate({ to: "/kids/studio", search: { book: id } })}
         onLibrary={() => void navigate({ to: "/kids/studio", search: { album: true } })}
-        onExit={() => void navigate({ to: "/kids/studio" })} />
+        onCreateMore={() => void navigate({ to: "/kids/studio/v3", search: {} })}
+        onExit={() => void navigate({ to: "/kids/studio", search: {} })} />
     </div>
   </div>;
 }
