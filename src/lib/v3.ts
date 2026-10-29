@@ -22,5 +22,5 @@ export function v3Details(kind: "comic" | "story" | "picture", count: number, ch
 /** Commit a replacement only after the audited image service succeeds. Story words are never changed. */
 export function replaceV3Art<T extends { image: string | null; description: string; text?: string }>(item: T, result: { ok: boolean; path?: string }, description: string): T {
   if (!result.ok || !result.path) return item;
-  return { ...item, description, image: result.path };
+  return { ...item, description: description.slice(0, 600), image: result.path };
 }

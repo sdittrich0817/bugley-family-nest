@@ -33,6 +33,10 @@ describe("character-first Create rules", () => {
     expect(next[0]).toEqual({ image: "night.png", description: "Nighttime", text: "  Ted ran!  " });
     expect(next[1]).toEqual(pages[1]);
   });
+  it("never saves a scene description longer than 600 characters", () => {
+    const next = replaceV3Art({ image: null, description: "x" }, { ok: true, path: "a.png" }, "y".repeat(900));
+    expect(next.description).toHaveLength(600);
+  });
 });
 import { v3Details as details2 } from "./v3";
 import { test as t2, expect as e2 } from "vitest";
