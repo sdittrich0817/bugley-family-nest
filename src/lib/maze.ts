@@ -14,23 +14,23 @@ export function buildMaze(w: number, h: number, seed: number, gemCount: number):
     const c = stack[stack.length - 1], x = c % w, y = Math.floor(c / w);
     const opts = (Object.keys(STEP) as Dir[]).filter((d) => { const nx = x + STEP[d][0], ny = y + STEP[d][1]; return nx >= 0 && ny >= 0 && nx < w && ny < h && !seen[ny * w + nx]; });
     if (!opts.length) { stack.pop(); continue; }
-    const d = opts[Math.floor(rand() * opts.length)], n = (y + STEP[d][1]) * w + x + STEP[d][0];
+    const d = opts[Math.floor(rand() * opts.length)]!, n = (y + STEP[d][1]) * w + x + STEP[d][0];
     cells[c] |= OPEN[d]; cells[n] |= OPEN[BACK[d]]; seen[n] = true; stack.push(n);
   }
   const dist = distances(cells, w, h, 0);
   const exit = dist.indexOf(Math.max(...dist));
   // Gems hide in dead ends (discovery moments), farthest first.
-  const ends = cells.map((v, i) => [i, v] as const).filter(([i, v]) => i !== 0 && i !== exit && [1, 2, 4, 8].includes(v)).sort((a, b) => dist[b[0]] - dist[a[0]]).map(([i]) => i);
-  return { w, h, seed, cells, gems: ends.slice(0, gemCount), exit, par: dist[exit] };
+  const ends = cells.map((v, i) => [i, v] as const).filter(([i, v]) => i !== 0 && i !== exit && [1, 2, 4, 8].includes(v)).sort((a, b) => dist[b[0]]! - dist[a[0]]!).map(([i]) => i);
+  return { w, h, seed, cells, gems: ends.slice(0, gemCount), exit, par: dist[exit]! };
 }
 
 export function distances(cells: number[], w: number, h: number, from: number) {
   const d = new Array(w * h).fill(-1), q = [from]; d[from] = 0;
-  while (q.length) { const c = q.shift()!; for (const k of Object.keys(STEP) as Dir[]) if (cells[c] & OPEN[k]) { const n = c + STEP[k][0] + STEP[k][1] * w; if (d[n] < 0) { d[n] = d[c] + 1; q.push(n); } } }
+  while (q.length) { const c = q.shift()!; for (const k of Object.keys(STEP) as Dir[]) if (cells[c]! & OPEN[k]) { const n = c + STEP[k][0] + STEP[k][1] * w; if (d[n]! < 0) { d[n] = d[c]! + 1; q.push(n); } } }
   return d;
 }
 
-export function move(level: MazeLevel, at: number, d: Dir) { return level.cells[at] & OPEN[d] ? at + STEP[d][0] + STEP[d][1] * level.w : at; }
+export function move(level: MazeLevel, at: number, d: Dir) { return level.cells[at]! & OPEN[d] ? at + STEP[d][0] + STEP[d][1] * level.w : at; }
 
 export const MAZE_WORLDS = ['Moon Meadow', 'Ring Planet', 'Comet Caves', 'Nebula Garden', 'Star Factory', 'Black-Hole Bend'] as const;
 /** Six levels; younger kids start smaller, older kids get bigger mazes. */
