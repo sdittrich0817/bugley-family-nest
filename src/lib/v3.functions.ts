@@ -110,7 +110,7 @@ export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requir
   if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   const { aiObject } = await import("./studio-ai.server");
   const out = await aiObject(z.object({ question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3) }),
-    `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, previous: p.details.pages, text: data.text, age: child.age }));
+    `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. The hero character(s) are ALREADY in every scene and fully designed: never ask who is there, what they are, or what they look like. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, previous: p.details.pages, text: data.text, age: child.age }));
   if (!out) throw new Error("Bugley couldn’t help just now. Your words are still here.");
   if (!data.help) out.ideas = [];
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
@@ -153,6 +153,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (!out) throw new Error("Bugley couldn’t plan that change. Your original picture is safe.");
     description = out.description;
   }
+  if (p.details.genre) description = `${p.details.genre} mood, colors and lighting. ${description}`.slice(0, 600);
   if (p.kind === "comic") description = `${description}`.slice(0, 480) + " One single seamless full-bleed illustration filling the whole frame: no panel borders, frames, gutters, strips, split panels or empty boxes. Let natural open scenery such as sky, wall or ceiling sit above the characters, with faces in the lower two-thirds.";
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const claimedAt = new Date().toISOString();
@@ -171,7 +172,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (locked?.artLock) p.details.artLock = locked.artLock;
     if (locked?.modelLock || result.lock) p.details.modelLock = locked?.modelLock ?? result.lock;
     if (p.kind === "picture") {
-      p.workspace.originalIdea = description; p.body = description; p.images = [result.path]; p.details.mode = "sketch"; p.details.upgradeState = "ready";
+      p.workspace.originalIdea = words.slice(0, 600); p.body = words.slice(0, 600); p.images = [result.path]; p.details.mode = "sketch"; p.details.upgradeState = "ready";
     } else {
       const target = (p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages).find((x: any) => x.id === data.itemId);
       if (!target) throw new Error("Your scene couldn’t be found.");
