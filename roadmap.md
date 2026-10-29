@@ -61,6 +61,7 @@
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
 
 ## Create Studio V3 (comic journey) — built 2026-10-25
+- [ ] Fix shared comic slideshow advances and preserve in-picture speech bubbles; verify Marilu and regression tests.
 - [x] Approved character-first revision: larger shared helping Bugley and homepage flying character; new/saved character, freeform missing-detail probing, optional sparks, portrait approval then picture/comic/story chooser; selected character/style carried through, title/count and sequential child descriptions, targeted reference-based redraws preserving original art on failure.
 - [x] Connect Studio home to revised Create, route saved V3 album entries back to V3, resume character drafts, history pagination, and link book continuation; legacy readers and games remain compatible.
 - [x] Live existing-character comic: Pickles → chosen one-panel comic → drawing → skip speech → cover → finish → refresh/readback, no browser errors and no 695px overflow. Used normal 6 Glow, Dawnie now at 0; test comic and text drafts remain in album.
