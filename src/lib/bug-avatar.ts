@@ -13,11 +13,12 @@ const color = z.enum(COLOR_KEYS as [keyof typeof BUG_COLORS, ...(keyof typeof BU
 export const bugSchema = z.object({
   kind: z.enum(BUG_KINDS), body: color, accent: color, pattern: z.enum(BUG_PATTERNS),
   eyes: z.enum(BUG_EYES), mouth: z.enum(BUG_MOUTHS), antennae: z.enum(BUG_ANTENNAE), extra: z.enum(BUG_EXTRAS),
+  imagePath: z.string().optional(), imageUrl: z.string().optional(),
 });
 export type BugConfig = z.infer<typeof bugSchema>;
 
 function hash(s: string) { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
-const pick = <T,>(list: readonly T[], n: number) => list[n % list.length]!;
+const pick = <T,>(list: readonly T[], n: number): T => { const value = list[n % list.length]; if (value === undefined) throw new Error("Missing bug parts"); return value; };
 /** A stable starter bug for a child who hasn't built one yet. */
 export function starterBug(seed: string): BugConfig {
   const h = hash(seed || "bug");
@@ -29,3 +30,5 @@ export function toBug(value: unknown, seed = ""): BugConfig {
   const p = bugSchema.safeParse(value);
   return p.success ? p.data : starterBug(typeof value === "string" ? `${value}${seed}` : seed);
 }
+
+export function avatarCost(completed: number) { return completed < 2 ? 0 : 1; }

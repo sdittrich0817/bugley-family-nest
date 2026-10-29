@@ -1,13 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
-import { BUG_ANTENNAE, BUG_EXTRAS, BUG_EYES, BUG_KINDS, BUG_MOUTHS, BUG_PATTERNS, COLOR_KEYS, bugSchema } from "./bug-avatar";
+import { BUG_ANTENNAE, BUG_EXTRAS, BUG_EYES, BUG_KINDS, BUG_MOUTHS, BUG_PATTERNS, COLOR_KEYS, bugSchema, avatarCost } from "./bug-avatar";
 
 /** Kid saves the bug they built. Only allow-listed parts can be stored. */
 export const saveBug = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), bug: bugSchema }).parse(i)).handler(async ({ data, context }) => {
-  const { data: row, error } = await context.supabase.from("children").update({ bug: data.bug as never }).eq("id", data.childId).eq("parent_id", context.userId).select("id").single();
+  const { imagePath: _path, imageUrl: _url, ...parts } = data.bug;
+  const { data: row, error } = await context.supabase.from("children").update({ bug: parts as never }).eq("id", data.childId).eq("parent_id", context.userId).select("id").single();
   if (error || !row) throw new Error("We couldn’t save your bug. Try again!");
-  return { bug: data.bug };
+  return { bug: parts };
+});
+
+export const getBugTries = createServerFn({ method: 'POST' }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+  const { loadChild } = await import('./studio.server');
+  await loadChild(context.supabase, context.userId, data.childId);
+  const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
+  const { count, error } = await supabaseAdmin.from('bug_avatar_attempts').select('op', { count: 'exact', head: true }).eq('child_id', data.childId).eq('status', 'complete');
+  if (error) throw new Error('Couldn’t check your free tries.');
+  return { completed: count ?? 0, nextCost: avatarCost(count ?? 0) };
+});
+
+export const generateBugPicture = createServerFn({ method: 'POST' }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), words: z.string().trim().min(2).max(200), bug: bugSchema, op: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+  const { paintBugAvatar } = await import('./images.server');
+  return paintBugAvatar(context.supabase, context.userId, data.childId, data.words, data.bug, data.op);
 });
 
 /** Bugley turns the kid's words into bug parts. The AI only picks from the parts list; it never draws or writes anything. */

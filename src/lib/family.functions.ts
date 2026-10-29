@@ -11,7 +11,8 @@ export const getFamily = createServerFn({ method: "GET" }).middleware([requireSu
   if (profileError || !profile) throw new Error("A verified parent account and parental consent are required.");
   const { data, error } = await context.supabase.from("children").select("id,nickname,age,avatar,bug,login_kind,age_band,bugley_stage").eq("parent_id", context.userId).order("created_at");
   if (error) throw new Error("We couldn’t load your family. Please try again.");
-  return { children: (data ?? []) as ChildProfile[], completed: Boolean(profile.family_setup_completed_at) };
+  const { signBugAvatars } = await import('./bug-avatar.server');
+  return { children: await signBugAvatars((data ?? []) as ChildProfile[], context.userId), completed: Boolean(profile.family_setup_completed_at) };
 });
 export const familyOptions = queryOptions({ queryKey: ["family"], queryFn: () => getFamily() });
 

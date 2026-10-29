@@ -8,5 +8,6 @@ export function PictureIcon({ picture }: { picture: typeof PICTURES[number] }) {
   return <Icon aria-hidden className="size-8 text-foreground" strokeWidth={1.7} />;
 }
 export function ChildAvatar({ avatar, className = "size-16", seed = "" }: { avatar: unknown; className?: string; seed?: string }) {
-  return <BugAvatar bug={toBug(avatar, seed)} className={className} />;
+  const bug = toBug(avatar, seed);
+  return bug.imageUrl ? <img src={bug.imageUrl} alt="Your bug" className={`${className} rounded-full object-contain bg-card`} /> : <BugAvatar bug={bug} className={className} />;
 }

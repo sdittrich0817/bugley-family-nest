@@ -152,6 +152,41 @@ export type Database = {
         }
         Relationships: []
       }
+      bug_avatar_attempts: {
+        Row: {
+          child_id: string
+          cost: number
+          created_at: string
+          image_path: string | null
+          op: string
+          status: string
+        }
+        Insert: {
+          child_id: string
+          cost: number
+          created_at?: string
+          image_path?: string | null
+          op: string
+          status?: string
+        }
+        Update: {
+          child_id?: string
+          cost?: number
+          created_at?: string
+          image_path?: string | null
+          op?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bug_avatar_attempts_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bugdex: {
         Row: {
           child_id: string
@@ -1892,6 +1927,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_bug_avatar: {
+        Args: { _child: string; _op: string; _parent: string }
+        Returns: Json
+      }
       claim_kid_auth_attempt: {
         Args: { _key: string; _limit: number; _seconds: number }
         Returns: boolean
@@ -1899,6 +1938,16 @@ export type Database = {
       consume_kid_pairing: {
         Args: { _claim: string; _id: string; _secret: string }
         Returns: string
+      }
+      finish_bug_avatar: {
+        Args: {
+          _bug: Json
+          _child: string
+          _op: string
+          _parent: string
+          _path: string
+        }
+        Returns: boolean
       }
       finish_play_session: {
         Args: { _parent: string; _session: string }

@@ -197,6 +197,20 @@
       "when": 1792951697716,
       "tag": "0027_studio_workspace_history",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793287899203,
+      "tag": "0028_ai_bug_avatar_attempts",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793288039802,
+      "tag": "0029_bug_avatar_failure_empty_path",
+      "breakpoints": true
     }
   ]
 }
