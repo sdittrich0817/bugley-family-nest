@@ -33,6 +33,6 @@
 
 - Subdirectories may have their own `AGENTS.md` (see `src/lib/AGENTS.md` for Studio makers and books); read it before changing files there.
 - Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
-- Child avatars are code-drawn bug portraits (`BugAvatar`) built from allow-listed parts stored in `children.bug`; kids build them in the Kid Zone (parts picker or words that AI maps to parts, guarded first), parents never pick. Why: safe, consistent, no generated images or uploads.
+- Child avatars retain allow-listed parts in children.bug with optional server-saved private image paths; AI bug portraits use images.server and atomic service-only attempt claims/completion, with signed URLs added only to owned family reads. Why: kids can draw their own safe bug without client-controlled quota, charges or foreign image paths.
 - Create V3 keeps separate character drafts and outputs in existing records; picture completion uses owned workspace saves with no art charge and links to My Album. Why: durable work without duplicate entries.
 - Studio routine choices advance locally with prepared lines; AI only for open-ended help, the guarded idea read, outlines and art. Why: no waiting on AI rephrasing.
