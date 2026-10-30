@@ -25,6 +25,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { WaitlistProvider } from "@/components/site/WaitlistModal";
 import { Bugley } from "@/components/brand/Bugley";
 import { Toaster } from "@/components/ui/sonner";
+import { Button } from "@/components/ui/button";
+import { isChunkLoadError, recoverChunkLoad } from '@/lib/chunk-recovery';
 import { ParentSessionProvider } from "@/components/site/ParentSession";
 
 function NotFoundComponent() {
@@ -55,6 +57,9 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    if (isChunkLoadError(error)) {
+      try { recoverChunkLoad(error, window.location.pathname, window.sessionStorage, () => window.location.reload()); } catch { /* Manual refresh remains available. */ }
+    }
   }, [error]);
 
   return (
@@ -68,15 +73,14 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
           Something went wrong on our end. You can try refreshing or head back home.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
+          <Button
             onClick={() => {
-              router.invalidate();
-              reset();
+              if (isChunkLoadError(error)) window.location.reload();
+              else { void router.invalidate(); reset(); }
             }}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-primary px-6 font-display text-sm text-primary-foreground shadow-glow transition-colors hover:bg-primary-hover"
           >
-            Try again
-          </button>
+            {isChunkLoadError(error) ? 'Refresh page' : 'Try again'}
+          </Button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
