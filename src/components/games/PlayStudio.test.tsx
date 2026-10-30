@@ -3,9 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlayStudio } from './PlayStudio';
 
-const calls=vi.hoisted(()=>({move:vi.fn(),start:vi.fn()}));
+const calls=vi.hoisted(()=>({move:vi.fn(),start:vi.fn(),finish:vi.fn()}));
 vi.mock('@/lib/stripe',()=>({getStripeEnvironment:()=> 'sandbox'}));
-vi.mock('@/lib/play.functions',()=>({getPlayHome:vi.fn(async()=>({stickers:[],badges:[],dex:[],rounds:[],players:[]})),startPlay:calls.start,playMove:calls.move,finishPlay:vi.fn()}));
+vi.mock('@/lib/play.functions',()=>({getPlayHome:vi.fn(async()=>({stickers:[],badges:[],dex:[],rounds:[],players:[]})),startPlay:calls.start,playMove:calls.move,finishPlay:calls.finish}));
 vi.mock('@/lib/play-extra.functions',()=>({getDashShelf:vi.fn(async()=>({heroes:[],remixes:[]}))}));
 vi.mock('@/components/studio/Sidekick',()=>({speak:vi.fn(),useVoiceInput:()=>({supported:false})}));
 vi.mock('./ExtraRound',()=>({ExtraRound:()=>null}));
