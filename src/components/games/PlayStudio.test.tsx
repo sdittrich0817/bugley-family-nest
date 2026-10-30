@@ -3,9 +3,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PlayStudio } from './PlayStudio';
 
-const calls=vi.hoisted(()=>({move:vi.fn(),start:vi.fn()}));
+const calls=vi.hoisted(()=>({move:vi.fn(),start:vi.fn(),finish:vi.fn()}));
 vi.mock('@/lib/stripe',()=>({getStripeEnvironment:()=> 'sandbox'}));
-vi.mock('@/lib/play.functions',()=>({getPlayHome:vi.fn(async()=>({stickers:[],badges:[],dex:[],rounds:[],players:[]})),startPlay:calls.start,playMove:calls.move,finishPlay:vi.fn()}));
+vi.mock('@/lib/play.functions',()=>({getPlayHome:vi.fn(async()=>({stickers:[],badges:[],dex:[],rounds:[],players:[]})),startPlay:calls.start,playMove:calls.move,finishPlay:calls.finish}));
 vi.mock('@/lib/play-extra.functions',()=>({getDashShelf:vi.fn(async()=>({heroes:[],remixes:[]}))}));
 vi.mock('@/components/studio/Sidekick',()=>({speak:vi.fn(),useVoiceInput:()=>({supported:false})}));
 vi.mock('./ExtraRound',()=>({ExtraRound:()=>null}));
@@ -31,5 +31,29 @@ describe('Doodle guessing control',()=>{
   expect(calls.move).toHaveBeenCalledTimes(1);
   expect(calls.move.mock.calls[0]?.[0].data.strokes).toEqual([{color:0,points:[[0.2,0.2],[0.4,0.4]]}]);
   expect(screen.getByText('I got it!',{exact:false})).toBeInTheDocument();
+ });
+});
+
+describe('Replay and exit',()=>{
+ afterEach(()=>{cleanup();vi.clearAllMocks();});
+ it('offers Play again on the same game and All games to exit',async()=>{
+  const state={turn:0,moves:0,words:[]};
+  calls.start.mockResolvedValue({id:'round',endsAt:new Date(Date.now()+240000).toISOString(),state});
+  calls.finish.mockResolvedValue({score:2,bonus:0});
+  const onExit=vi.fn();
+  const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
+  const child={id:'child',nickname:'Player',age_band:'explorers',bugley_stage:'scout'};
+  render(<QueryClientProvider client={qc}><PlayStudio child={child as any} family={[child as any]} start="doodle_duel" onExit={onExit}/></QueryClientProvider>);
+  fireEvent.click(screen.getByRole('button',{name:'Let’s play!'}));
+  await screen.findByRole('button',{name:'Finish round'});
+  fireEvent.click(screen.getByRole('button',{name:'Finish round'}));
+  await screen.findByText('That was awesome!');
+  expect(screen.getByRole('button',{name:'Play again'})).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'All games'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Play again'}));
+  expect(await screen.findByRole('button',{name:'Let’s play!'})).toBeInTheDocument();
+  expect(onExit).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'All games'}));
+  expect(onExit).toHaveBeenCalledTimes(1);
  });
 });
