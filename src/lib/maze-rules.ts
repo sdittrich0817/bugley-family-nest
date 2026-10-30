@@ -62,7 +62,7 @@ export type Step = Pose & { rule: number; gem?: number };
 export type Outcome = 'portal' | 'stuck' | 'bonk' | 'loop' | 'tired';
 export type RunResult = { steps: Step[]; result: Outcome; gems: number[] };
 
-const open = (g: Grid, at: number, d: Dir) => { const x = (at % g.w) + STEP[d][0], y = Math.floor(at / g.w) + STEP[d][1]; return x >= 0 && y >= 0 && x < g.w && y < g.h && !g.walls[y * g.w + x] ? y * g.w + x : -1; };
+function open(g: Grid, at: number, d: Dir) { const x = (at % g.w) + STEP[d][0], y = Math.floor(at / g.w) + STEP[d][1]; return x >= 0 && y >= 0 && x < g.w && y < g.h && !g.walls[y * g.w + x] ? y * g.w + x : -1; }
 
 export function sees(g: Grid, p: Pose, c: Cond) { return c === 'always' || open(g, p.at, c === 'ahead' ? p.dir : turn(p.dir, c === 'right' ? 1 : -1)) >= 0; }
 
