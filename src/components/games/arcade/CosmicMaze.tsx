@@ -139,10 +139,6 @@ function raceLine(run: { me: RunResult; bug?: RunResult }) {
 }
 
 const ROT = { N: 0, E: 90, S: 180, W: 270 } as const;
-function Rocket({ s, start, tint }: { s: Step | undefined; start: number; tint: string }) {
-  return null as unknown as JSX.Element ?? <g>{String(s)}{start}{tint}</g>;
-}
-void Rocket;
 
 function Board({ grid, me, bug, got }: { grid: Grid; me?: Step; bug?: Step | null; got: number[] }) {
   const S = 10, x = (c: number) => (c % grid.w) * S, y = (c: number) => Math.floor(c / grid.w) * S;
