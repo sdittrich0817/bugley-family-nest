@@ -29,8 +29,13 @@ export const BLANKS = [
   { ask: 'Something gross!', choices: ['slime', 'stinky boot', 'banana mush', 'soggy pizza'] },
   { ask: 'A silly sound!', choices: ['Bloop!', 'Squish!', 'Boing!', 'Pfffft!'] },
 ];
-export const DOODLES = ['sun', 'cat', 'pizza', 'rocket'];
+export const DOODLES = ['sun', 'cat', 'pizza', 'rocket', 'fish', 'house'];
+export const DOODLE_EMOJI: Record<string,string> = { sun:'☀️', cat:'🐱', pizza:'🍕', rocket:'🚀', fish:'🐟', house:'🏠' };
+export const DOODLE_TURNS = 3;
+export const doodleTarget = (turn: number) => DOODLES[turn % DOODLES.length]!;
+export const doodlePoints = (guessNumber: number) => guessNumber <= 1 ? 3 : 2;
+export type DoodleThought = { guesses: { name: string; pct: number }[]; noticed: string[]; tip?: string | undefined };
 export const DOODLE_CLUES = ['I’m round, warm, and shine in the sky.', 'I have whiskers and say meow.', 'I’m a cheesy triangle you can eat.', 'I zoom into space with a fiery tail.'];
 export type Stroke = { points: [number, number][]; color: number };
-export type PlayState = { turn: number; moves: number; words: string[]; feedback?: string | undefined; stickerKey?: string | undefined; solved?: boolean | undefined; rare?: boolean; power?: string; name?: string; story?: string; drawGuesses?: number; drawingGuessed?: boolean; animation?: 'bounce'|'fly'|'climb'|'float'; guess?:GuessState; manor?:PublicCase; visited?:number[]; caught?:boolean; dash?:DashConfig; remixId?:string; dashFinished?:boolean };
+export type PlayState = { turn: number; moves: number; words: string[]; feedback?: string | undefined; stickerKey?: string | undefined; solved?: boolean | undefined; rare?: boolean; power?: string; name?: string; story?: string; drawGuesses?: number; doodle?: DoodleThought | undefined; drawingGuessed?: boolean; animation?: 'bounce'|'fly'|'climb'|'float'; guess?:GuessState; manor?:PublicCase; visited?:number[]; caught?:boolean; dash?:DashConfig; remixId?:string; dashFinished?:boolean };
 export const initialPlayState = (): PlayState => ({ turn: 0, moves: 0, words: [] });

@@ -16,7 +16,7 @@ describe('Doodle guessing control',()=>{
  it('waits for the child to request a guess, then sends their strokes',async()=>{
   const state={turn:0,moves:0,words:[]};
   calls.start.mockResolvedValue({id:'round',endsAt:new Date(Date.now()+240000).toISOString(),state});
-  calls.move.mockResolvedValue({expired:false,state:{...state,drawGuesses:1,drawingGuessed:true,feedback:'I got it! We both score!'}});
+  calls.move.mockResolvedValue({expired:false,state:{...state,drawGuesses:1,drawingGuessed:true,feedback:"It's a sun! I got it!",doodle:{guesses:[{name:'sun',pct:80}],noticed:['a circle']}}});
   const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
   const child={id:'child',nickname:'Player',age_band:'explorers',bugley_stage:'scout'};
   render(<QueryClientProvider client={qc}><PlayStudio child={child as any} family={[child as any]} start="doodle_duel"/></QueryClientProvider>);
@@ -30,6 +30,6 @@ describe('Doodle guessing control',()=>{
   await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Guess my doodle!'}));});
   expect(calls.move).toHaveBeenCalledTimes(1);
   expect(calls.move.mock.calls[0]?.[0].data.strokes).toEqual([{color:0,points:[[0.2,0.2],[0.4,0.4]]}]);
-  expect(screen.getByRole('status')).toHaveTextContent('I got it!');
+  expect(screen.getByText('I got it!',{exact:false})).toBeInTheDocument();
  });
 });
