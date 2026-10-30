@@ -42,8 +42,8 @@ export const RULE_LEVELS: RulesLevel[] = [
     grid: parseGrid(['#######', '#S.####', '##.####', '##...##', '####*##', '####P##', '#######']) },
   { name: 'Nebula Garden', goal: 'Watch out for the dead end! Rule order matters.', tip: 'The rocket does the FIRST rule that fits. Try moving a turning rule to the top.', maxRules: 4, parRules: 4, reference: RIGHT_HAND,
     grid: parseGrid(['########', '#S....##', '####*###', '####P###', '########']) },
-  { name: 'Star Factory', goal: 'A real maze! One clever set of rules can solve it.', tip: 'Space pilots hug one wall: always try turning right first, and turn around at dead ends.', maxRules: 4, parRules: 4, reference: RIGHT_HAND, grid: gridFromSeed(4, 4, 311, 1) },
-  { name: 'Black-Hole Bend', goal: 'The biggest maze. Will your rules still work?', tip: 'Good rules work on mazes they have never seen. That is what makes them smart!', maxRules: 4, parRules: 4, reference: RIGHT_HAND, grid: gridFromSeed(5, 5, 523, 2) },
+  { name: 'Star Factory', goal: 'A real maze! One clever set of rules can solve it.', tip: 'Space pilots hug one wall: always try turning right first, and turn around at dead ends.', maxRules: 4, parRules: 4, reference: RIGHT_HAND, grid: gridFromSeed(4, 4, 103, 1) },
+  { name: 'Black-Hole Bend', goal: 'The biggest maze. Will your rules still work?', tip: 'Good rules work on mazes they have never seen. That is what makes them smart!', maxRules: 4, parRules: 4, reference: RIGHT_HAND, grid: gridFromSeed(5, 5, 104, 2) },
 ];
 
 /** Race tracks: mazes where hugging the right wall beats Bugley's left-wall rules. */
