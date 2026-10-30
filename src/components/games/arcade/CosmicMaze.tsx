@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Flag, Play, Plus, RotateCcw, Star, Trash2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bugley } from '@/components/brand/Bugley';
-import { ACT_LABEL, BUGLEY_RULES, COND_LABEL, OUTCOME_LINE, RACE_TRACKS, RACE_UNLOCK, RULE_LEVELS, runRules, rulesStars, type Act, type Cond, type Grid, type Rule, type RunResult, type Step } from '@/lib/maze-rules';
+import { BUGLEY_RULES, OUTCOME_LINE, RACE_TRACKS, RACE_UNLOCK, RULE_LEVELS, runRules, rulesStars, type Act, type Cond, type Grid, type Rule, type RunResult, type Step } from '@/lib/maze-rules';
 import { readProgress, recordBest, unlockLevel, updateProgress } from '@/lib/arcade';
 import space from '@/assets/games/cosmic-maze.jpg';
 
