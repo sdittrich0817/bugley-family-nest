@@ -460,6 +460,11 @@
   --maze-floor: oklch(0.25 0.07 280 / 0.55);
   --maze-gem: oklch(0.8 0.17 330);
   --maze-portal: oklch(0.82 0.15 180);
+  --maze-portal-deep: oklch(0.45 0.2 300);
+  --maze-rock-light: oklch(0.78 0.08 290);
+  --maze-rock-dark: oklch(0.42 0.1 285);
+  --maze-rock-edge: oklch(0.9 0.08 200);
+  --maze-stardust: oklch(0.97 0.05 95);
   --lab-1: oklch(0.78 0.15 20);
   --lab-2: oklch(0.83 0.14 140);
   --lab-3: oklch(0.75 0.13 250);
@@ -478,6 +483,14 @@
 @utility arcade-burst { animation: arcade-burst 0.6s ease-out forwards; transform-box: fill-box; transform-origin: center; }
 @utility arcade-wiggle { animation: arcade-wiggle 0.5s ease-in-out; transform-box: fill-box; transform-origin: center bottom; }
 @utility arcade-drift { animation: arcade-drift 40s linear infinite; }
+@keyframes maze-spin { to { transform: rotate(360deg); } }
+@keyframes maze-twinkle { 0%,100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes maze-portal-pulse { 0%,100% { transform: scale(0.9); } 50% { transform: scale(1.08); } }
+@utility maze-spin { animation: maze-spin 4s linear infinite; transform-box: view-box; transform-origin: 0 0; }
+@utility maze-spin-back { animation: maze-spin 2.6s linear infinite reverse; transform-box: view-box; transform-origin: 0 0; }
+@utility maze-twinkle { animation: maze-twinkle 2s ease-in-out infinite; }
+@utility maze-portal-pulse { animation: maze-portal-pulse 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { .maze-spin, .maze-spin-back, .maze-twinkle, .maze-portal-pulse { animation: none; } }
 
 /* Isolated Wonderwood game. All palette and surface treatments stay here. */
 .wonderwood { position: relative; min-height: 660px; height: 100svh; overflow: hidden; background: var(--wood-green); --foreground: var(--wood-ink); --card: var(--wood-paper); --secondary: var(--leaf); --border: var(--wood-outline); }
