@@ -125,6 +125,42 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
   </div>;
 }
 
+const RULE_CHOICES: { if: Cond; then: Act; emoji: string; title: string }[] = [
+  { if: 'ahead', then: 'forward', emoji: '⬆️', title: 'Go forward' },
+  { if: 'wall', then: 'left', emoji: '🧱', title: 'Wall? Turn' },
+  { if: 'stuck', then: 'right', emoji: '🔄', title: 'Stuck? Turn' },
+  { if: 'portal', then: 'forward', emoji: '🌀', title: 'Portal? Go!' },
+];
+const RULE_CARD: Record<Cond, { emoji: string; title: string; when: string }> = {
+  ahead: { emoji: '⬆️', title: 'Go forward', when: 'IF the path ahead is clear' },
+  wall: { emoji: '🧱', title: 'Turn at a wall', when: 'IF a wall blocks the way' },
+  stuck: { emoji: '🔄', title: 'Turn when stuck', when: "IF I can't move" },
+  portal: { emoji: '🌀', title: 'Go to the portal', when: 'IF the portal is ahead' },
+};
+const ruleShort = (r: Rule) => `${RULE_CARD[r.if].title} (${RULE_CARD[r.if].when.toLowerCase()})`;
+
+function RuleCard({ rule, index, firing, isFirst, isLast, onChange, onMove, onRemove }: { rule: Rule; index: number; firing: boolean; isFirst: boolean; isLast: boolean; onChange: (p: Partial<Rule>) => void; onMove: (by: number) => void; onRemove: () => void }) {
+  const card = RULE_CARD[rule.if];
+  const isTurn = rule.then === 'left' || rule.then === 'right';
+  return <div className={`flex items-center gap-2 rounded-lg border-2 p-2 transition-colors ${firing ? 'border-primary bg-primary/15' : 'border-border bg-card'}`}>
+    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-sm font-bold">{index + 1}</span>
+    <span className="text-2xl" aria-hidden>{card.emoji}</span>
+    <div className="min-w-0 flex-1">
+      <p className="font-display text-sm leading-tight">{isTurn ? (rule.then === 'left' ? 'Turn left' : 'Turn right') : card.title}</p>
+      <p className="text-xs text-muted-foreground">{card.when}</p>
+      {isTurn && <div className="mt-1 flex gap-1" role="group" aria-label="Turn which way">
+        {(['left', 'right'] as const).map((d) => <button key={d} type="button" onClick={() => onChange({ then: d })} aria-pressed={rule.then === d}
+          className={`rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${rule.then === d ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary'}`}>{d === 'left' ? '⤺ Left' : '⤵ Right'}</button>)}
+      </div>}
+    </div>
+    <span className="ml-auto flex shrink-0">
+      <Button size="icon" variant="ghost" aria-label="Move up" disabled={isFirst} onClick={() => onMove(-1)}><ArrowUp /></Button>
+      <Button size="icon" variant="ghost" aria-label="Move down" disabled={isLast} onClick={() => onMove(1)}><ArrowDown /></Button>
+      <Button size="icon" variant="ghost" aria-label="Remove rule" onClick={onRemove}><Trash2 /></Button>
+    </span>
+  </div>;
+}
+
 function raceTitle(run: { me: RunResult; bug?: RunResult | undefined }) {
   const mine = run.me.result === 'portal' ? run.me.steps.length : Infinity, his = run.bug?.result === 'portal' ? run.bug.steps.length : Infinity;
   return mine < his ? '🏆 You beat Bugley!' : mine === his && mine !== Infinity ? 'It’s a tie!' : 'Bugley wins this time!';
