@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireKidOrParentAuth } from './kid-device-auth';
 import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from './billing.functions';
-import { BLANKS, comboKey, DOODLES, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
+import { BLANKS, comboKey, DOODLE_TURNS, doodlePoints, doodleTarget, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
 import { caseSchema, dashSchema, defaultDash, firstGuess, SECRETS } from './play-extra';
 import { STARTER_CREATURES, STARTER_STICKERS } from './stickers';
 const id = z.string().uuid();
@@ -57,18 +57,21 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
   let state=r.state as unknown as PlayState,score=r.score;
   try {
-    const maxTurns=r.game==='creature_lab'?3:r.game==='story_blanks'?3:4;
+    const maxTurns=r.game==='creature_lab'?3:r.game==='story_blanks'?3:r.game==='doodle_duel'?DOODLE_TURNS:4;
     if(state.turn>=maxTurns)throw new Error('This round is ready for results!');
-    if(data.next) { if(!state.feedback||state.turn>=maxTurns-1)throw new Error('See your stars!');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false}; }
-    else if(r.game==='doodle_duel'&&state.turn%2===0) {
+    if(data.next) { if(!state.feedback||state.turn>=maxTurns-1)throw new Error('See your stars!');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false,doodle:undefined}; }
+    else if(r.game==='doodle_duel') {
       if(!data.strokes?.some(s=>s.points.length>1)||state.drawingGuessed|| (state.drawGuesses??0)>=6)throw new Error('Try the next turn!');
       const {renderDoodle}=await import('./doodle.server');const {aiObject}=await import('./studio-ai.server');
       const image=renderDoodle(data.strokes);
       const check=await aiObject(z.object({safe:z.boolean(),personal:z.boolean()}),'Check this in-app child drawing. safe=false for sexual, hateful, violent, or harmful content. personal=true for names, addresses, contact details or other personal information.','Check this drawing before guessing.',image);
       if(!check?.safe||check.personal){await a.from('studio_events').insert({parent_id:context.userId,child_id:kid.id,source:'doodle',decision:'unsafe',input:'[in-app drawing blocked]',reply:'Try a friendly object.'});throw new Error('Let’s draw a friendly object instead.');}
-      const verdict=await aiObject(z.object({guess:z.string().max(40),matches:z.boolean()}),'Guess the object drawn by a child. Return a short kid-safe object name, never personal names. matches only if the drawing reasonably matches the target.','Target: '+DOODLES[Math.floor(state.turn/2)%DOODLES.length],image);if(!verdict)throw new Error('I couldn’t see that doodle right now.');
-      await safe(context,kid,verdict.guess);
-      state={...state,drawGuesses:(state.drawGuesses??0)+1,drawingGuessed:verdict.matches,feedback:verdict.matches?`It's a ${verdict.guess}! I got it, we both score!`:`Is it a ${verdict.guess}?`};if(verdict.matches)score+=2;
+      const target=doodleTarget(state.turn);
+      const verdict=await aiObject(z.object({guesses:z.array(z.object({name:z.string().max(30),pct:z.number().min(0).max(100)})).min(1).max(3),noticed:z.array(z.string().max(40)).max(3),matches:z.boolean(),tip:z.string().max(80)}),'You are Bugley, a friendly firefly guessing a child\'s doodle. Think like a simple picture-recognizing AI. Return up to 3 short kid-safe object names you think it could be, most likely first, with confidence percentages adding to about 100. noticed: up to 3 tiny phrases (max 5 words) describing the shapes you actually see, e.g. "a big circle", "lines sticking out". matches=true only if your top guess reasonably is the target. tip: if not matching, one short friendly idea of a shape to add that would help you see the target, without naming the target; otherwise empty. Never personal names.','Target: '+target,image);if(!verdict)throw new Error('I couldn’t see that doodle right now.');
+      await safe(context,kid,[...verdict.guesses.map(g=>g.name),...verdict.noticed,verdict.tip].join(' '));
+      const n=(state.drawGuesses??0)+1,top=verdict.guesses[0]?.name??'something';
+      const doodle={guesses:verdict.guesses.map(g=>({name:g.name,pct:Math.round(g.pct)})),noticed:verdict.noticed,tip:verdict.matches?undefined:verdict.tip||undefined};
+      state={...state,drawGuesses:n,drawingGuessed:verdict.matches,doodle,feedback:verdict.matches?`It's a ${top}! I got it!`:`Hmm… is it a ${top}?`};if(verdict.matches)score+=doodlePoints(n);
     } else {
       if(!data.text)throw new Error('Pick or say an idea first.');if(state.feedback)throw new Error('Go to the next turn first.');
       await safe(context,kid,[data.text,data.second].filter(Boolean).join(' and '));
