@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Flag, Play, Plus, RotateCcw, Star, Trash2, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Bugley } from '@/components/brand/Bugley';
-import { ACT_LABEL, BUGLEY_RULES, COND_LABEL, OUTCOME_LINE, RACE_TRACKS, RACE_UNLOCK, RULE_LEVELS, runRules, rulesStars, type Act, type Cond, type Grid, type Rule, type RunResult, type Step } from '@/lib/maze-rules';
+import { BUGLEY_RULES, OUTCOME_LINE, RACE_TRACKS, RACE_UNLOCK, RULE_LEVELS, runRules, rulesStars, type Act, type Cond, type Grid, type Rule, type RunResult, type Step } from '@/lib/maze-rules';
 import { readProgress, recordBest, unlockLevel, updateProgress } from '@/lib/arcade';
 import space from '@/assets/games/cosmic-maze.jpg';
 
@@ -66,7 +65,7 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
   const firing = run && tick > 0 && tick <= run.me.steps.length ? myStep?.rule : undefined;
 
   const thought = !run ? (rules.length ? 'Ready when you are! Press Go.' : 'I don’t have any rules yet. Add one so I know what to do!')
-    : !done ? (myStep ? `Rule ${myStep.rule + 1} fits: ${COND_LABEL[rules[myStep.rule]!.if]} → ${ACT_LABEL[rules[myStep.rule]!.then]}` : 'Checking my rules from the top…')
+    : !done ? (myStep ? `Rule ${myStep.rule + 1} fits: ${ruleShort(rules[myStep.rule]!)}` : 'Checking my rules from the top…')
     : run.me.result === 'portal' ? (mode === 'race' ? raceLine(run) : 'Portal reached! I only did what your rules told me.')
     : OUTCOME_LINE[run.me.result];
 
@@ -88,19 +87,15 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
         </div>
         <div className="space-y-2">
           <p className="text-sm font-bold">My rules <span className="font-normal text-muted-foreground">(the rocket checks from the top, every step)</span></p>
-          {rules.map((r, i) => <div key={i} className={`flex flex-wrap items-center gap-1.5 rounded-lg border-2 p-2 transition-colors ${firing === i ? 'border-primary bg-primary/15' : 'border-border bg-card'}`}>
-            <span className="grid size-7 place-items-center rounded-full bg-muted text-sm font-bold">{i + 1}</span>
-            <span className="text-sm font-bold">If</span>
-            <Select value={r.if} onValueChange={(v) => update(i, { if: v as Cond })}><SelectTrigger className="h-9 w-auto min-w-36" aria-label={`Rule ${i + 1} if`}><SelectValue /></SelectTrigger><SelectContent>{(Object.keys(COND_LABEL) as Cond[]).map((c) => <SelectItem key={c} value={c}>{COND_LABEL[c]}</SelectItem>)}</SelectContent></Select>
-            <span className="text-sm font-bold">then</span>
-            <Select value={r.then} onValueChange={(v) => update(i, { then: v as Act })}><SelectTrigger className="h-9 w-auto min-w-36" aria-label={`Rule ${i + 1} then`}><SelectValue /></SelectTrigger><SelectContent>{(Object.keys(ACT_LABEL) as Act[]).map((a) => <SelectItem key={a} value={a}>{ACT_LABEL[a]}</SelectItem>)}</SelectContent></Select>
-            <span className="ml-auto flex">
-              <Button size="icon" variant="ghost" aria-label="Move up" disabled={i === 0} onClick={() => moveRule(i, -1)}><ArrowUp /></Button>
-              <Button size="icon" variant="ghost" aria-label="Move down" disabled={i === rules.length - 1} onClick={() => moveRule(i, 1)}><ArrowDown /></Button>
-              <Button size="icon" variant="ghost" aria-label="Remove rule" onClick={() => { edit(); setRules(rules.filter((_, j) => j !== i)); }}><Trash2 /></Button>
-            </span>
-          </div>)}
-          {rules.length < maxRules ? <Button variant="outline" className="w-full" onClick={() => { edit(); setRules([...rules, { if: 'ahead', then: 'forward' }]); }}><Plus />Add a rule ({rules.length}/{maxRules})</Button>
+          {rules.map((r, i) => <RuleCard key={i} rule={r} index={i} firing={firing === i} isFirst={i === 0} isLast={i === rules.length - 1}
+            onChange={(patch) => update(i, patch)} onMove={(by) => moveRule(i, by)} onRemove={() => { edit(); setRules(rules.filter((_, j) => j !== i)); }} />)}
+          {rules.length < maxRules ? <div className="space-y-1.5">
+            <p className="text-xs font-bold text-muted-foreground">Tap to add a rule ({rules.length}/{maxRules})</p>
+            <div className="grid grid-cols-2 gap-1.5">{RULE_CHOICES.map((c) => <button key={c.if} type="button" onClick={() => { edit(); setRules([...rules, { if: c.if, then: c.then }]); }}
+              className="flex items-center gap-2 rounded-lg border-2 border-dashed border-border bg-card px-2.5 py-2 text-left text-sm font-bold transition-colors hover:border-primary hover:bg-primary/10">
+              <span className="text-xl">{c.emoji}</span><span>{c.title}</span>
+            </button>)}</div>
+          </div>
             : <p className="text-xs text-muted-foreground">This world allows {maxRules} rule{maxRules > 1 ? 's' : ''}.</p>}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -126,6 +121,43 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
         {onExit && <Button variant="ghost" onClick={onExit}>All games</Button>}
       </div>
     </div>}
+  </div>;
+}
+
+const RULE_CHOICES: { if: Cond; then: Act; emoji: string; title: string }[] = [
+  { if: 'ahead', then: 'forward', emoji: '⬆️', title: 'Path ahead? Go' },
+  { if: 'right', then: 'right', emoji: '👉', title: 'Path right? Turn' },
+  { if: 'left', then: 'left', emoji: '👈', title: 'Path left? Turn' },
+  { if: 'always', then: 'back', emoji: '🔄', title: 'Otherwise…' },
+];
+const COND_CARD: Record<Cond, { emoji: string; when: string }> = {
+  ahead: { emoji: '⬆️', when: 'IF the path ahead is clear' },
+  right: { emoji: '👉', when: 'IF the path turns right' },
+  left: { emoji: '👈', when: 'IF the path turns left' },
+  always: { emoji: '🔄', when: 'IF nothing else fits' },
+};
+const ACT_TITLE: Record<Act, string> = { forward: 'Go forward', right: 'Turn right & go', left: 'Turn left & go', back: 'Turn around' };
+const ruleShort = (r: Rule) => `${ACT_TITLE[r.then]} (${COND_CARD[r.if].when.toLowerCase()})`;
+
+function RuleCard({ rule, index, firing, isFirst, isLast, onChange, onMove, onRemove }: { rule: Rule; index: number; firing: boolean; isFirst: boolean; isLast: boolean; onChange: (p: Partial<Rule>) => void; onMove: (by: number) => void; onRemove: () => void }) {
+  const card = COND_CARD[rule.if];
+  const isTurn = rule.then === 'left' || rule.then === 'right';
+  return <div className={`flex items-center gap-2 rounded-lg border-2 p-2 transition-colors ${firing ? 'border-primary bg-primary/15' : 'border-border bg-card'}`}>
+    <span className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-sm font-bold">{index + 1}</span>
+    <span className="text-2xl" aria-hidden>{card.emoji}</span>
+    <div className="min-w-0 flex-1">
+      <p className="font-display text-sm leading-tight">{ACT_TITLE[rule.then]}</p>
+      <p className="text-xs text-muted-foreground">{card.when}</p>
+      {isTurn && <div className="mt-1 flex gap-1" role="group" aria-label="Turn which way">
+        {(['left', 'right'] as const).map((d) => <button key={d} type="button" onClick={() => onChange({ then: d })} aria-pressed={rule.then === d}
+          className={`rounded-full border-2 px-3 py-1 text-xs font-bold transition-colors ${rule.then === d ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:border-primary'}`}>{d === 'left' ? '⤺ Left' : '⤵ Right'}</button>)}
+      </div>}
+    </div>
+    <span className="ml-auto flex shrink-0">
+      <Button size="icon" variant="ghost" aria-label="Move up" disabled={isFirst} onClick={() => onMove(-1)}><ArrowUp /></Button>
+      <Button size="icon" variant="ghost" aria-label="Move down" disabled={isLast} onClick={() => onMove(1)}><ArrowDown /></Button>
+      <Button size="icon" variant="ghost" aria-label="Remove rule" onClick={onRemove}><Trash2 /></Button>
+    </span>
   </div>;
 }
 
