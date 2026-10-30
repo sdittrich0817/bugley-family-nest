@@ -16,7 +16,7 @@ export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories:
 
 export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'glow_dash', name: 'Glow Dash', line: 'Run, jump and scoop up glow through magical worlds!', categories: ['action'], engine: 'play', controls: 'Tap, Space or ↑ to jump (tap twice to double-jump)' },
-  { id: 'creature_lab_v2', name: 'Creature Lab', line: 'Teach Bugley what a Glowbug is, then catch his mistakes!', categories: ['creativity', 'explore'], engine: 'creatures', controls: 'Tap parts and colors' },
+  { id: 'creature_lab_v2', name: 'Creature Lab', line: 'Pack lunch, a baseball bag and more. Teach Bugley your picks!', categories: ['creativity', 'explore'], engine: 'creatures', controls: 'Tap parts and colors' },
   { id: 'cosmic_maze', name: 'Cosmic Maze', line: 'Program your rocket with if-then rules, then race Bugley!', categories: ['puzzles', 'explore'], engine: 'maze', controls: 'Build rules, then press Go' },
   { id: 'mystery_manor', name: 'Mystery Manor', line: 'One friend is a sneaky robot. Can you catch it?', categories: ['ai', 'puzzles'], engine: 'play', controls: 'Tap' },
   { id: 'bugley_guesses', name: 'Bugley Guesses', line: 'Think of anything. Bugley will read your mind!', categories: ['ai'], engine: 'play', controls: 'Tap or type' },

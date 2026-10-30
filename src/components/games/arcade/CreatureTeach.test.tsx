@@ -1,23 +1,24 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { TeachLab } from './CreatureTeach';
-import { SECRET_RULES, isGlowbug, teachDeck } from '@/lib/creature-teach';
+import { SCENES, guess } from '@/lib/pack-teach';
 
-describe('Glowbug TeachLab', () => {
-  it('plays: pick, teach, catch the pink mistake, then 5 in a row wins', () => {
-    vi.useFakeTimers();
-    const r = SECRET_RULES[0]!, onWin = vi.fn();
+describe('Teach Bugley', () => {
+  it('offers several everyday scenes', () => {
+    expect(SCENES.map((s) => s.id)).toEqual(['lunch', 'baseball', 'beach', 'bedtime']);
+  });
+  it('Bugley copies by kind first, then color', () => {
+    const [apple, , , , broccoli, , chili] = SCENES[0]!.items;
+    expect(guess([{ item: apple!, yes: true }, { item: broccoli!, yes: false }], chili!).yes).toBe(false);
+    expect(guess([{ item: apple!, yes: true }], chili!).clue).toBe('color');
+  });
+  it('plays a lunch round through to the end', () => {
+    const onWin = vi.fn();
     render(<TeachLab stage="scout" onWin={onWin} />);
-    fireEvent.click(screen.getByText(r.label));
-    for (const c of teachDeck(r)) fireEvent.click(screen.getByText(isGlowbug(r, c) === 0 ? 'Glowbug!' : 'Not one'));
-    fireEvent.click(screen.getByText('Right!')); fireEvent.click(screen.getByText('Next bug →'));
-    fireEvent.click(screen.getByText('Right!')); fireEvent.click(screen.getByText('Next bug →'));
-    fireEvent.click(screen.getByText('Wrong!'));
-    expect(screen.getByText(/You only showed me pink Glowbugs/)).toBeTruthy();
-    fireEvent.click(screen.getByText('Teach him this one →'));
-    for (let i = 0; i < 5; i++) { fireEvent.click(screen.getByText('Right!')); if (i < 4) fireEvent.click(screen.getByText('Next bug →')); }
-    act(() => { vi.advanceTimersByTime(800); });
+    fireEvent.click(screen.getByText('Pack my lunch'));
+    for (let k = 0; k < 6; k++) fireEvent.click(screen.getByRole('button', { name: /Yum!/ }));
+    for (let k = 0; k < 6; k++) { fireEvent.click(screen.getByRole('button', { name: /Yum!/ })); fireEvent.click(screen.getByRole('button', { name: /Next/ })); }
     expect(onWin).toHaveBeenCalledWith(3);
-    vi.useRealTimers();
+    expect(screen.getByRole('button', { name: /Play again/ })).toBeTruthy();
   });
 });
