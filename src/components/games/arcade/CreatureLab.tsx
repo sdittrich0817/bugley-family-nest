@@ -84,7 +84,7 @@ export function FreeLab({ childId, stage, band }: { childId: string; stage: NonN
 }
 
 /** Creature Lab home: three "Teach Bugley" labs plus the free mixing lab. */
-export function CreatureLab({ childId, stage, band, onExit }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string; onExit?: () => void }) {
+export function CreatureLab({ childId, stage, band, onExit }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string; onExit?: (() => void) | undefined }) {
   const [open, setOpen] = useState<number | 'free' | null>(null), [run, setRun] = useState(0);
   const [prog, setProg] = useState(() => ({ level: 0, stars: {} as Record<string, number> }));
   useEffect(() => { const p = readProgress(childId); setProg({ level: p.level.creature_lab_v2 ?? 0, stars: JSON.parse(localStorage.getItem(`bugley-lab-stars-${childId}`) ?? '{}') }); }, [childId]);

@@ -38,7 +38,7 @@ function Brain({ clue, scores }: { clue: Clue; scores: { slot: string; acc: numb
 
 const why = (clue: Clue, lab: Lab) => `If it ${phrase(clue.slot, clue.value)} → ${lab.habitats[clue.side].name}. Otherwise → ${lab.habitats[1 - clue.side as Side].name}.`;
 
-export function TeachLab({ lab, index, stage, onBack, onExit, onNext, onWin }: { lab: Lab; index: number; stage: Stage; onBack: () => void; onExit?: () => void; onNext?: () => void; onWin: (stars: number) => void }) {
+export function TeachLab({ lab, index, stage, onBack, onExit, onNext, onWin }: { lab: Lab; index: number; stage: Stage; onBack: () => void; onExit?: (() => void) | undefined; onNext?: (() => void) | undefined; onWin: (stars: number) => void }) {
   const [phase, setPhase] = useState<Phase>(lab.choose ? 'pick' : 'intro');
   const [rule, setRule] = useState<SecretRule | undefined>();
   const truth = useMemo(() => truthFor(lab, rule), [lab, rule]);
