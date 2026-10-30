@@ -33,3 +33,27 @@ describe('Doodle guessing control',()=>{
   expect(screen.getByText('I got it!',{exact:false})).toBeInTheDocument();
  });
 });
+
+describe('Replay and exit',()=>{
+ afterEach(()=>{cleanup();vi.clearAllMocks();});
+ it('offers Play again on the same game and All games to exit',async()=>{
+  const state={turn:0,moves:0,words:[]};
+  calls.start.mockResolvedValue({id:'round',endsAt:new Date(Date.now()+240000).toISOString(),state});
+  calls.finish.mockResolvedValue({score:2,bonus:0});
+  const onExit=vi.fn();
+  const qc=new QueryClient({defaultOptions:{queries:{retry:false}}});
+  const child={id:'child',nickname:'Player',age_band:'explorers',bugley_stage:'scout'};
+  render(<QueryClientProvider client={qc}><PlayStudio child={child as any} family={[child as any]} start="doodle_duel" onExit={onExit}/></QueryClientProvider>);
+  fireEvent.click(screen.getByRole('button',{name:'Let’s play!'}));
+  await screen.findByRole('button',{name:'Finish round'});
+  fireEvent.click(screen.getByRole('button',{name:'Finish round'}));
+  await screen.findByText('That was awesome!');
+  expect(screen.getByRole('button',{name:'Play again'})).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'All games'})).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button',{name:'Play again'}));
+  expect(await screen.findByRole('button',{name:'Let’s play!'})).toBeInTheDocument();
+  expect(onExit).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button',{name:'All games'}));
+  expect(onExit).toHaveBeenCalledTimes(1);
+ });
+});
