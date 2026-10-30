@@ -612,3 +612,10 @@
   .ww-award > span { font-size: 11px; padding: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .ww-sprig img, .ww-discovery, .ww-discovery > .ww-item, .ww-bugley { animation: none; } }
+
+/* Doodle Duel: Bugley "scanning" the drawing and animated confidence bars */
+.doodle-scan span { position:absolute; inset-inline:0; height:30%; background:linear-gradient(to bottom, transparent, color-mix(in oklab, var(--primary) 45%, transparent), transparent); animation: doodle-scan 1.2s ease-in-out infinite alternate; }
+@keyframes doodle-scan { from { top:-30%; } to { top:100%; } }
+.doodle-bar { animation: doodle-grow .8s cubic-bezier(.2,.8,.2,1) both; transform-origin:left; }
+@keyframes doodle-grow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .doodle-scan span, .doodle-bar { animation:none; } }

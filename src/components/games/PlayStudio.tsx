@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Bugley } from '@/components/brand/Bugley';
 import { speak, useVoiceInput, type SidekickChild } from '@/components/studio/Sidekick';
 import { getPlayHome, startPlay, playMove, finishPlay } from '@/lib/play.functions';
-import { BLANKS, DOODLES, DOODLE_CLUES, PLAY_GAMES, PLAY_KEYS, PUZZLES, playAllowed, type PlayKey, type PlayState, type Stroke } from '@/lib/play';
+import { BLANKS, DOODLES, doodleTarget, PLAY_GAMES, PLAY_KEYS, PUZZLES, playAllowed, type PlayKey, type PlayState, type Stroke } from '@/lib/play';
 import { STARTER_CREATURES, STARTER_STICKERS, type Sticker } from '@/lib/stickers';
 import { getStripeEnvironment } from '@/lib/stripe';
 import { useScrollTopOn } from '@/lib/scroll';
