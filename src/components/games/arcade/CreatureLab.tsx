@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { TeachLab } from './CreatureTeach';
 import { LABS } from '@/lib/creature-teach';
-import { unlockLevel } from '@/lib/arcade';
 import { Dices, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { speak } from '@/components/studio/Sidekick';
 import { PARTS, SECRETS, SLOT_LABEL, creatureName, randomCreature, secretFor, type Creature, type Slot } from '@/lib/creatures';
-import { addFound, readProgress, recordBest, updateProgress } from '@/lib/arcade';
+import { addFound, readProgress, recordBest, unlockLevel, updateProgress } from '@/lib/arcade';
 import { cn } from '@/lib/utils';
 
 const ink = 'var(--lab-ink)';
