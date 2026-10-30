@@ -3,12 +3,13 @@ import { ArrowLeft, Play, Star, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import type { SidekickChild } from '@/components/studio/Sidekick';
-import { ARCADE_CATEGORIES, ARCADE_GAMES, FEATURED, markPlayed, readProgress, updateProgress, type ArcadeCategory, type ArcadeGame, type ArcadeId } from '@/lib/arcade';
+import { ARCADE_CATEGORIES, ARCADE_GAMES, FEATURED, markPlayed, recordBest, readProgress, updateProgress, type ArcadeCategory, type ArcadeGame, type ArcadeId } from '@/lib/arcade';
 import { playAllowed, type PlayKey } from '@/lib/play';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
 import { PlayStudio } from '../PlayStudio';
 import { CosmicMaze } from './CosmicMaze';
+import { MysteryManor } from './MysteryManor';
 import { CreatureArt, CreatureLab } from './CreatureLab';
 import guessArt from '@/assets/games/guesses.jpg';
 import manorArt from '@/assets/games/manor.jpg';
@@ -34,7 +35,7 @@ export function ArcadeHome({ child, family, myGames, onCreate }: { child: Sideki
   const current = games.find((g) => g.id === playing);
   if (current?.engine === 'play') return <PlayStudio child={child} family={family} start={current.id as PlayKey} onExit={back} />;
   if (current) return <div className="space-y-4"><div className="flex items-center gap-3"><Button variant="ghost" onClick={back}><ArrowLeft />All games</Button><h1 className="text-3xl">{current.name}</h1></div>
-    {current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
+    {current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
     <p className="text-xs text-muted-foreground">Controls: {current.controls}</p></div>;
   const featured = games.find((g) => g.id === FEATURED) ?? games[0];
   const shown = cat === 'all' ? games : games.filter((g) => g.categories.includes(cat));

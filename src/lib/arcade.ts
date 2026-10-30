@@ -12,13 +12,13 @@ export const ARCADE_CATEGORIES: { key: ArcadeCategory; label: string }[] = [
 ];
 
 export type ArcadeId = PlayKey | 'cosmic_maze' | 'creature_lab_v2';
-export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories: ArcadeCategory[]; engine: 'play' | 'maze' | 'creatures'; controls: string };
+export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories: ArcadeCategory[]; engine: 'play' | 'maze' | 'creatures' | 'manor'; controls: string };
 
 export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'glow_dash', name: 'Glow Dash', line: 'Run, jump and scoop up glow through magical worlds!', categories: ['action'], engine: 'play', controls: 'Tap, Space or ↑ to jump (tap twice to double-jump)' },
   { id: 'creature_lab_v2', name: 'Creature Lab', line: 'Pack lunch, a baseball bag and more. Teach Bugley your picks!', categories: ['creativity', 'explore'], engine: 'creatures', controls: 'Tap parts and colors' },
   { id: 'cosmic_maze', name: 'Cosmic Maze', line: 'Program your rocket with if-then rules, then race Bugley!', categories: ['puzzles', 'explore'], engine: 'maze', controls: 'Build rules, then press Go' },
-  { id: 'mystery_manor', name: 'Mystery Manor', line: 'One friend is a sneaky robot. Can you catch it?', categories: ['ai', 'puzzles'], engine: 'play', controls: 'Tap' },
+  { id: 'mystery_manor', name: 'Mystery Manor', line: 'A know-it-all robot is always sure. Check the clues and catch its mistakes!', categories: ['ai', 'puzzles'], engine: 'manor', controls: 'Tap clues, then decide' },
   { id: 'bugley_guesses', name: 'Bugley Guesses', line: 'Think of anything. Bugley will read your mind!', categories: ['ai'], engine: 'play', controls: 'Tap or type' },
   { id: 'doodle_duel', name: 'Doodle Duel', line: 'Draw it fast. Can Bugley guess it?', categories: ['ai', 'creativity'], engine: 'play', controls: 'Draw with finger or mouse' },
   { id: 'say_see', name: 'Say It, See It', line: 'Say any word and watch it appear!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Talk or type' },
