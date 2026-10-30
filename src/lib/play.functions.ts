@@ -68,7 +68,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
       if(!check?.safe||check.personal){await a.from('studio_events').insert({parent_id:context.userId,child_id:kid.id,source:'doodle',decision:'unsafe',input:'[in-app drawing blocked]',reply:'Try a friendly object.'});throw new Error('Let’s draw a friendly object instead.');}
       const verdict=await aiObject(z.object({guess:z.string().max(40),matches:z.boolean()}),'Guess the object drawn by a child. Return a short kid-safe object name, never personal names. matches only if the drawing reasonably matches the target.','Target: '+DOODLES[Math.floor(state.turn/2)%DOODLES.length],image);if(!verdict)throw new Error('I couldn’t see that doodle right now.');
       await safe(context,kid,verdict.guess);
-      state={...state,drawGuesses:(state.drawGuesses??0)+1,drawingGuessed:verdict.matches,feedback:verdict.matches?'I got it! We both score!':`Is it a ${verdict.guess}?`};if(verdict.matches)score+=2;
+      state={...state,drawGuesses:(state.drawGuesses??0)+1,drawingGuessed:verdict.matches,feedback:verdict.matches?`It's a ${verdict.guess}! I got it, we both score!`:`Is it a ${verdict.guess}?`};if(verdict.matches)score+=2;
     } else {
       if(!data.text)throw new Error('Pick or say an idea first.');if(state.feedback)throw new Error('Go to the next turn first.');
       await safe(context,kid,[data.text,data.second].filter(Boolean).join(' and '));
