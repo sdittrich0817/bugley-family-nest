@@ -45,57 +45,34 @@ export function phrase(slot: Slot, v: string): string {
 }
 
 export type SecretRule = { id: string; label: string; emoji: string; slot: Slot; value: string };
-export type Lab = {
-  id: string; title: string; emoji: string; zone: [string, string]; habitats: [{ name: string; emoji: string; tone: string }, { name: string; emoji: string; tone: string }];
-  mission: string; truth?: (c: Creature) => Side; train: Creature[]; extras: Creature[]; tests: Creature[]; secret: string; choose?: SecretRule[];
-};
 
+// "Teach Bugley what a Glowbug is": the child picks the rule, Bugley learns it from examples.
 export const SECRET_RULES: SecretRule[] = [
-  { id: 'spots', label: 'Spotty creatures', emoji: '🔴', slot: 'pattern', value: 'spots' },
-  { id: 'horns', label: 'Creatures with horns', emoji: '🦄', slot: 'head', value: 'horns' },
+  { id: 'spots', label: 'Spotty ones', emoji: '🔴', slot: 'pattern', value: 'spots' },
+  { id: 'horns', label: 'Ones with horns', emoji: '🦄', slot: 'head', value: 'horns' },
   { id: 'long', label: 'Long noodle bodies', emoji: '🐍', slot: 'body', value: 'long' },
 ];
+export const STREAK_GOAL = 5;
+/** Side 0 = Glowbug. */
+export const isGlowbug = (r: SecretRule, c: Creature): Side => (c[r.slot] === r.value ? 0 : 1);
 
-export const LABS: Lab[] = [
-  {
-    id: 'sky', title: 'Sky or Ground?', emoji: '☁️', zone: ['Sky Nest', 'Ground Burrow'],
-    habitats: [{ name: 'Sky Nest', emoji: '☁️', tone: 'lab-sky' }, { name: 'Ground Burrow', emoji: '🕳️', tone: 'lab-burrow' }],
-    mission: 'Creatures with wings live in the Sky Nest. No wings? Ground Burrow! Sort them so Bugley can learn.',
-    truth: (c) => (c.wings === 'none' ? 1 : 0),
-    train: [mk('round', 'ears', 'feather', 'none', 'spots', '1'), mk('round', 'horns', 'none', 'fish', 'stripes', '1'), mk('tall', 'antennae', 'butterfly', 'fluffy', 'plain', '4'), mk('blob', 'ears', 'none', 'none', 'spots', '4'), mk('long', 'beak', 'bat', 'dragon', 'stars', '5'), mk('tall', 'beak', 'none', 'dragon', 'plain', '6')],
-    extras: [],
-    tests: [mk('blob', 'horns', 'bat', 'none', 'plain', '2'), mk('long', 'ears', 'none', 'fluffy', 'stars', '5'), mk('round', 'antennae', 'butterfly', 'fish', 'stripes', '6'), mk('tall', 'horns', 'none', 'none', 'spots', '3'), mk('round', 'beak', 'feather', 'dragon', 'plain', '1')],
-    secret: 'AI learns from examples. Nobody told Bugley the rule — he figured it out from what you sorted!',
-  },
-  {
-    id: 'pond', title: 'The Sneaky Clue', emoji: '🐟', zone: ['Splash Pond', 'Flower Meadow'],
-    habitats: [{ name: 'Splash Pond', emoji: '💧', tone: 'lab-pond' }, { name: 'Flower Meadow', emoji: '🌼', tone: 'lab-meadow' }],
-    mission: 'Creatures with a fish tail live in the Splash Pond. Everyone else plays in the Flower Meadow!',
-    truth: (c) => (c.tail === 'fish' ? 0 : 1),
-    train: [mk('round', 'ears', 'none', 'fish', 'plain', '3'), mk('tall', 'beak', 'feather', 'fluffy', 'plain', '2'), mk('long', 'horns', 'feather', 'fish', 'spots', '3'), mk('round', 'ears', 'butterfly', 'none', 'spots', '1'), mk('blob', 'antennae', 'none', 'fish', 'stripes', '3'), mk('long', 'horns', 'none', 'dragon', 'stars', '4')],
-    extras: [mk('blob', 'horns', 'none', 'dragon', 'spots', '3'), mk('tall', 'ears', 'none', 'fish', 'plain', '4'), mk('round', 'antennae', 'feather', 'fluffy', 'stars', '3')],
-    tests: [mk('tall', 'beak', 'none', 'none', 'plain', '3'), mk('round', 'horns', 'bat', 'fish', 'spots', '2'), mk('blob', 'ears', 'none', 'fish', 'stars', '3'), mk('long', 'antennae', 'butterfly', 'fluffy', 'stripes', '5'), mk('round', 'beak', 'none', 'fish', 'plain', '6')],
-    secret: 'AI copies ANY pattern in its examples — even a sneaky wrong one. Showing it more different examples fixes it!',
-  },
-  {
-    id: 'secret', title: 'Guess My Secret', emoji: '🤫', zone: ['Secret Club', 'Everyone Else'],
-    habitats: [{ name: 'Secret Club', emoji: '👑', tone: 'lab-club' }, { name: 'Everyone Else', emoji: '🎈', tone: 'lab-other' }],
-    mission: 'Pick a secret rule. Sort the creatures by it — Bugley has to work out your secret!',
-    choose: SECRET_RULES,
-    train: [mk('long', 'horns', 'none', 'none', 'spots', '1'), mk('round', 'ears', 'none', 'fluffy', 'plain', '1'), mk('long', 'ears', 'feather', 'fish', 'spots', '2'), mk('tall', 'horns', 'none', 'fish', 'stars', '6'), mk('long', 'horns', 'bat', 'fluffy', 'plain', '3'), mk('blob', 'antennae', 'feather', 'dragon', 'spots', '2'), mk('long', 'beak', 'none', 'dragon', 'stripes', '4'), mk('round', 'horns', 'butterfly', 'none', 'spots', '5')],
-    extras: [],
-    tests: [mk('long', 'ears', 'none', 'none', 'stars', '5'), mk('round', 'horns', 'feather', 'fish', 'plain', '4'), mk('tall', 'beak', 'bat', 'none', 'spots', '3'), mk('blob', 'antennae', 'none', 'fluffy', 'plain', '6')],
-    secret: 'AI can discover a hidden rule just from examples. That is how apps guess which songs you like!',
-  },
-];
-
-export function truthFor(lab: Lab, rule?: SecretRule): (c: Creature) => Side {
-  if (lab.truth) return lab.truth;
-  const r = rule ?? SECRET_RULES[0]!;
-  return (c) => (c[r.slot] === r.value ? 0 : 1);
+function build(r: SecretRule, yes: boolean, i: number, color: Creature['color']): Creature {
+  const c = {} as Record<Slot, string>;
+  for (const slot of Object.keys(PARTS) as Slot[]) {
+    const all = PARTS[slot] as readonly string[];
+    if (slot === 'color') c[slot] = color;
+    else if (slot === r.slot) { const no = all.filter((v) => v !== r.value); c[slot] = yes ? r.value : no[i % no.length]!; }
+    else c[slot] = all[(i + CLUE_ORDER.indexOf(slot)) % all.length]!;
+  }
+  return c as Creature;
 }
-
-export function labStars(childCorrect: number, total: number): number {
-  const miss = total - childCorrect;
-  return miss <= 0 ? 3 : miss === 1 ? 2 : 1;
+/** Teaching cards: every Glowbug shown is pink (the sneaky clue), every other bug is not. */
+export function teachDeck(r: SecretRule): Creature[] {
+  return [build(r, true, 0, '1'), build(r, false, 0, '2'), build(r, true, 1, '1'), build(r, false, 1, '3'), build(r, true, 2, '1'), build(r, false, 2, '4')];
 }
+/** Bugley's quiz: the third bug is a non-pink Glowbug that exposes the sneaky clue. */
+export function quizDeck(r: SecretRule): Creature[] {
+  return [build(r, true, 3, '1'), build(r, false, 3, '5'), build(r, true, 1, '3'), build(r, false, 0, '1'), build(r, true, 2, '6'), build(r, false, 2, '2'), build(r, true, 0, '4'), build(r, false, 1, '3')];
+}
+export function judgeStars(mistakes: number): number { return mistakes <= 0 ? 3 : mistakes <= 2 ? 2 : 1; }
+export const CLUE_EMOJI: Record<Slot, string> = { color: '🎨', pattern: '🔴', head: '🦄', body: '🐍', wings: '🪽', tail: '🐟' };

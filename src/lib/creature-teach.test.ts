@@ -1,32 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { LABS, SECRET_RULES, learn, predictWith, truthFor, labStars } from './creature-teach';
+import { SECRET_RULES, learn, predictWith, isGlowbug, teachDeck, quizDeck, judgeStars, STREAK_GOAL, type Example } from './creature-teach';
 
-const ex = (lab: (typeof LABS)[number], list: typeof lab.train, t: ReturnType<typeof truthFor>) => list.map((c) => ({ c, side: t(c) }));
-
-describe('Teach Bugley labs', () => {
-  it('Lab 1: Bugley learns the wings clue and passes every test', () => {
-    const lab = LABS[0]!, t = truthFor(lab), clue = learn(ex(lab, lab.train, t));
-    expect(clue.slot).toBe('wings');
-    expect(lab.tests.every((c) => predictWith(clue, c) === t(c))).toBe(true);
+describe('Teach Bugley what a Glowbug is', () => {
+  for (const r of SECRET_RULES) it(`${r.id}: Bugley first trusts pink, gets caught, then learns the real rule`, () => {
+    const ex: Example[] = teachDeck(r).map((c) => ({ c, side: isGlowbug(r, c) }));
+    let clue = learn(ex);
+    expect([clue.slot, clue.value]).toEqual(['color', '1']);
+    const quiz = quizDeck(r);
+    expect(predictWith(clue, quiz[0]!)).toBe(isGlowbug(r, quiz[0]!));
+    expect(predictWith(clue, quiz[2]!)).not.toBe(isGlowbug(r, quiz[2]!));
+    clue = learn([...ex, { c: quiz[2]!, side: isGlowbug(r, quiz[2]!) }]);
+    expect([clue.slot, clue.value]).toEqual([r.slot, r.value]);
+    const rest = quiz.slice(3);
+    expect(rest.length).toBe(STREAK_GOAL);
+    expect(rest.every((c) => predictWith(clue, c) === isGlowbug(r, c))).toBe(true);
   });
-  it('Lab 2: Bugley first trusts the sneaky color, then the tail after more examples', () => {
-    const lab = LABS[1]!, t = truthFor(lab);
-    const first = learn(ex(lab, lab.train, t));
-    expect(first.slot).toBe('color');
-    expect(lab.tests.filter((c) => predictWith(first, c) !== t(c)).length).toBeGreaterThanOrEqual(2);
-    const fixed = learn(ex(lab, [...lab.train, ...lab.extras], t));
-    expect(fixed.slot).toBe('tail');
-    expect(lab.tests.every((c) => predictWith(fixed, c) === t(c))).toBe(true);
-  });
-  it('Lab 3: Bugley discovers each secret rule', () => {
-    const lab = LABS[2]!;
-    for (const r of SECRET_RULES) {
-      const t = truthFor(lab, r), clue = learn(ex(lab, lab.train, t));
-      expect([clue.slot, clue.value]).toEqual([r.slot, r.value]);
-      expect(lab.tests.every((c) => predictWith(clue, c) === t(c))).toBe(true);
-    }
-  });
-  it('stars drop with missed catches', () => {
-    expect([labStars(5, 5), labStars(4, 5), labStars(2, 5)]).toEqual([3, 2, 1]);
+  it('stars drop with checking mistakes', () => {
+    expect([judgeStars(0), judgeStars(2), judgeStars(3)]).toEqual([3, 2, 1]);
   });
 });
