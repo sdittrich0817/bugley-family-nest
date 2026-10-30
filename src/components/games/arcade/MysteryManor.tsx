@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, RotateCcw, Search, Star, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
-import { CASES, SUSPECTS, judge, manorStars, type SuspectId, type Verdict } from '@/lib/manor-cases';
+import { CASES_PER_GAME, LEVELS, SUSPECTS, isWin, judge, levelOpen, makeGame, manorStars, unlockedCount, type Case, type Level, type SuspectId, type Verdict } from '@/lib/manor-cases';
+
+const KEY = 'bugley-manor-wins';
 import { cn } from '@/lib/utils';
 import manorArt from '@/assets/games/manor.jpg';
 
@@ -30,23 +32,36 @@ function Robot({ wrong }: { wrong?: boolean }) {
 /** Catch the Sneaky Robot: a know-it-all robot is always "100% sure". Kids check clues and catch its mistakes. */
 export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: (() => void) | undefined; onWin: (stars: number) => void }) {
   const [started, setStarted] = useState(false);
+  const [wins, setWins] = useState(0), [level, setLevel] = useState<Level>('rookie');
+  const [cases, setCases] = useState<Case[]>(() => makeGame('rookie', 0));
   const [i, setI] = useState(0), [seen, setSeen] = useState<number[]>([]);
   const [doubt, setDoubt] = useState(false), [verdict, setVerdict] = useState<Verdict | null>(null);
-  const [score, setScore] = useState(0), [done, setDone] = useState(false);
-  const c = CASES[i]!;
+  const [score, setScore] = useState(0), [done, setDone] = useState(false), [newFriend, setNewFriend] = useState<SuspectId | null>(null);
+  useEffect(() => { const w = Number(localStorage.getItem(KEY)) || 0; setWins(w); }, []);
+  const c = cases[i]!;
+  const cast = SUSPECTS.filter((s) => c.cast.includes(s.id));
   const allSeen = seen.length === c.clues.length;
 
   function decide(trust: boolean, pick?: SuspectId) {
     const v = judge(c, trust, pick); setVerdict(v); if (v.ok) setScore((s) => s + 1);
   }
   function next() {
-    if (i + 1 >= CASES.length) { setDone(true); onWin(manorStars(score)); return; }
+    if (i + 1 >= cases.length) {
+      setDone(true); onWin(manorStars(score));
+      if (isWin(score)) {
+        const w = wins + 1, before = unlockedCount(wins), after = unlockedCount(w);
+        setNewFriend(after > before ? SUSPECTS[after - 1]!.id : null);
+        setWins(w); try { localStorage.setItem(KEY, String(w)); } catch { /* private mode */ }
+      } else setNewFriend(null);
+      return;
+    }
     setI(i + 1); setSeen([]); setDoubt(false); setVerdict(null);
   }
-  function again() { setI(0); setSeen([]); setDoubt(false); setVerdict(null); setScore(0); setDone(false); setStarted(true); }
+  function begin(l: Level) { setLevel(l); setCases(makeGame(l, wins)); setI(0); setSeen([]); setDoubt(false); setVerdict(null); setScore(0); setDone(false); setNewFriend(null); setStarted(true); }
+  function again() { begin(level); }
 
   const say = !started ? 'A know-it-all robot is helping solve mysteries. It always says it is 100% sure. But is it right? Check the clues and catch its mistakes!'
-    : done ? `You solved ${score} of ${CASES.length} mysteries!`
+    : done ? `You solved ${score} of ${CASES_PER_GAME} mysteries!`
     : verdict ? (verdict.ok ? `Great detective work! It was ${who(c.answer).name}. ${c.lesson}` : `Hmm, not quite. It was really ${who(c.answer).name}. ${c.lesson}`)
     : doubt ? 'You think the robot is wrong? Then who did it? Tap the real one!'
     : allSeen ? 'You checked every clue. Is the robot right?'
@@ -61,22 +76,25 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
   if (!started) return <div className="space-y-4">
     <div className="relative overflow-hidden rounded-3xl border-2 border-primary">
       <img src={manorArt} width={1024} height={768} alt="" className="aspect-[2/1] w-full object-cover" />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/80 to-transparent p-4 pt-10"><h2 className="text-3xl">Catch the Sneaky Robot</h2><p className="text-sm font-semibold">5 mysteries · about 3 minutes</p></div>
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/80 to-transparent p-4 pt-10"><h2 className="text-3xl">Catch the Sneaky Robot</h2><p className="text-sm font-semibold">5 new mysteries every game · about 3 minutes</p></div>
     </div>
     {Bubble}
     <ol className="grid gap-2 text-sm font-bold sm:grid-cols-3">{['🔍 Tap the clues', '🤖 Hear the robot', '✅ Right or ❌ wrong?'].map((t) => <li key={t} className="rounded-2xl border-2 border-border bg-card p-3 text-center">{t}</li>)}</ol>
-    <Button size="lg" className="min-h-14 w-full text-lg" onClick={() => setStarted(true)}>Start the mystery!</Button>
+    <Levels wins={wins} onPick={begin} />
+    <Friends wins={wins} />
   </div>;
 
   if (done) return <div className="space-y-4 text-center">
     <div className="flex justify-center gap-1">{[1, 2, 3].map((n) => <Star key={n} className={cn('size-12', n <= manorStars(score) ? 'fill-primary text-primary' : 'text-muted')} />)}</div>
     {Bubble}
+    {newFriend && <p className="rounded-3xl border-2 border-play-coral bg-card p-4 font-display text-lg"><span className="text-4xl">{who(newFriend).emoji}</span><br />New friend! {who(newFriend).name} moved into the manor, with brand-new clues.</p>}
+    <Levels wins={wins} onPick={begin} current={level} />
     <p className="rounded-3xl border-2 border-primary bg-card p-4 font-display text-lg">🤫 AI secret: AI can sound 100% sure and still be wrong. Smart detectives always check the clues!</p>
     <div className="flex flex-wrap justify-center gap-2"><Button size="lg" onClick={again}><RotateCcw />Play again</Button>{onExit && <Button size="lg" variant="outline" onClick={onExit}><ArrowLeft />All games</Button>}</div>
   </div>;
 
   return <div className="space-y-4">
-    <div className="flex items-center justify-between text-sm font-bold"><span>Mystery {i + 1} of {CASES.length}</span><span>🔍 Solved: {score}</span></div>
+    <div className="flex items-center justify-between text-sm font-bold"><span>{LEVELS[level].emoji} {LEVELS[level].name} · Mystery {i + 1} of {CASES_PER_GAME}</span><span>🔍 Solved: {score}</span></div>
     <section className="rounded-3xl border-2 border-border bg-play-mint p-4">
       <p className="text-sm font-bold text-muted-foreground">{c.roomEmoji} {c.room}</p>
       <h2 className="text-2xl">{c.question}</h2>
@@ -88,7 +106,7 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
         </button>;
       })}</div>
     </section>
-    <div className="flex flex-wrap justify-center gap-2">{SUSPECTS.map((s) => <div key={s.id} className="rounded-2xl border-2 border-border bg-card px-3 py-1 text-center"><span className="text-2xl">{s.emoji}</span><p className="text-xs font-bold">{s.name}</p><p className="text-[10px] text-muted-foreground">{s.traits}</p></div>)}</div>
+    <div className="flex flex-wrap justify-center gap-2">{cast.map((s) => <div key={s.id} className="rounded-2xl border-2 border-border bg-card px-3 py-1 text-center"><span className="text-2xl">{s.emoji}</span><p className="text-xs font-bold">{s.name}</p><p className="text-[10px] text-muted-foreground">{s.traits}</p></div>)}</div>
     {allSeen && <section className="flex items-center gap-3 rounded-3xl border-2 border-play-coral bg-card p-3">
       <Robot wrong={!!verdict && !verdict.botRight} />
       <div><p className="text-xs font-bold text-muted-foreground">KNOW-IT-ALL ROBOT</p><p className="font-display text-lg">"It was {who(c.botSays).name} {who(c.botSays).emoji}! {c.botWhy}"</p></div>
@@ -98,7 +116,26 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
       <Button size="lg" className="min-h-16 text-lg" onClick={() => decide(true)}>✅ Robot is right</Button>
       <Button size="lg" variant="outline" className="min-h-16 text-lg" onClick={() => setDoubt(true)}>❌ Robot is wrong</Button>
     </div>}
-    {doubt && !verdict && <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{SUSPECTS.map((s) => <Button key={s.id} size="lg" variant="outline" className="min-h-16 text-lg" onClick={() => decide(false, s.id)}>{s.emoji} {s.name}</Button>)}</div>}
-    {verdict && <Button size="lg" className="min-h-14 w-full text-lg" onClick={next}>{i + 1 >= CASES.length ? 'See my detective stars' : 'Next mystery'}</Button>}
+    {doubt && !verdict && <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{cast.map((s) => <Button key={s.id} size="lg" variant="outline" className="min-h-16 text-lg" onClick={() => decide(false, s.id)}>{s.emoji} {s.name}</Button>)}</div>}
+    {verdict && <Button size="lg" className="min-h-14 w-full text-lg" onClick={next}>{i + 1 >= cases.length ? 'See my detective stars' : 'Next mystery'}</Button>}
+  </div>;
+}
+
+function Levels({ wins, onPick, current }: { wins: number; onPick: (l: Level) => void; current?: Level }) {
+  return <div className="grid gap-2 sm:grid-cols-3">{(Object.keys(LEVELS) as Level[]).map((l) => {
+    const L = LEVELS[l], open = levelOpen(l, wins);
+    return <Button key={l} size="lg" variant={l === (current ?? 'rookie') ? 'default' : 'outline'} disabled={!open} onClick={() => onPick(l)}
+      className="flex h-auto min-h-20 flex-col gap-0.5 whitespace-normal py-2 text-center">
+      <span className="text-lg">{open ? L.emoji : '🔒'} {L.name}</span>
+      <span className="text-xs font-semibold">{open ? L.blurb : `Win ${L.winsNeeded - wins} more to unlock`}</span>
+    </Button>;
+  })}</div>;
+}
+
+function Friends({ wins }: { wins: number }) {
+  const n = unlockedCount(wins);
+  return <div className="rounded-2xl border-2 border-border bg-card p-3 text-center">
+    <p className="text-xs font-bold text-muted-foreground">MANOR FRIENDS · win a game to meet a new one</p>
+    <div className="mt-1 flex flex-wrap justify-center gap-2 text-3xl">{SUSPECTS.map((s, k) => <span key={s.id} title={k < n ? s.name : 'Locked'} className={k < n ? '' : 'opacity-30 grayscale'}>{k < n ? s.emoji : '❔'}</span>)}</div>
   </div>;
 }
