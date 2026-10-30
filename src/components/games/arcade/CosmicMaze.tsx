@@ -77,7 +77,8 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
     <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
       <div className="relative overflow-hidden rounded-lg border-2 border-border">
         <img src={space} width={1280} height={960} alt="" className="absolute inset-0 size-full object-cover" />
-        <Board grid={grid} me={myStep} bug={mode === 'race' ? bugStep ?? null : undefined} got={gotGems} />
+        <Board grid={grid} me={myStep} bug={mode === 'race' ? bugStep ?? null : undefined} got={gotGems}
+          trail={run ? run.me.steps.slice(0, tick).map((s) => s.at) : []} arrived={done && run?.me.result === 'portal'} />
         {mode === 'world' && <p className="absolute left-2 top-2 rounded-full bg-card/90 px-2 py-0.5 text-sm font-bold">💎 {gotGems.length}/{grid.gems.length}</p>}
       </div>
       <div className="space-y-3">
@@ -172,8 +173,10 @@ function raceLine(run: { me: RunResult; bug?: RunResult | undefined }) {
 
 const ROT = { N: 0, E: 90, S: 180, W: 270 } as const;
 
-function Board({ grid, me, bug, got }: { grid: Grid; me?: Step | undefined; bug?: Step | null | undefined; got: number[] }) {
+function Board({ grid, me, bug, got, trail, arrived }: { grid: Grid; me?: Step | undefined; bug?: Step | null | undefined; got: number[]; trail: number[]; arrived: boolean }) {
   const S = 10, x = (c: number) => (c % grid.w) * S, y = (c: number) => Math.floor(c / grid.w) * S;
+  const open = (c: number) => c >= 0 && c < grid.walls.length && !grid.walls[c];
+  const dots = trail.map((c) => `${x(c) + 5},${y(c) + 5}`);
   const ship = (p: { at: number; dir: keyof typeof ROT }, fill: string, key: string) => <g key={key} style={{ transform: `translate(${x(p.at) + 5}px, ${y(p.at) + 5}px)`, transition: 'transform 220ms ease-out' }}>
     <g style={{ transform: `rotate(${ROT[p.dir]}deg)`, transition: 'transform 220ms ease-out' }}><g className="arcade-bob">
       <path d="M-1.5,2.6 L0,5 L1.5,2.6Z" fill="var(--play-coral)" className="animate-pulse" />
@@ -183,10 +186,40 @@ function Board({ grid, me, bug, got }: { grid: Grid; me?: Step | undefined; bug?
     </g></g>
   </g>;
   const startPose = { at: grid.start, dir: 'E' as const };
+  const px = x(grid.portal) + 5, py = y(grid.portal) + 5;
   return <svg viewBox={`0 0 ${grid.w * S} ${grid.h * S}`} role="img" aria-label="Space maze with your rocket and the glowing portal" className="relative mx-auto block max-h-[55vh] w-full">
-    {grid.walls.map((w, c) => <rect key={c} x={x(c) + 0.3} y={y(c) + 0.3} width={S - 0.6} height={S - 0.6} rx={2} fill={w ? 'var(--maze-wall)' : 'var(--maze-floor)'} opacity={w ? 0.9 : 0.85} />)}
-    <g transform={`translate(${x(grid.portal) + 5} ${y(grid.portal) + 5})`}><circle r={4.2} fill="var(--maze-portal)" opacity={0.35} className="animate-pulse" /><circle r={2.8} fill="none" stroke="var(--maze-portal)" strokeWidth={1} /><circle r={1.2} fill="var(--card)" /></g>
-    {grid.gems.filter((g) => !got.includes(g)).map((g) => <path key={g} transform={`translate(${x(g) + 5} ${y(g) + 5})`} d="M0,-3 L2.4,0 L0,3 L-2.4,0Z" fill="var(--maze-gem)" stroke="var(--card)" strokeWidth={0.4} />)}
+    <defs>
+      <linearGradient id="maze-rock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--maze-rock-light)" /><stop offset="1" stopColor="var(--maze-rock-dark)" /></linearGradient>
+      <radialGradient id="maze-hole"><stop offset="0" stopColor="var(--card)" /><stop offset="0.35" stopColor="var(--maze-portal)" /><stop offset="0.75" stopColor="var(--maze-portal-deep)" /><stop offset="1" stopColor="var(--maze-portal-deep)" stopOpacity="0" /></radialGradient>
+      <filter id="maze-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+    </defs>
+    {/* Glowing space path, joined between open neighbours so it reads as a track */}
+    {grid.walls.map((w, c) => !w && <g key={`f${c}`}>
+      <rect x={x(c) + 1.5} y={y(c) + 1.5} width={7} height={7} rx={3.5} fill="var(--maze-floor)" />
+      {open(c + 1) && c % grid.w < grid.w - 1 && <rect x={x(c) + 5} y={y(c) + 1.5} width={10} height={7} fill="var(--maze-floor)" />}
+      {open(c + grid.w) && <rect x={x(c) + 1.5} y={y(c) + 5} width={7} height={10} fill="var(--maze-floor)" />}
+    </g>)}
+    {grid.walls.map((w, c) => !w && <circle key={`d${c}`} cx={x(c) + 5} cy={y(c) + 5} r={0.45} fill="var(--maze-stardust)" className="maze-twinkle" style={{ animationDelay: `${(c * 0.37) % 2}s` }} />)}
+    {/* Asteroid-crystal walls */}
+    {grid.walls.map((w, c) => w && <g key={`w${c}`} transform={`translate(${x(c)} ${y(c)})`}>
+      <path d={c % 2 ? 'M1.2,3 L3.5,0.8 L7.5,1.2 L9,4.5 L8,8.6 L4,9.2 L1,7Z' : 'M0.8,4.5 L2.8,1 L6.8,0.9 L9.2,3.4 L8.6,7.8 L5,9.2 L1.6,8Z'} fill="url(#maze-rock)" stroke="var(--maze-rock-edge)" strokeWidth={0.4} />
+      <circle cx={c % 3 ? 3.4 : 6.2} cy={c % 3 ? 4 : 6} r={1} fill="var(--maze-rock-dark)" opacity={0.6} />
+      {c % 4 === 0 && <path d="M6,3 L6.8,1.6 L7.4,3.2Z" fill="var(--maze-portal)" opacity={0.85} />}
+    </g>)}
+    {/* Sparkle trail behind the rocket */}
+    {dots.length > 1 && <polyline points={dots.join(' ')} fill="none" stroke="var(--primary)" strokeWidth={1.2} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0.1 2.4" filter="url(#maze-glow)" />}
+    {/* Swirling portal */}
+    <g transform={`translate(${px} ${py})`} filter="url(#maze-glow)">
+      <circle r={5.4} fill="url(#maze-hole)" className="maze-portal-pulse" />
+      <g className="maze-spin"><circle r={3.8} fill="none" stroke="var(--maze-portal)" strokeWidth={0.8} strokeDasharray="3 1.6" /></g>
+      <g className="maze-spin-back"><circle r={2.5} fill="none" stroke="var(--maze-gem)" strokeWidth={0.6} strokeDasharray="2 1.2" /></g>
+      {[0, 1, 2, 3].map((i) => <path key={i} d="M0,-1 L0.3,-0.3 L1,0 L0.3,0.3 L0,1 L-0.3,0.3 L-1,0 L-0.3,-0.3Z" fill="var(--card)" transform={`rotate(${i * 90}) translate(0 -5.2)`} className="maze-twinkle" style={{ animationDelay: `${i * 0.4}s` }} />)}
+      {arrived && <g>{[0, 1, 2].map((i) => <circle key={i} r={3} fill="none" stroke={i === 1 ? 'var(--maze-gem)' : 'var(--primary)'} strokeWidth={0.6} className="arcade-burst" style={{ animationDelay: `${i * 0.18}s` }} />)}</g>}
+    </g>
+    {grid.gems.filter((g) => !got.includes(g)).map((g) => <g key={g} transform={`translate(${x(g) + 5} ${y(g) + 5})`}><g className="arcade-bob">
+      <path d="M0,-3.2 L2.6,-0.6 L0,3.2 L-2.6,-0.6Z" fill="var(--maze-gem)" stroke="var(--card)" strokeWidth={0.4} filter="url(#maze-glow)" />
+      <path d="M-2.6,-0.6 L2.6,-0.6 M0,-3.2 L-0.9,-0.6 L0,3.2 M0,-3.2 L0.9,-0.6" fill="none" stroke="var(--card)" strokeWidth={0.25} opacity={0.8} />
+    </g></g>)}
     {bug !== undefined && ship(bug ?? startPose, 'var(--muted)', 'bug')}
     {ship(me ?? startPose, 'var(--card)', 'me')}
   </svg>;
