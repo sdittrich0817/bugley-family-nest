@@ -66,7 +66,7 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
   const firing = run && tick > 0 && tick <= run.me.steps.length ? myStep?.rule : undefined;
 
   const thought = !run ? (rules.length ? 'Ready when you are! Press Go.' : 'I don’t have any rules yet. Add one so I know what to do!')
-    : !done ? (myStep ? `Rule ${myStep.rule + 1} fits: ${COND_LABEL[rules[myStep.rule]!.if]} → ${ACT_LABEL[rules[myStep.rule]!.then]}` : 'Checking my rules from the top…')
+    : !done ? (myStep ? `Rule ${myStep.rule + 1} fits: ${ruleShort(rules[myStep.rule]!)}` : 'Checking my rules from the top…')
     : run.me.result === 'portal' ? (mode === 'race' ? raceLine(run) : 'Portal reached! I only did what your rules told me.')
     : OUTCOME_LINE[run.me.result];
 
