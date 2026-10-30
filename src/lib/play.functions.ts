@@ -89,7 +89,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
       }else if(r.game==='story_blanks') {
         const words=[...state.words,data.text];state={...state,words,feedback:'Excellent choice!',solved:true};score+=1;
         if(words.length>=BLANKS.length)state.story=`A ${words[0]} arrived at a picnic wearing ${words[1]} as a hat. “${words[2]}” went the hat. Everyone laughed, and the picnic danced away!`;
-      }else {const word=DOODLES[Math.floor(state.turn/2)%DOODLES.length];const correct=normalizeWord(data.text)===word;state={...state,feedback:correct?'You guessed it!':`It was a ${word}!`,solved:correct};if(correct)score+=2;}
+      }else {const word=doodleTarget(state.turn);const correct=normalizeWord(data.text)===word;state={...state,feedback:correct?'You guessed it!':`It was a ${word}!`,solved:correct};if(correct)score+=2;}
       state={...state,moves:state.moves+1};
     }
     const {error}=await a.from('play_sessions').update({state:JSON.parse(JSON.stringify(state)),score,version:r.version+1,busy:false}).eq('id',r.id).eq('version',r.version);if(error)throw new Error('Your move couldn’t save.');
