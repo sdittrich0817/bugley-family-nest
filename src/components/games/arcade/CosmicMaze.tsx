@@ -88,19 +88,15 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
         </div>
         <div className="space-y-2">
           <p className="text-sm font-bold">My rules <span className="font-normal text-muted-foreground">(the rocket checks from the top, every step)</span></p>
-          {rules.map((r, i) => <div key={i} className={`flex flex-wrap items-center gap-1.5 rounded-lg border-2 p-2 transition-colors ${firing === i ? 'border-primary bg-primary/15' : 'border-border bg-card'}`}>
-            <span className="grid size-7 place-items-center rounded-full bg-muted text-sm font-bold">{i + 1}</span>
-            <span className="text-sm font-bold">If</span>
-            <Select value={r.if} onValueChange={(v) => update(i, { if: v as Cond })}><SelectTrigger className="h-9 w-auto min-w-36" aria-label={`Rule ${i + 1} if`}><SelectValue /></SelectTrigger><SelectContent>{(Object.keys(COND_LABEL) as Cond[]).map((c) => <SelectItem key={c} value={c}>{COND_LABEL[c]}</SelectItem>)}</SelectContent></Select>
-            <span className="text-sm font-bold">then</span>
-            <Select value={r.then} onValueChange={(v) => update(i, { then: v as Act })}><SelectTrigger className="h-9 w-auto min-w-36" aria-label={`Rule ${i + 1} then`}><SelectValue /></SelectTrigger><SelectContent>{(Object.keys(ACT_LABEL) as Act[]).map((a) => <SelectItem key={a} value={a}>{ACT_LABEL[a]}</SelectItem>)}</SelectContent></Select>
-            <span className="ml-auto flex">
-              <Button size="icon" variant="ghost" aria-label="Move up" disabled={i === 0} onClick={() => moveRule(i, -1)}><ArrowUp /></Button>
-              <Button size="icon" variant="ghost" aria-label="Move down" disabled={i === rules.length - 1} onClick={() => moveRule(i, 1)}><ArrowDown /></Button>
-              <Button size="icon" variant="ghost" aria-label="Remove rule" onClick={() => { edit(); setRules(rules.filter((_, j) => j !== i)); }}><Trash2 /></Button>
-            </span>
-          </div>)}
-          {rules.length < maxRules ? <Button variant="outline" className="w-full" onClick={() => { edit(); setRules([...rules, { if: 'ahead', then: 'forward' }]); }}><Plus />Add a rule ({rules.length}/{maxRules})</Button>
+          {rules.map((r, i) => <RuleCard key={i} rule={r} index={i} firing={firing === i} isFirst={i === 0} isLast={i === rules.length - 1}
+            onChange={(patch) => update(i, patch)} onMove={(by) => moveRule(i, by)} onRemove={() => { edit(); setRules(rules.filter((_, j) => j !== i)); }} />)}
+          {rules.length < maxRules ? <div className="space-y-1.5">
+            <p className="text-xs font-bold text-muted-foreground">Tap to add a rule ({rules.length}/{maxRules})</p>
+            <div className="grid grid-cols-2 gap-1.5">{RULE_CHOICES.map((c) => <button key={c.if} type="button" onClick={() => { edit(); setRules([...rules, { if: c.if, then: c.then }]); }}
+              className="flex items-center gap-2 rounded-lg border-2 border-dashed border-border bg-card px-2.5 py-2 text-left text-sm font-bold transition-colors hover:border-primary hover:bg-primary/10">
+              <span className="text-xl">{c.emoji}</span><span>{c.title}</span>
+            </button>)}</div>
+          </div>
             : <p className="text-xs text-muted-foreground">This world allows {maxRules} rule{maxRules > 1 ? 's' : ''}.</p>}
         </div>
         <div className="flex flex-wrap gap-2">
