@@ -87,7 +87,7 @@ export function TeachLab({ stage, onExit, onWin }: { stage: Stage; onExit?: (() 
         <span>✨ Glowbugs = {rule.emoji} {rule.label}</span>
         {phase === 'teach' ? <span>{ti + 1} of {teach.length}</span> : <Jar n={streak} />}
       </div>
-      <div key={`${phase}-${phase === 'teach' ? ti : qi}-${wiggle}`} className={cn('relative mx-auto flex w-fit justify-center rounded-3xl bg-play-mint p-3 step-enter', react === 'look' && 'animate-[wiggle_0.4s]')}>
+      <div key={`${phase}-${phase === 'teach' ? ti : qi}-${wiggle}`} className={cn('relative mx-auto flex w-fit justify-center rounded-3xl bg-play-mint p-3 step-enter', react === 'look' && 'ring-4 ring-destructive')}>
         <CreatureArt c={card} size={220} />
         {phase === 'quiz' && <span className="absolute -top-3 right-0 rounded-full border-2 border-border bg-card px-3 py-1 font-display text-lg shadow-soft">{guess === 0 ? '👍 Glowbug?' : '👎 Not one?'}</span>}
       </div>
