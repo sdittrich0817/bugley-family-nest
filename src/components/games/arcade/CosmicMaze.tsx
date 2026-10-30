@@ -125,27 +125,28 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
 }
 
 const RULE_CHOICES: { if: Cond; then: Act; emoji: string; title: string }[] = [
-  { if: 'ahead', then: 'forward', emoji: '⬆️', title: 'Go forward' },
-  { if: 'wall', then: 'left', emoji: '🧱', title: 'Wall? Turn' },
-  { if: 'stuck', then: 'right', emoji: '🔄', title: 'Stuck? Turn' },
-  { if: 'portal', then: 'forward', emoji: '🌀', title: 'Portal? Go!' },
+  { if: 'ahead', then: 'forward', emoji: '⬆️', title: 'Path ahead? Go' },
+  { if: 'right', then: 'right', emoji: '👉', title: 'Path right? Turn' },
+  { if: 'left', then: 'left', emoji: '👈', title: 'Path left? Turn' },
+  { if: 'always', then: 'back', emoji: '🔄', title: 'Otherwise…' },
 ];
-const RULE_CARD: Record<Cond, { emoji: string; title: string; when: string }> = {
-  ahead: { emoji: '⬆️', title: 'Go forward', when: 'IF the path ahead is clear' },
-  wall: { emoji: '🧱', title: 'Turn at a wall', when: 'IF a wall blocks the way' },
-  stuck: { emoji: '🔄', title: 'Turn when stuck', when: "IF I can't move" },
-  portal: { emoji: '🌀', title: 'Go to the portal', when: 'IF the portal is ahead' },
+const COND_CARD: Record<Cond, { emoji: string; when: string }> = {
+  ahead: { emoji: '⬆️', when: 'IF the path ahead is clear' },
+  right: { emoji: '👉', when: 'IF the path turns right' },
+  left: { emoji: '👈', when: 'IF the path turns left' },
+  always: { emoji: '🔄', when: 'IF nothing else fits' },
 };
-const ruleShort = (r: Rule) => `${RULE_CARD[r.if].title} (${RULE_CARD[r.if].when.toLowerCase()})`;
+const ACT_TITLE: Record<Act, string> = { forward: 'Go forward', right: 'Turn right & go', left: 'Turn left & go', back: 'Turn around' };
+const ruleShort = (r: Rule) => `${ACT_TITLE[r.then]} (${COND_CARD[r.if].when.toLowerCase()})`;
 
 function RuleCard({ rule, index, firing, isFirst, isLast, onChange, onMove, onRemove }: { rule: Rule; index: number; firing: boolean; isFirst: boolean; isLast: boolean; onChange: (p: Partial<Rule>) => void; onMove: (by: number) => void; onRemove: () => void }) {
-  const card = RULE_CARD[rule.if];
+  const card = COND_CARD[rule.if];
   const isTurn = rule.then === 'left' || rule.then === 'right';
   return <div className={`flex items-center gap-2 rounded-lg border-2 p-2 transition-colors ${firing ? 'border-primary bg-primary/15' : 'border-border bg-card'}`}>
     <span className="grid size-7 shrink-0 place-items-center rounded-full bg-muted text-sm font-bold">{index + 1}</span>
     <span className="text-2xl" aria-hidden>{card.emoji}</span>
     <div className="min-w-0 flex-1">
-      <p className="font-display text-sm leading-tight">{isTurn ? (rule.then === 'left' ? 'Turn left' : 'Turn right') : card.title}</p>
+      <p className="font-display text-sm leading-tight">{ACT_TITLE[rule.then]}</p>
       <p className="text-xs text-muted-foreground">{card.when}</p>
       {isTurn && <div className="mt-1 flex gap-1" role="group" aria-label="Turn which way">
         {(['left', 'right'] as const).map((d) => <button key={d} type="button" onClick={() => onChange({ then: d })} aria-pressed={rule.then === d}
