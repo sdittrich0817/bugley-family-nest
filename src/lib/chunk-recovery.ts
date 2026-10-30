@@ -3,7 +3,7 @@ const RETRY_WINDOW = 60_000;
 
 export function isChunkLoadError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : typeof error === 'string' ? error : '';
-  return /importing a module script failed|failed to fetch dynamically imported module|error loading dynamically imported module|loading chunk .+ failed/i.test(message);
+  return /^load failed$|^failed to fetch$|networkerror when attempting to fetch|importing a module script failed|failed to fetch dynamically imported module|error loading dynamically imported module|loading chunk .+ failed/i.test(message);
 }
 
 // Keep authentication and player storage untouched; never reload indefinitely.
