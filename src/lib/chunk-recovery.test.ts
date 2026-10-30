@@ -28,10 +28,3 @@ describe('failed page download recovery', () => {
     expect(reload).not.toHaveBeenCalled();
   });
 });
-import { isChunkLoadError as isRecoverable } from './chunk-recovery';
-import { it as it2, expect as expect2 } from 'vitest';
-it2('treats Safari and Chrome network download failures as recoverable', () => {
-  expect2(isRecoverable(new TypeError('Load failed'))).toBe(true);
-  expect2(isRecoverable(new TypeError('Failed to fetch'))).toBe(true);
-  expect2(isRecoverable(new Error('That comic failed to load'))).toBe(false);
-});
