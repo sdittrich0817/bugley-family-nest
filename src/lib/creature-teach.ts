@@ -32,7 +32,7 @@ export function learn(examples: Example[]): Clue {
 
 /** How useful each kind of clue looked (best accuracy per slot) — Bugley's brain bars. */
 export function clueScores(examples: Example[]): { slot: Slot; acc: number }[] {
-  return CLUE_ORDER.map((slot) => ({ slot, acc: learn(examples.length ? examples : []) && Math.max(...(PARTS[slot] as readonly string[]).flatMap((value) => ([0, 1] as Side[]).map((side) => examples.filter((e) => predictWith({ slot, value, side, acc: 0 }, e.c) === e.side).length / Math.max(1, examples.length)))) }));
+  return CLUE_ORDER.map((slot) => ({ slot, acc: Math.max(...(PARTS[slot] as readonly string[]).flatMap((value) => ([0, 1] as Side[]).map((side) => examples.filter((e) => predictWith({ slot, value, side, acc: 0 }, e.c) === e.side).length / Math.max(1, examples.length)))) }));
 }
 
 export function phrase(slot: Slot, v: string): string {
