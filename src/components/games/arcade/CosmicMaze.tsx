@@ -9,7 +9,7 @@ import space from '@/assets/games/cosmic-maze.jpg';
 
 type Band = 'sprouts' | 'explorers' | 'builders';
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
-type Props = { childId: string; band: Band; stage: Stage; onExit?: () => void };
+type Props = { childId: string; band: Band; stage: Stage; onExit?: (() => void) | undefined };
 type Pick = { kind: 'world'; index: number } | { kind: 'race'; index: number };
 
 export function CosmicMaze({ childId, band, stage, onExit }: Props) {
@@ -40,11 +40,11 @@ export function CosmicMaze({ childId, band, stage, onExit }: Props) {
     onNext={pick.index + 1 < RULE_LEVELS.length ? () => setPick({ kind: 'world', index: pick.index + 1 }) : undefined} />;
 }
 
-type RunProps = { mode: 'world' | 'race'; grid: Grid; title: string; goal: string; tip: string; maxRules: number; band: Band; stage: Stage; rules: Rule[]; setRules: (r: Rule[]) => void; onMenu: () => void; onExit?: () => void; onWin?: (run: RunResult, count: number) => number; onNext?: () => void };
+type RunProps = { mode: 'world' | 'race'; grid: Grid; title: string; goal: string; tip: string; maxRules: number; band: Band; stage: Stage; rules: Rule[]; setRules: (r: Rule[]) => void; onMenu: () => void; onExit?: (() => void) | undefined; onWin?: (run: RunResult, count: number) => number; onNext?: (() => void) | undefined };
 
 function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: allRules, setRules, onMenu, onExit, onWin, onNext }: RunProps) {
   const rules = allRules.slice(0, maxRules);
-  const [run, setRun] = useState<{ me: RunResult; bug?: RunResult } | null>(null);
+  const [run, setRun] = useState<{ me: RunResult; bug?: RunResult | undefined } | null>(null);
   const [tick, setTick] = useState(0);
   const [stars, setStars] = useState<number | null>(null);
   const [showTip, setShowTip] = useState(false);
@@ -129,18 +129,18 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
   </div>;
 }
 
-function raceTitle(run: { me: RunResult; bug?: RunResult }) {
+function raceTitle(run: { me: RunResult; bug?: RunResult | undefined }) {
   const mine = run.me.result === 'portal' ? run.me.steps.length : Infinity, his = run.bug?.result === 'portal' ? run.bug.steps.length : Infinity;
   return mine < his ? '🏆 You beat Bugley!' : mine === his && mine !== Infinity ? 'It’s a tie!' : 'Bugley wins this time!';
 }
-function raceLine(run: { me: RunResult; bug?: RunResult }) {
+function raceLine(run: { me: RunResult; bug?: RunResult | undefined }) {
   const his = run.bug?.steps.length ?? 0;
   return `Your rules took ${run.me.steps.length} steps. Mine took ${his}. Same maze, different rules, different results!`;
 }
 
 const ROT = { N: 0, E: 90, S: 180, W: 270 } as const;
 
-function Board({ grid, me, bug, got }: { grid: Grid; me?: Step; bug?: Step | null; got: number[] }) {
+function Board({ grid, me, bug, got }: { grid: Grid; me?: Step | undefined; bug?: Step | null | undefined; got: number[] }) {
   const S = 10, x = (c: number) => (c % grid.w) * S, y = (c: number) => Math.floor(c / grid.w) * S;
   const ship = (p: { at: number; dir: keyof typeof ROT }, fill: string, key: string) => <g key={key} style={{ transform: `translate(${x(p.at) + 5}px, ${y(p.at) + 5}px)`, transition: 'transform 220ms ease-out' }}>
     <g style={{ transform: `rotate(${ROT[p.dir]}deg)`, transition: 'transform 220ms ease-out' }}><g className="arcade-bob">

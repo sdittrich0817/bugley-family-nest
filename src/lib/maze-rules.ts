@@ -58,7 +58,7 @@ export const RACE_TRACKS: Grid[] = (() => {
 export const RACE_UNLOCK = 3; // race opens after the first three worlds
 
 export type Pose = { at: number; dir: Dir };
-export type Step = Pose & { rule: number; gem?: number };
+export type Step = Pose & { rule: number; gem?: number | undefined };
 export type Outcome = 'portal' | 'stuck' | 'bonk' | 'loop' | 'tired';
 export type RunResult = { steps: Step[]; result: Outcome; gems: number[] };
 
