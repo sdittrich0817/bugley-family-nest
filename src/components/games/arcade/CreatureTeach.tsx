@@ -82,7 +82,7 @@ export function TeachLab({ lab, index, stage, onBack, onExit, onNext, onWin }: {
     : phase === 'intro' ? lab.mission
     : phase === 'sort' ? (usedExtras ? 'These ones are tricky. Show me where they go!' : lab.choose ? `Sort by your secret: ${rule?.label.toLowerCase()}. I’m watching…` : 'Tap the home where this creature lives.')
     : phase === 'think' ? (clue.acc === 1 ? `I found a clue! ${why(clue, lab)}` : `My best clue only works ${Math.round(clue.acc * 100)}% of the time…`)
-    : phase === 'test' ? (j?.childSaid == null ? `I think this one goes to the ${lab.habitats[j?.bugley ?? 0].name}, because it ${phrase(clue.slot, clue.value).replace(/^is /, 'is ')}${predictWith(clue, lab.tests[ti]!) === clue.side ? '' : ' — no, wait, it doesn’t'}. Am I right?` : (j.bugley === j.truth ? 'Yes! I got it right.' : `Oops! It really goes in the ${lab.habitats[j.truth].name}.`))
+    : phase === 'test' ? (j?.childSaid == null ? `I think it goes to the ${lab.habitats[j?.bugley ?? 0].name}, because ${lab.tests[ti]![clue.slot] === clue.value ? `it ${phrase(clue.slot, clue.value)}` : `my clue is “${phrase(clue.slot, clue.value)}” and this one doesn’t`}. Am I right?` : (j.bugley === j.truth ? 'Yes! I got it right.' : `Oops! It really goes in the ${lab.habitats[j.truth].name}.`))
     : phase === 'result' ? (clue.slot === 'color' ? `Oh no! I thought ${COLOR_NAME[clue.value]} was the clue, because ALL your ${lab.habitats[clue.side].name} examples were ${COLOR_NAME[clue.value]}. Teach me with more examples?` : 'I got some wrong. Can you teach me more?')
     : lab.choose ? `Your secret was: ${rule?.label}! I worked it out just from your sorting.` : 'I learned it! Thanks for teaching me.';
 

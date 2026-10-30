@@ -472,6 +472,12 @@
   --lab-5: oklch(0.72 0.16 320);
   --lab-6: oklch(0.8 0.1 190);
   --lab-ink: oklch(0.25 0.05 268);
+  --lab-sky-a: oklch(0.9 0.07 230); --lab-sky-b: oklch(0.97 0.03 220);
+  --lab-burrow-a: oklch(0.72 0.08 60); --lab-burrow-b: oklch(0.86 0.07 85);
+  --lab-pond-a: oklch(0.75 0.11 220); --lab-pond-b: oklch(0.88 0.08 200);
+  --lab-meadow-a: oklch(0.85 0.13 135); --lab-meadow-b: oklch(0.94 0.08 110);
+  --lab-club-a: oklch(0.78 0.13 310); --lab-club-b: oklch(0.92 0.07 320);
+  --lab-other-a: oklch(0.88 0.1 70); --lab-other-b: oklch(0.96 0.05 90);
   --dash-hill-far: oklch(0.8 0.08 300 / 0.55);
   --dash-hill-near: oklch(0.7 0.11 160 / 0.75);
 }
@@ -632,3 +638,19 @@
 .doodle-bar { animation: doodle-grow .8s cubic-bezier(.2,.8,.2,1) both; transform-origin:left; }
 @keyframes doodle-grow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .doodle-scan span, .doodle-bar { animation:none; } }
+
+/* Creature Lab habitats */
+.lab-sky { background: radial-gradient(circle at 20% 30%, var(--card) 0 10%, transparent 11%), radial-gradient(circle at 70% 20%, var(--card) 0 8%, transparent 9%), linear-gradient(180deg, var(--lab-sky-a), var(--lab-sky-b)); }
+.lab-burrow { background: radial-gradient(circle at 25% 75%, var(--lab-burrow-a) 0 6%, transparent 7%), radial-gradient(circle at 80% 60%, var(--lab-burrow-a) 0 5%, transparent 6%), linear-gradient(180deg, var(--lab-burrow-b), var(--lab-burrow-a)); }
+.lab-pond { background: repeating-radial-gradient(circle at 50% 120%, transparent 0 14px, color-mix(in oklab, var(--card) 35%, transparent) 15px 17px), linear-gradient(180deg, var(--lab-pond-b), var(--lab-pond-a)); }
+.lab-meadow { background: radial-gradient(circle at 15% 80%, var(--lab-4) 0 4%, transparent 5%), radial-gradient(circle at 60% 85%, var(--lab-1) 0 4%, transparent 5%), radial-gradient(circle at 85% 70%, var(--card) 0 4%, transparent 5%), linear-gradient(180deg, var(--lab-meadow-b), var(--lab-meadow-a)); }
+.lab-club { background: radial-gradient(circle at 80% 20%, var(--lab-4) 0 3%, transparent 4%), radial-gradient(circle at 30% 70%, var(--card) 0 2%, transparent 3%), linear-gradient(135deg, var(--lab-club-a), var(--lab-club-b)); }
+.lab-other { background: radial-gradient(circle at 20% 25%, var(--lab-1) 0 5%, transparent 6%), radial-gradient(circle at 75% 35%, var(--lab-3) 0 5%, transparent 6%), linear-gradient(180deg, var(--lab-other-b), var(--lab-other-a)); }
+.lab-sky-world { background: linear-gradient(180deg, var(--lab-sky-b), var(--lab-burrow-b)); }
+.lab-pond-world { background: linear-gradient(180deg, var(--lab-pond-b), var(--lab-meadow-b)); }
+.lab-club-world { background: linear-gradient(180deg, var(--lab-club-b), var(--lab-other-b)); }
+@keyframes lab-land { 0% { transform: translateY(-40px) scale(1.6); opacity: 0; } 70% { transform: translateY(4px) scale(0.95); opacity: 1; } 100% { transform: none; } }
+@keyframes lab-shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-10px) rotate(-4deg); } 40%,80% { transform: translateX(10px) rotate(4deg); } }
+.lab-land { display: inline-block; animation: lab-land 0.45s ease-out both; }
+.lab-shake { animation: lab-shake 0.4s ease-in-out; }
+@media (prefers-reduced-motion: reduce) { .lab-land, .lab-shake { animation: none; } }

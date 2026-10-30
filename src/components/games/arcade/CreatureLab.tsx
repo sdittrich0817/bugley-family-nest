@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react';
+import { TeachLab } from './CreatureTeach';
+import { LABS } from '@/lib/creature-teach';
+import { unlockLevel } from '@/lib/arcade';
 import { Dices, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
@@ -52,7 +55,7 @@ export function CreatureArt({ c, size = 260, className }: { c: Creature; size?: 
 }
 
 const START: Creature = { body: 'round', head: 'ears', wings: 'none', tail: 'none', pattern: 'plain', color: '2' };
-export function CreatureLab({ childId, stage, band }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string }) {
+export function FreeLab({ childId, stage, band }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string }) {
   const [c, setC] = useState<Creature>(START), [found, setFound] = useState<string[]>([]), [pop, setPop] = useState(0), [news, setNews] = useState<string | null>(null), [slot, setSlot] = useState<Slot>('head');
   useEffect(() => { setFound(readProgress(childId).found); }, [childId]);
   function change(next: Creature) {
@@ -78,5 +81,36 @@ export function CreatureLab({ childId, stage, band }: { childId: string; stage: 
       <Button size="lg" className="w-full" onClick={() => change(randomCreature())}><Dices />Surprise mix!</Button>
       {found.length > 0 && <div><p className="text-sm font-bold">My discoveries</p><div className="flex flex-wrap gap-1">{found.map((f) => <span key={f} className="rounded-full bg-accent px-2 py-1 text-xs">{f}</span>)}</div></div>}
     </div>
+  </div>;
+}
+
+/** Creature Lab home: three "Teach Bugley" labs plus the free mixing lab. */
+export function CreatureLab({ childId, stage, band, onExit }: { childId: string; stage: NonNullable<React.ComponentProps<typeof Bugley>['stage']>; band: string; onExit?: () => void }) {
+  const [open, setOpen] = useState<number | 'free' | null>(null), [run, setRun] = useState(0);
+  const [prog, setProg] = useState(() => ({ level: 0, stars: {} as Record<string, number> }));
+  useEffect(() => { const p = readProgress(childId); setProg({ level: p.level.creature_lab_v2 ?? 0, stars: JSON.parse(localStorage.getItem(`bugley-lab-stars-${childId}`) ?? '{}') }); }, [childId]);
+  function win(i: number, s: number) {
+    const p = updateProgress(childId, (q) => unlockLevel(q, 'creature_lab_v2', i + 1));
+    const stars = { ...prog.stars, [LABS[i]!.id]: Math.max(s, prog.stars[LABS[i]!.id] ?? 0) };
+    localStorage.setItem(`bugley-lab-stars-${childId}`, JSON.stringify(stars));
+    setProg({ level: p.level.creature_lab_v2 ?? 0, stars });
+  }
+  if (open === 'free') return <div className="space-y-3"><Button size="sm" variant="outline" onClick={() => setOpen(null)}>← Labs</Button><FreeLab childId={childId} stage={stage} band={band} /></div>;
+  if (typeof open === 'number') { const i = open; return <TeachLab key={`${i}-${run}`} lab={LABS[i]!} index={i} stage={stage} onBack={() => setOpen(null)} onExit={onExit} onWin={(s) => win(i, s)} onNext={i + 1 < LABS.length ? () => { setOpen(i + 1); setRun((r) => r + 1); } : undefined} />; }
+  return <div className="space-y-4">
+    <div className="flex items-start gap-3 rounded-3xl bg-play-mint p-4">
+      <div className="arcade-bob shrink-0"><Bugley stage={stage} expression="curious" glow size={80} /></div>
+      <div><p className="font-display text-xl">Teach me about creatures!</p><p className="text-sm">You sort creatures into their homes. I learn a rule from your examples. Then you check if I got it right — AI makes mistakes too!</p></div>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-3">{LABS.map((l, i) => { const locked = i > prog.level; const s = prog.stars[l.id] ?? 0; return <button key={l.id} type="button" disabled={locked} onClick={() => { setOpen(i); setRun((r) => r + 1); }}
+      className={cn('lab-card relative overflow-hidden rounded-3xl border-4 p-4 text-left transition', l.habitats[0].tone, locked ? 'border-border opacity-60' : 'border-card hover:-translate-y-1 active:scale-95')}>
+      <span className="text-4xl">{locked ? '🔒' : l.emoji}</span>
+      <p className="font-display text-lg">Lab {i + 1}: {l.title}</p>
+      <p className="text-xs">{l.zone[0]} or {l.zone[1]}?</p>
+      <p className="mt-1 text-lg">{[1, 2, 3].map((n) => n <= s ? '⭐' : '☆').join('')}</p>
+    </button>; })}</div>
+    <button type="button" onClick={() => setOpen('free')} className="flex w-full items-center gap-3 rounded-3xl border-4 border-border bg-card p-3 text-left transition hover:border-primary">
+      <CreatureArt c={START} size={64} /><span><span className="block font-display">Free Mix Lab</span><span className="text-xs text-muted-foreground">Build your own creatures and find the secret ones.</span></span>
+    </button>
   </div>;
 }
