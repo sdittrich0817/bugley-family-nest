@@ -62,7 +62,7 @@ function build(r: SecretRule, yes: boolean, i: number, color: Creature['color'])
     const all = PARTS[slot] as readonly string[];
     if (slot === 'color') c[slot] = color;
     else if (slot === r.slot) { const no = all.filter((v) => v !== r.value); c[slot] = yes ? r.value : no[i % no.length]!; }
-    else c[slot] = all.filter((v) => !(r.slot === slot))[(i + CLUE_ORDER.indexOf(slot)) % all.length]!;
+    else c[slot] = all[(i + CLUE_ORDER.indexOf(slot)) % all.length]!;
   }
   return c as Creature;
 }
