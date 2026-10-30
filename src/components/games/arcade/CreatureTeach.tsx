@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Check, RotateCcw, Star, ThumbsDown, ThumbsUp, Volume2, X } from 'lucide-react';
+import { useState } from 'react';
+import { RotateCcw, Star, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
-import { CreatureArt } from './CreatureLab';
-import { CLUE_EMOJI, COLOR_NAME, SECRET_RULES, STREAK_GOAL, isGlowbug, judgeStars, learn, phrase, predictWith, quizDeck, teachDeck, type Example, type SecretRule } from '@/lib/creature-teach';
+import { SCENES, TEST_COUNT, deal, guess, packStars, type Example, type Item, type Scene } from '@/lib/pack-teach';
 import { cn } from '@/lib/utils';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
-type Phase = 'pick' | 'teach' | 'quiz' | 'done';
+type Phase = 'pick' | 'teach' | 'test' | 'done';
 
 function speak(text: string) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -17,58 +16,44 @@ function speak(text: string) {
 }
 
 function Steps({ at }: { at: number }) {
-  return <ol className="flex justify-center gap-2 text-xs font-bold">{['Pick', 'Teach', 'Test'].map((t, i) => <li key={t} className={cn('rounded-full border-2 px-3 py-1', i === at ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground')}>{i + 1} {t}</li>)}</ol>;
+  return <ol className="flex justify-center gap-2 text-xs font-bold">{['Pick a day', 'Show Bugley', 'Bugley tries'].map((t, i) => <li key={t} className={cn('rounded-full border-2 px-3 py-1', i === at ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card text-muted-foreground')}>{i + 1} {t}</li>)}</ol>;
 }
 
-/** Glow jar: fills one light per correct guess in a row. */
-function Jar({ n }: { n: number }) {
-  return <div className="flex items-center gap-2" aria-label={`${n} of ${STREAK_GOAL} right in a row`}>
-    <span className="text-2xl">🫙</span>
-    <div className="flex gap-1">{Array.from({ length: STREAK_GOAL }, (_, i) => <span key={i} className={cn('size-5 rounded-full border-2 transition-all duration-500', i < n ? 'scale-110 border-primary bg-primary shadow-glow' : 'border-border bg-muted')} />)}</div>
-  </div>;
-}
-
-/** Teach Bugley what a Glowbug is: the child picks the rule, shows examples, then checks Bugley. */
+/** Teach Bugley your choices for an everyday job (lunch, baseball, beach, bedtime), then see if he copies you. */
 export function TeachLab({ stage, onExit, onWin }: { stage: Stage; onExit?: (() => void) | undefined; onWin: (stars: number) => void }) {
   const [phase, setPhase] = useState<Phase>('pick');
-  const [rule, setRule] = useState<SecretRule>(SECRET_RULES[0]!);
-  const [ti, setTi] = useState(0), [examples, setExamples] = useState<Example[]>([]);
-  const [qi, setQi] = useState(0), [streak, setStreak] = useState(0), [mistakes, setMistakes] = useState(0);
-  const [react, setReact] = useState<null | 'right' | 'oops' | 'look'>(null), [wiggle, setWiggle] = useState(0);
-  const teach = useMemo(() => teachDeck(rule), [rule]), quiz = useMemo(() => quizDeck(rule), [rule]);
-  const clue = useMemo(() => learn(examples), [examples]);
-  const card = phase === 'teach' ? teach[ti] : quiz[qi % quiz.length];
-  const guess = card ? predictWith(clue, card) : 0;
-  const clueWord = clue.slot === 'color' ? `${COLOR_NAME[clue.value]} color` : phrase(clue.slot, clue.value).replace(/^(has|is) (an? )?/, '');
+  const [scene, setScene] = useState<Scene>(SCENES[0]!);
+  const [deck, setDeck] = useState<{ teach: Item[]; test: Item[] }>({ teach: [], test: [] });
+  const [n, setN] = useState(0), [examples, setExamples] = useState<Example[]>([]);
+  const [right, setRight] = useState(0), [result, setResult] = useState<null | boolean>(null);
 
-  function pick(r: SecretRule) { setRule(r); setTi(0); setExamples([]); setQi(0); setStreak(0); setMistakes(0); setReact(null); setPhase('teach'); }
-  function show(side: 0 | 1) {
+  const card = phase === 'teach' ? deck.teach[n] : phase === 'test' ? deck.test[n] : undefined;
+  const g = card && phase === 'test' ? guess(examples, card) : null;
+  const packed = examples.filter((e) => e.yes);
+
+  function pick(s: Scene) { setScene(s); setDeck(deal(s)); setN(0); setExamples([]); setRight(0); setResult(null); setPhase('teach'); }
+  function show(yes: boolean) {
     if (!card) return;
-    if (isGlowbug(rule, card) !== side) { setWiggle((w) => w + 1); setReact('look'); return; }
-    setReact(null);
-    setExamples((e) => [...e, { c: card, side }]);
-    if (ti + 1 >= teach.length) setPhase('quiz'); else setTi(ti + 1);
+    setExamples((e) => [...e, { item: card, yes }]);
+    if (n + 1 >= deck.teach.length) { setN(0); setPhase('test'); } else setN(n + 1);
   }
-  function check(saysRight: boolean) {
-    if (!card || react === 'right' || react === 'oops') return;
-    const right = guess === isGlowbug(rule, card);
-    if (saysRight !== right) { setMistakes((m) => m + 1); setWiggle((w) => w + 1); setReact('look'); return; }
-    if (right) { const s = streak + 1; setStreak(s); setReact('right'); if (s >= STREAK_GOAL) { setTimeout(() => { setPhase('done'); onWin(judgeStars(mistakes)); }, 700); } }
-    else { setStreak(0); setReact('oops'); }
+  function answer(yes: boolean) {
+    if (!card || !g || result !== null) return;
+    const ok = g.yes === yes;
+    setResult(ok); if (ok) setRight((r) => r + 1);
+    setExamples((e) => [...e, { item: card, yes }]);
   }
   function next() {
-    if (react === 'oops' && card) setExamples((e) => [...e, { c: card, side: isGlowbug(rule, card) }]);
-    setReact(null); setQi(qi + 1);
+    setResult(null);
+    if (n + 1 >= deck.test.length) { setPhase('done'); onWin(packStars(right)); } else setN(n + 1);
   }
 
-  const mood = phase === 'done' || react === 'right' ? 'celebrating' : react === 'oops' ? 'oops' : phase === 'quiz' ? 'thinking' : 'curious';
-  const say = phase === 'pick' ? 'You get to decide what a Glowbug is! Pick your secret.'
-    : phase === 'teach' ? (react === 'look' ? `Hmm, look again! Is it one of your ${rule.label.toLowerCase()}?` : 'Show me! Is this a Glowbug?')
-    : phase === 'quiz' ? (react === 'right' ? 'Yay! I got it!'
-      : react === 'oops' ? (clue.slot === 'color' ? `Oops! You only showed me ${COLOR_NAME[clue.value]} Glowbugs, so I thought ${COLOR_NAME[clue.value]} mattered!` : 'Oops! Thanks, now I know more.')
-      : react === 'look' ? 'Are you sure? Look at the bug again!'
-      : guess === 0 ? 'I think it IS a Glowbug! Am I right?' : 'I think it is NOT a Glowbug. Am I right?')
-    : 'You taught me! I learned from your examples.';
+  const reason = g?.because ? `${g.clue === 'kind' ? `It's a ${card!.kind} like` : `It's ${card!.color} like`} the ${g.because.item.name} ${g.because.item.emoji} you said ${g.yes ? scene.yes : scene.no}` : 'I am just guessing!';
+  const mood = phase === 'done' || result === true ? 'celebrating' : result === false ? 'oops' : phase === 'test' ? 'thinking' : 'curious';
+  const say = phase === 'pick' ? 'Where are we going today? Pick one!'
+    : phase === 'teach' ? (n === 0 ? scene.story : 'And this one?')
+    : phase === 'test' ? (result === true ? 'Yay! I copied you right!' : result === false ? "Oops! Now I know. I'll remember that!" : `I think: ${g?.yes ? scene.yes : scene.no} ${reason}.`)
+    : `I got ${right} of ${TEST_COUNT} right, just from your examples!`;
 
   return <div className="space-y-4">
     <Steps at={phase === 'pick' ? 0 : phase === 'teach' ? 1 : 2} />
@@ -78,38 +63,36 @@ export function TeachLab({ stage, onExit, onWin }: { stage: Stage; onExit?: (() 
       <Button size="icon" variant="outline" aria-label="Hear Bugley" onClick={() => speak(say)}><Volume2 /></Button>
     </div>
 
-    {phase === 'pick' && <div className="grid gap-3 sm:grid-cols-3">{SECRET_RULES.map((r) => <button key={r.id} type="button" onClick={() => pick(r)} className="rounded-3xl border-4 border-border bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary active:scale-95">
-      <span className="block text-5xl">{r.emoji}</span><span className="mt-2 block font-display text-lg">{r.label}</span><span className="text-xs text-muted-foreground">are Glowbugs</span>
+    {phase === 'pick' && <div className="grid grid-cols-2 gap-3">{SCENES.map((s) => <button key={s.id} type="button" onClick={() => pick(s)} className="rounded-3xl border-4 border-border bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary active:scale-95">
+      <span className="block text-6xl">{s.emoji}</span><span className="mt-2 block font-display text-xl">{s.title}</span>
     </button>)}</div>}
 
-    {(phase === 'teach' || phase === 'quiz') && card && <>
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-card px-3 py-2 text-sm font-bold">
-        <span>✨ Glowbugs = {rule.emoji} {rule.label}</span>
-        {phase === 'teach' ? <span>{ti + 1} of {teach.length}</span> : <Jar n={streak} />}
+    {card && <>
+      <div className="flex items-center justify-between rounded-2xl bg-card px-3 py-2 text-sm font-bold">
+        <span>{scene.emoji} {scene.title}</span>
+        <span>{phase === 'teach' ? `Show me ${n + 1} of ${deck.teach.length}` : `Bugley's try ${n + 1} of ${deck.test.length} · ⭐ ${right}`}</span>
       </div>
-      <div key={`${phase}-${phase === 'teach' ? ti : qi}-${wiggle}`} className={cn('relative mx-auto flex w-fit justify-center rounded-3xl bg-play-mint p-3 step-enter', react === 'look' && 'ring-4 ring-destructive')}>
-        <CreatureArt c={card} size={220} />
-        {phase === 'quiz' && <span className="absolute -top-3 right-0 rounded-full border-2 border-border bg-card px-3 py-1 font-display text-lg shadow-soft">{guess === 0 ? '👍 Glowbug?' : '👎 Not one?'}</span>}
+      <div key={`${phase}-${n}`} className={cn('relative mx-auto flex w-fit flex-col items-center rounded-3xl bg-play-mint px-10 py-5 step-enter', result === true && 'ring-4 ring-primary', result === false && 'ring-4 ring-destructive')}>
+        <span className="text-8xl leading-none">{card.emoji}</span>
+        <span className="mt-2 font-display text-2xl capitalize">{card.name}</span>
+        {g && <span className="absolute -top-3 -right-4 rounded-full border-2 border-border bg-card px-3 py-1 font-display text-lg shadow-soft">🤔 {g.yes ? scene.yesEmoji : scene.noEmoji}?</span>}
       </div>
-      {phase === 'quiz' && <p className="text-center text-sm font-bold">🧠 Bugley looks for: <span className="rounded-full bg-primary px-2 py-0.5 text-primary-foreground">{CLUE_EMOJI[clue.slot]} {clueWord}</span></p>}
-      {phase === 'teach' && <div className="grid grid-cols-2 gap-3">
-        <Button size="lg" className="h-20 text-xl" onClick={() => show(0)}><ThumbsUp className="size-7" />Glowbug!</Button>
-        <Button size="lg" variant="outline" className="h-20 text-xl" onClick={() => show(1)}><ThumbsDown className="size-7" />Not one</Button>
+      {phase === 'test' && result === null && <p className="text-center text-sm font-bold">Now YOU tell Bugley the real answer:</p>}
+      {(phase === 'teach' || result === null) && <div className="grid grid-cols-2 gap-3">
+        <Button size="lg" className="h-20 text-xl" onClick={() => phase === 'teach' ? show(true) : answer(true)}><span className="text-3xl">{scene.yesEmoji}</span>{scene.yes}</Button>
+        <Button size="lg" variant="outline" className="h-20 text-xl" onClick={() => phase === 'teach' ? show(false) : answer(false)}><span className="text-3xl">{scene.noEmoji}</span>{scene.no}</Button>
       </div>}
-      {phase === 'quiz' && (react === 'right' || react === 'oops'
-        ? <Button size="lg" className="h-16 w-full text-xl" onClick={next}>{react === 'oops' ? 'Teach him this one →' : 'Next bug →'}</Button>
-        : <div className="grid grid-cols-2 gap-3">
-          <Button size="lg" className="h-20 text-xl" onClick={() => check(true)}><Check className="size-7" />Right!</Button>
-          <Button size="lg" variant="outline" className="h-20 text-xl" onClick={() => check(false)}><X className="size-7" />Wrong!</Button>
-        </div>)}
-      {examples.length > 0 && <div className="flex flex-wrap justify-center gap-1" aria-label="What you taught Bugley">{examples.map((e, i) => <span key={i} className={cn('rounded-xl border-2 p-0.5', e.side === 0 ? 'border-primary bg-primary/20' : 'border-border bg-muted')}><CreatureArt c={e.c} size={36} /></span>)}</div>}
+      {phase === 'test' && result !== null && <Button size="lg" className="h-16 w-full text-xl" onClick={next}>Next →</Button>}
+      {packed.length > 0 && <div className="rounded-2xl border-2 border-dashed border-border p-2 text-center" aria-label={`Bugley's ${scene.bag}`}>
+        <span className="mr-2 text-2xl">{scene.bag}</span>{packed.map((e, i) => <span key={i} className="text-2xl">{e.item.emoji}</span>)}
+      </div>}
     </>}
 
     {phase === 'done' && <div className="lab-win space-y-3 rounded-3xl bg-card p-5 text-center step-enter">
-      <p className="text-4xl">✨🎉🪲🎉✨</p>
-      <p className="font-display text-2xl">Firefly party! 5 in a row!</p>
-      <div className="flex justify-center gap-1">{[1, 2, 3].map((n) => <Star key={n} className={cn('size-9', n <= judgeStars(mistakes) ? 'fill-primary text-primary' : 'text-muted')} />)}</div>
-      <p className="rounded-xl bg-accent p-3 text-sm"><strong>💡 AI secret:</strong> AI only knows what its examples show it. When all your Glowbugs were the same color, Bugley thought color mattered. More different examples made him smarter!</p>
+      <p className="text-5xl">{scene.bag}🎉</p>
+      <p className="font-display text-2xl">All packed! {packed.map((e) => e.item.emoji).join('')}</p>
+      <div className="flex justify-center gap-1">{[1, 2, 3].map((k) => <Star key={k} className={cn('size-9', k <= packStars(right) ? 'fill-primary text-primary' : 'text-muted')} />)}</div>
+      <p className="rounded-xl bg-accent p-3 text-sm"><strong>💡 AI secret:</strong> Bugley only knows what you showed him. He copies things that look alike, like the same color or the same kind. Show him more, and he gets smarter!</p>
       <div className="flex flex-wrap justify-center gap-2">
         <Button size="lg" onClick={() => setPhase('pick')}><RotateCcw />Play again</Button>
         {onExit && <Button size="lg" variant="outline" onClick={onExit}>All games</Button>}
