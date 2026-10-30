@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, ArrowRight, Mic, Play, Sparkles, Star, Trophy, Users, Volume2, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Mic, Play, RotateCcw, Sparkles, Star, Trophy, Users, Volume2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,8 @@ export function PlayStudio({child,family,builder,start,onExit}:{child:Kid;family
  }catch(e){setMessage(e instanceof Error?e.message:'Couldn’t start.');}finally{setBusy(false);}}
  async function done(r:{score:number;bonus:number}){const current=sessions[turn];if(!current||!game)return;const all=[...results,{...r,kid:current.kid}];setResults(all);const who=pass?family.filter(k=>picked.includes(k.id)&&playAllowed(game,k.age_band as any)):[child];const next=who[turn+1];if(next){setBusy(true);try{const s={...await startPlay({data:{childId:next.id,game,environment,dash,remixId}}),kid:next};setSessions([...sessions,s]);setTurn(turn+1);}catch(e){setMessage(e instanceof Error?e.message:'Couldn’t start the next turn.');setFinished(true);}finally{setBusy(false);}}else{setFinished(true);refresh();}}
  function home(){if(onExit){refresh();onExit();return;}setGame(null);setRemixId(undefined);setSessions([]);setResults([]);setFinished(false);setMessage('');refresh();}
+ function again(){setSessions([]);setResults([]);setFinished(false);setTurn(0);setMessage('');refresh();}
+ function allGames(){setGame(null);setRemixId(undefined);setSessions([]);setResults([]);setFinished(false);setMessage('');if(onExit){refresh();onExit();}else refresh();}
  if(finished&&game)return <div className="mx-auto max-w-2xl space-y-6 py-6 text-center"><Bugley stage={child.bugley_stage} expression="celebrating" glow size={120}/><h1 className="text-4xl">That was awesome!</h1>{results.map(r=><div key={r.kid.id} className="border-b border-border py-4"><h2 className="text-xl">{r.kid.nickname}</h2><p className="mt-2 flex justify-center gap-2 font-display text-3xl"><Star className="size-8 fill-primary text-primary"/>{r.score} stars</p>{r.score>0&&<p className="mt-2 flex justify-center gap-2 text-sm"><Trophy className="size-4"/>{badgeForPlay(game)}</p>}{r.bonus>0&&<p className="mt-2 font-semibold">+{r.bonus} bonus glow!</p>}</div>)}<div className="bg-play-mint p-5"><p className="text-xs font-bold uppercase">Bugley’s secret</p><p className="mt-2 font-display text-xl">{PLAY_GAMES[game].secret}</p><Button variant="ghost" size="icon" aria-label="Read Bugley’s secret" onClick={()=>speak(PLAY_GAMES[game].secret)}><Volume2/></Button></div><Button size="lg" onClick={home}>Back to PLAY</Button>{message&&<p role="alert">{message}</p>}</div>;
  const current=sessions[turn];
  if(current&&game&&['bugley_guesses','mystery_manor','glow_dash'].includes(game))return <ExtraRound key={current.id} session={current} game={game} stickers={stickers} onDone={r=>void done(r)} handoff={pass}/>;
