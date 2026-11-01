@@ -6,6 +6,7 @@ import { familyHasAccess } from './billing.functions';
 import { BLANKS, comboKey, DOODLE_TURNS, doodlePoints, doodleTarget, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
 import { caseSchema, dashSchema, defaultDash, firstGuess, SECRETS } from './play-extra';
 import { STARTER_CREATURES, STARTER_STICKERS } from './stickers';
+import { acceptStoryWord, storyWorld } from './story-blanks';
 const id = z.string().uuid();
 const environment = z.enum(['sandbox','live']);
 const admin = async () => (await import('@/integrations/supabase/client.server')).supabaseAdmin;
@@ -51,7 +52,7 @@ export const startPlay=createServerFn({method:'POST'}).middleware([requireKidOrP
   const {data:r,error}=await a.from('play_sessions').insert({parent_id:context.userId,child_id:kid.id,game:data.game,state:state as any,private_state:hidden as any}).select('id,started_at,state').single();if(error||!r)throw new Error('The game couldn’t start.');
   return {id:r.id,endsAt:new Date(new Date(r.started_at).getTime()+playSeconds(data.game)*1000).toISOString(),state:r.state as unknown as PlayState,heroUrl,heroId:typeof hidden['heroId']==='string'?hidden['heroId']:undefined};
 });
-export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
+export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,storyWorld:z.enum(['dragon','space','school']).optional(),text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment),a=await admin();
   const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(!['say_see','creature_lab','story_blanks','doodle_duel'].includes(r.game))throw new Error('Pick the matching game controls.');if(Date.now()>new Date(r.started_at).getTime()+playSeconds(r.game as any)*1000)return {expired:true,state:r.state as unknown as PlayState};
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
@@ -59,7 +60,8 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
   try {
     const maxTurns=r.game==='creature_lab'?3:r.game==='story_blanks'?3:r.game==='doodle_duel'?DOODLE_TURNS:4;
     if(state.turn>=maxTurns)throw new Error('This round is ready for results!');
-    if(data.next) { if(!state.feedback||state.turn>=maxTurns-1)throw new Error('See your stars!');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false,doodle:undefined,doodleTried:[]}; }
+    if(data.storyWorld) { if(r.game!=='story_blanks'||state.words.length||state.storyWorld)throw new Error('Your story has already started.');state={...state,storyWorld:data.storyWorld}; }
+    else if(data.next) { if(!state.feedback||state.turn>=maxTurns-1)throw new Error('See your stars!');state={...state,turn:state.turn+1,feedback:undefined,stickerKey:undefined,solved:undefined,drawGuesses:0,drawingGuessed:false,doodle:undefined,doodleTried:[]}; }
     else if(r.game==='doodle_duel') {
       if(!data.strokes?.some(s=>s.points.length>1)||state.drawingGuessed|| (state.drawGuesses??0)>=6)throw new Error('Try the next turn!');
       const {renderDoodle}=await import('./doodle.server');const {aiObject}=await import('./studio-ai.server');
@@ -90,8 +92,9 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
         const key=comboKey(canonical(data.text),canonical(data.second));const s=await stickerFor(context,kid,key,data.make,true);
         const {error}=await a.from('bugdex').upsert({child_id:kid.id,parent_id:context.userId,sticker_key:s.key},{onConflict:'child_id,sticker_key',ignoreDuplicates:true});if(error)throw new Error('Your creature couldn’t join the Bugdex.');state={...state,stickerKey:s.key,name:s.name,power:s.power,rare:s.rare,feedback:`Meet ${s.name}!`,solved:true};score+=s.rare?3:2;
       }else if(r.game==='story_blanks') {
-        const words=[...state.words,data.text];state={...state,words,feedback:'Excellent choice!',solved:true};score+=1;
-        if(words.length>=BLANKS.length)state.story=`A ${words[0]} arrived at a picnic wearing ${words[1]} as a hat. “${words[2]}” went the hat. Everyone laughed, and the picnic danced away!`;
+        if(!state.storyWorld)throw new Error('Pick your story first.');
+        const next=acceptStoryWord(storyWorld(state.storyWorld),state.words,data.text);
+        state={...state,...next,feedback:'Your word is in the story!',solved:true};score+=1;
       }else {const word=doodleTarget(state.turn);const correct=normalizeWord(data.text)===word;state={...state,feedback:correct?'You guessed it!':`It was a ${word}!`,solved:correct};if(correct)score+=2;}
       state={...state,moves:state.moves+1};
     }

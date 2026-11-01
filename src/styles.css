@@ -654,3 +654,12 @@
 .lab-land { display: inline-block; animation: lab-land 0.45s ease-out both; }
 .lab-shake { animation: lab-shake 0.4s ease-in-out; }
 @media (prefers-reduced-motion: reduce) { .lab-land, .lab-shake { animation: none; } }
+
+/* Silly Story Blanks: a lined story page and inspectable word-frequency meter. */
+.story-paper { background-color:var(--card); background-image:repeating-linear-gradient(transparent 0 43px, color-mix(in oklab,var(--sky) 18%,transparent) 43px 44px); border-left:4px solid var(--play-coral); border-radius:var(--radius-sm); }
+.story-meter { display:block; width:100%; height:14px; border:0; background:var(--card); border-radius:7px; }
+.story-meter::-webkit-meter-bar { background:var(--card); border:0; border-radius:7px; }
+.story-meter::-webkit-meter-optimum-value { background:var(--sky); border-radius:7px; }
+.story-meter::-moz-meter-bar { background:var(--sky); border-radius:7px; }
+.story-word { display:inline-block; animation:lab-land .45s ease-out both; }
+@media (prefers-reduced-motion:reduce) { .story-word { animation:none; } }

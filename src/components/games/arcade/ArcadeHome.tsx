@@ -15,7 +15,7 @@ import guessArt from '@/assets/games/guesses.jpg';
 import manorArt from '@/assets/games/manor.jpg';
 import dashArt from '@/assets/games/dash-candy.jpg';
 import sayArt from '@/assets/games/say-see.jpg';
-import storyArt from '@/assets/games/story-blanks.jpg';
+import storyArt from '@/assets/games/story-dragon-party.jpg';
 import doodleArt from '@/assets/games/doodle-duel.jpg';
 import mazeArt from '@/assets/games/cosmic-maze.jpg';
 

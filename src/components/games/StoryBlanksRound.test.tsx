@@ -1,0 +1,9 @@
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { StoryBlanksRound } from './StoryBlanksRound';
+vi.mock('@/components/studio/Sidekick',()=>({speak:vi.fn()}));
+afterEach(cleanup);
+describe('Story choice loop',()=>{
+ it('lets the child choose a surprise or their exact own words',()=>{const move=vi.fn();render(<StoryBlanksRound state={{turn:0,moves:0,words:[],storyWorld:'dragon'}} stage="scout" busy={false} error="" left={200} onMove={move} onFinish={vi.fn()} onExit={vi.fn()}/>);fireEvent.click(screen.getByRole('button',{name:/striped socks/}));expect(move).toHaveBeenCalledWith({word:'striped socks'});fireEvent.change(screen.getByRole('textbox',{name:'Your own story word'}),{target:{value:'a giggling cloud'}});fireEvent.click(screen.getByRole('button',{name:'Use my word'}));expect(move).toHaveBeenCalledWith({word:'a giggling cloud'});});
+ it('compares finished versions without modifying child words and can exit',()=>{const exit=vi.fn(),finish=vi.fn();render(<StoryBlanksRound state={{turn:2,moves:3,words:['striped socks','a dancing pickle','juggle planets'],storyWorld:'dragon',story:'done'}} stage="scout" busy={false} error="" left={100} onMove={vi.fn()} onFinish={finish} onExit={exit}/>);fireEvent.click(screen.getByRole('button',{name:'Bugley’s guesses'}));expect(screen.getByRole('button',{name:'Bugley’s guesses'})).toHaveAttribute('aria-pressed','true');fireEvent.click(screen.getByRole('button',{name:'Your surprises'}));fireEvent.click(screen.getByRole('button',{name:'See my stars'}));expect(finish).toHaveBeenCalledTimes(1);fireEvent.click(screen.getByRole('button',{name:'All games'}));expect(exit).toHaveBeenCalledTimes(1);});
+});
