@@ -21,7 +21,6 @@ export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'mystery_manor', name: 'Mystery Manor', line: 'A know-it-all robot is always sure. Check the clues and catch its mistakes!', categories: ['ai', 'puzzles'], engine: 'manor', controls: 'Tap clues, then decide' },
   { id: 'bugley_guesses', name: 'Bugley Guesses', line: 'Keep a picture secret. Watch your clues shrink Bugley’s guesses!', categories: ['ai'], engine: 'guesses', controls: 'Answer yes, no or not sure' },
   { id: 'doodle_duel', name: 'Doodle Duel', line: 'Draw it fast. Can Bugley guess it?', categories: ['ai', 'creativity'], engine: 'play', controls: 'Draw with finger or mouse' },
-  { id: 'say_see', name: 'Say It, See It', line: 'Say any word and watch it appear!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Talk or type' },
   { id: 'story_blanks', name: 'Silly Story Blanks', line: 'Surprise Bugley’s word guesses. Make a laugh-out-loud story!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Tap or type' },
 ];
 export const FEATURED: ArcadeId = 'glow_dash';

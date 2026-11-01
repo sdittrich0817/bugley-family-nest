@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { requireKidOrParentAuth } from './kid-device-auth';
 import { requireParentDevice } from './parent-device.functions';
 import { familyHasAccess } from './billing.functions';
-import { BLANKS, comboKey, DOODLE_TURNS, doodlePoints, doodleTarget, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, PUZZLES, type PlayState } from './play';
+import { BLANKS, comboKey, DOODLE_TURNS, doodlePoints, doodleTarget, initialPlayState, normalizeWord, PLAY_KEYS, playSeconds, playAllowed, type PlayState } from './play';
 import { caseSchema, dashSchema, defaultDash, firstGuess, SECRETS } from './play-extra';
 import { STARTER_CREATURES, STARTER_STICKERS } from './stickers';
 import { acceptStoryWord, storyWorld } from './story-blanks';
@@ -54,7 +54,7 @@ export const startPlay=createServerFn({method:'POST'}).middleware([requireKidOrP
 });
 export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,sessionId:id,environment,storyWorld:z.enum(['dragon','space','school']).optional(),text:z.string().trim().max(120).optional(),second:z.string().trim().max(60).optional(),make:z.boolean().default(false),next:z.boolean().default(false),strokes:z.array(z.object({color:z.number().int().min(0).max(3),points:z.array(z.tuple([z.number().min(0).max(1),z.number().min(0).max(1)])).max(1000)})).max(80).optional()}).parse(i)).handler(async({data,context})=>{
   const kid=await child(context,data.childId,data.environment),a=await admin();
-  const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(!['say_see','creature_lab','story_blanks','doodle_duel'].includes(r.game))throw new Error('Pick the matching game controls.');if(Date.now()>new Date(r.started_at).getTime()+playSeconds(r.game as any)*1000)return {expired:true,state:r.state as unknown as PlayState};
+  const {data:r}=await a.from('play_sessions').select('*').eq('id',data.sessionId).eq('parent_id',context.userId).eq('child_id',kid.id).maybeSingle();if(!r||r.finished_at)throw new Error('This round has ended.');if(!['creature_lab','story_blanks','doodle_duel'].includes(r.game))throw new Error('Pick the matching game controls.');if(Date.now()>new Date(r.started_at).getTime()+playSeconds(r.game as any)*1000)return {expired:true,state:r.state as unknown as PlayState};
   const {data:claim}=await a.from('play_sessions').update({busy:true}).eq('id',r.id).eq('version',r.version).eq('busy',false).select('id');if(!claim?.length)throw new Error('Wait for Bugley’s current move.');
   let state=r.state as unknown as PlayState,score=r.score;
   try {
@@ -80,13 +80,7 @@ export const playMove=createServerFn({method:'POST'}).middleware([requireKidOrPa
     } else {
       if(!data.text)throw new Error('Pick or say an idea first.');if(state.feedback)throw new Error('Go to the next turn first.');
       await safe(context,kid,[data.text,data.second].filter(Boolean).join(' and '));
-      if(r.game==='say_see') {
-        const puzzle=PUZZLES[state.turn%PUZZLES.length];if(!puzzle)throw new Error('Round complete.');
-        const {aiObject}=await import('./studio-ai.server');
-        const verdict=await aiObject(z.object({works:z.boolean(),creative:z.boolean(),object:z.string().max(60),animation:z.enum(['bounce','fly','climb','float']),reply:z.string().max(140)}),'Judge a silly child puzzle generously: any reasonable imaginative solution works. Extract only the object concept, never personal information. Reply one playful child-friendly sentence; no instructions outside the puzzle.',JSON.stringify({puzzle:puzzle.task,idea:data.text}));if(!verdict)throw new Error('Bugley needs a moment.');
-        await safe(context,kid,verdict.object);
-        if(!verdict.works)state={...state,feedback:verdict.reply,solved:false};else {const s=await stickerFor(context,kid,verdict.object,data.make);state={...state,feedback:verdict.reply,solved:true,stickerKey:s.key,animation:verdict.animation};score+=verdict.creative?3:2;}
-      }else if(r.game==='creature_lab') {
+      if(r.game==='creature_lab') {
         if(!data.second)throw new Error('Pick two things!');
         const canonical=(w:string)=>STARTER_STICKERS.find(s=>s.key===normalizeWord(w)||s.synonyms.includes(normalizeWord(w)))?.key??normalizeWord(w);
         const key=comboKey(canonical(data.text),canonical(data.second));const s=await stickerFor(context,kid,key,data.make,true);

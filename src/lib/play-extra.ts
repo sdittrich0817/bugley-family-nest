@@ -15,4 +15,4 @@ export const canAskGuess=(count:number)=>count<GUESS_LIMIT;
 export const DASH_STEP=1000/60;
 export const DASH_TICKS=DASH_SECONDS*60;
 export function checkedDashTicks(ticks:number,elapsedMs:number){return Math.min(DASH_TICKS,Math.max(0,Math.floor(Math.min(ticks,(elapsedMs+1500)/DASH_STEP))));}
-export const badgeForPlay=(game:string)=>({say_see:'Word Wizard',creature_lab:'Creature Keeper',story_blanks:'Silly Story Star',doodle_duel:'Doodle Detective',bugley_guesses:'Mind Detective',mystery_manor:'Clue Checker',glow_dash:'Glow Runner'}[game]??'Playful Explorer');
+export const badgeForPlay=(game:string)=>({creature_lab:'Creature Keeper',story_blanks:'Silly Story Star',doodle_duel:'Doodle Detective',bugley_guesses:'Mind Detective',mystery_manor:'Clue Checker',glow_dash:'Glow Runner'}[game]??'Playful Explorer');
