@@ -1,7 +1,8 @@
 // Ocean Quest: steer a submarine while Bugley's sonar (a tiny practice "AI")
 // labels what's ahead. In murky water the sonar is less sure and sometimes wrong.
 // Lesson: low confidence means look for yourself.
-import { seeded, type Rng } from './manor-cases';
+import { seeded } from './manor-cases';
+type Rng = () => number;
 
 export type Kind = 'treasure' | 'danger';
 export type Thing = { id: string; emoji: string; name: string; kind: Kind };
@@ -37,13 +38,13 @@ export function sonarRead(thing: Thing, murk: number, r: Rng): Sonar {
 }
 
 export function makeDive(dive: Dive, r: Rng = Math.random): Wave[] {
-  const waves = Array.from({ length: DIVE_ITEMS }, () => {
-    const thing = THINGS[Math.floor(r() * THINGS.length)];
+  const waves: Wave[] = Array.from({ length: DIVE_ITEMS }, () => {
+    const thing = THINGS[Math.floor(r() * THINGS.length)]!;
     return { thing, lane: Math.floor(r() * LANES), sonar: sonarRead(thing, dive.murk, r) };
   });
   // Every murky dive shows at least one mistake to catch.
   if (dive.murk > 0 && !waves.some((w) => !w.sonar.right)) {
-    const w = waves[5];
+    const w = waves[5]!;
     w.sonar = { label: w.thing.kind === 'treasure' ? 'danger' : 'treasure', pct: 48, right: false };
   }
   return waves;

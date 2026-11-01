@@ -5,7 +5,7 @@ import { Bugley } from '@/components/brand/Bugley';
 import { DIVES, LANES, makeDive, oceanStars, SURE, type Dive, type Wave } from '@/lib/ocean-quest';
 import { cn } from '@/lib/utils';
 
-type Stage = React.ComponentProps<typeof Bugley>['stage'];
+type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 type Result = { treasure: number; total: number; hearts: number; wrong: number; caught: number };
 
 export function OceanQuest({ stage, band, onExit, onWin }: { stage: Stage; band: string; onExit: () => void; onWin?: (stars: number) => void }) {

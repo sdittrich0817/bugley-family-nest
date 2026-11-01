@@ -8,7 +8,7 @@ describe('ocean quest', () => {
   });
   it('wrong sonar guesses always show a low sure-meter', () => {
     const r = seeded(2);
-    for (let i = 0; i < 200; i++) { const s = sonarRead(THINGS[i % THINGS.length], 0.4, r); if (!s.right) expect(s.pct).toBeLessThan(SURE); }
+    for (let i = 0; i < 200; i++) { const s = sonarRead(THINGS[i % THINGS.length]!, 0.4, r); if (!s.right) expect(s.pct).toBeLessThan(SURE); }
   });
   it('murky dives always include a mistake to catch', () => {
     for (let seed = 0; seed < 30; seed++) for (const d of DIVES.slice(1)) {
