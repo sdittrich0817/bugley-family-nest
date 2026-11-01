@@ -13,23 +13,23 @@ describe('Bugley Guesses practice flow', () => {
     for (let n=0; n<MAX_QUESTIONS && pool.length>1; n++) {
       const q = nextQuestion(pool,history); if (!q) break;
       const answer = cat.clues.includes(q.id) ? 'yes' : 'no';
-      fireEvent.click(screen.getByRole('button',{name:answer==='yes'?'Yes':'No',exact:true}));
+      fireEvent.click(screen.getByRole('button',{name:answer==='yes'?'Yes':'No'}));
       history.push({id:q.id,answer}); pool=narrow(pool,q.id,answer);
     }
     fireEvent.click(screen.getByRole('button',{name:'You got it!'}));
     fireEvent.click(screen.getByRole('button',{name:'Play again'}));
     fireEvent.click(screen.getByRole('button',{name:/I’ve got my secret/}));
-    for(let n=0;n<MAX_QUESTIONS;n++) fireEvent.click(screen.getByRole('button',{name:'Not sure',exact:true}));
+    for(let n=0;n<MAX_QUESTIONS;n++) fireEvent.click(screen.getByRole('button',{name:'Not sure'}));
     fireEvent.click(screen.getByRole('button',{name:'Not my secret!'}));
     fireEvent.click(screen.getByRole('button',{name:/dog/}));
-    fireEvent.click(screen.getByRole('button',{name:'All games',exact:true}));
+    fireEvent.click(screen.getByRole('button',{name:'All games'}));
     expect(exit).toHaveBeenCalledOnce();
   });
   it('ends an active round after four minutes', () => {
     vi.useFakeTimers(); render(<BugleyGuesses stage="scout" onExit={()=>{}}/>);
     fireEvent.click(screen.getByRole('button',{name:/I’ve got my secret/}));
     act(() => { vi.advanceTimersByTime(ROUND_MS); });
-    expect(screen.queryByRole('button',{name:'Yes',exact:true})).toBeNull();
+    expect(screen.queryByRole('button',{name:'Yes'})).toBeNull();
     expect(screen.getByRole('button',{name:'Play again'})).toBeTruthy();
   });
 });

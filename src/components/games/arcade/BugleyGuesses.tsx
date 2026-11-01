@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import garden from '@/assets/games/guesses-observatory.jpg';
 
 type Phase = 'pick' | 'ask' | 'guess' | 'reveal' | 'done';
-type Stage = React.ComponentProps<typeof Bugley>['stage'];
+type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 export function BugleyGuesses({ stage, onExit }: { stage: Stage; onExit: () => void }) {
   const [phase, setPhase] = useState<Phase>('pick');
   const [pool, setPool] = useState(THINGS);
@@ -46,7 +46,7 @@ export function BugleyGuesses({ stage, onExit }: { stage: Stage; onExit: () => v
     if (!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel(); const speech = new SpeechSynthesisUtterance(line); speech.rate = 0.9; window.speechSynthesis.speak(speech);
   }
-  const Tiles = ({choose}: {choose?: (t:Thing)=>void}) => <div className="grid grid-cols-5 gap-2 sm:grid-cols-6" aria-label="Secret pictures">{THINGS.map(t => choose
+  const Tiles = ({choose}: {choose?: (t:Thing)=>void}) => <div className="grid grid-cols-4 gap-2 sm:grid-cols-6" aria-label="Secret pictures">{THINGS.map(t => choose
     ? <Button key={t.name} variant="outline" className="guess-tile h-auto min-h-20 flex-col gap-1 rounded-lg px-1 py-2" onClick={()=>choose(t)}><span className="text-3xl">{t.emoji}</span><span className="whitespace-normal text-center text-xs">{t.name}</span></Button>
     : <div key={t.name} className={cn('guess-tile flex min-h-20 flex-col items-center justify-center rounded-lg border-2 px-1 py-2', phase === 'pick' || pool.includes(t) ? 'border-border bg-card' : 'border-transparent bg-muted opacity-25 grayscale')}><span className="text-3xl" aria-hidden="true">{t.emoji}</span><span className="text-center text-xs font-bold">{t.name}</span></div>)}</div>;
   const missing = real && guessed ? separatingQuestion(guessed,real) : undefined;
