@@ -1,3 +1,4 @@
+- [ ] Refresh Parent Hub: important updates first, expandable full recorded child history, reassuring AI guidance, and Always/default or 24-hour remembered child login; verify saved controls and expiry.
 - [x] Restore a visible home-page login at small screen widths; verified at 695×594 that it opens /login.
 - [x] Implement Bugley Kids manifest/generated preview-safe worker, public Kids entry, private device/pair/PIN records, selected-child authorization, revocation and daily-time heartbeat, settings and illustrated installation/device-lock guides. Local parent session is removed when trusting this device; PIN permits navigation only, normal parent sign-in still protects Hub.
 - [ ] Verify successful trusted-device setup, QR/short-code approval and redemption, child login and PIN exit end-to-end (blocked: available parent session is Kid-Zone locked, no successful parent password/PIN available; no device/PIN records created).
