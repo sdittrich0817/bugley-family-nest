@@ -27,7 +27,7 @@ import { useScrollTopOn } from "@/lib/scroll";
 import type { OutputKind, WorkspaceProject } from "@/lib/workspace";
 
 type CharacterFacts = { name: string; kind: string; color: string; special: string; personality: string; question: string; ideas: string[] };
-export function ComicJourney({ child, projectId, draftId, characterId, onProject, onDraft, onBook, onExit, onLibrary, onCreateMore }: { child: SidekickChild; projectId?: string | undefined; draftId?: string | undefined; characterId?: string | undefined; onProject: (id: string) => void; onDraft: (id: string) => void; onBook: (id: string) => void; onExit: () => void; onLibrary: () => void; onCreateMore: () => void }) {
+export function ComicJourney({ child, projectId, draftId, characterId, startKind, onProject, onDraft, onBook, onExit, onLibrary, onCreateMore }: { child: SidekickChild; projectId?: string | undefined; draftId?: string | undefined; characterId?: string | undefined; startKind?: "picture" | "comic" | "story" | undefined; onProject: (id: string) => void; onDraft: (id: string) => void; onBook: (id: string) => void; onExit: () => void; onLibrary: () => void; onCreateMore: () => void }) {
   const [project, setProject] = useState<WorkspaceProject | null>(null);
   const [branch, setBranch] = useState<"entry" | "new" | "existing" | "output" | "setup">("entry");
   const [hero, setHero] = useState<CastMember | null>(null);
@@ -57,7 +57,7 @@ export function ComicJourney({ child, projectId, draftId, characterId, onProject
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   useEffect(() => { if (projectId) void load({ data: { childId: child.id, id: projectId } }).then(setProject).catch(e => setNote(e.message)); }, [projectId, child.id]);
   useEffect(() => { if (draftId && !projectId) { draftKey.current = draftId; setBranch("new"); void loadDraft({ data: { childId: child.id, id: draftId } }).then(d => { setDescription(d.description); setStyle(d.styleKey); }).catch(e => setNote(e.message)); } }, [draftId, projectId]);
-  useEffect(() => { if (characterId && !projectId) { const c = cast.find(c => c.id === characterId); if (c) { setHero(c); setBranch("output"); } } }, [characterId, cast, projectId]);
+  useEffect(() => { if (characterId && !projectId) { const c = cast.find(c => c.id === characterId); if (c) { setHero(c); if (startKind) { setKind(startKind); setCount(startKind === "story" ? 5 : 4); setTitle(""); startKey.current = null; setBranch("setup"); } else setBranch("output"); } } }, [characterId, cast, projectId]); // eslint-disable-line react-hooks/exhaustive-deps
   const items: any[] = project?.kind === "comic" ? project.details.pages.flatMap((p: any) => p.panels.map((panel: any, index: number) => ({ ...panel, pageId: p.id, page: p, index }))) : project?.details.pages ?? [];
   const item = items[at]; const selectedIds: string[] = project?.details.characterIds ?? project?.details.characters ?? [];
   useEffect(() => { if (skipSync.current) { skipSync.current = false; return; } setText(project?.kind === "picture" ? project.workspace.originalIdea : project?.kind === "comic" ? item?.description ?? "" : item?.text ?? ""); setDialogue(item?.layers?.find((l: any) => l.type === "speech")?.text ?? ""); setChanging(false); setRevision(""); setHelp(null); }, [project?.id, project?.updatedAt, at]);
