@@ -26,12 +26,14 @@ export const MAX_LOCKED = 3;
 async function admin() { return (await import("@/integrations/supabase/client.server")).supabaseAdmin; }
 
 export function buildPrompt(recipe: string, description: string, mode: ImageMode | "sheet") {
-  const framing = mode === "character"
-    ? "One simple picture-book illustration of a single character, seen full-body from head to toe, standing relaxed and facing the viewer. Behind them is only a plain flat wall of one quiet color that fills the whole frame to every corner, and they stand on a plain flat floor of the same color that reaches every edge. The space around the character is completely empty: no scenery, no props, no shapes, no decorations."
-    : mode === "sheet"
-      ? "A clean character reference sheet of the exact same character from the reference image: one full-body front view, one full-body side view, and one happy face close-up, side by side on a plain white background, identical colors, outfit and markings in every view."
+  const framing = mode === "sheet"
+    ? "A clean character reference sheet of the exact same character from the reference image: one full-body front view, one full-body side view, and one happy face close-up, side by side on a plain white background, identical colors, outfit and markings in every view."
+    : mode === "character"
+      ? "The character stands facing the viewer with their whole body visible from head to toe, alone against a completely solid flat white background that covers the entire image with no variations, no shapes and no decorations of any kind."
       : "";
-  return [recipe, framing, description, SAFETY_SUFFIX].filter(Boolean).join(". ").replace(/\.\s*\./g, ".");
+  // Character mode proved cleanest with the plain-background sentence AFTER the child's description.
+  const parts = mode === "character" ? [recipe, description, framing, SAFETY_SUFFIX] : [recipe, framing, description, SAFETY_SUFFIX];
+  return parts.filter(Boolean).join(". ").replace(/\.\s*\./g, ".");
 }
 
 async function loadModel(mode: ModelMode): Promise<ModelRow | null> {
