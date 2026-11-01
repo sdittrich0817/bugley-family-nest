@@ -26,12 +26,14 @@ export const MAX_LOCKED = 3;
 async function admin() { return (await import("@/integrations/supabase/client.server")).supabaseAdmin; }
 
 export function buildPrompt(recipe: string, description: string, mode: ImageMode | "sheet") {
-  const framing = mode === "character"
-    ? "A single character, clean full-body portrait, standing, facing the viewer, whole body visible head to toe, centered on a plain soft white background, no scenery."
-    : mode === "sheet"
-      ? "A clean character reference sheet of the exact same character from the reference image: one full-body front view, one full-body side view, and one happy face close-up, side by side on a plain white background, identical colors, outfit and markings in every view."
+  const framing = mode === "sheet"
+    ? "A clean character reference sheet of the exact same character from the reference image: one full-body front view, one full-body side view, and one happy face close-up, side by side on a plain white background, identical colors, outfit and markings in every view."
+    : mode === "character"
+      ? "The character stands facing the viewer with their whole body visible from head to toe, alone against a completely solid flat white background that covers the entire image with no variations, no shapes and no decorations of any kind."
       : "";
-  return [recipe, framing, description, SAFETY_SUFFIX].filter(Boolean).join(". ").replace(/\.\s*\./g, ".");
+  // Character mode proved cleanest with the plain-background sentence AFTER the child's description.
+  const parts = mode === "character" ? [recipe, description, framing, SAFETY_SUFFIX] : [recipe, framing, description, SAFETY_SUFFIX];
+  return parts.filter(Boolean).join(". ").replace(/\.\s*\./g, ".");
 }
 
 async function loadModel(mode: ModelMode): Promise<ModelRow | null> {
@@ -300,6 +302,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
+  console.log("HERO_PROMPT_DEBUG", JSON.stringify({ model: model.model, settings: model.settings, prompt }));
   const results = await Promise.allSettled([0, 1, 2].map(async () => {
     const src = await replicateRun(model, prompt, []);
     if (!(await imageIsSafe(src))) throw new Error("unsafe");
