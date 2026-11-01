@@ -51,7 +51,7 @@ function KidZone() {
   const [deviceError, setDeviceError] = useState('');
   // The root shell completes the server lock before mounting this page.
   // A second lock here can finish after password verification and relock the exit.
-  useEffect(() => { void kidDeviceStatus().then(d=>{const id=d.trusted?d.childId:getActivePlayer();const c=id&&data.children.find(k=>k.id===id);if(c){setActivePlayer(c.id);setPlayer(c);}setDeviceReady(true);}).catch(()=>setDeviceError('Couldn’t open this device. Ask your grown-up.')); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { void kidDeviceStatus().then(d=>{const id=d.trusted?d.childId:getActivePlayer();const c=id&&data.children.find(k=>k.id===id);if(c){if(d.trusted)setActivePlayer(c.id,d.verifiedAt??undefined);setPlayer(c);}else setActivePlayer(null);setDeviceReady(true);}).catch(()=>setDeviceError('Couldn’t open this device. Ask your grown-up.')); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const band = (player?.age_band ?? "explorers") as Band;
   const { data: billing } = useQuery(billingOptions(getStripeEnvironment()));
   if (!deviceReady) return <p role={deviceError ? 'alert' : 'status'} className="p-6">{deviceError || 'Opening the Kid Zone…'}</p>;

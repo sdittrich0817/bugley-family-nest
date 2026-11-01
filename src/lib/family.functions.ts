@@ -12,7 +12,9 @@ export const getFamily = createServerFn({ method: "GET" }).middleware([requireSu
   const { data, error } = await context.supabase.from("children").select("id,nickname,age,avatar,bug,login_kind,age_band,bugley_stage").eq("parent_id", context.userId).order("created_at");
   if (error) throw new Error("We couldn’t load your family. Please try again.");
   const { signBugAvatars } = await import('./bug-avatar.server');
-  return { children: await signBugAvatars((data ?? []) as ChildProfile[], context.userId), completed: Boolean(profile.family_setup_completed_at) };
+  const { data: controls, error: controlsError } = await context.supabase.from('child_controls').select('child_id,remember_login').eq('parent_id',context.userId);
+  if (controlsError) throw new Error('Couldn’t load child sign-in settings.');
+  return { children: await signBugAvatars((data ?? []) as ChildProfile[], context.userId), completed: Boolean(profile.family_setup_completed_at), rememberLogins: Object.fromEntries((controls ?? []).map(c => [c.child_id,c.remember_login])) };
 });
 export const familyOptions = queryOptions({ queryKey: ["family"], queryFn: () => getFamily() });
 

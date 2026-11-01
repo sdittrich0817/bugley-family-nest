@@ -1,3 +1,4 @@
+import { rememberedLoginValid } from './hub';
 // Device-level Kid Zone lock. While locked, the app only renders /kids routes.
 const KEY = "bugley-kid-zone-lock";
 const listeners = new Set<() => void>();
@@ -35,20 +36,22 @@ export const BAND_COPY = {
 export type Band = keyof typeof BAND_COPY;
 // The child currently playing on this device (per browser tab session). Server functions still check family ownership.
 const PLAYER_KEY = "bugley-kid-player";
-// A signed-in child stays chosen on this device for a few hours so new tabs/reloads don't ask "Who's playing?" again.
-const PLAYER_TTL = 4 * 60 * 60 * 1000;
+const POLICY_KEY = "bugley-player-policies";
+export function setPlayerPolicies(policies: Record<string, string>) {
+  if (typeof window !== "undefined") window.localStorage.setItem(POLICY_KEY, JSON.stringify(policies));
+}
 export function getActivePlayer() {
   if (typeof window === "undefined") return null;
-  const tab = window.sessionStorage.getItem(PLAYER_KEY);
-  if (tab) return tab;
   try {
     const saved = JSON.parse(window.localStorage.getItem(PLAYER_KEY) ?? "null") as { id: string; at: number } | null;
-    if (saved && Date.now() - saved.at < PLAYER_TTL) { window.sessionStorage.setItem(PLAYER_KEY, saved.id); return saved.id; }
+    const policies = JSON.parse(window.localStorage.getItem(POLICY_KEY) ?? "{}");
+    if (saved && rememberedLoginValid(saved.at, policies[saved.id] ?? "always")) return saved.id;
   } catch { /* ignore */ }
   window.localStorage.removeItem(PLAYER_KEY);
+  window.sessionStorage.removeItem(PLAYER_KEY);
   return null;
 }
-export function setActivePlayer(id: string | null) {
-  if (id) { window.sessionStorage.setItem(PLAYER_KEY, id); window.localStorage.setItem(PLAYER_KEY, JSON.stringify({ id, at: Date.now() })); }
+export function setActivePlayer(id: string | null, verifiedAt?: string) {
+  if (id) { window.sessionStorage.setItem(PLAYER_KEY, id); window.localStorage.setItem(PLAYER_KEY, JSON.stringify({ id, at: verifiedAt ? Date.parse(verifiedAt) : Date.now() })); }
   else { window.sessionStorage.removeItem(PLAYER_KEY); window.localStorage.removeItem(PLAYER_KEY); }
 }

@@ -1,5 +1,6 @@
 import { getRequest, setResponseHeader } from '@tanstack/react-start/server';
 import { DEVICE_SECONDS, deviceAvailable, PIN_ATTEMPTS, PIN_WINDOW_SECONDS } from './kid-device-rules';
+import { rememberedLoginValid } from './hub';
 
 export const admin = async () => (await import('@/integrations/supabase/client.server')).supabaseAdmin;
 export async function digest(value: string) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value))), b => b.toString(16).padStart(2,'0')).join(''); }
@@ -16,6 +17,15 @@ export async function resolveDevice() {
   if (!profile || !consent) return null;
   const {data:account,error:accountError}=await a.auth.admin.getUserById(data.parent_id);
   if(accountError||!account.user?.email_confirmed_at)return null;
+  if (data.child_id) {
+    const { data: controls, error: controlsError } = await a.from('child_controls').select('remember_login').eq('parent_id', data.parent_id).eq('child_id', data.child_id).maybeSingle();
+    if (controlsError) throw new Error('Couldn’t check child sign-in. Please try again.');
+    if (!rememberedLoginValid(data.child_verified_at, controls?.remember_login ?? 'always')) {
+      const { error: resetError } = await a.from('kid_devices').update({ child_id: null, child_verified_at: null }).eq('id',data.id).is('revoked_at',null);
+      if (resetError) throw new Error('Couldn’t reset child sign-in. Please try again.');
+      data.child_id = null; data.child_verified_at = null;
+    }
+  }
   await a.from('kid_devices').update({last_used_at:new Date().toISOString()}).eq('id',data.id).is('revoked_at',null);
   return data;
 }

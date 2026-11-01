@@ -211,6 +211,13 @@
       "when": 1793288039802,
       "tag": "0029_bug_avatar_failure_empty_path",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793576923733,
+      "tag": "0030_child_remembered_login",
+      "breakpoints": true
     }
   ]
 }
