@@ -670,3 +670,14 @@
 .guess-question { background: var(--play-mint); border-block: 2px solid var(--leaf); }
 .guess-tile { transition: opacity .45s ease, filter .45s ease, transform .2s ease; }
 @media (prefers-reduced-motion: reduce) { .guess-tile { transition: none; } .arcade-bob { animation: none; } }
+
+/* Ocean Quest */
+.ocean-world { background: linear-gradient(180deg, var(--play-mint), var(--card)); }
+.ocean-sea { background: linear-gradient(180deg, oklch(0.82 0.1 220), oklch(0.55 0.13 245) 60%, oklch(0.32 0.1 260)); }
+.ocean-murk { background: oklch(0.2 0.06 260); opacity: calc(var(--murk) * 1.6); pointer-events: none; }
+.ocean-bubble { background: oklch(1 0 0 / 0.5); animation: ocean-rise 4s linear infinite; }
+.ocean-beam { background: radial-gradient(ellipse at left, oklch(0.95 0.15 95 / 0.6), transparent 70%); }
+.ocean-blur { filter: blur(3px) grayscale(0.6); transition: filter 0.3s; }
+.ocean-unsure { outline: 2px dashed var(--foreground); animation: maze-twinkle 0.8s ease-in-out infinite; }
+@keyframes ocean-rise { from { transform: translateY(0); opacity: 0.8; } to { transform: translateY(-500px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ocean-bubble, .ocean-unsure { animation: none; } }
