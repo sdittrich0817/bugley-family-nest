@@ -7,9 +7,17 @@ describe('failed page download recovery', () => {
   });
   it('does not reload for a normal sign-in or connection error', () => {
     const reload = vi.fn();
-    expect(recoverChunkLoad(new Error('Load failed'), '/kids', sessionStorage, reload)).toBe(false);
     expect(isChunkLoadError(new Error('Incorrect PIN'))).toBe(false);
+    expect(recoverChunkLoad(new Error('Incorrect PIN'), '/kids', sessionStorage, reload)).toBe(false);
     expect(reload).not.toHaveBeenCalled();
+  });
+  it('treats Safari’s generic "Load failed" as a stale download and reloads once', () => {
+    const values = new Map<string, string>();
+    const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => { values.set(key, value); } };
+    const reload = vi.fn();
+    expect(recoverChunkLoad(new Error('Load failed'), '/kids', storage, reload, 100_000)).toBe(true);
+    expect(recoverChunkLoad(new Error('Load failed'), '/kids', storage, reload, 101_000)).toBe(false);
+    expect(reload).toHaveBeenCalledTimes(1);
   });
   it('reloads once, preserves player storage, and prevents a reload loop', () => {
     const values = new Map([['bugley-active-player', 'test-child']]);
