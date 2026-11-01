@@ -8,6 +8,8 @@ import { familyHasAccess } from "./billing.functions";
 import { EMPTY_MAP, ideaGenre } from "./story";
 import { newComicPage } from "./comic";
 import { v3Count, v3Details, replaceV3Art } from "./v3";
+import { cleanSparks, storyCoachingInstructions } from "./story";
+import { formatStoryPage, storyCoachContext, storyLayoutSchema } from "./story-presentation";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 const environment = z.enum(["sandbox", "live"]);
@@ -103,22 +105,48 @@ export const startV3Creation = createServerFn({ method: "POST" }).middleware([re
 });
 
 /** Saved child words are never replaced by the optional sparks. */
-export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ text: z.string().max(600), help: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
+export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ text: z.string().max(20000), itemId: z.string().uuid().optional(), help: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const p = await (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
+  const storyContext = p.kind === "story" ? storyCoachContext(p.details, data.itemId ?? "", data.text) : null;
+  if (p.kind === "story" && !data.help && (p.details.followups ?? []).includes(data.itemId)) return { question: "", ideas: [] as string[] };
   const g = await s.guardChildText(context.supabase, context.userId, child, data.text.trim() || "Help with my adventure", "story");
   if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   const { aiObject } = await import("./studio-ai.server");
   const out = await aiObject(z.object({ question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3) }),
-    `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. The hero character(s) are ALREADY in every scene and fully designed: never ask who is there, what they are, or what they look like. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, previous: p.details.pages, text: data.text, age: child.age }));
+    p.kind === "story" ? `${storyCoachingInstructions(child.age_band)} The selected hero is already designed. Coach this CURRENT page of a real child-authored book, using only earlier pages and the saved map. Never ask for a detail already supplied or implied by continuity. Ask ONE gentle question only for a confusing jump, unclear motivation, missing action/place, or contradiction; otherwise return question empty. Do not demand every map field or force a conventional ending. ${data.help ? "The child requested help: offer 2–3 short optional idea sparks for this page's hidden beat, never ready-made sentences. End your question with Your call!" : "Return ideas empty; the child did not request sparks."}` : `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. The hero character(s) are ALREADY in every scene and fully designed: never ask who is there, what they are, or what they look like. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, ...(storyContext ?? { previous: p.details.pages, text: data.text }), age: child.age }));
   if (!out) throw new Error("Bugley couldn’t help just now. Your words are still here.");
-  if (!data.help) out.ideas = [];
+  out.ideas = data.help ? cleanSparks(out.ideas.map(idea => idea.replace(/\s*[—–-]?\s*Your call!?\s*$/i, ""))) : [];
+  if (p.kind === "story" && !data.help) {
+    p.details.followups = [...(p.details.followups ?? []), data.itemId];
+    await (await import("./workspace.server")).persistWorkspace(context.userId, child.id, p);
+  }
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   if (g.eventId) {
     const { error } = await a.from("studio_events").update({ reply: [out.question, ...out.ideas].filter(Boolean).join(" · ") || "Your scene has enough detail." }).eq("id", g.eventId).eq("parent_id", context.userId);
     if (error) throw new Error("Bugley’s help couldn’t save. Try again.");
   }
   return out;
+});
+
+/** Presentation-only changes never generate art or spend Glow. */
+export const formatV3Story = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ updatedAt: z.string(), itemId: z.string().uuid(), layout: storyLayoutSchema, chapter: z.string().max(120) }).parse(i)).handler(async ({ data, context }) => {
+  const s = await import("./studio.server");
+  const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
+  const p = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
+  if (p.kind !== "story" || p.details.finished || p.updatedAt !== data.updatedAt) throw new Error("Reopen your story before changing its pages.");
+  (await import("./workspace")).assertWorkspaceIdle(p.details);
+  const index = p.details.pages.findIndex((page: { id: string }) => page.id === data.itemId);
+  const page = p.details.pages[index];
+  if (!page) throw new Error("Choose a story page first.");
+  if (data.chapter !== page.chapter && data.chapter.trim()) {
+    const guard = await s.guardChildText(context.supabase, context.userId, child, data.chapter, "story");
+    if (guard.decision !== "allowed") throw new Error(guard.reply ?? "Try a made-up chapter name.");
+  }
+  p.details.pages[index] = formatStoryPage(page, data.layout, data.chapter);
+  await persistWorkspace(context.userId, child.id, p);
+  return loadWorkspace(context.supabase, context.userId, child.id, p.id);
 });
 
 /** Atomic art replacement: original image remains saved until a checked redraw can be persisted. */

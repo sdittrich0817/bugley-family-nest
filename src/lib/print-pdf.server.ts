@@ -104,9 +104,17 @@ export async function buildInterior(book: Book, nickname: string, format: PrintF
         const p = blank();
         let top = H - BLEED - SAFE;
         if (i === 0) top -= textBlock(p, ch.title, fonts.display, 20, inner.x, top, inner.w, { center: true }) + 10;
+        if (sp.chapter) top -= textBlock(p, sp.chapter, fonts.display, 18, inner.x, top, inner.w) + 12;
         const pic = await img.get(sp.image);
-        if (pic) { const size = Math.min(inner.w, top - inner.y - 120); img.draw(p, pic, (W - size) / 2, top - size, size, size); top -= size + 16; }
-        fitText(p, sp.text, fonts.body, inner.x, inner.y, inner.w, top - inner.y, 18, false);
+        if (sp.layout === "picture-side" && pic) {
+          const width = (inner.w - 18) / 2;
+          const size = Math.min(width, top - inner.y);
+          img.draw(p, pic, inner.x, top - size, size, size);
+          fitText(p, sp.text, fonts.body, inner.x + width + 18, inner.y, width, top - inner.y, 18, false);
+        } else {
+          if (pic) { const size = Math.min(sp.layout === "small-picture" ? inner.w / 3 : inner.w, top - inner.y - 120); img.draw(p, pic, (W - size) / 2, top - size, size, size); top -= size + 16; }
+          fitText(p, sp.text, fonts.body, inner.x, inner.y, inner.w, top - inner.y, 18, false);
+        }
       }
     } else {
       for (const [i, cp] of ch.comic.data.pages.entries()) {

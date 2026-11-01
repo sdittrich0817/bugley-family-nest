@@ -60,6 +60,9 @@
 - [x] Studio 2.2 approved workspace: durable idea-first comic/storybook/picture, inline characters, explicit drawing, contextual Bugley, length choices, history restore and picture editing. Verified approved Pickles/first comic drawing, dialogue restore, exact story words after refresh, picture preview + upgrade readback, phone no overflow; 164 tests pass and build OK. Test projects remain in the album; normal Glow balance moved from 26 to 16 during generation checks.
 - [ ] Studio 2.2 complete comic cover/finish/book and remaining illustration verification (blocked: second-panel drawing did not save during the timed test; subsequent child sign-in returned “Something went wrong. Try again.”). No full-finish or provider reliability claim; existing account/device/physical-voice and art-matrix limitations remain above.
 
+## Story book-making improvements
+- [x] Add contextual optional coaching, saved page layouts and chapter headings, title-page/book preview and read-through. Verified as Dawnie: exact words/layout/heading survive reload, live page check and sparks, Addie’s existing art in preview, mobile no overflow, unchanged 82 Glow; temporary test drafts removed. 42 tests pass; build OK. Physical audio and printed output not verified.
+
 ## Create Studio V3 (comic journey) — built 2026-10-25
 - [x] Add Back to Studio and Create some more; shared player restoration and trusted fallback tested (17 tests), navigation and unchanged finished Marilu verified using authenticated parent’s owned child. Fresh child PIN sign-in failed during verification, so child-authenticated repeat remains unverified; build OK.
 - [x] Fix shared comic slideshow advances and preserve in-picture speech bubbles; Marilu manual/automatic playback and 894×594 display verified, 15 regression tests pass, build OK; saved artwork and words unchanged.

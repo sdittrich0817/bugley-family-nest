@@ -17,6 +17,7 @@ import { controlsOptions } from "@/lib/hub.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { useScrollTopOn } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
+import { StoryPageCanvas } from "./v3/StoryBookPreview";
 
 export function StoryMaker({ child, chat, storyId, onStory, onDirty }: { child: SidekickChild; chat: BugleyChat; storyId: string | null; onStory: (id: string) => void; onDirty: (dirty: boolean) => void }) {
   const [story, setStory] = useState<Story | null>(null);
@@ -171,8 +172,10 @@ export function StoryReader({ story, child, onBack }: { story: Story; child: Sid
     {story.data.finished && page < 0 && <div className="relative flex items-center justify-center gap-3 overflow-hidden py-5"><div aria-hidden className="pointer-events-none absolute inset-0 flex items-start justify-around">{["✦", "●", "◆", "✦", "◆", "●"].map((shape, i) => <span key={i} className={cn("text-xl motion-safe:animate-bounce", i % 2 ? "text-primary" : "text-accent-foreground")}>{shape}</span>)}</div><Bugley stage={child.bugley_stage} expression="celebrating" glow size={80} /><h1 className="text-2xl">You made a story!</h1></div>}
     <div className="flex items-center justify-between gap-2">{onBack ? <Button variant="ghost" onClick={onBack}><ArrowLeft />Keep writing</Button> : <h2 className="break-words text-xl">{story.title}</h2>}<Button variant="ghost" size="icon" aria-label="Read aloud" onClick={() => speak(words)}><Volume2 /></Button></div>
     <article className="space-y-4 border-y border-border py-5" aria-live="polite">
+      {page >= 0 && current ? <StoryPageCanvas page={current} url={picture ? story.urls[picture] : undefined} /> : <>
       {picture && story.urls[picture] ? <img src={story.urls[picture]} alt={page < 0 ? "Story cover" : current?.description ?? "Page illustration"} className="aspect-square w-full rounded-lg bg-muted object-contain" /> : <div className="flex aspect-square items-center justify-center bg-muted"><BookOpen className="size-20 text-muted-foreground" /></div>}
       {page < 0 ? <h2 className="break-words text-center text-3xl">{words}</h2> : <>{current?.chapter && <h3 className="break-words text-xl">{current.chapter}</h3>}<p className={cn("whitespace-pre-wrap break-words leading-relaxed", child.age_band === "sprouts" ? "text-xl" : "text-lg")}>{words}</p></>}
+      </>}
     </article>
     <div className="flex items-center justify-between gap-3"><Button variant="outline" aria-label="Previous reading page" disabled={page < 0} onClick={() => setPage(page - 1)}><ArrowLeft /></Button><span className="text-sm">{page < 0 ? "Cover" : `${page + 1} / ${story.data.pages.length}`}</span><Button variant="outline" aria-label="Next reading page" disabled={page >= story.data.pages.length - 1} onClick={() => setPage(page + 1)}><ArrowRight /></Button></div>
     <p className="text-center text-sm text-muted-foreground">{story.data.pages.length} pages · Printing comes later.</p>
