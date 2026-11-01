@@ -14,6 +14,7 @@ import { type Band } from "@/lib/kid-zone";
 import { listAlbum, listInProgress, updateCreation, CREATION_KINDS, type Creation, type CreationKind } from "@/lib/studio.functions";
 import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
+import { StudioDashboard } from "@/components/studio/StudioDashboard";
 import { GlowMeter } from "@/components/studio/GlowMeter";
 import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { BugleyGuide } from "@/components/studio/Guided";
@@ -105,15 +106,15 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
         {view !== "home"
           ? <Button variant="ghost" onClick={() => { if (storyDirty && !window.confirm("Leave without saving your latest words?")) return; setStoryDirty(false); if (inBook && (view === "story" || view === "comic")) { setView("book"); } else { setInBook(false); setView("home"); void navigate({ to: "/kids/studio", search: {}, replace: true }); } }}><ArrowLeft className="size-5" />{inBook && (view === "story" || view === "comic") ? "My book" : "Studio"}</Button>
           : <Link to="/kids" className="flex items-center gap-2 rounded-full px-3 py-2 font-semibold hover:bg-muted"><ArrowLeft className="size-5" />{sprouts ? "Home" : "Kid Zone"}</Link>}
-        <span className="flex items-center gap-2">{view === "home" && <Button variant="ghost" onClick={() => setView("album")}><Library className="size-5" />My Album</Button>}</span>
+        <span className="flex items-center gap-2"></span>
         {glow ? <GlowMeter compact total={glow.total} allowance={glow.allowance} stage={child.bugley_stage} /> : <span className="h-10 w-32" />}
       </div>
     </header>
     <div className="mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-5">
-      {!["create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
+      {!["home", "create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
-          : view === "home" ? <StudioHome child={child} onOpen={(v) => { if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); if (v === "book") setBookId(null); if (v === "picture") setPictureId(null); setInBook(false); setView(v); }} />
+          : view === "home" ? <StudioDashboard child={child} glow={glow} onAlbum={() => setView("album")} />
           : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />
           : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />
           : view === "book" ? <BookBuilder key={bookId ?? "new"} child={child} chat={chat} bookId={bookId} onBook={setBookId} onOpenChapter={openChapter} />
@@ -126,26 +127,6 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
 
 type View = "home" | "create" | "album" | "picture" | "character" | "story" | "comic" | "book";
 const VIEW_CONTEXT: Record<View, string> = { home: "Studio home", create: "Choosing what to create", album: "My Album", picture: "Picture Maker", character: "Character Creator", story: "Story Maker", comic: "Comic Maker", book: "Book Builder" };
-
-function StudioHome({ child, onOpen: _onOpen }: { child: SidekickChild; onOpen: (v: View) => void }) {
-  const navigate = useNavigate();
-  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
-  const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
-  // Continue first, then "pick a character to start creating", then PLAY.
-  return <div className="space-y-8">
-    {open.length > 0 && <section className="space-y-3"><h2 className="font-display text-2xl">Keep working</h2><ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">{open.slice(0, 8).map(w => <li key={w.id}><Button variant="outline" onClick={() => void navigate({ to: "/kids/studio/v3", search: { project: w.id } })} className="h-auto w-full flex-col items-stretch gap-0 overflow-hidden rounded-3xl border-2 border-border bg-card p-0 text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary">{w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}<span className="block truncate px-3 pt-2 font-display">{w.title}</span><span className="block px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind} · tap to continue</span></Button><DeleteCreationButton childId={child.id} id={w.id} title={w.title} /></li>)}</ul></section>}
-    <section className="space-y-3"><h2 className="font-display text-2xl">Let’s create! Who’s starring?</h2><p className="text-muted-foreground">Tap a character to make a picture, comic or story with them.</p>
-      <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-        <li><button onClick={() => void navigate({ to: "/kids/studio/v3" })} className="flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-primary/60 bg-card p-2 text-center font-display text-lg transition hover:border-primary hover:shadow-glow focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring"><span className="flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground"><Sparkles className="size-6" /></span>New character</button></li>
-        {cast.map((m) => <li key={m.id}><button onClick={() => void navigate({ to: "/kids/studio/v3", search: { character: m.id } })} className="w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-center shadow-soft transition hover:-translate-y-0.5 hover:border-primary focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
-          {m.url ? <img src={m.url} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>🐾</span>}
-          <span className="block truncate px-2 py-1.5 text-sm font-semibold">{m.title}</span>
-        </button></li>)}
-      </ul></section>
-    <div className="flex flex-col items-center gap-3"><Button variant="secondary" size="lg" onClick={() => void navigate({ to: "/kids/studio/games" })}><Gamepad2 className="size-5" />Play games</Button></div>
-    <p className="flex items-center justify-center gap-2 text-center text-sm text-muted-foreground"><Sparkles className="size-4" />You describe everything in words. No photos or uploads, ever.</p>
-  </div>;
-}
 
 /** Vault character building: pick a look, then the three-step builder. */
 function CharacterFlow({ child, chat, onDone, onBack }: { child: SidekickChild; chat: ReturnType<typeof useBugleyChat>; onDone: () => void; onBack: () => void }) {

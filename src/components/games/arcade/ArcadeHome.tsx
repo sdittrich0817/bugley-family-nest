@@ -15,22 +15,13 @@ import { OceanQuest } from './OceanQuest';
 import { DragonCatch } from './DragonCatch';
 import { MemoryMeadow } from './MemoryMeadow';
 import { CreatureLab } from './CreatureLab';
-import meadowArt from '@/assets/games/cover-memory.jpg';
-import dragonArt from '@/assets/games/cover-dragon.jpg';
-import oceanArt from '@/assets/games/cover-ocean.jpg';
-import creatureArt from '@/assets/games/cover-creature.jpg';
-import guessArt from '@/assets/games/cover-guesses.jpg';
-import manorArt from '@/assets/games/cover-manor.jpg';
-import storyArt from '@/assets/games/cover-story.jpg';
-import doodleArt from '@/assets/games/cover-doodle.jpg';
-import mazeArt from '@/assets/games/cover-maze.jpg';
+import { ARCADE_ART as ART } from '@/lib/arcade-art';
 
-const ART: Partial<Record<ArcadeId, string>> = { memory_meadow: meadowArt, dragon_catch: dragonArt, ocean_quest: oceanArt, creature_lab_v2: creatureArt, cosmic_maze: mazeArt, mystery_manor: manorArt, bugley_guesses: guessArt, doodle_duel: doodleArt, story_blanks: storyArt };
 const Thumb = ({ g }: { g: ArcadeGame }) => <img src={ART[g.id]} width={1024} height={768} loading="lazy" alt="" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />;
 
-export function ArcadeHome({ child, family, myGames, onCreate }: { child: SidekickChild & { age_band: string }; family: SidekickChild[]; myGames: React.ReactNode; onCreate: () => void }) {
+export function ArcadeHome({ child, family, myGames, onCreate, initial }: { child: SidekickChild & { age_band: string }; family: SidekickChild[]; myGames: React.ReactNode; onCreate: () => void; initial?: ArcadeId | undefined }) {
   const band = child.age_band as 'sprouts' | 'explorers' | 'builders';
-  const [playing, setPlaying] = useState<ArcadeId | null>(null), [cat, setCat] = useState<ArcadeCategory | 'all'>('all'), [recent, setRecent] = useState<ArcadeId[]>([]);
+  const [playing, setPlaying] = useState<ArcadeId | null>(initial ?? null), [cat, setCat] = useState<ArcadeCategory | 'all'>('all'), [recent, setRecent] = useState<ArcadeId[]>([]);
   useEffect(() => { setRecent(readProgress(child.id).recent); }, [child.id, playing]);
   useScrollTopOn(`${playing}`);
   const games = ARCADE_GAMES.filter((g) => g.engine === 'guesses' ? playAllowed('bugley_guesses', band) : g.engine !== 'play' || playAllowed(g.id as PlayKey, band));

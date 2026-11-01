@@ -21,5 +21,5 @@ describe('arcade progress', () => {
     for (const id of ['ocean_quest', 'cosmic_maze', 'doodle_duel', 'story_blanks', 'ocean_quest'] as const) p = markPlayed(p, id);
     expect(p.recent).toEqual(['ocean_quest', 'story_blanks', 'doodle_duel', 'cosmic_maze']);
   });
-  it('only keeps a personal best when beaten', () => { let p = recordBest({ recent: [], best: {}, level: {}, found: [] }, 'cosmic_maze', 5); p = recordBest(p, 'cosmic_maze', 3); expect(p.best.cosmic_maze).toBe(5); });
+  it('only keeps a personal best when beaten', () => { let p = recordBest({ recent: [], plays: {}, best: {}, level: {}, found: [] }, 'cosmic_maze', 5); p = recordBest(p, 'cosmic_maze', 3); expect(p.best.cosmic_maze).toBe(5); });
 });
