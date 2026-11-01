@@ -225,6 +225,7 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
 
   // ---------- Case play (normal + daily) ----------
   return <div className="space-y-4">
+    <div className="adventure-panorama manor-case-scene"><img src={manorArt} width={1024} height={768} alt="Mystery Manor detective headquarters" /><div className="adventure-panorama-title"><span className="font-bold">{c.roomEmoji} {c.room}</span></div></div>
     <div className="flex items-center justify-between text-sm font-bold"><span>{mode === 'daily' ? '⭐ Case of the Day' : `${LEVELS[level].emoji} ${LEVELS[level].name} · Mystery ${i + 1} of ${CASES_PER_GAME}`}</span><span>🔍 Solved: {score}</span></div>
     <section className="manor-evidence rounded-lg border-2 border-border bg-play-mint p-4">
       <p className="text-sm font-bold text-muted-foreground">{c.roomEmoji} {c.room}</p>
