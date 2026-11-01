@@ -19,7 +19,7 @@ import { ARCADE_ART as ART } from '@/lib/arcade-art';
 
 const Thumb = ({ g }: { g: ArcadeGame }) => <img src={ART[g.id]} width={1024} height={768} loading="lazy" alt="" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />;
 
-export function ArcadeHome({ child, family, myGames, onCreate, initial }: { child: SidekickChild & { age_band: string }; family: SidekickChild[]; myGames: React.ReactNode; onCreate: () => void; initial?: ArcadeId }) {
+export function ArcadeHome({ child, family, myGames, onCreate, initial }: { child: SidekickChild & { age_band: string }; family: SidekickChild[]; myGames: React.ReactNode; onCreate: () => void; initial?: ArcadeId | undefined }) {
   const band = child.age_band as 'sprouts' | 'explorers' | 'builders';
   const [playing, setPlaying] = useState<ArcadeId | null>(initial ?? null), [cat, setCat] = useState<ArcadeCategory | 'all'>('all'), [recent, setRecent] = useState<ArcadeId[]>([]);
   useEffect(() => { setRecent(readProgress(child.id).recent); }, [child.id, playing]);

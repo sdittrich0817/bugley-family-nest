@@ -28,7 +28,7 @@ const WHY = [
 
 const DEFAULT_GAMES: ArcadeId[] = ["dragon_catch", "mystery_manor", "doodle_duel"];
 
-export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild; glow?: { total: number }; onAlbum: () => void }) {
+export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild; glow?: { total: number } | undefined; onAlbum: () => void }) {
   const navigate = useNavigate();
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
@@ -42,7 +42,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
     <section className="relative overflow-hidden rounded-[2rem] bg-secondary p-6 text-secondary-foreground shadow-lift sm:p-8">
       <div className="pointer-events-none absolute -right-10 -top-10 size-56 rounded-full bg-primary/30 blur-3xl" aria-hidden />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-        <div className="shrink-0 animate-[float_4s_ease-in-out_infinite]"><Bugley stage={child.bugley_stage} expression="happy" size={120} /></div>
+        <div className="shrink-0"><Bugley stage={child.bugley_stage} expression="happy" size={120} /></div>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-semibold uppercase tracking-widest opacity-80">Welcome back</p>
           <h1 className="font-display text-4xl sm:text-5xl">{child.nickname}’s Studio</h1>
