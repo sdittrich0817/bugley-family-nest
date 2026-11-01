@@ -12,6 +12,9 @@ import { CosmicMaze } from './CosmicMaze';
 import { MysteryManor } from './MysteryManor';
 import { BugleyGuesses } from './BugleyGuesses';
 import { OceanQuest } from './OceanQuest';
+import { DragonCatch } from './DragonCatch';
+import dragonArt from '@/assets/games/dragon-valley.jpg';
+import dragonSprite from '@/assets/games/dragon-flyer.png';
 import oceanArt from '@/assets/games/ocean-quest.jpg';
 import { CreatureArt, CreatureLab } from './CreatureLab';
 import guessArt from '@/assets/games/guesses-observatory.jpg';
@@ -21,9 +24,10 @@ import storyArt from '@/assets/games/story-dragon-party.jpg';
 import doodleArt from '@/assets/games/doodle-duel.jpg';
 import mazeArt from '@/assets/games/cosmic-maze.jpg';
 
-const ART: Partial<Record<ArcadeId, string>> = { glow_dash: dashArt, ocean_quest: oceanArt, cosmic_maze: mazeArt, mystery_manor: manorArt, bugley_guesses: guessArt, doodle_duel: doodleArt, story_blanks: storyArt };
+const ART: Partial<Record<ArcadeId, string>> = { glow_dash: dashArt, dragon_catch: dragonArt, ocean_quest: oceanArt, cosmic_maze: mazeArt, mystery_manor: manorArt, bugley_guesses: guessArt, doodle_duel: doodleArt, story_blanks: storyArt };
 const Thumb = ({ g }: { g: ArcadeGame }) => g.id === 'creature_lab_v2'
   ? <div className="flex aspect-[4/3] w-full items-center justify-center bg-play-mint"><CreatureArt c={{ body: 'tall', head: 'horns', wings: 'bat', tail: 'dragon', pattern: 'stars', color: '5' }} size={150} className="arcade-bob" /></div>
+  : g.id === 'dragon_catch' ? <div className="relative aspect-[4/3] overflow-hidden"><img src={dragonArt} width={1536} height={1024} loading="lazy" alt="" className="size-full object-cover" /><img src={dragonSprite} width={1024} height={1024} loading="lazy" alt="" className="absolute left-1/4 top-[8%] h-4/5 w-3/4 object-contain arcade-bob" /></div>
   : <img src={ART[g.id]} width={1024} height={768} loading="lazy" alt="" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />;
 
 export function ArcadeHome({ child, family, myGames, onCreate }: { child: SidekickChild & { age_band: string }; family: SidekickChild[]; myGames: React.ReactNode; onCreate: () => void }) {
@@ -37,8 +41,8 @@ export function ArcadeHome({ child, family, myGames, onCreate }: { child: Sideki
   const current = games.find((g) => g.id === playing);
   if (current?.engine === 'play') return <PlayStudio child={child} family={family} start={current.id as PlayKey} onExit={back} />;
   if (current) return <div className="space-y-4"><div className="flex items-center gap-3"><Button variant="ghost" onClick={back}><ArrowLeft />All games</Button><h1 className="text-3xl">{current.name}</h1></div>
-    {current.engine === 'ocean' ? <OceanQuest stage={child.bugley_stage} band={band} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'ocean_quest', n))} /> : current.engine === 'guesses' ? <BugleyGuesses stage={child.bugley_stage} onExit={back} /> : current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
-    {current.engine !== 'guesses' && <p className="text-xs text-muted-foreground">Controls: {current.controls}</p>}</div>;
+    {current.engine === 'dragon' ? <DragonCatch stage={child.bugley_stage} band={band} onExit={back} /> : current.engine === 'ocean' ? <OceanQuest stage={child.bugley_stage} band={band} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'ocean_quest', n))} /> : current.engine === 'guesses' ? <BugleyGuesses stage={child.bugley_stage} onExit={back} /> : current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
+    {current.engine !== 'guesses' && current.engine !== 'dragon' && <p className="text-xs text-muted-foreground">Controls: {current.controls}</p>}</div>;
   const featured = games.find((g) => g.id === FEATURED) ?? games[0];
   const shown = cat === 'all' ? games : games.filter((g) => g.categories.includes(cat));
   const Card = ({ g }: { g: ArcadeGame }) => <article className="group overflow-hidden rounded-lg border-2 border-border bg-card shadow-soft transition hover:border-primary">
