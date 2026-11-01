@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, BookOpen, CalendarStar, Pencil, RotateCcw, Search, Star, Volume2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarCheck, Pencil, RotateCcw, Search, Star, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import {
@@ -125,7 +125,7 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
     <ol className="grid gap-2 text-sm font-bold sm:grid-cols-3">{['🔍 Tap the clues', '🤖 Hear the robot', '✅ Right or ❌ wrong?'].map((t) => <li key={t} className="rounded-2xl border-2 border-border bg-card p-3 text-center">{t}</li>)}</ol>
     <button type="button" onClick={beginDaily} disabled={dailyDone}
       className={cn('flex w-full items-center gap-3 rounded-3xl border-2 p-4 text-left transition', dailyDone ? 'border-border bg-muted opacity-70' : 'border-primary bg-card hover:scale-[1.01]')}>
-      <CalendarStar className="size-10 shrink-0 text-primary" />
+      <CalendarCheck className="size-10 shrink-0 text-primary" />
       <span className="flex-1"><span className="font-display text-lg">Case of the Day</span><br />
         <span className="text-sm font-semibold text-muted-foreground">{dailyDone ? 'Solved! A new case arrives tomorrow 🌙' : 'One special mystery, same for every detective today'}</span></span>
       {!dailyDone && <span className="rounded-full bg-primary px-3 py-1 text-sm font-bold text-primary-foreground">Play</span>}
