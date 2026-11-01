@@ -1,9 +1,8 @@
 import type { Band } from './games';
 import type { DashConfig, GuessState, PublicCase } from './play-extra';
-export const PLAY_KEYS = ['say_see', 'creature_lab', 'story_blanks', 'doodle_duel', 'bugley_guesses', 'mystery_manor', 'glow_dash'] as const;
+export const PLAY_KEYS = ['creature_lab', 'story_blanks', 'doodle_duel', 'bugley_guesses', 'mystery_manor', 'glow_dash'] as const;
 export type PlayKey = typeof PLAY_KEYS[number];
 export const PLAY_GAMES = {
-  say_see: { name: 'Say It, See It', line: 'Say any word and watch it appear!', pitch: 'Tell me one thing that could rescue the day!', secret: 'You just turned words into things. That’s how people talk to AI!' },
   creature_lab: { name: 'Creature Lab', line: 'Mix two things. Hatch a crazy creature!', pitch: 'Pick two things and let’s hatch a wonderfully weird creature!', secret: 'AI mixes ideas it’s seen before, just like your lab!' },
   story_blanks: { name: 'Silly Story Blanks', line: 'Surprise Bugley’s word guesses. Make a laugh-out-loud story!', pitch: 'I’ll guess the next word. Keep it or surprise me with your own!', secret: 'AI guesses words from patterns. A likely word isn’t always the best idea. You decide what happens in your story!' },
   doodle_duel: { name: 'Doodle Duel', line: 'Draw it fast. Can Bugley guess it?', pitch: 'Draw the secret word and see if I can guess it!', secret: 'I look for patterns to guess, just like AI does!' },
@@ -18,17 +17,6 @@ export const GAME_BONUS_CAP = 3;
 export const gameBonus = (stars: number, used: number) => stars >= 3 && used < GAME_BONUS_CAP ? 1 : 0;
 export const normalizeWord = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').slice(0, 60);
 export const comboKey = (a: string, b: string) => [normalizeWord(a), normalizeWord(b)].sort().join('+');
-export const PUZZLES = [
-  { task: 'Get the cat down from the tree!', target: 'cat', place: 'tree', choices: ['ladder', 'trampoline', 'giant bird', 'jetpack'] },
-  { task: 'Help the snowman cross the river!', target: 'snowman', place: 'river', choices: ['giant bird', 'jetpack', 'trampoline', 'rocket'] },
-  { task: 'Help the moon reach the birthday party!', target: 'moon', place: 'party', choices: ['rocket', 'jetpack', 'giant bird', 'ladder'] },
-  { task: 'Rescue the pizza from a cloud castle!', target: 'pizza', place: 'castle', choices: ['jetpack', 'rocket', 'ladder', 'giant bird'] },
-];
-export const BLANKS = [
-  { ask: 'Give me an animal!', choices: ['cat', 'dog', 'owl', 'octopus'] },
-  { ask: 'Something gross!', choices: ['slime', 'stinky boot', 'banana mush', 'soggy pizza'] },
-  { ask: 'A silly sound!', choices: ['Bloop!', 'Squish!', 'Boing!', 'Pfffft!'] },
-];
 export const DOODLES = ['sun', 'cat', 'pizza', 'rocket', 'fish', 'house'];
 export const DOODLE_EMOJI: Record<string,string> = { sun:'☀️', cat:'🐱', pizza:'🍕', rocket:'🚀', fish:'🐟', house:'🏠' };
 export const DOODLE_TURNS = 3;

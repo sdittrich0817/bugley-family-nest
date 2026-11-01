@@ -15,12 +15,11 @@ import { CreatureArt, CreatureLab } from './CreatureLab';
 import guessArt from '@/assets/games/guesses-observatory.jpg';
 import manorArt from '@/assets/games/manor.jpg';
 import dashArt from '@/assets/games/dash-candy.jpg';
-import sayArt from '@/assets/games/say-see.jpg';
 import storyArt from '@/assets/games/story-dragon-party.jpg';
 import doodleArt from '@/assets/games/doodle-duel.jpg';
 import mazeArt from '@/assets/games/cosmic-maze.jpg';
 
-const ART: Partial<Record<ArcadeId, string>> = { glow_dash: dashArt, cosmic_maze: mazeArt, mystery_manor: manorArt, bugley_guesses: guessArt, doodle_duel: doodleArt, say_see: sayArt, story_blanks: storyArt };
+const ART: Partial<Record<ArcadeId, string>> = { glow_dash: dashArt, cosmic_maze: mazeArt, mystery_manor: manorArt, bugley_guesses: guessArt, doodle_duel: doodleArt, story_blanks: storyArt };
 const Thumb = ({ g }: { g: ArcadeGame }) => g.id === 'creature_lab_v2'
   ? <div className="flex aspect-[4/3] w-full items-center justify-center bg-play-mint"><CreatureArt c={{ body: 'tall', head: 'horns', wings: 'bat', tail: 'dragon', pattern: 'stars', color: '5' }} size={150} className="arcade-bob" /></div>
   : <img src={ART[g.id]} width={1024} height={768} loading="lazy" alt="" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />;
