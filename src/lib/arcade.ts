@@ -11,11 +11,12 @@ export const ARCADE_CATEGORIES: { key: ArcadeCategory; label: string }[] = [
   { key: 'ai', label: 'AI Learning' },
 ];
 
-export type ArcadeId = PlayKey | 'cosmic_maze' | 'creature_lab_v2';
-export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories: ArcadeCategory[]; engine: 'play' | 'maze' | 'creatures' | 'manor' | 'guesses'; controls: string };
+export type ArcadeId = PlayKey | 'cosmic_maze' | 'creature_lab_v2' | 'ocean_quest';
+export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories: ArcadeCategory[]; engine: 'play' | 'maze' | 'creatures' | 'manor' | 'guesses' | 'ocean'; controls: string };
 
 export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'glow_dash', name: 'Glow Dash', line: 'Run, jump and scoop up glow through magical worlds!', categories: ['action'], engine: 'play', controls: 'Tap, Space or ↑ to jump (tap twice to double-jump)' },
+  { id: 'ocean_quest', name: 'Ocean Quest', line: 'Steer your sub past jellyfish. Can you trust Bugley’s sonar?', categories: ['action', 'ai'], engine: 'ocean', controls: 'Tap the sea, ↑ ↓ or the arrow buttons' },
   { id: 'creature_lab_v2', name: 'Creature Lab', line: 'Pack lunch, a baseball bag and more. Teach Bugley your picks!', categories: ['creativity', 'explore'], engine: 'creatures', controls: 'Tap parts and colors' },
   { id: 'cosmic_maze', name: 'Cosmic Maze', line: 'Program your rocket with if-then rules, then race Bugley!', categories: ['puzzles', 'explore'], engine: 'maze', controls: 'Build rules, then press Go' },
   { id: 'mystery_manor', name: 'Mystery Manor', line: 'A know-it-all robot is always sure. Check the clues and catch its mistakes!', categories: ['ai', 'puzzles'], engine: 'manor', controls: 'Tap clues, then decide' },
