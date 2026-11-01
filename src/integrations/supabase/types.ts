@@ -619,6 +619,51 @@ export type Database = {
         }
         Relationships: []
       }
+      family_ai_news: {
+        Row: {
+          family_guidance: string
+          id: string
+          published_at: string | null
+          publisher: string
+          response: string
+          source_date: string
+          source_reviewed: boolean
+          source_url: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          family_guidance?: string
+          id?: string
+          published_at?: string | null
+          publisher: string
+          response?: string
+          source_date: string
+          source_reviewed?: boolean
+          source_url: string
+          status?: string
+          summary?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          family_guidance?: string
+          id?: string
+          published_at?: string | null
+          publisher?: string
+          response?: string
+          source_date?: string
+          source_reviewed?: boolean
+          source_url?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       family_glow_settings: {
         Row: {
           alerted_month: string | null

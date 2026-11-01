@@ -1,5 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { FamilyHistory } from "@/components/site/FamilyHistory";
+import { FamilyNews } from "@/components/site/FamilyNews";
 import { studioActivityOptions, markNotificationRead } from "@/lib/studio.functions";
 import { setPlayerPolicies } from "@/lib/kid-zone";
 import { useServerFn } from "@tanstack/react-start";
@@ -63,6 +64,7 @@ function Hub() {
         <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">Learning progress</summary><KidCard child={c} badges={cur.badges[c.id]??[]} skills={cur.skills[c.id]??{}} totals={cur.strandTotals}/></details>
       </div>)}</div></Section>
       <FamilyGuidance />
+      <FamilyNews />
       <ThisWeek current={cur.current}/>
       <section className="border-y border-border py-6"><details><summary className="cursor-pointer font-display text-xl">Family activity history</summary><div className="mt-5"><FamilyHistory kids={family.children}/></div></details></section>
       <section className="space-y-4"><details><summary className="cursor-pointer font-display text-xl">Creations, books &amp; printing</summary><div className="mt-5 space-y-5"><ParentPrints kids={family.children}/><ParentBooks kids={family.children}/><ParentGames/></div></details><details><summary className="cursor-pointer font-semibold">Studio conversations &amp; recently deleted</summary><div className="mt-4"><StudioActivity kids={family.children}/></div></details></section>

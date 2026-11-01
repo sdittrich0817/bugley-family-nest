@@ -1,3 +1,5 @@
+- [x] Add Google News family-AI shortlist discovery, admin response/guidance prompts and reviewed Parent Hub publication; real feed returned 10 draft candidates, 9 publication/access tests pass, build OK. No commentary generated or published.
+- [ ] Verify news discovery/save/publish and family readback live (blocked: parent/admin preview session redirects to locked Kid Zone; normal parent unlock needed).
 - [x] Build simpler Parent Hub: important updates, expandable recorded child history, reassuring AI guidance and per-child Always/default or 24-hour remembered login; boundary and restoration tests pass; build OK.
 - [ ] Verify refreshed Hub saved controls/history and parent screen layout live (blocked: both injected and freshly minted parent sessions redirect to locked Kid Zone; normal parent unlock needed). History is recorded domain activity, not every edit or local practice round.
 - [x] Restore a visible home-page login at small screen widths; verified at 695×594 that it opens /login.
