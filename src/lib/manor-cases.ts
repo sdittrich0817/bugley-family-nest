@@ -36,6 +36,11 @@ export const CLUES: Record<Tag, { emoji: string; texts: string[] }> = {
   quack: { emoji: '🔊', texts: ['Someone heard "QUACK!"', 'A loud quack echoed'] },
 };
 
+/** Short picker labels for each clue tag (used when kids build their own mystery). */
+export const TAG_LABEL: Record<Tag, string> = {
+  orange: 'Orange fur', carrots: 'Carrot bits', hops: 'Hop marks', feathers: 'Feathers', glasses: 'Glasses', night: 'At night', big: 'Big prints', honey: 'Honey drips', fur: 'Fluffy fur', paws: 'Paw prints', stripes: 'Stripes', green: 'Green smudge', wet: 'Wet puddles', nuts: 'Nut shells', climbs: 'Climb scratches', quack: 'A quack',
+};
+
 export const ROOMS: { room: string; emoji: string; question: string }[] = [
   { room: 'Kitchen', emoji: '🍰', question: 'Who ate the birthday cake?' },
   { room: 'Pantry', emoji: '🍯', question: 'Who spilled the snack jar?' },
