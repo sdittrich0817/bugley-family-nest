@@ -22,7 +22,7 @@ export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'bugley_guesses', name: 'Bugley Guesses', line: 'Think of anything. Bugley will read your mind!', categories: ['ai'], engine: 'play', controls: 'Tap or type' },
   { id: 'doodle_duel', name: 'Doodle Duel', line: 'Draw it fast. Can Bugley guess it?', categories: ['ai', 'creativity'], engine: 'play', controls: 'Draw with finger or mouse' },
   { id: 'say_see', name: 'Say It, See It', line: 'Say any word and watch it appear!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Talk or type' },
-  { id: 'story_blanks', name: 'Silly Story Blanks', line: 'Fill in the blanks. Get the silliest story ever!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Tap or type' },
+  { id: 'story_blanks', name: 'Silly Story Blanks', line: 'Surprise Bugley’s word guesses. Make a laugh-out-loud story!', categories: ['ai', 'creativity'], engine: 'play', controls: 'Tap or type' },
 ];
 export const FEATURED: ArcadeId = 'glow_dash';
 
