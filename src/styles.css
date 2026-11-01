@@ -681,3 +681,34 @@
 .ocean-unsure { outline: 2px dashed var(--foreground); animation: maze-twinkle 0.8s ease-in-out infinite; }
 @keyframes ocean-rise { from { transform: translateY(0); opacity: 0.8; } to { transform: translateY(-500px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .ocean-bubble, .ocean-unsure { animation: none; } }
+
+/* Dragon Catch: illustrated flight and a pretend camera, never device access. */
+:root { --dragon-paper: oklch(0.99 0.01 130); --dragon-ink: oklch(0.27 0.06 165); --dragon-outline: oklch(0.99 0.01 130 / .9); --dragon-shade: oklch(0.27 0.06 165 / .2); }
+.dragon-scene { position:relative; height:360px; overflow:hidden; border-radius:8px; background:var(--sky); }
+.dragon-world { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.dragon-intro { height:400px; }
+.dragon-intro-flyer { position:absolute; right:4%; top:5%; width:46%; height:85%; object-fit:contain; }
+.dragon-intro-copy { position:absolute; left:0; bottom:0; padding:24px; width:52%; background:var(--dragon-paper); color:var(--dragon-ink); border-radius:0 8px 0 0; }
+.dragon-lane { position:absolute; left:0; right:0; border-bottom:2px dashed var(--dragon-outline); opacity:.25; }
+.dragon-lane-active { opacity:.85; }
+.dragon-rider { position:absolute; width:120px; height:110px; left:2%; translate:0 -50%; transition:top .2s ease; }
+.dragon-rider img { width:100%; height:100%; object-fit:contain; }
+.dragon-rider > span { position:absolute; bottom:0; left:25%; border-radius:4px; padding:1px 8px; background:var(--dragon-paper); color:var(--dragon-ink); font-size:11px; font-weight:800; }
+.dragon-target { position:absolute; translate:0 -50%; width:120px; height:110px; animation:dragon-pass linear both; }
+.dragon-viewfinder { position:relative; width:100%; height:100%; border:3px dashed var(--dragon-outline); border-radius:8px; background:var(--dragon-shade); }
+.dragon-subject { position:relative; width:100%; height:100%; }
+.dragon-subject img { width:100%; height:100%; object-fit:contain; }
+.dragon-rock img { filter:grayscale(.9); }
+.dragon-leaf img { filter:hue-rotate(20deg); }
+.dragon-disguise { position:absolute; bottom:0; right:0; font-size:38px; }
+.dragon-decoy { display:grid; place-items:center; width:100%; height:100%; font-size:78px; line-height:1; }
+.dragon-scene-note { position:absolute; top:10px; left:50%; translate:-50% 0; width:max-content; max-width:95%; border-radius:6px; background:var(--dragon-paper); color:var(--dragon-ink); padding:6px 12px; font-weight:800; text-align:center; }
+.dragon-photo-focus { position:absolute; left:50%; top:50%; translate:-50% -50%; width:220px; height:240px; border:8px solid var(--dragon-paper); border-bottom-width:38px; border-radius:4px; background:var(--dragon-shade); box-shadow:var(--shadow-lift-value); animation:lab-land .3s ease-out; }
+.dragon-photo-focus .dragon-decoy { font-size:130px; }
+.dragon-photo-label { position:absolute; bottom:-30px; left:0; width:100%; color:var(--dragon-ink); text-align:center; font-size:14px; font-weight:800; }
+.dragon-print { width:130px; height:145px; padding:6px 6px 22px; border:1px solid var(--border); background:var(--card); border-radius:4px; transform:rotate(-3deg); }
+.dragon-print:nth-child(even) { transform:rotate(3deg); }
+.dragon-print > span { font-size:11px; font-weight:700; }
+@keyframes dragon-pass { from { left:calc(100% - 125px); } to { left:28%; } }
+@media (max-width:600px) { .dragon-scene { height:320px; } .dragon-intro { height:460px; } .dragon-intro-flyer { top:0; right:9%; width:75%; height:58%; } .dragon-intro-copy { width:100%; padding:18px; } .dragon-intro-copy h2 { font-size:30px; } .dragon-intro-copy p { font-size:16px; margin-block:10px; } .dragon-rider { width:88px; height:90px; } .dragon-target { width:92px; height:96px; } .dragon-decoy { font-size:62px; } }
+@media (prefers-reduced-motion:reduce) { .dragon-target { animation:none; left:60%; } .dragon-rider { transition:none; } .dragon-photo-focus { animation:none; } }
