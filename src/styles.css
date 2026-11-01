@@ -663,3 +663,10 @@
 .story-meter::-moz-meter-bar { background:var(--sky); border-radius:7px; }
 .story-word { display:inline-block; animation:lab-land .45s ease-out both; }
 @media (prefers-reduced-motion:reduce) { .story-word { animation:none; } }
+
+/* Guessing Garden: picture choices and an inspectable decision tree. */
+.guess-world { border-bottom: 4px solid var(--play-coral); }
+.guess-title { background: linear-gradient(transparent, var(--card) 70%); color: var(--foreground); }
+.guess-question { background: var(--play-mint); border-block: 2px solid var(--leaf); }
+.guess-tile { transition: opacity .45s ease, filter .45s ease, transform .2s ease; }
+@media (prefers-reduced-motion: reduce) { .guess-tile { transition: none; } .arcade-bob { animation: none; } }
