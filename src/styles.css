@@ -709,6 +709,6 @@
 .dragon-print { width:130px; height:145px; padding:6px 6px 22px; border:1px solid var(--border); background:var(--card); border-radius:4px; transform:rotate(-3deg); }
 .dragon-print:nth-child(even) { transform:rotate(3deg); }
 .dragon-print > span { font-size:11px; font-weight:700; }
-@keyframes dragon-pass { from { left:84%; } to { left:28%; } }
+@keyframes dragon-pass { from { left:calc(100% - 125px); } to { left:28%; } }
 @media (max-width:600px) { .dragon-scene { height:320px; } .dragon-intro { height:460px; } .dragon-intro-flyer { top:0; right:9%; width:75%; height:58%; } .dragon-intro-copy { width:100%; padding:18px; } .dragon-intro-copy h2 { font-size:30px; } .dragon-intro-copy p { font-size:16px; margin-block:10px; } .dragon-rider { width:88px; height:90px; } .dragon-target { width:92px; height:96px; } .dragon-decoy { font-size:62px; } }
 @media (prefers-reduced-motion:reduce) { .dragon-target { animation:none; left:60%; } .dragon-rider { transition:none; } .dragon-photo-focus { animation:none; } }

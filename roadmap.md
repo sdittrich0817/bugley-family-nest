@@ -77,10 +77,11 @@
 - [x] Fix Marilu panel-change failures: observed provider E004 temporary outage; clear service-specific reasons, one delayed transient retry within the original Glow charge, fresh saved version after failure preserving edits. 13 tests pass; live panel 2 requested castles/ferries/flying animals/gardens/waterfalls revision saved with paintState done and new image, build OK.
 
 ## Games 2.0 Part 1
-- [ ] Build Dragon Catch: illustrated flights, pretend-camera mistakes in both directions, correction-driven practice learning, replay/All games, bounded rounds and live verification.
+- [x] Build Dragon Catch: illustrated flights, practice-camera mistakes in both directions, checked corrections retained for replay, six-photo album, All games and four-minute bound. Dawnie completed a real flight; replay showed learned corrections, exit worked, 390px had no overflow or page errors; 13 regression tests pass, build OK. No device camera, Glow or server rewards.
 - [x] Rebuild Bugley Guesses with an illustrated garden, 30 secret pictures, visible decision-tree narrowing, yes/no/not-sure clues, mistake explanations, four-minute practice rounds, replay and All games. Nine tests pass; Dawnie completed a live round, replay/exit worked, 390px had no overflow or page errors; build OK. Local practice awards no rewards; existing server guessing unchanged.
 - [x] Rebuild Silly Story Blanks with three illustrated worlds, transparent example-frequency word guesses, exact guarded child surprises, read-aloud comparison, server-backed stars, replay and All games. Nine focused tests pass; Dawnie completed a real round, earned the normal three stars, replay/exit worked, 390px layout had no overflow or page errors; build OK. Physical speaker output remains unverified.
 - [x] Build isolated Wonderwood at /game-playground with generated woodland art and sprites, real local example-learning AI, mistake correction, picnic finale, optional read-aloud and a four-minute bound. Full browser round/replay and 390/894px layouts checked; no family data, Glow or existing game changes.
 - [x] Arcade home, Glow Dash visual upgrade, new Creature Lab, Cosmic Maze (first playtest batch)
-- [ ] Ocean Quest, Dragon Catch, Memory Meadow — blocked on Shea's feedback on the first three
+- [x] Ocean Quest built and playtested by Shea; Dragon Catch built and browser-verified.
+- [ ] Memory Meadow — awaiting approval to start.
 - [ ] Wave 2 and Part 2 — blocked on explicit approval
