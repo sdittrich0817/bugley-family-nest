@@ -11,7 +11,7 @@ import {
 
 const KEY = 'bugley-manor-wins';
 import { cn } from '@/lib/utils';
-import manorArt from '@/assets/games/manor.jpg';
+import manorArt from '@/assets/games/cover-manor.jpg';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 const who = (id: SuspectId) => SUSPECTS.find((s) => s.id === id)!;
@@ -226,7 +226,7 @@ export function MysteryManor({ stage, onExit, onWin }: { stage: Stage; onExit?: 
   // ---------- Case play (normal + daily) ----------
   return <div className="space-y-4">
     <div className="flex items-center justify-between text-sm font-bold"><span>{mode === 'daily' ? '⭐ Case of the Day' : `${LEVELS[level].emoji} ${LEVELS[level].name} · Mystery ${i + 1} of ${CASES_PER_GAME}`}</span><span>🔍 Solved: {score}</span></div>
-    <section className="rounded-3xl border-2 border-border bg-play-mint p-4">
+    <section className="manor-evidence rounded-lg border-2 border-border bg-play-mint p-4">
       <p className="text-sm font-bold text-muted-foreground">{c.roomEmoji} {c.room}</p>
       <h2 className="text-2xl">{c.question}</h2>
       <div className="mt-3 grid grid-cols-3 gap-2">{c.clues.map((cl, k) => {

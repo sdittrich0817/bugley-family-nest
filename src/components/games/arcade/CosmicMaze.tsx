@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { BUGLEY_RULES, OUTCOME_LINE, RACE_TRACKS, RACE_UNLOCK, RULE_LEVELS, runRules, rulesStars, type Act, type Cond, type Grid, type Rule, type RunResult, type Step } from '@/lib/maze-rules';
 import { readProgress, recordBest, unlockLevel, updateProgress } from '@/lib/arcade';
-import space from '@/assets/games/cosmic-maze.jpg';
+import space from '@/assets/games/world-maze.jpg';
 
 type Band = 'sprouts' | 'explorers' | 'builders';
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
@@ -19,6 +19,7 @@ export function CosmicMaze({ childId, band, stage, onExit }: Props) {
   const raceOpen = unlocked >= RACE_UNLOCK;
 
   if (!pick) return <div className="space-y-5">
+    <div className="adventure-panorama"><img src={space} width={1536} height={1024} alt="Crystal asteroid ruins and distant planets" /><div className="adventure-panorama-title"><h2 className="text-3xl">Cosmic Maze</h2></div></div>
     <div className="flex items-center gap-3 rounded-lg border-2 border-border bg-card p-4">
       <Bugley stage={stage} expression="curious" glow size={72} />
       <div><p className="font-display text-xl">You’re the rocket’s programmer!</p><p className="text-sm text-muted-foreground">Give the rocket rules like “If there’s a path ahead, go forward.” Then press Go and watch it follow your rules exactly.</p></div>
@@ -75,7 +76,7 @@ function RulesRun({ mode, grid, title, goal, tip, maxRules, band, stage, rules: 
       <div className="flex gap-2"><Button size="sm" variant="ghost" onClick={onMenu}>Worlds</Button>{onExit && <Button size="sm" variant="ghost" onClick={onExit}>All games</Button>}</div>
     </div>
     <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-      <div className="relative overflow-hidden rounded-lg border-2 border-border">
+      <div className="maze-playfield relative overflow-hidden rounded-lg border-2 border-border">
         <img src={space} width={1280} height={960} alt="" className="absolute inset-0 size-full object-cover" />
         <Board grid={grid} me={myStep} bug={mode === 'race' ? bugStep ?? null : undefined} got={gotGems}
           trail={run ? run.me.steps.slice(0, tick).map((s) => s.at) : []} arrived={done && run?.me.result === 'portal'} />

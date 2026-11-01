@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { SCENES, TEST_COUNT, deal, guess, packStars, type Example, type Item, type Scene } from '@/lib/pack-teach';
 import { cn } from '@/lib/utils';
+import clubhouse from '@/assets/games/world-teach.jpg';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 type Phase = 'pick' | 'teach' | 'test' | 'done';
@@ -55,7 +56,8 @@ export function TeachLab({ stage, onExit, onWin }: { stage: Stage; onExit?: (() 
     : phase === 'test' ? (result === true ? 'Yay! I copied you right!' : result === false ? "Oops! Now I know. I'll remember that!" : `I think: ${g?.yes ? scene.yes : scene.no} ${reason}.`)
     : `I got ${right} of ${TEST_COUNT} right, just from your examples!`;
 
-  return <div className="space-y-4">
+  return <div className="teach-adventure space-y-4">
+    {phase === 'pick' && <div className="adventure-panorama"><img src={clubhouse} width={1536} height={1024} alt="An explorer clubhouse ready for lunch, sports and beach adventures" /><div className="adventure-panorama-title"><h2 className="text-3xl">Teach Bugley</h2></div></div>}
     <Steps at={phase === 'pick' ? 0 : phase === 'teach' ? 1 : 2} />
     <div className="flex items-center gap-3">
       <div className={cn('shrink-0', phase === 'done' ? 'animate-bounce' : 'arcade-bob')}><Bugley stage={stage} expression={mood} glow size={96} /></div>
@@ -63,19 +65,21 @@ export function TeachLab({ stage, onExit, onWin }: { stage: Stage; onExit?: (() 
       <Button size="icon" variant="outline" aria-label="Hear Bugley" onClick={() => speak(say)}><Volume2 /></Button>
     </div>
 
-    {phase === 'pick' && <div className="grid grid-cols-2 gap-3">{SCENES.map((s) => <button key={s.id} type="button" onClick={() => pick(s)} className="rounded-3xl border-4 border-border bg-card p-5 text-center transition hover:-translate-y-1 hover:border-primary active:scale-95">
+    {phase === 'pick' && <div className="grid grid-cols-2 gap-3">{SCENES.map((s) => <Button key={s.id} variant="outline" onClick={() => pick(s)} className="teach-day h-auto flex-col border-2 p-5 text-center transition hover:-translate-y-1 hover:border-primary active:scale-95">
       <span className="block text-6xl">{s.emoji}</span><span className="mt-2 block font-display text-xl">{s.title}</span>
-    </button>)}</div>}
+    </Button>)}</div>}
 
     {card && <>
       <div className="flex items-center justify-between rounded-2xl bg-card px-3 py-2 text-sm font-bold">
         <span>{scene.emoji} {scene.title}</span>
         <span>{phase === 'teach' ? `Show me ${n + 1} of ${deck.teach.length}` : `Bugley's try ${n + 1} of ${deck.test.length} · ⭐ ${right}`}</span>
       </div>
-      <div key={`${phase}-${n}`} className={cn('relative mx-auto flex w-fit flex-col items-center rounded-3xl bg-play-mint px-10 py-5 step-enter', result === true && 'ring-4 ring-primary', result === false && 'ring-4 ring-destructive')}>
+      <div className="teach-bench"><img src={clubhouse} width={1536} height={1024} alt="" className="adventure-world" />
+      <div key={`${phase}-${n}`} className={cn('teach-item relative mx-auto flex w-fit flex-col items-center rounded-lg bg-card px-10 py-5 step-enter', result === true && 'ring-4 ring-primary', result === false && 'ring-4 ring-destructive')}>
         <span className="text-8xl leading-none">{card.emoji}</span>
         <span className="mt-2 font-display text-2xl capitalize">{card.name}</span>
         {g && <span className="absolute -top-3 -right-4 rounded-full border-2 border-border bg-card px-3 py-1 font-display text-lg shadow-soft">🤔 {g.yes ? scene.yesEmoji : scene.noEmoji}?</span>}
+      </div>
       </div>
       {phase === 'test' && result === null && <p className="text-center text-sm font-bold">Now YOU tell Bugley the real answer:</p>}
       {(phase === 'teach' || result === null) && <div className="grid grid-cols-2 gap-3">

@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { DIVES, LANES, makeDive, oceanStars, SURE, type Dive, type Wave } from '@/lib/ocean-quest';
 import { cn } from '@/lib/utils';
+import ocean from '@/assets/games/world-ocean.jpg';
+import submarine from '@/assets/games/explorer-sub.png';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 type Result = { treasure: number; total: number; hearts: number; wrong: number; caught: number };
@@ -30,6 +32,7 @@ export function OceanQuest({ stage, band, onExit, onWin }: { stage: Stage; band:
     </div>;
   }
   return <div className="ocean-world space-y-4 rounded-lg p-5">
+    <div className="adventure-panorama"><img src={ocean} width={1536} height={1024} alt="Sunken ruins and a shipwreck beyond a colorful coral reef" /><img src={submarine} width={816} height={816} alt="Your exploration submarine" className="adventure-panorama-sprite" /></div>
     <div className="flex items-center gap-3"><Bugley stage={stage} expression="curious" glow size={96} className="arcade-bob" />
       <div><h2 className="text-3xl">Ocean Quest</h2><p>Steer the sub. Grab treasure 💎, dodge jellyfish 🪼. My sonar tells you what’s coming… but is it always right?</p></div></div>
     <div className="grid gap-3 sm:grid-cols-3">{DIVES.map((d) => <button key={d.key} type="button" onClick={() => { setDive(d); setRun((n) => n + 1); }} className="rounded-lg border-2 border-border bg-card p-4 text-left shadow-soft transition hover:border-primary">
@@ -75,9 +78,10 @@ function DiveRun({ dive, stage, ms, onDone }: { dive: Dive; stage: Stage; ms: nu
       <span className="flex items-center gap-3"><span>💎 {stats.current.treasure}</span><span className="flex">{[0, 1, 2].map((n) => <Heart key={n} className={cn('size-6', n < stats.current.hearts ? 'fill-destructive text-destructive' : 'text-muted-foreground')} />)}</span></span>
     </div>
     <div className="ocean-sea relative aspect-[16/9] w-full overflow-hidden rounded-lg border-4 border-border" style={{ ['--murk' as string]: dive.murk }} onPointerDown={(e) => { const r = e.currentTarget.getBoundingClientRect(); setLane(Math.min(LANES - 1, Math.floor(((e.clientY - r.top) / r.height) * LANES))); }}>
+      <img src={ocean} width={1536} height={1024} alt="" className="adventure-world" />
       <div className="ocean-murk absolute inset-0" />
       {[12, 30, 55, 72, 88].map((x, n) => <span key={x} className="ocean-bubble absolute bottom-0 size-3 rounded-full" style={{ left: `${x}%`, animationDelay: `${n * 0.7}s` }} />)}
-      <div className="absolute left-[3%] -translate-y-1/2 text-5xl transition-[top] duration-150 sm:text-6xl" style={{ top: laneTop(lane) }} aria-label="Your submarine">🚤<span className="ocean-beam absolute left-full top-1/2 h-8 w-24 -translate-y-1/2" /></div>
+      <div className="ocean-sub absolute left-[3%] -translate-y-1/2 transition-[top] duration-150" style={{ top: laneTop(lane) }} aria-label="Your submarine"><img src={submarine} width={816} height={816} alt="" /><span className="ocean-beam absolute left-full top-1/2 h-8 w-24 -translate-y-1/2" /></div>
       <div className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${100 - t * 84}%`, top: laneTop(w.lane) }}>
         {showSonar && <div className={cn('mb-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold shadow-soft sm:text-sm', w.sonar.label === 'treasure' ? 'bg-play-mint' : 'bg-play-coral', !sure && 'ocean-unsure')}>
           {w.sonar.label === 'treasure' ? '💎 Treasure' : '⚠️ Danger'} · {w.sonar.pct}%{!sure && ' 🤔'}</div>}
