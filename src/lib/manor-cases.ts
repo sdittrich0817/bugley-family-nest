@@ -36,6 +36,11 @@ export const CLUES: Record<Tag, { emoji: string; texts: string[] }> = {
   quack: { emoji: '🔊', texts: ['Someone heard "QUACK!"', 'A loud quack echoed'] },
 };
 
+/** Short picker labels for each clue tag (used when kids build their own mystery). */
+export const TAG_LABEL: Record<Tag, string> = {
+  orange: 'Orange fur', carrots: 'Carrot bits', hops: 'Hop marks', feathers: 'Feathers', glasses: 'Glasses', night: 'At night', big: 'Big prints', honey: 'Honey drips', fur: 'Fluffy fur', paws: 'Paw prints', stripes: 'Stripes', green: 'Green smudge', wet: 'Wet puddles', nuts: 'Nut shells', climbs: 'Climb scratches', quack: 'A quack',
+};
+
 export const ROOMS: { room: string; emoji: string; question: string }[] = [
   { room: 'Kitchen', emoji: '🍰', question: 'Who ate the birthday cake?' },
   { room: 'Pantry', emoji: '🍯', question: 'Who spilled the snack jar?' },
@@ -144,4 +149,65 @@ export const isWin = (score: number) => manorStars(score) >= 2;
 export function seeded(seed: number): Rng {
   let s = seed >>> 0;
   return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 2 ** 32; };
+}
+
+/** Stable hash of a string (used to seed the Case of the Day from the date). */
+export function hashKey(key: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/** One special mystery per calendar day — the same for everyone, everywhere. */
+export function dailyCase(level: Level, wins: number, dateKey: string): Case {
+  const r = seeded(hashKey(`manor-daily-${dateKey}`));
+  const pool = SUSPECTS.slice(0, unlockedCount(wins)).map((s) => s.id);
+  return makeCase(level, pool, r, hashKey(dateKey) % ROOMS.length);
+}
+
+/**
+ * A mystery the child designs: they pick the room, the culprit and the clues.
+ * The robot solves it honestly: if the clues point at exactly one friend in the
+ * cast it gets it right; if the clues are vague it falls back to a hunch and
+ * gets it wrong — showing that good clues are what make a robot smart.
+ */
+export function makeKidCase(roomIdx: number, culprit: SuspectId, tags: Tag[], pool: SuspectId[], r: Rng = Math.random): Case {
+  const cast = shuffle(pool, r).slice(0, Math.min(6, pool.length));
+  if (!cast.includes(culprit)) cast[0] = culprit;
+  const clues = tags.map((t) => ({ tag: t, emoji: CLUES[t].emoji, text: pick(CLUES[t].texts, r) }));
+  const room = ROOMS[roomIdx % ROOMS.length]!;
+  const solvers = cast.filter((s) => tags.every((t) => fits(s, t)));
+  const solved = solvers.length === 1 && solvers[0] === culprit;
+  const botSays = solved ? culprit : pick(cast.filter((s) => s !== culprit), r);
+  const botWhy = solved
+    ? `Every clue fits ${who(culprit).name} and nobody else. I am 100% sure!`
+    : `${who(botSays).hunch}. I am 100% sure!`;
+  const lesson = solved
+    ? 'Your clues were so clear the robot solved it! Good clues make AI smart.'
+    : 'Your clues fit more than one friend, so the robot had to guess. Clearer clues help AI get it right!';
+  return { id: `kid-${roomIdx}-${culprit}`, room: room.room, roomEmoji: room.emoji, question: room.question, cast, clues, answer: culprit, botSays, botWhy, lesson };
+}
+
+/** A stamp in the detective notebook: one solved (or attempted) mystery. */
+export type NotebookEntry = { room: string; roomEmoji: string; culprit: SuspectId; solved: boolean; date: string; daily?: boolean; mine?: boolean };
+export const NOTEBOOK_KEY = 'bugley-manor-notebook';
+export const NOTEBOOK_CAP = 60;
+
+export function readNotebook(storage: Pick<Storage, 'getItem'>): NotebookEntry[] {
+  try {
+    const raw = storage.getItem(NOTEBOOK_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((e) => e && typeof e.room === 'string' && typeof e.culprit === 'string') : [];
+  } catch { return []; }
+}
+
+export function addNotebookEntry(storage: Pick<Storage, 'getItem' | 'setItem'>, entry: NotebookEntry): NotebookEntry[] {
+  const list = [entry, ...readNotebook(storage)].slice(0, NOTEBOOK_CAP);
+  try { storage.setItem(NOTEBOOK_KEY, JSON.stringify(list)); } catch { /* private mode */ }
+  return list;
+}
+
+/** Today's date key in the family's local time, e.g. "2026-11-01". */
+export function todayKey(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 }

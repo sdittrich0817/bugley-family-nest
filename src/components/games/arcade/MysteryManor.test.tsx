@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MysteryManor } from './MysteryManor';
-import { SUSPECTS, judge, levelOpen, makeGame, seeded, unlockedCount, type Level } from '@/lib/manor-cases';
+import { SUSPECTS, addNotebookEntry, dailyCase, hashKey, judge, levelOpen, makeGame, makeKidCase, readNotebook, seeded, todayKey, unlockedCount, type Level, type Tag } from '@/lib/manor-cases';
 
 const fits = (id: string, tag: string) => SUSPECTS.find((s) => s.id === id)!.tags.includes(tag as never);
 
@@ -45,5 +45,36 @@ describe('Catch the Sneaky Robot', () => {
     }
     expect(onWin).toHaveBeenCalled();
     expect(screen.getByText('Play again')).toBeTruthy();
+  });
+  it('Case of the Day is the same all day and changes tomorrow', () => {
+    const a = dailyCase('rookie', 0, '2026-11-01'), b = dailyCase('rookie', 0, '2026-11-01'), c = dailyCase('rookie', 0, '2026-11-02');
+    expect(a).toEqual(b);
+    expect(a.id).not.toBe(c.id);
+  });
+  it('kid-made mystery: clear clues let the robot solve it, vague clues make it guess', () => {
+    const pool = SUSPECTS.map((s) => s.id);
+    // Owl is the only one with feathers + glasses + night: robot must solve it.
+    const clear = makeKidCase(0, 'owl', ['feathers', 'glasses', 'night'] as Tag[], pool, seeded(1));
+    expect(clear.botSays).toBe('owl');
+    expect(clear.answer).toBe('owl');
+    // 'fur' alone fits many friends: the robot cannot know and must not name the culprit by logic.
+    const vague = makeKidCase(0, 'owl', ['fur', 'fur', 'fur'] as Tag[], pool, seeded(1));
+    expect(vague.answer).toBe('owl');
+    expect(vague.lesson).toContain('more than one friend');
+  });
+  it('notebook keeps newest first, caps at 60, and survives bad data', () => {
+    const store = new Map<string, string>();
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) };
+    expect(readNotebook(storage)).toEqual([]);
+    for (let n = 0; n < 70; n++) addNotebookEntry(storage, { room: `Room ${n}`, roomEmoji: '🚪', culprit: 'fox', solved: true, date: todayKey() });
+    const list = readNotebook(storage);
+    expect(list.length).toBe(60);
+    expect(list[0]!.room).toBe('Room 69');
+    store.set('bugley-manor-notebook', 'not json');
+    expect(readNotebook(storage)).toEqual([]);
+  });
+  it('hashKey is stable and date keys are zero-padded', () => {
+    expect(hashKey('manor-daily-2026-11-01')).toBe(hashKey('manor-daily-2026-11-01'));
+    expect(todayKey(new Date(2026, 0, 5))).toBe('2026-01-05');
   });
 });
