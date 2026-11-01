@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_kid/kids_/studio_/v3")({
     { property: "og:title", content: "Create with Your Characters · Bugley Kids" }, { property: "og:description", content: "Your characters, your words, your pictures and adventures." },
     { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }, { name: "robots", content: "noindex" },
   ] }),
-  validateSearch: z.object({ project: z.string().uuid().optional(), draft: z.string().uuid().optional(), character: z.string().uuid().optional() }),
+  validateSearch: z.object({ project: z.string().uuid().optional(), draft: z.string().uuid().optional(), character: z.string().uuid().optional(), kind: z.enum(["picture", "comic", "story"]).optional() }),
   loader: ({ context }) => context.queryClient.ensureQueryData(familyOptions),
   component: V3Page,
 });
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_kid/kids_/studio_/v3")({
 function V3Page() {
   const { data } = useSuspenseQuery(familyOptions);
   const navigate = useNavigate();
-  const { project, draft, character } = Route.useSearch();
+  const { project, draft, character, kind } = Route.useSearch();
   const [journey, setJourney] = useState(0);
   const onMissing = useCallback(() => { void navigate({ to: "/kids", replace: true }); }, [navigate]);
   const { childId, error } = useStudioPlayer(data.children, onMissing);
@@ -33,7 +33,7 @@ function V3Page() {
   if (!child) return null;
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${child.age_band}`)}>
     <div className="mx-auto max-w-3xl px-4 pb-32 pt-5">
-      <ComicJourney key={journey} child={child as SidekickChild} projectId={project} draftId={draft} characterId={character}
+      <ComicJourney key={journey} child={child as SidekickChild} projectId={project} draftId={draft} characterId={character} startKind={kind}
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
         onDraft={id => void navigate({ to: "/kids/studio/v3", search: id ? { draft: id } : {}, replace: true })}
         onBook={id => void navigate({ to: "/kids/studio", search: { book: id } })}
