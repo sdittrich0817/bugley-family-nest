@@ -748,3 +748,16 @@
 @keyframes meadow-pop { 50% { transform:scale(1.05); } }
 @media(max-width:600px) { .meadow-intro { min-height:460px; } .meadow-intro-copy { min-height:460px; max-width:100%; padding:22px; justify-content:flex-end; background:linear-gradient(0deg,var(--meadow-paper) 40%, transparent 75%); } .meadow-intro-copy h2 { font-size:30px; } .meadow-intro-bugs { top:20px; bottom:auto; right:15%; width:70%; justify-content:center; } .meadow-board { min-height:270px; padding:16px 10px 38px; } .meadow-grid { gap:10px; } .meadow-tile { aspect-ratio:.8; border-width:2px; padding:3px; } .meadow-tile-name { font-size:10px; } .meadow-guess-label { font-size:9px; } .meadow-coach { gap:6px; } .meadow-coach > svg { width:75px; height:75px; } .meadow-coach p { font-size:14px; } }
 @media(prefers-reduced-motion:reduce) { .meadow-suggested,.meadow-found { animation:none; } .meadow-tile { transition:none; } }
+
+/* Glow Dash example school and visible prediction run. */
+.dash-school-world { position:relative; height:300px; overflow:hidden; border-radius:8px; background:var(--play-mint); }
+.dash-school-path { position:absolute; inset:82% 0 0; border-top:5px solid var(--primary); background:var(--leaf); }
+.dash-school-runner,.dash-school-flyer { position:absolute; left:12%; bottom:14%; width:120px; height:120px; }
+.dash-school-flyer { bottom:42%; }
+.dash-school-obstacle { position:absolute; bottom:15%; font-size:60px; line-height:1; }
+.dash-school-far { left:78%; }.dash-school-middle { left:62%; }.dash-school-near { left:48%; }
+.dash-school-sign { position:absolute; top:16px; left:50%; translate:-50% 0; max-width:90%; width:max-content; padding:8px 14px; border-radius:6px; background:var(--card); font-weight:800; text-align:center; }
+.dash-run-progress { display:block; width:100%; height:12px; accent-color:var(--primary); }
+.dash-finish-gate { position:absolute; top:35%; bottom:10%; border-left:5px solid var(--primary); font-size:42px; display:flex; flex-direction:column; align-items:center; }
+.dash-finish-gate span { font-size:12px; font-weight:800; padding:4px; background:var(--card); color:var(--foreground); }
+@media(max-width:600px) { .dash-school-world { height:260px; } .dash-school-runner,.dash-school-flyer { left:5%; width:100px; height:100px; } .dash-school-obstacle { font-size:45px; } }

@@ -16,7 +16,7 @@ export type ArcadeGame = { id: ArcadeId; name: string; line: string; categories:
 
 export const ARCADE_GAMES: ArcadeGame[] = [
   { id: 'memory_meadow', name: 'Memory Meadow', line: 'Find the bug twins. Teach Bugley which little details matter!', categories: ['puzzles', 'ai'], engine: 'memory', controls: 'Flip leaves to find identical bugs' },
-  { id: 'glow_dash', name: 'Glow Dash', line: 'Run, jump and scoop up glow through magical worlds!', categories: ['action'], engine: 'play', controls: 'Tap, Space or ↑ to jump (tap twice to double-jump)' },
+  { id: 'glow_dash', name: 'Glow Dash', line: 'Teach Bugley when to jump. Then test its brain on a glowing dash!', categories: ['action', 'ai'], engine: 'play', controls: 'Teach Jump or Wait, then drive or watch Bugley' },
   { id: 'ocean_quest', name: 'Ocean Quest', line: 'Steer your sub past jellyfish. Can you trust Bugley’s sonar?', categories: ['action', 'ai'], engine: 'ocean', controls: 'Tap the sea, ↑ ↓ or the arrow buttons' },
   { id: 'dragon_catch', name: 'Dragon Catch', line: 'Fly through Dragon Valley. Snap dragons and catch the camera’s mistakes!', categories: ['action', 'explore', 'ai'], engine: 'dragon', controls: 'Fly up or down, then snap a photo' },
   { id: 'creature_lab_v2', name: 'Creature Lab', line: 'Pack lunch, a baseball bag and more. Teach Bugley your picks!', categories: ['creativity', 'explore'], engine: 'creatures', controls: 'Tap parts and colors' },
