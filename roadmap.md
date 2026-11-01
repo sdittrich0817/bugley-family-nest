@@ -83,5 +83,5 @@
 - [x] Build isolated Wonderwood at /game-playground with generated woodland art and sprites, real local example-learning AI, mistake correction, picnic finale, optional read-aloud and a four-minute bound. Full browser round/replay and 390/894px layouts checked; no family data, Glow or existing game changes.
 - [x] Arcade home, Glow Dash visual upgrade, new Creature Lab, Cosmic Maze (first playtest batch)
 - [x] Ocean Quest built and playtested by Shea; Dragon Catch built and browser-verified.
-- [ ] Build and verify Memory Meadow: simple picture matching, visible feature-based guesses, immediate learning from checked matches, replay and All games.
+- [x] Build and verify Memory Meadow: illustrated four-pair matching, real local feature-based guesses and immediate checked-pair learning retained in replay. Dawnie completed 4/4 and caught a mistake; replay/All games and 390px layout verified without errors. Ten focused tests pass; build OK. Four-minute cap, no Glow or rewards; Wave 2 remains approval-gated.
 - [ ] Wave 2 and Part 2 — blocked on explicit approval
