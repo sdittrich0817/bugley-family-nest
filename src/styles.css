@@ -761,3 +761,89 @@
 .dash-finish-gate { position:absolute; top:35%; bottom:10%; border-left:5px solid var(--primary); font-size:42px; display:flex; flex-direction:column; align-items:center; }
 .dash-finish-gate span { font-size:12px; font-weight:800; padding:4px; background:var(--card); color:var(--foreground); }
 @media(max-width:600px) { .dash-school-world { height:260px; } .dash-school-runner,.dash-school-flyer { left:5%; width:100px; height:100px; } .dash-school-obstacle { font-size:45px; } }
+
+/* Adventure edition: game-only surfaces; learning and controls are unchanged. */
+:root {
+  --adventure-paper: oklch(0.99 0.006 180);
+  --adventure-ink: oklch(0.26 0.045 225);
+  --adventure-teal: oklch(0.47 0.09 195);
+  --adventure-soft: oklch(0.94 0.025 190);
+  --adventure-line: oklch(0.79 0.035 195);
+  --adventure-shade: oklch(0.2 0.04 200 / .72);
+  --adventure-shadow: 0 10px 25px oklch(0.22 0.04 200 / .16);
+  --adventure-specimen-shadow: 0 5px 5px oklch(0.22 0.04 200 / .24);
+  --adventure-ocean-deep: oklch(0.23 0.065 230);
+  --adventure-ocean-mid: oklch(0.55 0.11 230);
+  --adventure-ocean-light: oklch(0.81 0.09 210);
+  --adventure-bubble: oklch(1 0 0 / .5);
+  --adventure-beam: oklch(0.95 0.15 95 / .6);
+  --adventure-space-shade: oklch(0.19 0.045 240 / .55);
+}
+.game-adventure {
+  --card: var(--adventure-paper); --card-foreground: var(--adventure-ink);
+  --foreground: var(--adventure-ink); --muted: var(--adventure-soft);
+  --border: var(--adventure-line); --play-mint: var(--adventure-soft);
+  --radius: .5rem; --btn-radius: .5rem;
+  isolation:isolate;
+}
+.game-adventure .game-heading { padding-block:8px 16px; border-bottom:2px solid var(--border); }
+.game-adventure :is(.rounded-3xl,.rounded-2xl) { border-radius:8px; }
+.game-adventure button { white-space:normal; }
+.game-adventure button:focus-visible { outline:3px solid var(--primary); outline-offset:3px; }
+.adventure-panorama { position:relative; height:260px; overflow:hidden; border-radius:8px; }
+.adventure-panorama > img:first-child,.adventure-world { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.adventure-panorama-title { position:absolute; bottom:18px; left:20px; color:var(--adventure-paper); text-shadow:0 2px 8px var(--adventure-shade); }
+.adventure-panorama-sprite { position:absolute; right:14%; bottom:0; width:34%; height:100%; object-fit:contain; filter:drop-shadow(var(--adventure-specimen-shadow)); }
+.game-adventure .dragon-intro-copy { width:55%; color:var(--adventure-paper); background:var(--adventure-shade); border-radius:0; }
+.game-adventure .dragon-intro-copy h2 { color:inherit; }
+.game-adventure .dragon-intro-flyer { width:53%; right:0; }
+.game-adventure .dragon-viewfinder { border-style:solid; border-width:2px; background:var(--dragon-shade); }
+.game-adventure .dragon-photo-focus { background:var(--adventure-paper); }
+.game-adventure .dragon-subject img { filter:drop-shadow(var(--adventure-specimen-shadow)); }
+.game-adventure .meadow-intro-copy { background:var(--adventure-shade); color:var(--adventure-paper); max-width:52%; min-height:360px; }
+.game-adventure .meadow-intro-bugs { right:3%; width:40%; }
+.game-adventure .meadow-board { padding:30px 24px 46px; }
+.game-adventure .meadow-bug { object-fit:contain; filter:drop-shadow(var(--adventure-specimen-shadow)); }
+.game-adventure .meadow-tile { border-width:2px; background:var(--adventure-teal); box-shadow:var(--adventure-shadow); }
+.game-adventure .meadow-tile:hover { background:var(--adventure-teal); }
+.game-adventure .meadow-face,.game-adventure .meadow-face:hover { background:var(--adventure-paper); }
+.game-adventure .meadow-leaf { stroke-width:1; }
+.game-adventure .guess-title { color:var(--adventure-paper); background:var(--adventure-shade); }
+.game-adventure .guess-question { background:var(--adventure-soft); border-color:var(--adventure-line); }
+.game-adventure .guess-tile { box-shadow:var(--shadow-soft-value); border-width:1px; }
+.game-adventure .maze-playfield { padding:12px; background:var(--adventure-space-shade); align-self:start; }
+.game-adventure .maze-playfield > img { opacity:.65; }
+.game-adventure .ocean-world { background:transparent; padding:0; }
+.ocean-sea { background:linear-gradient(180deg,var(--adventure-ocean-light),var(--adventure-ocean-mid) 60%,var(--adventure-ocean-deep)); }
+.ocean-murk { background:var(--adventure-ocean-deep); }
+.ocean-bubble { background:var(--adventure-bubble); }
+.ocean-beam { background:radial-gradient(ellipse at left,var(--adventure-beam),transparent 70%); }
+.ocean-sub { width:100px; height:90px; }
+.ocean-sub > img { width:100%; height:100%; object-fit:contain; filter:drop-shadow(var(--adventure-specimen-shadow)); }
+.teach-bench { position:relative; padding:44px 24px 30px; min-height:270px; overflow:hidden; border-radius:8px; }
+.teach-item { z-index:1; box-shadow:var(--adventure-shadow); min-width:180px; }
+.game-adventure .teach-day { border-radius:8px; box-shadow:var(--shadow-soft-value); border-bottom:4px solid var(--adventure-teal); }
+.game-adventure .teach-day > span:first-child { font-size:40px; }
+.game-adventure .manor-evidence { background:var(--adventure-soft); border-left:5px solid var(--adventure-teal); }
+.game-adventure .manor-case-scene { height:180px; }
+.doodle-workbench { position:relative; height:140px; overflow:hidden; border-radius:8px; }
+.doodle-workbench > img { width:100%; height:100%; object-fit:cover; object-position:center 55%; }
+.doodle-workbench > div { position:absolute; inset:auto 0 0; display:flex; justify-content:space-between; align-items:center; padding:10px 18px; background:var(--adventure-shade); color:var(--adventure-paper); }
+.game-adventure .doodle-round aside { border-top:4px solid var(--adventure-teal); box-shadow:var(--shadow-soft-value); }
+.game-adventure .doodle-round ol { flex-wrap:wrap; }
+.game-adventure .story-paper { border-left-color:var(--adventure-teal); box-shadow:var(--shadow-soft-value); }
+.game-adventure .play-preview { max-height:380px; }
+@media(max-width:600px) {
+  .adventure-panorama { height:210px; }
+  .game-adventure .dragon-intro-copy { width:100%; padding:18px; }
+  .game-adventure .dragon-intro-flyer { right:5%; width:86%; }
+  .game-adventure .meadow-intro-copy { max-width:100%; min-height:460px; padding:22px; justify-content:flex-end; background:linear-gradient(0deg,var(--adventure-shade) 48%,transparent 85%); }
+  .game-adventure .meadow-intro-bugs { top:25px; right:10%; width:80%; }
+  .game-adventure .meadow-board { padding:16px 10px 38px; }
+  .ocean-sub { width:68px; height:64px; }
+  .teach-bench { padding:30px 15px 22px; }
+  .teach-item { padding:16px 24px; }
+  .game-adventure .teach-adventure > div:nth-child(3) > div { flex-shrink:0; }
+  .game-adventure .doodle-round ol { font-size:12px; gap:4px; }
+  .doodle-workbench { height:95px; }
+}

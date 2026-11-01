@@ -4,6 +4,7 @@ import { Bugley } from '@/components/brand/Bugley';
 import { DoodleCanvas } from './DoodleCanvas';
 import { DOODLE_EMOJI, DOODLE_TURNS, doodleTarget, type PlayState, type Stroke } from '@/lib/play';
 import { cn } from '@/lib/utils';
+import workshop from '@/assets/games/cover-doodle.jpg';
 
 type Props = { state: PlayState; busy: boolean; disabled: boolean; stage: string; strokes: Stroke[]; onStrokes: (s: Stroke[]) => void; onGuess: () => void };
 
@@ -14,6 +15,7 @@ export function DoodleRound({ state, busy, disabled, stage, strokes, onStrokes, 
   const used = state.drawGuesses ?? 0, hasInk = strokes.some(s => s.points.length > 1);
   const step = got ? 3 : busy ? 2 : thought ? 3 : 1;
   return <div className="doodle-round space-y-4">
+    <div className="doodle-workbench"><img src={workshop} width={1024} height={768} alt="An adventurous artist’s workshop with sketches coming to life" /><div><h2 className="text-2xl">Doodle Duel</h2><Eye className="size-6" /></div></div>
     <ol className="flex items-center justify-center gap-2 text-sm font-bold" aria-label="How to play">
       {[['1', 'You draw'], ['2', 'Bugley looks'], ['3', 'See his brain']].map(([n, l], i) => <li key={n} className={cn('flex items-center gap-2 rounded-full border-2 px-3 py-1', step === i + 1 ? 'border-primary bg-primary/20' : 'border-border text-muted-foreground')}><span className="grid size-6 place-items-center rounded-full bg-card">{n}</span>{l}</li>)}
     </ol>

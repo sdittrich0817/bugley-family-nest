@@ -5,7 +5,7 @@ import { Bugley } from '@/components/brand/Bugley';
 import { THINGS, QUESTIONS, MAX_QUESTIONS, ROUND_MS, narrow, nextQuestion, separatingQuestion, type Answer, type ClueAnswer, type Thing } from '@/lib/guess-garden';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
-import garden from '@/assets/games/guesses-observatory.jpg';
+import garden from '@/assets/games/world-guesses.jpg';
 
 type Phase = 'pick' | 'ask' | 'guess' | 'reveal' | 'done';
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;

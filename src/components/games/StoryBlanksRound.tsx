@@ -8,9 +8,9 @@ import { STORY_WORLDS, storyWorld, storyPredictions, finishSillyStory, surpriseC
 import type { PlayState } from '@/lib/play';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
-import dragon from '@/assets/games/story-dragon-party.jpg';
-import space from '@/assets/games/story-penguin-space.jpg';
-import school from '@/assets/games/story-frog-school.jpg';
+import dragon from '@/assets/games/adventure-story-dragon.jpg';
+import space from '@/assets/games/adventure-story-space.jpg';
+import school from '@/assets/games/adventure-story-school.jpg';
 const ART={dragon,space,school};
 type Props={state:PlayState;stage:React.ComponentProps<typeof Bugley>['stage'];busy:boolean;error:string;left:number;onMove:(o:{word?:string;next?:boolean;storyWorld?:StoryWorldId})=>void;onFinish:()=>void;onExit:()=>void};
 export function StoryBlanksRound({state,stage,busy,error,left,onMove,onFinish,onExit}:Props){

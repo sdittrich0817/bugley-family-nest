@@ -5,26 +5,16 @@ import { Bugley } from '@/components/brand/Bugley';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
 import { makeMeadow, meadowGuess, meadowMatch, teachMeadow, MEADOW_ROUND_MS, type MeadowCard, type MeadowItem, type MeadowLearning } from '@/lib/memory-meadow';
-import meadow from '@/assets/games/memory-meadow.jpg';
+import meadow from '@/assets/games/world-meadow.jpg';
+import butterfly from '@/assets/games/specimen-butterfly.png';
+import dragonfly from '@/assets/games/specimen-dragonfly.png';
+import ladybird from '@/assets/games/specimen-ladybird.png';
+import bee from '@/assets/games/specimen-bee.png';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 function MeadowBug({ item }: { item: MeadowItem }) {
-  return <svg viewBox="0 0 120 100" className={cn('meadow-bug', `meadow-${item.id}`)} role="img" aria-label={item.name}>
-    {item.color === 'blue' ? <>
-      <ellipse className="meadow-wing" cx="35" cy="36" rx={item.id === 'butterfly' ? 25 : 29} ry={item.id === 'butterfly' ? 27 : 10} transform="rotate(25 35 36)" />
-      <ellipse className="meadow-wing" cx="85" cy="36" rx={item.id === 'butterfly' ? 25 : 29} ry={item.id === 'butterfly' ? 27 : 10} transform="rotate(-25 85 36)" />
-      <ellipse className="meadow-wing" cx="37" cy="65" rx={item.id === 'butterfly' ? 20 : 27} ry={item.id === 'butterfly' ? 20 : 9} transform="rotate(-20 37 65)" />
-      <ellipse className="meadow-wing" cx="83" cy="65" rx={item.id === 'butterfly' ? 20 : 27} ry={item.id === 'butterfly' ? 20 : 9} transform="rotate(20 83 65)" />
-      <ellipse className="meadow-ink-fill" cx="60" cy="53" rx="7" ry={item.id === 'dragonfly' ? 37 : 23} />
-      {item.id === 'butterfly' && <g className="meadow-light-fill"><circle cx="30" cy="30" r="8" /><circle cx="90" cy="30" r="8" /><circle cx="35" cy="68" r="5" /><circle cx="85" cy="68" r="5" /></g>}
-    </> : <>
-      <ellipse className="meadow-light-fill meadow-outline" cx="36" cy="33" rx="22" ry="15" transform="rotate(-30 36 33)" /><ellipse className="meadow-light-fill meadow-outline" cx="84" cy="33" rx="22" ry="15" transform="rotate(30 84 33)" />
-      <ellipse className="meadow-gold-fill meadow-outline" cx="60" cy="59" rx="34" ry="29" />
-      {item.id === 'bee' ? <g className="meadow-ink-stroke"><path d="M39 38v42M58 31v56M77 36v46" /></g> : <g className="meadow-ink-fill"><circle cx="43" cy="49" r="6" /><circle cx="76" cy="48" r="6" /><circle cx="42" cy="68" r="6" /><circle cx="76" cy="68" r="6" /><path d="M59 31h3v56h-3z" /></g>}
-    </>}
-    <path className="meadow-antenna" d="M53 24 45 12M67 24 75 12" /><circle className="meadow-ink-fill" cx="60" cy="28" r="14" />
-    <g className="meadow-light-fill"><circle cx="55" cy="25" r="4" /><circle cx="65" cy="25" r="4" /></g><g className="meadow-ink-fill"><circle cx="56" cy="25" r="2" /><circle cx="64" cy="25" r="2" /></g>
-  </svg>;
+  const art = item.id === 'butterfly' ? butterfly : item.id === 'dragonfly' ? dragonfly : item.id === 'bee' ? bee : ladybird;
+  return <img src={art} width={816} height={816} className={cn('meadow-bug', `meadow-${item.id}`)} alt={item.name} draggable={false} />;
 }
 
 export function MemoryMeadow({ stage, onExit }: { stage: Stage; onExit: () => void }) {

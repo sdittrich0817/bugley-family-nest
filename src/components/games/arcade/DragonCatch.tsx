@@ -5,8 +5,8 @@ import { Bugley } from '@/components/brand/Bugley';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cameraGuess, checkPhoto, flightSpeed, makeFlight, PHOTO_GOAL, ROUND_MS, teachCamera, type CameraMemory, type Sighting } from '@/lib/dragon-catch';
 import { cn } from '@/lib/utils';
-import valley from '@/assets/games/dragon-valley.jpg';
-import dragon from '@/assets/games/dragon-flyer.png';
+import valley from '@/assets/games/world-dragon.jpg';
+import dragon from '@/assets/games/adventure-dragon.png';
 
 type Stage = NonNullable<React.ComponentProps<typeof Bugley>['stage']>;
 type Photo = { sighting: Sighting; correct: boolean };
