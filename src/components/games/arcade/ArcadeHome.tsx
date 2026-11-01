@@ -37,7 +37,7 @@ export function ArcadeHome({ child, family, myGames, onCreate }: { child: Sideki
   if (current?.engine === 'play') return <PlayStudio child={child} family={family} start={current.id as PlayKey} onExit={back} />;
   if (current) return <div className="space-y-4"><div className="flex items-center gap-3"><Button variant="ghost" onClick={back}><ArrowLeft />All games</Button><h1 className="text-3xl">{current.name}</h1></div>
     {current.engine === 'guesses' ? <BugleyGuesses stage={child.bugley_stage} onExit={back} /> : current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
-    </div>;
+    {current.engine !== 'guesses' && <p className="text-xs text-muted-foreground">Controls: {current.controls}</p>}</div>;
   const featured = games.find((g) => g.id === FEATURED) ?? games[0];
   const shown = cat === 'all' ? games : games.filter((g) => g.categories.includes(cat));
   const Card = ({ g }: { g: ArcadeGame }) => <article className="group overflow-hidden rounded-lg border-2 border-border bg-card shadow-soft transition hover:border-primary">
