@@ -8,7 +8,7 @@ export const PLAY_GAMES = {
   doodle_duel: { name: 'Doodle Duel', line: 'Draw it fast. Can Bugley guess it?', pitch: 'Draw the secret word and see if I can guess it!', secret: 'I look for patterns to guess, just like AI does!' },
   bugley_guesses: { name:'Bugley Guesses',line:'Think of anything. Bugley will read your mind!',pitch:'Think of an animal, food, or object. I’ll ask questions, then we’ll swap!',secret:'Each answer helped me narrow it down. AI does that too!' },
   mystery_manor: { name:'Mystery Manor',line:'One friend is a sneaky robot. Can you catch it?',pitch:'Explore three rooms and find the clue that doesn’t add up!',secret:'Not everything that sounds true is true. Always check the clues!' },
-  glow_dash: { name:'Glow Dash',line:'Run, jump and dodge through glowing worlds!',pitch:'Jump, double-jump, and scoop up glow on the way to the finish!',secret:'You just gave instructions to a computer, and it listened!' },
+  glow_dash: { name:'Glow Dash',line:'Teach Bugley when to jump. Test its brain on a glowing dash!',pitch:'Show me when to jump and when to wait. Then watch me use your examples — or take the wheel!',secret:'AI learns from examples. My little brain compares the obstacle distance and whether I’m in the air with the examples you checked. Good examples help me choose a jump, but they don’t guarantee every new situation will go right!' },
 } as const;
 export const playAllowed = (game: PlayKey, band: Band) => ['bugley_guesses','mystery_manor','glow_dash'].includes(game) ? band !== 'sprouts' : game !== 'story_blanks' || band !== 'builders';
 export const playSeconds=(game:PlayKey)=>game==='mystery_manor'?290:game==='glow_dash'?180:240;
