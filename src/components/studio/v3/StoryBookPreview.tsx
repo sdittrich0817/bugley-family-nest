@@ -6,8 +6,8 @@ import { speak } from "../Sidekick";
 import { cn } from "@/lib/utils";
 import type { StoryLayout } from "@/lib/story-presentation";
 
-type Page = { id: string; text: string; image: string | null; chapter?: string; description?: string; layout?: StoryLayout };
-export function StoryPageCanvas({ page, url, layout }: { page: Page; url?: string; layout?: StoryLayout }) {
+type Page = { id: string; text: string; image: string | null; chapter?: string | undefined; description?: string | undefined; layout?: StoryLayout | undefined };
+export function StoryPageCanvas({ page, url, layout }: { page: Page; url?: string | undefined; layout?: StoryLayout | undefined }) {
   const chosen = layout ?? page.layout ?? "picture-top";
   return <article className={cn("min-w-0 space-y-4", chosen === "picture-side" && "sm:grid sm:grid-cols-2 sm:items-start sm:gap-6 sm:space-y-0")}>
     <div className={cn(chosen === "small-picture" && "mx-auto w-1/3 min-w-24")}>
@@ -17,12 +17,12 @@ export function StoryPageCanvas({ page, url, layout }: { page: Page; url?: strin
   </article>;
 }
 
-export function StoryBookPreview({ title, author, cover, pages, urls, onClose, onEdit }: { title: string; author: string; cover?: string; pages: Page[]; urls: Record<string, string>; onClose: () => void; onEdit?: (index: number) => void }) {
+export function StoryBookPreview({ title, author, cover, pages, urls, onClose, onEdit }: { title: string; author: string; cover?: string | undefined; pages: Page[]; urls: Record<string, string>; onClose: () => void; onEdit?: ((index: number) => void) | undefined }) {
   const [at, setAt] = useState(-2);
   const page = pages[at];
   const words = at < 0 ? `${title}. By ${author}.` : page ? `${page.chapter ? page.chapter + ". " : ""}${page.text}` : "The End";
   useEffect(() => { window.speechSynthesis?.cancel(); return () => window.speechSynthesis?.cancel(); }, [at]);
-  return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="max-h-[90dvh] max-w-3xl overflow-y-auto">
+  return <Dialog open onOpenChange={open => { if (!open) onClose(); }}><DialogContent aria-describedby={undefined} className="max-h-[90dvh] max-w-3xl overflow-y-auto">
     <DialogTitle className="break-words pr-8">{title}</DialogTitle>
     <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm font-semibold text-muted-foreground">{at === -2 ? "Cover" : at === -1 ? "Title page" : page ? `Page ${at + 1} of ${pages.length}` : "The End"}</span><div className="flex gap-1"><Button variant="ghost" size="icon" aria-label="Read this book page aloud" title="Read aloud" onClick={() => speak(words)}><Volume2 /></Button>{page && onEdit && <Button variant="outline" onClick={() => { onEdit(at); onClose(); }}><Pencil />Edit this page</Button>}</div></div>
     <div key={at} className="step-enter min-h-64 border-y border-border py-6">

@@ -10,7 +10,7 @@ const layouts = [
   { id: "picture-side", label: "Picture beside words", icon: Columns2 },
   { id: "small-picture", label: "More words, small picture", icon: BookOpen },
 ] as const;
-export function StoryPageDesign({ page, words, url, busy, onSave }: { page: { id: string; text: string; image: string | null; chapter?: string; layout?: StoryLayout }; words: string; url?: string; busy: boolean; onSave: (layout: StoryLayout, chapter: string) => void }) {
+export function StoryPageDesign({ page, words, url, busy, onSave }: { page: { id: string; text: string; image: string | null; chapter?: string | undefined; layout?: StoryLayout | undefined }; words: string; url?: string | undefined; busy: boolean; onSave: (layout: StoryLayout, chapter: string) => void }) {
   const [chosen, setChosen] = useState<StoryLayout>(page.layout ?? "picture-top");
   const [chapter, setChapter] = useState(page.chapter ?? "");
   const suggestion = suggestStoryLayout(words);
