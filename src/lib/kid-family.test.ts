@@ -31,4 +31,10 @@ describe('returning to Studio', () => {
     vi.mocked(kidDeviceStatus).mockRejectedValue(new Error('Load failed'));
     await expect(restoreStudioPlayer([{ id: 'dawnie' }])).rejects.toThrow('Load failed');
   });
+  it('rejects an expired trusted login even when the browser remembers the child', async () => {
+    setActivePlayer('dawnie');
+    vi.mocked(kidDeviceStatus).mockResolvedValue({trusted:true,invalid:false,childId:null,verifiedAt:null,parentUnlocked:false});
+    expect(await restoreStudioPlayer([{id:'dawnie'}])).toBeNull();
+    expect(getActivePlayer()).toBeNull();
+  });
 });

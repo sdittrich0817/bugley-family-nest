@@ -21,6 +21,8 @@ export async function resolveDevice() {
     const { data: controls, error: controlsError } = await a.from('child_controls').select('remember_login').eq('parent_id', data.parent_id).eq('child_id', data.child_id).maybeSingle();
     if (controlsError) throw new Error('Couldn’t check child sign-in. Please try again.');
     if (!rememberedLoginValid(data.child_verified_at, controls?.remember_login ?? 'always')) {
+      const { error: resetError } = await a.from('kid_devices').update({ child_id: null, child_verified_at: null }).eq('id',data.id).is('revoked_at',null);
+      if (resetError) throw new Error('Couldn’t reset child sign-in. Please try again.');
       data.child_id = null; data.child_verified_at = null;
     }
   }
