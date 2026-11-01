@@ -200,13 +200,15 @@ function CreationCard({ c, onUpdate, onStory, onComic, onBook, onPicture, childI
       <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">{KIND_ONE[c.kind]}</span>
       <button onClick={() => onUpdate(c.id, { favorite: !c.favorite })} aria-label={c.favorite ? "Unfavorite" : "Favorite"} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/90"><Heart className={cn("size-5", c.favorite && "fill-current text-destructive")} /></button>
     </div>
-    <div className="flex items-center gap-1 p-3">
+    <div className="space-y-1 p-3">
       {editing ? <form className="min-w-0 flex-1" onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} onBlur={() => setEditing(false)} aria-label="New name" className="w-full rounded-lg border-2 border-primary bg-background px-2 py-1" />
-      </form> : <p className="min-w-0 flex-1 truncate font-display">{c.title}</p>}
+      </form> : <p className="line-clamp-2 font-display leading-tight">{c.title}</p>}
+      <div className="flex items-center justify-end gap-1">
       {(c.kind === "story" || c.kind === "comic") && !c.project && <button aria-label="Make it Chapter 1 of a book" title="Make it a book" className="rounded-full p-1.5 text-muted-foreground hover:bg-muted" onClick={async () => { try { const b = await bookFromOneShot({ data: { childId, creationId: c.id, environment: getStripeEnvironment() } }); toast.success("Your book is ready! This is Chapter 1."); onBook(b.id); } catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); } }}><Library className="size-4" /></button>}
       <button onClick={() => setEditing(true)} aria-label="Rename" className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="size-4" /></button>
       <DeleteCreationButton childId={childId} id={c.id} title={c.title} />
+      </div>
     </div>
   </li>;
 }
