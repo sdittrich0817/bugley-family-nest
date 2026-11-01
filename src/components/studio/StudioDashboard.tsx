@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Gamepad2, Library, Play, Plus, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ChildAvatar } from "@/components/site/ChildAvatar";
+import { BugBuilder } from "@/components/site/BugBuilder";
+import { toBug } from "@/lib/bug-avatar";
+import { ArrowRight, Pencil, X, Gamepad2, Library, Play, Plus, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { Bugley } from "@/components/brand/Bugley";
 import { Button } from "@/components/ui/button";
 import { DeleteCreationButton } from "@/components/studio/DeleteCreationButton";
@@ -28,7 +32,7 @@ const WHY = [
 
 const DEFAULT_GAMES: ArcadeId[] = ["dragon_catch", "mystery_manor", "doodle_duel"];
 
-export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild; glow?: { total: number } | undefined; onAlbum: () => void }) {
+export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild & { bug?: unknown; avatar?: unknown }; glow?: { total: number } | undefined; onAlbum: () => void }) {
   const navigate = useNavigate();
   const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
   const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
@@ -36,13 +40,20 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
   useEffect(() => { setFavs(favoriteGames(readProgress(child.id))); }, [child.id]);
   const games = (favs.length ? favs : DEFAULT_GAMES).map((id) => ARCADE_GAMES.find((g) => g.id === id)!).filter(Boolean);
   const start = () => void navigate({ to: "/kids/studio/v3" });
+  const [pickFor, setPickFor] = useState<(typeof JOURNEYS)[number] | null>(null);
+  const [bugOpen, setBugOpen] = useState(false);
+  const [bug, setBug] = useState<unknown>(child.bug ?? child.avatar);
+  const qc = useQueryClient();
+  const startWith = (id: string, kind?: "picture" | "comic" | "story") => void navigate({ to: "/kids/studio/v3", search: kind ? { character: id, kind } : { character: id } });
+  if (bugOpen) return <BugBuilder childId={child.id} start={toBug(bug, child.id)} onClose={() => setBugOpen(false)} onSaved={(b) => { setBug(b); setBugOpen(false); void qc.invalidateQueries({ queryKey: ["family"] }); toast.success("Your bug is saved!"); }} />;
 
   return <div className="space-y-10">
     {/* Welcome */}
     <section className="relative overflow-hidden rounded-[2rem] bg-secondary p-6 text-secondary-foreground shadow-lift sm:p-8">
       <div className="pointer-events-none absolute -right-10 -top-10 size-56 rounded-full bg-primary/30 blur-3xl" aria-hidden />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-        <div className="shrink-0"><Bugley stage={child.bugley_stage} expression="happy" size={120} /></div>
+        <div className="flex shrink-0 items-end gap-2"><Bugley stage={child.bugley_stage} expression="happy" size={110} />
+          <button onClick={() => setBugOpen(true)} aria-label="Update my bug picture" className="group relative rounded-full ring-4 ring-primary transition hover:scale-105"><ChildAvatar avatar={bug} seed={child.id} className="size-20" /><span className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow"><Pencil className="size-4" /></span></button></div>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-semibold uppercase tracking-widest opacity-80">Welcome back</p>
           <h1 className="font-display text-4xl sm:text-5xl">{child.nickname}’s Studio</h1>
@@ -50,6 +61,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
         </div>
         <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
           <span className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 font-display text-xl text-primary-foreground shadow-glow"><Zap className="size-5 fill-current" />{glow?.total ?? "–"} Glow</span>
+          <Button size="sm" variant="outline" onClick={() => setBugOpen(true)}>🐞 Update my bug</Button>
           <Button variant="ghost" size="sm" onClick={onAlbum} className="text-secondary-foreground hover:bg-background/15 hover:text-secondary-foreground"><Library />My Album</Button>
         </div>
       </div>
@@ -74,11 +86,18 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
       <ol className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
         <Step n={1} label="Pick or invent a character" /><ArrowRight className="size-4" /><Step n={2} label="Choose what to make" /><ArrowRight className="size-4" /><Step n={3} label="Describe it. Bugley helps." />
       </ol>
-      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={start} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={() => cast.length ? setPickFor(j) : start()} aria-pressed={pickFor?.key === j.key} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
         <img src={j.art} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent" aria-hidden />
-        <span className="absolute inset-x-0 bottom-0 p-4 text-background"><span className="block font-display text-2xl">{j.title}</span><span className="block text-sm opacity-90">{j.line}</span></span>
+        <span className="absolute inset-x-0 bottom-0 p-4 text-background"><span className="block font-display text-2xl">{j.title}</span><span className="block text-sm opacity-90">{j.line}</span><span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Pick a character<ArrowRight className="size-3" /></span></span>
       </button>)}</div>
+      {pickFor && <div className="step-enter space-y-3 rounded-3xl border-4 border-primary bg-card p-4 shadow-glow">
+        <div className="flex items-center justify-between gap-2"><h3 className="font-display text-xl">Who’s starring in your {pickFor.key}?</h3><Button variant="ghost" size="icon" aria-label="Close" onClick={() => setPickFor(null)}><X /></Button></div>
+        <ul className="flex snap-x gap-3 overflow-x-auto pb-1">
+          <li className="w-24 shrink-0"><button onClick={start} className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-dashed border-primary/60 text-sm font-semibold hover:border-primary"><Plus className="size-6 text-primary" />New</button></li>
+          {cast.map((m) => <li key={m.id} className="w-24 shrink-0 text-center"><button onClick={() => startWith(m.id, pickFor.key)} className="block w-full">{m.url ? <img src={m.url} alt="" className="aspect-square w-full rounded-full border-4 border-background object-cover shadow-soft transition hover:scale-105 hover:border-primary" /> : <span className="flex aspect-square items-center justify-center rounded-full bg-primary/15 text-3xl">🐾</span>}<span className="mt-1 block truncate text-sm font-semibold">{m.title}</span></button></li>)}
+        </ul>
+      </div>}
     </section>
 
     {/* Characters */}
