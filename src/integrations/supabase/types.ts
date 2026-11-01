@@ -308,6 +308,7 @@ export type Database = {
           daily_minutes: number | null
           parent_id: string
           read_aloud: boolean
+          remember_login: string
           spelling_help: boolean
           studio_games: boolean
           studio_stories: boolean
@@ -318,6 +319,7 @@ export type Database = {
           daily_minutes?: number | null
           parent_id: string
           read_aloud?: boolean
+          remember_login?: string
           spelling_help?: boolean
           studio_games?: boolean
           studio_stories?: boolean
@@ -328,6 +330,7 @@ export type Database = {
           daily_minutes?: number | null
           parent_id?: string
           read_aloud?: boolean
+          remember_login?: string
           spelling_help?: boolean
           studio_games?: boolean
           studio_stories?: boolean
