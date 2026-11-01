@@ -6,7 +6,6 @@ import { ChildAvatar } from "@/components/site/ChildAvatar";
 import { BugBuilder } from "@/components/site/BugBuilder";
 import { toBug } from "@/lib/bug-avatar";
 import { ArrowRight, Pencil, X, Gamepad2, Library, Play, Plus, ShieldCheck, Sparkles, Zap } from "lucide-react";
-import { Bugley } from "@/components/brand/Bugley";
 import { Button } from "@/components/ui/button";
 import { DeleteCreationButton } from "@/components/studio/DeleteCreationButton";
 import type { SidekickChild } from "@/components/studio/Sidekick";
@@ -52,8 +51,8 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
     <section className="relative overflow-hidden rounded-[2rem] bg-secondary p-6 text-secondary-foreground shadow-lift sm:p-8">
       <div className="pointer-events-none absolute -right-10 -top-10 size-56 rounded-full bg-primary/30 blur-3xl" aria-hidden />
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
-        <div className="flex shrink-0 items-end gap-2"><Bugley stage={child.bugley_stage} expression="happy" size={110} />
-          <button onClick={() => setBugOpen(true)} aria-label="Update my bug picture" className="group relative rounded-full ring-4 ring-primary transition hover:scale-105"><ChildAvatar avatar={bug} seed={child.id} className="size-20" /><span className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow"><Pencil className="size-4" /></span></button></div>
+        <div className="shrink-0">
+          <button onClick={() => setBugOpen(true)} aria-label="Update my bug picture" className="group relative rounded-full ring-4 ring-primary transition hover:scale-105"><ChildAvatar avatar={bug} seed={child.id} className="size-28" /><span className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow"><Pencil className="size-4" /></span></button></div>
         <div className="min-w-0 flex-1 space-y-2">
           <p className="text-sm font-semibold uppercase tracking-widest opacity-80">Welcome back</p>
           <h1 className="font-display text-4xl sm:text-5xl">{child.nickname}’s Studio</h1>
@@ -61,7 +60,6 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
         </div>
         <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
           <span className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 font-display text-xl text-primary-foreground shadow-glow"><Zap className="size-5 fill-current" />{glow?.total ?? "–"} Glow</span>
-          <Button size="sm" variant="outline" onClick={() => setBugOpen(true)}>🐞 Update my bug</Button>
           <Button variant="ghost" size="sm" onClick={onAlbum} className="text-secondary-foreground hover:bg-background/15 hover:text-secondary-foreground"><Library />My Album</Button>
         </div>
       </div>

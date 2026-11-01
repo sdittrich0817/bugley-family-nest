@@ -139,7 +139,8 @@ function CharacterFlow({ child, chat, onDone, onBack }: { child: SidekickChild; 
   return <HeroBuilder child={child} chat={chat} styleKey={style} role="hero" onBack={() => setStyle(null)} onDone={onDone} />;
 }
 
-const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Heroes", game: "Games" };
+const KIND_LABEL: Record<CreationKind, string> = { picture: "Pictures", story: "Stories", comic: "Comics", book: "Books", character: "Characters", game: "Games" };
+const KIND_ONE: Record<CreationKind, string> = { picture: "Picture", story: "Story", comic: "Comic", book: "Book", character: "Character", game: "Game" };
 
 function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id: string) => void; child: SidekickChild; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
   const qc = useQueryClient();
@@ -147,7 +148,8 @@ function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id:
   const { data: items = [], isLoading } = useQuery({ queryKey: key, queryFn: () => listAlbum({ data: { childId: child.id } }) });
   const [filter, setFilter] = useState<CreationKind | "all" | "favorites">("all");
   const [mode, setMode] = useState<"grid" | "projects">("grid");
-  const shown = useMemo(() => items.filter((c) => filter === "all" ? true : filter === "favorites" ? c.favorite : c.kind === filter), [items, filter]);
+  const kinds = useMemo(() => CREATION_KINDS.filter((k) => items.some((c) => c.kind === k)), [items]);
+  const shown = useMemo(() => items.filter((c) => filter === "all" ? (c.kind !== "character" || c.images.length > 0) : filter === "favorites" ? c.favorite : c.kind === filter), [items, filter]);
   const projects = useMemo(() => {
     const m = new Map<string, Creation[]>();
     for (const c of shown) { const p = c.project ?? c.title; m.set(p, [...(m.get(p) ?? []), c]); }
@@ -167,7 +169,7 @@ function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id:
       <h1 className="text-3xl sm:text-4xl">My Album</h1>
       <div className="flex rounded-full bg-muted p-1">{(["grid", "projects"] as const).map((m) => <button key={m} onClick={() => setMode(m)} className={cn("rounded-full px-4 py-1.5 text-sm font-semibold capitalize transition", mode === m && "bg-card shadow-soft")}>{m === "grid" ? "Everything" : "Projects"}</button>)}</div>
     </div>
-    <div className="flex flex-wrap gap-2">{(["all", ...CREATION_KINDS, "favorites"] as const).map((k) => <button key={k} onClick={() => setFilter(k)} className={cn("rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition", filter === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary")}>{k === "all" ? "All" : k === "favorites" ? "♥ Favorites" : KIND_LABEL[k]}</button>)}</div>
+    <div className="flex flex-wrap gap-2">{(["all", ...kinds, "favorites"] as const).map((k) => <button key={k} onClick={() => setFilter(k)} className={cn("rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition", filter === k ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:border-primary")}>{k === "all" ? "All" : k === "favorites" ? "♥ Favorites" : KIND_LABEL[k]}</button>)}</div>
     {isLoading ? <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="aspect-[4/5] animate-pulse rounded-3xl bg-muted" />)}</div>
       : !shown.length ? <div className="flex flex-col items-center gap-3 rounded-3xl bg-card p-10 text-center shadow-soft">
           <Bugley stage={child.bugley_stage} expression="sleepy" size={96} />
@@ -183,32 +185,28 @@ function Album({ child, onStory, onComic, onBook, onPicture }: { onPicture: (id:
 }
 
 function CreationCard({ c, onUpdate, onStory, onComic, onBook, onPicture, childId }: { onPicture: (id: string) => void; childId: string; c: Creation; onUpdate: (id: string, p: { title?: string; favorite?: boolean; remove?: boolean }) => void; onStory: (id: string) => void; onComic: (id: string) => void; onBook: (id: string) => void }) {
+  const navigate = useNavigate();
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(c.title);
-  return <li className="group overflow-hidden rounded-3xl border border-border bg-card shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift animate-in fade-in duration-300">
-    <div className="relative aspect-square bg-muted">
-      {c.images[0] ? <img src={c.images[0]} alt={c.title} loading="lazy" className="size-full object-cover" /> : <p className="line-clamp-6 p-4 text-sm text-muted-foreground">{c.body ?? ""}</p>}
-      <span className="absolute left-2 top-2 rounded-full bg-background/85 px-2 py-0.5 text-xs font-semibold">{KIND_LABEL[c.kind].replace(/s$/, "")}</span>
-      <button onClick={() => onUpdate(c.id, { favorite: !c.favorite })} aria-label={c.favorite ? "Unfavorite" : "Favorite"} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/85"><Heart className={cn("size-5", c.favorite && "fill-current text-destructive")} /></button>
+  const draft = c.kind === "character" && !c.images.length;
+  const open = () => c.kind === "picture" ? onPicture(c.id) : c.kind === "story" ? onStory(c.id) : c.kind === "comic" ? onComic(c.id) : c.kind === "book" ? onBook(c.id)
+    : c.kind === "character" ? void navigate({ to: "/kids/studio/v3", search: draft ? { draft: c.id } : { character: c.id } }) : void navigate({ to: "/kids/studio/games", search: { game: c.id } });
+  return <li className="group overflow-hidden rounded-3xl border border-border bg-card shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift">
+    <div className="relative">
+      <button onClick={open} aria-label={`Open ${c.title}`} className="block aspect-square w-full overflow-hidden bg-muted">
+        {c.images[0] ? <img src={c.images[0]} alt="" loading="lazy" className={cn("size-full transition-transform duration-500 group-hover:scale-105", c.kind === "character" ? "object-contain p-3" : "object-cover")} />
+          : <span className="flex size-full flex-col items-center justify-center gap-2 text-muted-foreground"><span className="text-5xl" aria-hidden>{draft ? "✏️" : "📄"}</span><span className="text-sm font-semibold">{draft ? "Keep building" : "Tap to open"}</span></span>}
+      </button>
+      <span className="pointer-events-none absolute left-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-xs font-semibold">{KIND_ONE[c.kind]}</span>
+      <button onClick={() => onUpdate(c.id, { favorite: !c.favorite })} aria-label={c.favorite ? "Unfavorite" : "Favorite"} className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-background/90"><Heart className={cn("size-5", c.favorite && "fill-current text-destructive")} /></button>
     </div>
-    <div className="p-3">
-      {c.kind === "picture" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onPicture(c.id)}><Paintbrush />Open picture</Button>}
-      {c.kind === "story" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onStory(c.id)}><BookOpen />Open story</Button>}
-      {c.kind === "comic" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onComic(c.id)}><LayoutGrid />Open comic</Button>}
-      {c.kind === "character" && <Button asChild variant="secondary" size="sm" className="mb-2 w-full"><Link to="/kids/studio/v3" search={c.images.length ? { character: c.id } : { draft: c.id }}><Users />{c.images.length ? "Create with this character" : "Keep building"}</Link></Button>}
-      {c.kind === "game" && <Link to="/kids/studio/games" search={{ game: c.id }} className="mb-2 flex w-full items-center justify-center gap-2 rounded-full bg-secondary px-3 py-1.5 text-sm font-semibold text-secondary-foreground"><Gamepad2 className="size-4" />Open game</Link>}
-      {c.kind === "book" && <Button variant="secondary" size="sm" className="mb-2 w-full" onClick={() => onBook(c.id)}><Library />Open book</Button>}
-      {(c.kind === "story" || c.kind === "comic") && !c.project && <Button variant="ghost" size="sm" className="mb-2 h-auto w-full whitespace-normal" onClick={async () => { try { const b = await bookFromOneShot({ data: { childId, creationId: c.id, environment: getStripeEnvironment() } }); toast.success("Your book is ready! This is Chapter 1."); onBook(b.id); } catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); } }}><Library />Make it Chapter 1 of a Book</Button>}
-      {editing ? <form onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
+    <div className="flex items-center gap-1 p-3">
+      {editing ? <form className="min-w-0 flex-1" onSubmit={(e) => { e.preventDefault(); setEditing(false); if (title.trim() && title !== c.title) onUpdate(c.id, { title }); }}>
         <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} onBlur={() => setEditing(false)} aria-label="New name" className="w-full rounded-lg border-2 border-primary bg-background px-2 py-1" />
-      </form> : <p className="truncate font-display">{c.title}</p>}
-      <div className="mt-2 flex items-center justify-between text-muted-foreground">
-        <span className="text-xs">{new Date(c.created_at).toLocaleDateString()}</span>
-        <span className="flex gap-1">
-          <button onClick={() => setEditing(true)} aria-label="Rename" className="rounded-full p-1.5 hover:bg-muted"><Pencil className="size-4" /></button>
-          <DeleteCreationButton childId={childId} id={c.id} title={c.title} />
-        </span>
-      </div>
+      </form> : <p className="min-w-0 flex-1 truncate font-display">{c.title}</p>}
+      {(c.kind === "story" || c.kind === "comic") && !c.project && <button aria-label="Make it Chapter 1 of a book" title="Make it a book" className="rounded-full p-1.5 text-muted-foreground hover:bg-muted" onClick={async () => { try { const b = await bookFromOneShot({ data: { childId, creationId: c.id, environment: getStripeEnvironment() } }); toast.success("Your book is ready! This is Chapter 1."); onBook(b.id); } catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); } }}><Library className="size-4" /></button>}
+      <button onClick={() => setEditing(true)} aria-label="Rename" className="rounded-full p-1.5 text-muted-foreground hover:bg-muted"><Pencil className="size-4" /></button>
+      <DeleteCreationButton childId={childId} id={c.id} title={c.title} />
     </div>
   </li>;
 }
