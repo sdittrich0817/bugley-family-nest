@@ -7,7 +7,8 @@ export function buildChildReport(childId:string,days:number|null,events:Event[],
   const interactions=events.filter(e=>e.child_id===childId&&within(e.created_at)).sort((a,b)=>b.created_at.localeCompare(a.created_at));
   const work=creations.filter(c=>c.child_id===childId&&within(c.created_at));
   const records=audit.filter(a=>a.childId===childId&&within(a.at));
-  const decisions=Object.fromEntries(['allowed','personal_info','unsafe','copyright','error'].map(d=>[d,interactions.filter(e=>e.decision===d).length]));
+  const countDecision=(decision:string)=>interactions.filter(e=>e.decision===decision).length;
+  const decisions={allowed:countDecision('allowed'),personal_info:countDecision('personal_info'),unsafe:countDecision('unsafe'),copyright:countDecision('copyright'),error:countDecision('error')};
   const kinds=Object.entries(work.reduce<Record<string,number>>((counts,c)=>{counts[c.kind]=(counts[c.kind]??0)+1;return counts;},{}));
   const gameFinishes=records.filter(r=>r.category==='Games'&&r.id.startsWith('finish-'));
   const learning=records.filter(r=>r.category==='Learning');
