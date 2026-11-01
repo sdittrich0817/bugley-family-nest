@@ -93,6 +93,7 @@ function FamilyGuidance() {
     {label:'Try together',title:'Let their idea lead the way.',body:'Ask your child to explain a creation or show you an AI mistake they caught. Celebrate their imagination and the moment they disagree with a machine. Creating, checking and choosing together builds confidence.',question:'“What did you decide yourself, and what did AI help with?”'},
   ];
   const current=guidance[topic];
+  if (!current) return null;
   return <section className="grid items-center gap-6 bg-accent/40 px-5 py-7 sm:grid-cols-[110px_1fr] sm:px-7"><Bugley stage="navigator" expression="curious" glow size={110} className="mx-auto"/><div><p className="mb-3 flex items-center gap-2 text-sm font-semibold"><Heart className="size-4"/>IN YOUR CORNER</p><div role="tablist" aria-label="Family AI guidance" className="mb-4 flex flex-wrap gap-2">{guidance.map((g,i)=><Button key={g.label} role="tab" aria-selected={topic===i} variant={topic===i?'default':'ghost'} size="sm" onClick={()=>setTopic(i)}>{g.label}</Button>)}</div><div role="tabpanel"><h2 className="text-2xl">{current.title}</h2><p className="mt-3 text-sm leading-relaxed text-muted-foreground">{current.body}</p><p className="mt-4 flex items-start gap-2 text-sm font-semibold"><MessageCircle className="mt-0.5 size-4 shrink-0"/>{current.question}</p></div></div></section>;
 }
 

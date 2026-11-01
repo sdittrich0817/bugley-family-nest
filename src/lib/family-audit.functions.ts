@@ -22,7 +22,7 @@ export const getFamilyAudit = createServerFn({ method: 'GET' }).middleware([requ
     db.from('glow_ledger').select('id,child_id,amount,reason,created_at').eq('parent_id',context.userId).order('created_at').order('id'),
     db.from('print_requests').select('id,child_id,status,created_at').eq('parent_id',context.userId).order('created_at').order('id'),
   ];
-  const [rounds, plays, activities, sessions, badges, glow, prints] = await Promise.all(queries.map(all));
+  const [rounds = [], plays = [], activities = [], sessions = [], badges = [], glow = [], prints = []] = await Promise.all(queries.map(all));
   const entries: AuditEntry[] = [];
   for (const r of [...rounds,...plays]) {
     entries.push({id:`start-${r.id}`,childId:r.child_id,at:r.started_at,category:'Games',title:`Started ${r.game.replaceAll('_',' ')}`});
