@@ -30,7 +30,7 @@ export function ArcadeHome({ child, family, myGames, onCreate }: { child: Sideki
   const [playing, setPlaying] = useState<ArcadeId | null>(null), [cat, setCat] = useState<ArcadeCategory | 'all'>('all'), [recent, setRecent] = useState<ArcadeId[]>([]);
   useEffect(() => { setRecent(readProgress(child.id).recent); }, [child.id, playing]);
   useScrollTopOn(`${playing}`);
-  const games = ARCADE_GAMES.filter((g) => g.engine !== 'play' || playAllowed(g.id as PlayKey, band));
+  const games = ARCADE_GAMES.filter((g) => g.engine === 'guesses' ? playAllowed('bugley_guesses', band) : g.engine !== 'play' || playAllowed(g.id as PlayKey, band));
   const open = (id: ArcadeId) => { updateProgress(child.id, (p) => markPlayed(p, id)); setPlaying(id); };
   const back = () => setPlaying(null);
   const current = games.find((g) => g.id === playing);

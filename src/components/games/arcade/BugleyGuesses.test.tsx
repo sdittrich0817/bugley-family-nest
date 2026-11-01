@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, cleanup } from '@testing-library/react';
+import { act, fireEvent, render, screen, cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BugleyGuesses } from './BugleyGuesses';
 import { THINGS, MAX_QUESTIONS, narrow, nextQuestion, ROUND_MS, type ClueAnswer } from '@/lib/guess-garden';
@@ -28,7 +28,7 @@ describe('Bugley Guesses practice flow', () => {
   it('ends an active round after four minutes', () => {
     vi.useFakeTimers(); render(<BugleyGuesses stage="scout" onExit={()=>{}}/>);
     fireEvent.click(screen.getByRole('button',{name:/I’ve got my secret/}));
-    vi.advanceTimersByTime(ROUND_MS);
+    act(() => { vi.advanceTimersByTime(ROUND_MS); });
     expect(screen.queryByRole('button',{name:'Yes',exact:true})).toBeNull();
     expect(screen.getByRole('button',{name:'Play again'})).toBeTruthy();
   });
