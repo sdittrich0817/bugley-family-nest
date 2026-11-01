@@ -27,7 +27,7 @@ async function admin() { return (await import("@/integrations/supabase/client.se
 
 export function buildPrompt(recipe: string, description: string, mode: ImageMode | "sheet") {
   const framing = mode === "character"
-    ? "A single character, clean full-body portrait, standing, facing the viewer, whole body visible head to toe, centered. One flat plain background color fills the entire picture edge to edge, with nothing behind the character and nothing around them: no scenery, no props, no decorations, no frames."
+    ? "One simple picture-book illustration of a single character, seen full-body from head to toe, standing relaxed and facing the viewer. Behind them is only a plain flat wall of one quiet color that fills the whole frame to every corner, and they stand on a plain flat floor of the same color that reaches every edge. The space around the character is completely empty: no scenery, no props, no shapes, no decorations."
     : mode === "sheet"
       ? "A clean character reference sheet of the exact same character from the reference image: one full-body front view, one full-body side view, and one happy face close-up, side by side on a plain white background, identical colors, outfit and markings in every view."
       : "";
