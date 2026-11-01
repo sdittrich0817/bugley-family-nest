@@ -712,3 +712,39 @@
 @keyframes dragon-pass { from { left:calc(100% - 125px); } to { left:28%; } }
 @media (max-width:600px) { .dragon-scene { height:320px; } .dragon-intro { height:460px; } .dragon-intro-flyer { top:0; right:9%; width:75%; height:58%; } .dragon-intro-copy { width:100%; padding:18px; } .dragon-intro-copy h2 { font-size:30px; } .dragon-intro-copy p { font-size:16px; margin-block:10px; } .dragon-rider { width:88px; height:90px; } .dragon-target { width:92px; height:96px; } .dragon-decoy { font-size:62px; } }
 @media (prefers-reduced-motion:reduce) { .dragon-target { animation:none; left:60%; } .dragon-rider { transition:none; } .dragon-photo-focus { animation:none; } }
+
+/* Memory Meadow — inspectable little feature-matching world. */
+:root { --meadow-paper: oklch(0.99 0.012 140); --meadow-ink: oklch(0.28 0.065 165); --meadow-green: oklch(0.47 0.13 155); --meadow-blue: oklch(0.72 0.15 235); --meadow-outline: oklch(0.99 0.012 140 / .9); --meadow-shadow: 0 5px 0 oklch(0.28 0.065 165 / .28); }
+.meadow-intro { position:relative; min-height:360px; overflow:hidden; }
+.meadow-world { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.meadow-intro-copy { position:relative; z-index:1; padding:30px; max-width:520px; color:var(--meadow-ink); background:linear-gradient(90deg,var(--meadow-paper) 70%, transparent); min-height:360px; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; }
+.meadow-intro-bugs { position:absolute; right:4%; bottom:12%; display:flex; align-items:center; width:38%; }
+.meadow-intro-bugs .meadow-bug { width:140px; transform:rotate(-12deg); }
+.meadow-board { position:relative; overflow:hidden; min-height:390px; padding:24px 20px 45px; }
+.meadow-grid { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; max-width:690px; margin:auto; }
+.meadow-tile { position:relative; padding:6px; height:auto; width:100%; aspect-ratio:1.05; border-radius:8px; border:3px solid var(--meadow-outline); background:var(--meadow-green); color:var(--meadow-paper); box-shadow:var(--meadow-shadow); flex-direction:column; white-space:normal; transition:transform .2s,background .2s; }
+.meadow-tile:hover { background:var(--meadow-green); transform:translateY(-3px); }
+.meadow-tile:disabled { opacity:1; }
+.meadow-face,.meadow-face:hover { background:var(--meadow-paper); color:var(--meadow-ink); }
+.meadow-found { border-color:var(--primary); animation:meadow-pop .35s ease-out; }
+.meadow-suggested { border-color:var(--primary); outline:3px solid var(--primary); animation:meadow-pulse 1.5s ease-in-out infinite; }
+.meadow-bug { width:100%; height:calc(100% - 22px); max-height:120px; overflow:visible; }
+.meadow-wing { fill:var(--meadow-blue); stroke:var(--meadow-ink); stroke-width:2; }
+.meadow-ink-fill { fill:var(--meadow-ink); }
+.meadow-light-fill { fill:var(--meadow-paper); }
+.meadow-gold-fill { fill:var(--primary); }
+.meadow-outline { stroke:var(--meadow-ink); stroke-width:2; }
+.meadow-ink-stroke { stroke:var(--meadow-ink); stroke-width:9; }
+.meadow-antenna { stroke:var(--meadow-ink); stroke-width:3; fill:none; stroke-linecap:round; }
+.meadow-tile-name { font-size:12px; font-weight:800; line-height:1.15; text-align:center; }
+.meadow-leaf { width:54%; height:54%; stroke-width:1.5; }
+.meadow-leaf-number { position:absolute; bottom:10px; font-size:16px; font-weight:800; }
+.meadow-guess-label { position:absolute; top:6px; font-size:12px; font-weight:800; color:var(--primary); }
+.meadow-coach { display:flex; align-items:center; gap:12px; min-height:110px; }
+.meadow-lights { position:absolute; bottom:4px; left:0; right:0; display:flex; gap:30px; justify-content:center; font-size:28px; color:var(--meadow-outline); }
+.meadow-light-on { color:var(--primary); text-shadow:0 0 12px var(--primary); }
+.meadow-keepsake { width:90px; height:90px; }
+@keyframes meadow-pulse { 50% { box-shadow:0 0 20px var(--primary); } }
+@keyframes meadow-pop { 50% { transform:scale(1.05); } }
+@media(max-width:600px) { .meadow-intro { min-height:460px; } .meadow-intro-copy { min-height:460px; max-width:100%; padding:22px; justify-content:flex-end; background:linear-gradient(0deg,var(--meadow-paper) 40%, transparent 75%); } .meadow-intro-copy h2 { font-size:30px; } .meadow-intro-bugs { top:20px; bottom:auto; right:15%; width:70%; justify-content:center; } .meadow-board { min-height:270px; padding:16px 10px 38px; } .meadow-grid { gap:10px; } .meadow-tile { aspect-ratio:.8; border-width:2px; padding:3px; } .meadow-tile-name { font-size:10px; } .meadow-guess-label { font-size:9px; } .meadow-coach { gap:6px; } .meadow-coach > svg { width:75px; height:75px; } .meadow-coach p { font-size:14px; } }
+@media(prefers-reduced-motion:reduce) { .meadow-suggested,.meadow-found { animation:none; } .meadow-tile { transition:none; } }
