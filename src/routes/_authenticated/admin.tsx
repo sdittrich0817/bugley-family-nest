@@ -18,9 +18,10 @@ import { StickerAdmin } from "@/components/site/StickerAdmin";
 import { ManorAdmin } from "@/components/site/ManorAdmin";
 import { PrintAdmin } from "@/components/site/PrintAdmin";
 import { Badge } from "@/components/ui/badge";
+import { FamilyNewsEditor } from "@/components/site/FamilyNews";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  head: () => accountHead("Curriculum admin", "Create and edit Bugley Seasons, Units, Sessions and Activities."),
+  head: () => accountHead("Bugley admin", "Review family AI news and edit Bugley learning content."),
   loader: ({ context }) => context.queryClient.ensureQueryData(isAdminOptions),
   errorComponent: ({ error }) => <div role="alert" className="container-page py-16 text-center">{error instanceof Error ? error.message : "Something went wrong."}</div>,
   component: Admin,
@@ -74,6 +75,7 @@ function AdminArea() {
       <div>{sel ? <Editor key={`${sel.table}-${sel.id ?? "new"}-${sel.parentId ?? ""}`} sel={sel} row={find(sel)} onSaved={(id) => setSel({ ...sel, id })} onDeleted={() => setSel(null)} /> : <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">Pick something on the left to edit, or add a new Season.</p>}</div>
     </div>
     <GlowAdmin />
+    <FamilyNewsEditor />
     <ImageAdmin />
     <GameAdmin />
     <StickerAdmin />
