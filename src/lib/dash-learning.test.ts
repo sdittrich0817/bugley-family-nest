@@ -13,7 +13,7 @@ describe('Glow Dash example learning', () => {
     expect(brain?.predict(125, true)).toBe('wait');
   });
   for (const speed of ['slow', 'normal', 'fast'] as const) it(`runs the actual ${speed} physics with learned jumps and replayable inputs`, () => {
-    const config = { ...defaultDash(), speed, pads: false }, r = createDash(config), brain = makeDashBrain(DASH_LESSONS), jumps: number[] = [];
+    const config = { ...defaultDash(), speed, pads: false }, r = createDash(config), brain = makeDashBrain(DASH_LESSONS, speed), jumps: number[] = [];
     for (let t = 0; t < 4000 && r.view().x < DASH_FINISH_X; t++) {
       const v = r.view(), o = r.obstacles.find(o => o.x >= v.x - 22);
       const jump = !!o && brain?.predict(o.x - v.x, v.y < 298) === 'jump';

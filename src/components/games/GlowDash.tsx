@@ -21,7 +21,7 @@ export function GlowDash({config,heroUrl,stage,stickers,onEnd}:{config:DashConfi
  const jump=()=>{press.current=true;};
  useEffect(()=>{
   if(!examples.length)return;
-  brain.current=makeDashBrain(examples);
+  brain.current=makeDashBrain(examples,config.speed);
   const r=createDash(config);run.current=r;let last=performance.now(),acc=0,frame=0;
   const key=(e:KeyboardEvent)=>{if([' ','ArrowUp','w'].includes(e.key)&&!e.repeat){e.preventDefault();jump();}};window.addEventListener('keydown',key);
   const deadline=Date.now()+180000;
