@@ -10,8 +10,9 @@ import { cn } from '@/lib/utils';
 import { PlayStudio } from '../PlayStudio';
 import { CosmicMaze } from './CosmicMaze';
 import { MysteryManor } from './MysteryManor';
+import { BugleyGuesses } from './BugleyGuesses';
 import { CreatureArt, CreatureLab } from './CreatureLab';
-import guessArt from '@/assets/games/guesses.jpg';
+import guessArt from '@/assets/games/guesses-observatory.jpg';
 import manorArt from '@/assets/games/manor.jpg';
 import dashArt from '@/assets/games/dash-candy.jpg';
 import sayArt from '@/assets/games/say-see.jpg';
@@ -29,14 +30,14 @@ export function ArcadeHome({ child, family, myGames, onCreate }: { child: Sideki
   const [playing, setPlaying] = useState<ArcadeId | null>(null), [cat, setCat] = useState<ArcadeCategory | 'all'>('all'), [recent, setRecent] = useState<ArcadeId[]>([]);
   useEffect(() => { setRecent(readProgress(child.id).recent); }, [child.id, playing]);
   useScrollTopOn(`${playing}`);
-  const games = ARCADE_GAMES.filter((g) => g.engine !== 'play' || playAllowed(g.id as PlayKey, band));
+  const games = ARCADE_GAMES.filter((g) => g.engine === 'guesses' ? playAllowed('bugley_guesses', band) : g.engine !== 'play' || playAllowed(g.id as PlayKey, band));
   const open = (id: ArcadeId) => { updateProgress(child.id, (p) => markPlayed(p, id)); setPlaying(id); };
   const back = () => setPlaying(null);
   const current = games.find((g) => g.id === playing);
   if (current?.engine === 'play') return <PlayStudio child={child} family={family} start={current.id as PlayKey} onExit={back} />;
   if (current) return <div className="space-y-4"><div className="flex items-center gap-3"><Button variant="ghost" onClick={back}><ArrowLeft />All games</Button><h1 className="text-3xl">{current.name}</h1></div>
-    {current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
-    <p className="text-xs text-muted-foreground">Controls: {current.controls}</p></div>;
+    {current.engine === 'guesses' ? <BugleyGuesses stage={child.bugley_stage} onExit={back} /> : current.engine === 'manor' ? <MysteryManor stage={child.bugley_stage} onExit={back} onWin={(n) => updateProgress(child.id, (p) => recordBest(p, 'mystery_manor', n))} /> : current.engine === 'maze' ? <CosmicMaze childId={child.id} band={band} stage={child.bugley_stage} onExit={back} /> : <CreatureLab childId={child.id} band={band} stage={child.bugley_stage} onExit={back} />}
+    {current.engine !== 'guesses' && <p className="text-xs text-muted-foreground">Controls: {current.controls}</p>}</div>;
   const featured = games.find((g) => g.id === FEATURED) ?? games[0];
   const shown = cat === 'all' ? games : games.filter((g) => g.categories.includes(cat));
   const Card = ({ g }: { g: ArcadeGame }) => <article className="group overflow-hidden rounded-lg border-2 border-border bg-card shadow-soft transition hover:border-primary">
