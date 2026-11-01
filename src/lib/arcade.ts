@@ -28,14 +28,21 @@ export const ARCADE_GAMES: ArcadeGame[] = [
 export const FEATURED: ArcadeId = 'dragon_catch';
 
 // ---------- private, per-child, on-device progress ----------
-type Progress = { recent: ArcadeId[]; best: Partial<Record<ArcadeId, number>>; level: Partial<Record<ArcadeId, number>>; found: string[] };
-const empty = (): Progress => ({ recent: [], best: {}, level: {}, found: [] });
+type Progress = { recent: ArcadeId[]; plays: Partial<Record<ArcadeId, number>>; best: Partial<Record<ArcadeId, number>>; level: Partial<Record<ArcadeId, number>>; found: string[] };
+const empty = (): Progress => ({ recent: [], plays: {}, best: {}, level: {}, found: [] });
 const key = (childId: string) => `bugley-arcade:${childId}`;
 export function readProgress(childId: string): Progress {
   try { return { ...empty(), ...JSON.parse(localStorage.getItem(key(childId)) ?? '{}') }; } catch { return empty(); }
 }
 function write(childId: string, p: Progress) { try { localStorage.setItem(key(childId), JSON.stringify(p)); } catch { /* storage full or blocked */ } }
-export function markPlayed(p: Progress, id: ArcadeId): Progress { return { ...p, recent: [id, ...p.recent.filter((r) => r !== id)].slice(0, 4) }; }
+export function markPlayed(p: Progress, id: ArcadeId): Progress { return { ...p, plays: { ...p.plays, [id]: (p.plays[id] ?? 0) + 1 }, recent: [id, ...p.recent.filter((r) => r !== id)].slice(0, 4) }; }
+/** Most-played first, then most recent; only games still in the catalog. */
+export function favoriteGames(p: Progress, n = 3): ArcadeId[] {
+  const ids = [...new Set([...p.recent, ...(Object.keys(p.plays) as ArcadeId[])])].filter((id) => ARCADE_GAMES.some((g) => g.id === id));
+  return ids.sort((a, b) => (p.plays[b] ?? 0) - (p.plays[a] ?? 0) || p.recent.indexOf(a) - p.recent.indexOf(b)).slice(0, n);
+}
+/** PLAY games are server-graded and can award capped bonus Glow. */
+export const earnsGlow = (g: ArcadeGame) => g.engine === 'play';
 export function recordBest(p: Progress, id: ArcadeId, score: number): Progress { return (p.best[id] ?? -1) >= score ? p : { ...p, best: { ...p.best, [id]: score } }; }
 export function unlockLevel(p: Progress, id: ArcadeId, level: number): Progress { return (p.level[id] ?? 0) >= level ? p : { ...p, level: { ...p.level, [id]: level } }; }
 export function addFound(p: Progress, name: string): Progress { return p.found.includes(name) ? p : { ...p, found: [...p.found, name] }; }
