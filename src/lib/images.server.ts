@@ -302,6 +302,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
+  console.log("HERO_PROMPT_DEBUG", JSON.stringify({ model: model.model, settings: model.settings, prompt }));
   const results = await Promise.allSettled([0, 1, 2].map(async () => {
     const src = await replicateRun(model, prompt, []);
     if (!(await imageIsSafe(src))) throw new Error("unsafe");
