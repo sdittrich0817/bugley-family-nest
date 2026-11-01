@@ -17,6 +17,11 @@ export const GAME_BONUS_CAP = 3;
 export const gameBonus = (stars: number, used: number) => stars >= 3 && used < GAME_BONUS_CAP ? 1 : 0;
 export const normalizeWord = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').slice(0, 60);
 export const comboKey = (a: string, b: string) => [normalizeWord(a), normalizeWord(b)].sort().join('+');
+export const BLANKS = [
+  { ask: 'Give me an animal!', choices: ['cat', 'dog', 'owl', 'octopus'] },
+  { ask: 'Something gross!', choices: ['slime', 'stinky boot', 'banana mush', 'soggy pizza'] },
+  { ask: 'A silly sound!', choices: ['Bloop!', 'Squish!', 'Boing!', 'Pfffft!'] },
+];
 export const DOODLES = ['sun', 'cat', 'pizza', 'rocket', 'fish', 'house'];
 export const DOODLE_EMOJI: Record<string,string> = { sun:'☀️', cat:'🐱', pizza:'🍕', rocket:'🚀', fish:'🐟', house:'🏠' };
 export const DOODLE_TURNS = 3;
