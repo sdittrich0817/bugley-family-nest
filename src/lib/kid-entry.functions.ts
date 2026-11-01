@@ -5,7 +5,10 @@ import { familyHasAccess } from './billing.functions';
 export const getKidFamily=createServerFn({method:'GET'}).handler(async()=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(!d)throw new Error('Ask your grown-up to set up this device for me!');
   const {data,error}=await (await s.admin()).from('children').select('id,nickname,age,avatar,bug,login_kind,age_band,bugley_stage').eq('parent_id',d.parent_id).order('created_at');
-  if(error)throw new Error('Couldn’t load your players.');const {signBugAvatars}=await import('./bug-avatar.server');return {children:await signBugAvatars((data??[]) as ChildProfile[],d.parent_id),completed:true};
+  if(error)throw new Error('Couldn’t load your players.');
+  const { data: controls, error: controlsError } = await (await s.admin()).from('child_controls').select('child_id,remember_login').eq('parent_id', d.parent_id);
+  if (controlsError) throw new Error('Couldn’t load child sign-in settings.');
+  const {signBugAvatars}=await import('./bug-avatar.server');return {children:await signBugAvatars((data??[]) as ChildProfile[],d.parent_id),completed:true,rememberLogins:Object.fromEntries((controls??[]).map(c=>[c.child_id,c.remember_login]))};
 });
 export const getKidPlan=createServerFn({method:'POST'}).inputValidator((i:unknown)=>z.object({environment:z.enum(['sandbox','live'])}).parse(i)).handler(async({data})=>{
   const s=await import('./kid-device.server'),d=await s.resolveDevice();if(!d)throw new Error('This device isn’t set up.');return {active:await familyHasAccess(await s.admin(),d.parent_id,data.environment)};

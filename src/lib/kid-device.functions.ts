@@ -14,7 +14,7 @@ async function verifyPassword(ctx: any, value:string) {
 }
 export const kidDeviceStatus=createServerFn({method:'GET'}).handler(async()=>{
   const s=await import('./kid-device.server');const d=await s.resolveDevice();
-  return {trusted:!!d,invalid:!!s.cookie('bugley_kids')&&!d,childId:d?.child_id??null,parentUnlocked:!!d?.parent_unlocked_until&&Date.parse(d.parent_unlocked_until)>Date.now()};
+  return {trusted:!!d,invalid:!!s.cookie('bugley_kids')&&!d,childId:d?.child_id??null,verifiedAt:d?.child_verified_at??null,parentUnlocked:!!d?.parent_unlocked_until&&Date.parse(d.parent_unlocked_until)>Date.now()};
 });
 export const listKidDevices=createServerFn({method:'GET'}).middleware([requireParentDevice]).handler(async({context})=>{
   const a=await (await import('./kid-device.server')).admin();
