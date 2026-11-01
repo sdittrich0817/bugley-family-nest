@@ -7,7 +7,7 @@ describe("image prompt", () => {
   it("frames characters full-body on a plain background with no circles or boxes", () => {
     const prompt = buildPrompt("cartoon", "a robot", "character");
     expect(prompt).toMatch(/full-body.*plain seamless white background/);
-    expect(prompt).toMatch(/no circle, ring or halo/);
-    expect(prompt).toMatch(/no frame, no border, no panels and no empty boxes/);
+    expect(prompt).toMatch(/no circle, ring or halo/i);
+    expect(prompt).toMatch(/no frame, no border, no panels and no empty boxes/i);
   });
 });
