@@ -1,3 +1,4 @@
+- [ ] Add sourced family AI news discovery, founder response/guidance prompts and reviewed publication to Parent Hub; verify editorial permissions and publication rules.
 - [x] Build simpler Parent Hub: important updates, expandable recorded child history, reassuring AI guidance and per-child Always/default or 24-hour remembered login; boundary and restoration tests pass; build OK.
 - [ ] Verify refreshed Hub saved controls/history and parent screen layout live (blocked: both injected and freshly minted parent sessions redirect to locked Kid Zone; normal parent unlock needed). History is recorded domain activity, not every edit or local practice round.
 - [x] Restore a visible home-page login at small screen widths; verified at 695×594 that it opens /login.
