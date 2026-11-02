@@ -1685,6 +1685,42 @@ export type Database = {
           },
         ]
       }
+      site_feedback: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          page: string
+          rating: number | null
+          resolved: boolean
+          topic: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          page: string
+          rating?: number | null
+          resolved?: boolean
+          topic?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          page?: string
+          rating?: number | null
+          resolved?: boolean
+          topic?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       studio_creations: {
         Row: {
           body: string | null
