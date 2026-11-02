@@ -23,6 +23,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="container-page flex h-16 items-center justify-between gap-4 lg:h-20">
         <Wordmark />
 
@@ -45,6 +46,8 @@ export function SiteHeader() {
           {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button variant="secondary" size="sm" asChild><Link to="/login">Log in</Link></Button>}
           {moreTrigger}
         </div>
+      </div>
+
 
         <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetContent side="right" className="flex w-[85vw] max-w-sm flex-col gap-6 bg-background p-6">
