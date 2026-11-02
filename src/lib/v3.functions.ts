@@ -65,7 +65,7 @@ export const getV3CharacterDraft = createServerFn({ method: "POST" }).middleware
   return { description: row.body ?? "", styleKey: row.style_key ?? "cartoon" };
 });
 
-export const readV3Character = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), description: z.string().trim().min(2).max(600), help: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
+export const readV3Character = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), description: z.string().trim().min(2).max(600), help: z.boolean().default(false), writing: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const g = await s.guardChildText(context.supabase, context.userId, child, data.description, "character_details");
   if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up character.");
@@ -105,25 +105,26 @@ export const startV3Creation = createServerFn({ method: "POST" }).middleware([re
 });
 
 /** Saved child words are never replaced by the optional sparks. */
-export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ text: z.string().max(20000), itemId: z.string().uuid().optional(), help: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
+export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ text: z.string().max(20000), itemId: z.string().uuid().optional(), help: z.boolean().default(false), writing: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const p = await (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
   const storyContext = p.kind === "story" ? storyCoachContext(p.details, data.itemId ?? "", data.text) : null;
-  if (p.kind === "story" && !data.help && (p.details.followups ?? []).includes(data.itemId)) return { question: "", ideas: [] as string[] };
+  if (p.kind === "story" && !data.help && !data.writing && (p.details.followups ?? []).includes(data.itemId)) return { question: "", ideas: [] as string[], praise: "", tips: [] as { skill: string; tip: string }[] };
   const g = await s.guardChildText(context.supabase, context.userId, child, data.text.trim() || "Help with my adventure", "story");
   if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   const { aiObject } = await import("./studio-ai.server");
-  const out = await aiObject(z.object({ question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3) }),
-    p.kind === "story" ? `${storyCoachingInstructions(child.age_band)} The selected hero is already designed. Coach this CURRENT page of a real child-authored book, using only earlier pages and the saved map. Never ask for a detail already supplied or implied by continuity. Ask ONE gentle question only for a confusing jump, unclear motivation, missing action/place, or contradiction; otherwise return question empty. Do not demand every map field or force a conventional ending. ${data.help ? "The child requested help: offer 2–3 short optional idea sparks for this page's hidden beat, never ready-made sentences. End your question with Your call!" : "Return ideas empty; the child did not request sparks."}` : `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. The hero character(s) are ALREADY in every scene and fully designed: never ask who is there, what they are, or what they look like. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.`, JSON.stringify({ title: p.title, hero: p.details.map?.hero, ...(storyContext ?? { previous: p.details.pages, text: data.text }), age: child.age }));
+  const writingRules = p.kind === "story" && data.writing ? ` ALSO act as a kind writing teacher for THIS page only. Return praise: one specific sentence celebrating something real they did well. Return tips: 1–2 short writing lessons matched to age ${child.age} (e.g. capital letters at the start and for names, ending sentences with . ! or ?, splitting a very long sentence, a stronger describing word, showing a feeling, using quotation marks for talking, varying how sentences start). Each tip has skill (2–4 words) and tip (one friendly sentence explaining how to do it and where, by quoting at most 4 of the child's own words). Never rewrite or supply their sentence; any example must be about something unrelated to their story (like a cat or the rain). If the writing is already strong for their age, return one stretch tip. Spelling: point out at most one misspelled word gently.` : " Return praise empty and tips empty.";
+  const out = await aiObject(z.object({ question: z.string().max(160), ideas: z.array(z.string().max(60)).max(3), praise: z.string().max(160).default(""), tips: z.array(z.object({ skill: z.string().max(40), tip: z.string().max(200) })).max(2).default([]) }),
+    p.kind === "story" ? `${storyCoachingInstructions(child.age_band)} The selected hero is already designed. Coach this CURRENT page of a real child-authored book, using only earlier pages and the saved map. Never ask for a detail already supplied or implied by continuity. Ask ONE gentle question only for a confusing jump, unclear motivation, missing action/place, or contradiction; otherwise return question empty. Do not demand every map field or force a conventional ending. ${data.help ? "The child requested help: offer 2–3 short optional idea sparks for this page's hidden beat, never ready-made sentences. End your question with Your call!" : "Return ideas empty; the child did not request sparks."}` : `Coach a child ages 5–12. ${data.help ? "Offer up to 3 short adventure/scene sparks of 2–5 words, not sentences. End the question with Your call!" : "Return ideas empty. The hero character(s) are ALREADY in every scene and fully designed: never ask who is there, what they are, or what they look like. Ask ONE short question only if the description lacks an action or place needed for drawing, accounting for saved previous scenes. Otherwise question empty. Don't ask decorative or unnecessary questions."} NEVER write or rewrite child story words.` + writingRules, JSON.stringify({ title: p.title, hero: p.details.map?.hero, ...(storyContext ?? { previous: p.details.pages, text: data.text }), age: child.age }));
   if (!out) throw new Error("Bugley couldn’t help just now. Your words are still here.");
   out.ideas = data.help ? cleanSparks(out.ideas.map(idea => idea.replace(/\s*[—–-]?\s*Your call!?\s*$/i, ""))) : [];
-  if (p.kind === "story" && !data.help) {
+  if (p.kind === "story" && !data.help && !data.writing) {
     p.details.followups = [...(p.details.followups ?? []), data.itemId];
     await (await import("./workspace.server")).persistWorkspace(context.userId, child.id, p);
   }
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   if (g.eventId) {
-    const { error } = await a.from("studio_events").update({ reply: [out.question, ...out.ideas].filter(Boolean).join(" · ") || "Your scene has enough detail." }).eq("id", g.eventId).eq("parent_id", context.userId);
+    const { error } = await a.from("studio_events").update({ reply: [out.question, ...out.ideas, out.praise, ...out.tips.map(t => `${t.skill}: ${t.tip}`)].filter(Boolean).join(" · ") || "Your scene has enough detail." }).eq("id", g.eventId).eq("parent_id", context.userId);
     if (error) throw new Error("Bugley’s help couldn’t save. Try again.");
   }
   return out;
