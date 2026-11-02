@@ -109,7 +109,7 @@ export const helpV3Scene = createServerFn({ method: "POST" }).middleware([requir
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const p = await (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
   const storyContext = p.kind === "story" ? storyCoachContext(p.details, data.itemId ?? "", data.text) : null;
-  if (p.kind === "story" && !data.help && !data.writing && (p.details.followups ?? []).includes(data.itemId)) return { question: "", ideas: [] as string[] };
+  if (p.kind === "story" && !data.help && !data.writing && (p.details.followups ?? []).includes(data.itemId)) return { question: "", ideas: [] as string[], praise: "", tips: [] as { skill: string; tip: string }[] };
   const g = await s.guardChildText(context.supabase, context.userId, child, data.text.trim() || "Help with my adventure", "story");
   if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
   const { aiObject } = await import("./studio-ai.server");

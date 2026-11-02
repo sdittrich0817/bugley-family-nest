@@ -12,7 +12,7 @@ import { StoryReader } from "../StoryMaker";
 import { useVoiceInput, type SidekickChild } from "../Sidekick";
 import { BugleyCompanion, BugleyMagic, Confetti } from "./BugleyCompanion";
 import { ComicSlideshow } from "./ComicSlideshow";
-import { StoryBookPreview, StoryPageCanvas } from "./StoryBookPreview";
+import { StoryBookPreview } from "./StoryBookPreview";
 import { StoryPageDesign } from "./StoryPageDesign";
 import { getV3CharacterDraft, saveV3CharacterDraft, readV3Character, startV3Creation, helpV3Scene, paintV3Scene, chooseV3Cover, formatV3Story } from "@/lib/v3.functions";
 import { getWorkspace, updateWorkspace, workspaceHistory, restoreWorkspace, completePicture } from "@/lib/workspace.functions";
