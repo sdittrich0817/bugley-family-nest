@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PaymentTestModeBanner } from "@/components/site/PaymentTestModeBanner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
@@ -72,6 +73,7 @@ function OrderForm({ req, formats, credit, onClose }: { req: any; formats: any[]
   }
   if (!formats.length) return <div className="mt-4 space-y-3"><p>No print format fits this book right now.</p><Button variant="outline" onClick={onClose}>Back</Button></div>;
   if (checkout) return <div className="mt-4 space-y-3">
+    <PaymentTestModeBanner />
     <EmbeddedCheckoutProvider stripe={getStripe()} options={{ fetchClientSecret: async () => {
       const r = await start({ data: { ...input, returnUrl: `${window.location.origin}/hub?print=ORDER_ID` } });
       if ("error" in r) throw new Error(r.error);
