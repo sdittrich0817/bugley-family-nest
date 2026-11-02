@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { FeedbackInbox } from "@/components/site/FeedbackInbox";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -75,6 +76,7 @@ function AdminArea() {
       <div>{sel ? <Editor key={`${sel.table}-${sel.id ?? "new"}-${sel.parentId ?? ""}`} sel={sel} row={find(sel)} onSaved={(id) => setSel({ ...sel, id })} onDeleted={() => setSel(null)} /> : <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">Pick something on the left to edit, or add a new Season.</p>}</div>
     </div>
     <GlowAdmin />
+    <FeedbackInbox />
     <FamilyNewsEditor />
     <ImageAdmin />
     <GameAdmin />
