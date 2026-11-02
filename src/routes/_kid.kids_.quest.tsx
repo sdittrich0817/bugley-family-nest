@@ -100,7 +100,7 @@ function Chapter({ child, sessionId, onExit }: { child: ChildProfile; sessionId:
     setBusy(true);
     try {
       const r: any = await answerQuest({ data: { childId: child.id, sessionId, activityId: s.id, ...payload } });
-      setFeedback({ ok: r.correct, text: r.message });
+      setI(at); setFeedback({ ok: r.correct, text: r.message });
       if (r.correct) { await qc.invalidateQueries({ queryKey: key }); void qc.invalidateQueries({ queryKey: ["quest", "map", child.id] }); void qc.invalidateQueries({ queryKey: ["curriculum"] }); }
       if (r.finished) toast.success(r.badge ? `You lit a new light: ${r.badge}!` : "Chapter complete!");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Oops! Try again."); }
