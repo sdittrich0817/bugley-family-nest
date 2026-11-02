@@ -17,7 +17,7 @@ export function FeedbackWidget() {
   const [open, setOpen] = useState(false);
   return <>
     <div className="border-b border-border bg-accent/60 px-4 py-2 text-center text-sm">
-      <span className="font-semibold">You’re testing early Bugley.</span> No real payments — ever. <button className="font-semibold underline" onClick={() => setOpen(true)}>Tell us what you think</button>
+      <span className="font-semibold">You’re testing early Bugley.</span> Nothing you do here is charged. <button className="font-semibold underline" onClick={() => setOpen(true)}>Tell us what you think</button>
     </div>
     <Button onClick={() => setOpen(true)} className="fixed bottom-4 right-4 z-40 rounded-full shadow-glow" aria-label="Send feedback"><MessageSquareHeart />Feedback</Button>
     <FeedbackDialog open={open} onOpenChange={setOpen} />
