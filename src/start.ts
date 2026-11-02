@@ -24,7 +24,9 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
 // file opts out, so re-add it explicitly to keep server functions protected
 // from cross-site requests.
 const csrfMiddleware = createCsrfMiddleware({
-  filter: (ctx) => !new URL(getRequest().url).pathname.startsWith('/lovable/') && ctx.handlerType === "serverFn",
+  // Email webhooks/previews are server routes, so this already skips them.
+  // Keep the filter browser-safe; getRequest belongs only in .server() bodies.
+  filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
 export const startInstance = createStart(() => ({
