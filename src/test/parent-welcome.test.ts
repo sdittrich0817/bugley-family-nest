@@ -7,7 +7,8 @@ const parent = { id: 'parent-one', email: 'parent@example.test', email_confirmed
 
 describe('Parent welcome event', () => {
   it('requires verified email before welcoming a parent', () => {
-    expect(parentWelcomeEvent({ ...parent, email_confirmed_at: undefined }, completedAt)).toBeNull()
+    const { email_confirmed_at: _confirmation, ...unverified } = parent
+    expect(parentWelcomeEvent(unverified, completedAt)).toBeNull()
     expect(parentWelcomeEvent(parent, completedAt)?.recipient).toBe('parent@example.test')
   })
   it('requires adult attestation and consent', () => {
@@ -17,7 +18,8 @@ describe('Parent welcome event', () => {
   it('requires completed family setup and sends only to the verified account address', () => {
     expect(parentWelcomeEvent(parent, '')).toBeNull()
     expect(parentWelcomeEvent(null, completedAt)).toBeNull()
-    expect(parentWelcomeEvent({ ...parent, email: undefined }, completedAt)).toBeNull()
+    const { email: _email, ...withoutEmail } = parent
+    expect(parentWelcomeEvent(withoutEmail, completedAt)).toBeNull()
     expect(parentWelcomeEvent(parent, completedAt)?.recipient).toBe(parent.email)
   })
   it('uses a stable setup event key for managed retry deduplication', () => {
