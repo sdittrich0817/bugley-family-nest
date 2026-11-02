@@ -1,4 +1,5 @@
 # Studio makers and books
+- Auth email branding uses the managed six-type handler; welcome sends after first verified, consent-gated setup with an event-derived idempotency key, never on later login. Failures do not block setup; /lovable/* routes verify their own callers. Why: branded delivery without email queues or changing family access.
 
 - Trusted devices authorize only explicitly kid-facing handlers through `requireKidOrParentAuth`, with server-verified selected child, family ownership, revocation and daily-time checks; parent handlers retain managed authentication plus `requireParentDevice`. Why: opaque device cookies cannot become adult accounts or bypass child limits.
 - Pairing and device credentials are hashed server-side, raw device secrets are HttpOnly cookies, and parent PIN only opens navigation to normal parent sign-in. Why: installation never persists a parent password or grants adult authority from a four-digit PIN.
