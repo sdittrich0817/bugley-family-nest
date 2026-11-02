@@ -112,7 +112,7 @@ function SettingRow({ to, icon, label, hint }: { to: "/settings" | "/account"; i
   return <li><Link to={to} className="flex items-center gap-3 px-5 py-4 hover:bg-muted [&_svg]:size-5">{icon}<span className="flex-1"><span className="block font-medium">{label}</span><span className="text-sm text-muted-foreground">{hint}</span></span><ChevronRight /></Link></li>;
 }
 
-function QuestStrip({ quest, ideas }: { quest?: { done: number; total: number; next: string | null }; ideas: { answer: string; chapter: string; at: string }[] }) {
+function QuestStrip({ quest, ideas }: { quest?: { done: number; total: number; next: string | null } | undefined; ideas: { answer: string; chapter: string; at: string }[] }) {
   if (!quest || !quest.total) return null;
   return <div className="mt-4 rounded-2xl bg-muted/60 p-3">
     <p className="text-sm font-semibold">Bugley’s Quest · {quest.done} of {quest.total} chapters</p>

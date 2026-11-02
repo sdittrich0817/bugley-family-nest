@@ -46,7 +46,7 @@ export const getFamilyCurriculum = createServerFn({ method: "GET" }).middleware(
   for (const a of p.activities) { const st = strandOf.get(a.activity_id); if (st) { (activityCounts[a.child_id] ??= {})[st] = ((activityCounts[a.child_id] ??= {})[st] ?? 0) + 1; } }
   const quest: Record<string, { done: number; total: number; next: string | null }> = {};
   for (const c of p.childIds) {
-    const mine = new Set(p.sessions.filter((s: any) => s.child_id === c).map((s: any) => s.session_id as string));
+    const mine = new Set<string>(p.sessions.filter((s: any) => s.child_id === c).map((s: any) => s.session_id as string));
     const states = questStates(ordered, mine); const nextIdx = states.indexOf("current");
     quest[c] = { done: states.filter((s) => s === "done").length, total: ordered.length, next: nextIdx >= 0 ? ordered[nextIdx].unit.title : null };
   }
@@ -100,10 +100,12 @@ export const getQuestChapter = createServerFn({ method: "POST" }).middleware([re
   const answers = new Map((ans ?? []).map((r: any) => [r.activity_id, r]));
   return {
     sessionId: s.id, title: s.unit.title, badge: s.unit.badge_name,
-    steps: s.activities.map((a: any) => { const v = a.activity_versions.find((x: any) => x.age_band === child.age_band) ?? a.activity_versions[0]; const r: any = answers.get(a.id);
+    steps: s.activities.map((a: any): QuestStep => { const v = a.activity_versions.find((x: any) => x.age_band === child.age_band) ?? a.activity_versions[0]; const r: any = answers.get(a.id);
       return { id: a.id, step: a.step as string, kind: a.kind as string, title: v?.kid_title ?? a.title, text: v?.instructions ?? "", choices: ((v?.choices ?? []) as any[]).map((c) => c.label as string), done: doneSet.has(a.id), answer: r?.answer ?? null, correct: r?.correct ?? null }; }),
   };
 });
+
+export type QuestStep = { id: string; step: string; kind: string; title: string; text: string; choices: string[]; done: boolean; answer: string | null; correct: boolean | null };
 
 /** Records an activity and, once the solo steps are done, the chapter and unit badge. */
 async function markDone(ctx: Ctx, childId: string, activityId: string) {
