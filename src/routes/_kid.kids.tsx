@@ -8,7 +8,7 @@ import { verifyChildLogin } from "@/lib/kid.functions";
 import { verifyTrustedChild } from '@/lib/kid-entry.functions';
 import { kidDeviceStatus, resetKidPlayer, unlockKidParentPin } from '@/lib/kid-device.functions';
 import { useServerFn } from '@tanstack/react-start';
-import { completeActivity, getChildMission } from "@/lib/curriculum.functions";
+import { getChildMission } from "@/lib/curriculum.functions";
 import { getChildGlow } from "@/lib/glow.functions";
 import { GlowMeter } from "@/components/studio/GlowMeter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -133,10 +133,6 @@ function KidHome({ child, onBug }: { child: ChildProfile; onBug: (b: BugConfig) 
   const qc = useQueryClient();
   const { data: m } = useQuery({ queryKey: ["curriculum", "child", child.id], queryFn: () => getChildMission({ data: { childId: child.id } }) });
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
-  async function done(activityId: string) {
-    try { const r = await completeActivity({ data: { childId: child.id, activityId } }); if (r.badge) toast.success(`You earned the ${r.badge} badge!`); else toast.success(sprouts ? "Yay! You did it!" : "Nice work!"); await qc.invalidateQueries({ queryKey: ["curriculum"] }); }
-    catch { toast.error("Oops! Try again."); }
-  }
   if (building) return <BugBuilder childId={child.id} start={toBug(child.bug ?? child.avatar, child.id)} big={sprouts} onClose={() => setBuilding(false)} onSaved={(b) => { onBug(b); setBuilding(false); toast.success(sprouts ? "Cool bug!" : "Your bug is saved!"); }} />;
   return <section className="mx-auto max-w-5xl px-4 pb-16">
     <button onClick={() => setBuilding(true)} className="mb-4 flex w-full items-center gap-4 rounded-3xl border-2 border-border bg-card p-4 text-left shadow-soft transition hover:border-primary">
@@ -157,13 +153,8 @@ function KidHome({ child, onBug }: { child: ChildProfile; onBug: (b: BugConfig) 
         <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{copy.mission}</p>
         {!m ? <p className="mt-2 text-muted-foreground">Loading…</p> : !m.mission ? <p className={cn("mt-2 font-display", sprouts ? "text-3xl" : "text-2xl")}>Coming soon!</p> : <>
           <p className={cn("mt-1 font-display", sprouts ? "text-3xl" : "text-2xl")}>{m.mission.unitTitle}</p>
-          <ul className="mt-4 space-y-3">{m.mission.activities.map((a: any) => <li key={a.id} className="rounded-2xl bg-muted p-4">
-            <div className="flex items-start justify-between gap-3"><p className={cn("font-display", sprouts ? "text-2xl" : "text-lg")}>{a.title}</p>{!sprouts && <span className="shrink-0 text-xs text-muted-foreground">{a.minutes} min</span>}</div>
-            {!sprouts && <p className="mt-1 text-sm leading-relaxed">{a.instructions}</p>}
-            {sprouts && <p className="mt-1">{a.instructions}</p>}
-            {a.done ? <p className="mt-3 flex items-center gap-2 font-semibold"><Check className="size-5" />Done!</p> : <Button size={sprouts ? "lg" : "sm"} className="mt-3" onClick={() => void done(a.id)}>{sprouts ? "I did it!" : "Mark done"}</Button>}
-          </li>)}</ul>
-          {m.mission.storyPrompt && <p className="mt-4 text-sm text-muted-foreground">Story idea: {m.mission.storyPrompt}</p>}
+          <p className="mt-1 text-sm text-muted-foreground">{m.mission.done} of {m.mission.total} lights glowing</p>
+          <Button asChild size={sprouts ? "lg" : "default"} className="mt-4"><Link to="/kids/quest"><Sparkles />{m.mission.done ? "Keep going" : "Start the quest"}</Link></Button>
         </>}
       </div>
       <Link to="/kids/studio" className={cn("flex flex-col items-start justify-center gap-2 rounded-3xl bg-primary p-6 text-left text-primary-foreground shadow-glow transition hover:-translate-y-1", sprouts && "min-h-44 items-center text-center")}>

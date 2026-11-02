@@ -857,3 +857,7 @@
   .game-adventure .doodle-round ol { font-size:12px; gap:4px; }
   .doodle-workbench { height:95px; }
 }
+
+@keyframes quest-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--glow) 70%, transparent); } 50% { box-shadow: 0 0 0 12px color-mix(in oklab, var(--glow) 0%, transparent); } }
+.quest-pulse { animation: quest-pulse 1.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .quest-pulse { animation: none; } }

@@ -43,6 +43,7 @@ import { Route as KidKidsRouteImport } from './routes/_kid.kids'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
 import { Route as KidKidsInstallRouteImport } from './routes/_kid.kids_.install'
+import { Route as KidKidsQuestRouteImport } from './routes/_kid.kids_.quest'
 import { Route as KidKidsStudioRouteImport } from './routes/_kid.kids_.studio'
 import { Route as KidKidsStudioGamesRouteImport } from './routes/_kid.kids_.studio_.games'
 import { Route as KidKidsStudioV3RouteImport } from './routes/_kid.kids_.studio_.v3'
@@ -216,6 +217,11 @@ const KidKidsInstallRoute = KidKidsInstallRouteImport.update({
   path: '/kids/install',
   getParentRoute: () => KidRoute,
 } as any)
+const KidKidsQuestRoute = KidKidsQuestRouteImport.update({
+  id: '/kids_/quest',
+  path: '/kids/quest',
+  getParentRoute: () => KidRoute,
+} as any)
 const KidKidsStudioRoute = KidKidsStudioRouteImport.update({
   id: '/kids_/studio',
   path: '/kids/studio',
@@ -271,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/kids/install': typeof KidKidsInstallRoute
+  '/kids/quest': typeof KidKidsQuestRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/kids/studio/v3': typeof KidKidsStudioV3Route
@@ -309,6 +316,7 @@ export interface FileRoutesByTo {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
   '/kids/install': typeof KidKidsInstallRoute
+  '/kids/quest': typeof KidKidsQuestRoute
   '/kids/studio': typeof KidKidsStudioRoute
   '/kids/studio/games': typeof KidKidsStudioGamesRoute
   '/kids/studio/v3': typeof KidKidsStudioV3Route
@@ -350,6 +358,7 @@ export interface FileRoutesById {
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
   '/_kid/kids_/install': typeof KidKidsInstallRoute
+  '/_kid/kids_/quest': typeof KidKidsQuestRoute
   '/_kid/kids_/studio': typeof KidKidsStudioRoute
   '/_kid/kids_/studio_/games': typeof KidKidsStudioGamesRoute
   '/_kid/kids_/studio_/v3': typeof KidKidsStudioV3Route
@@ -390,6 +399,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources/'
     | '/kids/install'
+    | '/kids/quest'
     | '/kids/studio'
     | '/kids/studio/games'
     | '/kids/studio/v3'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources'
     | '/kids/install'
+    | '/kids/quest'
     | '/kids/studio'
     | '/kids/studio/games'
     | '/kids/studio/v3'
@@ -468,6 +479,7 @@ export interface FileRouteTypes {
     | '/resources/$slug'
     | '/resources/'
     | '/_kid/kids_/install'
+    | '/_kid/kids_/quest'
     | '/_kid/kids_/studio'
     | '/_kid/kids_/studio_/games'
     | '/_kid/kids_/studio_/v3'
@@ -743,6 +755,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KidKidsInstallRouteImport
       parentRoute: typeof KidRoute
     }
+    '/_kid/kids_/quest': {
+      id: '/_kid/kids_/quest'
+      path: '/kids/quest'
+      fullPath: '/kids/quest'
+      preLoaderRoute: typeof KidKidsQuestRouteImport
+      parentRoute: typeof KidRoute
+    }
     '/_kid/kids_/studio': {
       id: '/_kid/kids_/studio'
       path: '/kids/studio'
@@ -800,6 +819,7 @@ const AuthenticatedRouteRouteWithChildren =
 interface KidRouteChildren {
   KidKidsRoute: typeof KidKidsRoute
   KidKidsInstallRoute: typeof KidKidsInstallRoute
+  KidKidsQuestRoute: typeof KidKidsQuestRoute
   KidKidsStudioRoute: typeof KidKidsStudioRoute
   KidKidsStudioGamesRoute: typeof KidKidsStudioGamesRoute
   KidKidsStudioV3Route: typeof KidKidsStudioV3Route
@@ -808,6 +828,7 @@ interface KidRouteChildren {
 const KidRouteChildren: KidRouteChildren = {
   KidKidsRoute: KidKidsRoute,
   KidKidsInstallRoute: KidKidsInstallRoute,
+  KidKidsQuestRoute: KidKidsQuestRoute,
   KidKidsStudioRoute: KidKidsStudioRoute,
   KidKidsStudioGamesRoute: KidKidsStudioGamesRoute,
   KidKidsStudioV3Route: KidKidsStudioV3Route,
