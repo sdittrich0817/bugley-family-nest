@@ -6,6 +6,11 @@
 // You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { VitePWA } from 'vite-plugin-pwa';
+import { loadEnv } from 'vite';
+import path from 'node:path';
+
+// Server env only; the wrapper still exposes only VITE_* to the browser.
+Object.assign(process.env, loadEnv(process.env['NODE_ENV'] === 'production' ? 'production' : 'development', process.cwd(), ''));
 
 export default defineConfig({
   vite: { plugins: [VitePWA({registerType:'autoUpdate',injectRegister:null,devOptions:{enabled:false},manifest:false,scope:'/kids',workbox:{globPatterns:['**/*.{js,css,woff2}'],navigateFallback:null,runtimeCaching:[{urlPattern:({request,url})=>request.mode==='navigate'&&/^\/kids(?:\/|$)/.test(url.pathname),handler:'NetworkFirst',options:{cacheName:'bugley-kids-public-navigation',networkTimeoutSeconds:3,cacheableResponse:{statuses:[]},precacheFallback:{fallbackURL:'/kids-offline.html'}}},{urlPattern:({url})=>url.origin===self.location.origin&&/\/assets\/.+-[\w-]+\.(js|css|woff2)$/.test(url.pathname),handler:'CacheFirst',options:{cacheName:'bugley-kids-assets',expiration:{maxEntries:150,maxAgeSeconds:30*86400}}}],additionalManifestEntries:[{url:'/kids-offline.html',revision:'kids-offline-v1'}]}})] },
@@ -14,4 +19,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  // React Email's parser requires entities v4, including its deep entry points.
+  // Merge with the wrapper's existing aliases rather than replacing them.
+  // These aliases apply to both dev and the published server bundle.
 });

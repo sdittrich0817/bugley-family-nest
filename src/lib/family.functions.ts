@@ -46,7 +46,24 @@ export const removeChild = createServerFn({ method: "POST" }).middleware([requir
 export const finishFamilySetup = createServerFn({ method: "POST" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   const { count, error: countError } = await context.supabase.from("children").select("id", { count: "exact", head: true }).eq("parent_id", context.userId);
   if (countError || !count) throw new Error("Add at least one child before finishing.");
-  const { data, error } = await context.supabase.from("profiles").update({ family_setup_completed_at: new Date().toISOString() }).eq("id", context.userId).select("id").single();
+  const { data: profile, error: profileError } = await context.supabase.from('profiles').select('family_setup_completed_at').eq('id', context.userId).single();
+  if (profileError || !profile) throw new Error("We couldn’t finish setup. Please try again.");
+  if (profile.family_setup_completed_at) return { completed: true };
+  const completedAt = new Date().toISOString();
+  const { data, error } = await context.supabase.from("profiles").update({ family_setup_completed_at: completedAt }).eq("id", context.userId).is('family_setup_completed_at', null).select("id").maybeSingle();
+  if (!error && !data) return { completed: true };
   if (error || !data) throw new Error("We couldn’t finish setup. Please try again.");
+  // First completed setup only; later logins never resend. Email failure cannot undo setup.
+  try {
+    const { data: auth } = await context.supabase.auth.getUser();
+    const { parentWelcomeEvent } = await import('./parent-welcome');
+    const event = parentWelcomeEvent(auth.user, completedAt);
+    if (event && auth.user?.id === context.userId) {
+      const { sendTemplateEmail } = await import('./email-templates/send-email');
+      await sendTemplateEmail('parent-welcome', event.recipient, event.options);
+    }
+  } catch {
+    console.warn('Parent setup completed, but the welcome email could not be sent. Check email delivery settings.');
+  }
   return { completed: true };
 });

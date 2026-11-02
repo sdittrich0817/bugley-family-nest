@@ -11,6 +11,7 @@ import {
   Preview,
   Text,
 } from '@react-email/components'
+import { emailBrand as brand } from './brand'
 
 interface SignupEmailProps {
   siteName: string
@@ -26,33 +27,35 @@ export const SignupEmail = ({
   confirmationUrl,
 }: SignupEmailProps) => (
   <Html lang="en" dir="ltr">
-    <Head>
-      <style>{darkModeCss}</style>
-    </Head>
-    <Preview>Confirm your email for {siteName}</Preview>
+    <Head />
+    <Preview>Welcome to Bugley. Verify your parent email to set up your family.</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email</Heading>
+        <Text style={{ ...text, fontWeight: '800', fontSize: '24px' }}>Bugley</Text>
+        <Heading style={h1}>Welcome to Bugley</Heading>
         <Text style={text}>
-          Thanks for signing up for{' '}
+          Let’s get your family ready to figure out AI, together with{' '}
           <Link href={siteUrl} style={link}>
             <strong>{siteName}</strong>
           </Link>
           !
         </Text>
         <Text style={text}>
-          Please confirm your email address (
+          First, verify your parent email address (
           <Link href={`mailto:${recipient}`} style={link}>
             {recipient}
           </Link>
-          ) by clicking the button below:
+          ). Your account stays inactive until you verify it.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Verify Email
+          Verify my parent email
         </Button>
+        <Text style={{ ...text, marginTop: '24px' }}>Next, you’ll add your children and choose their PIN or picture password. You stay in charge of their access and can review recorded activity in your Parent Hub.</Text>
+        <Text style={footer}>If the button doesn’t open, copy this secure link into your browser:<br /><Link href={confirmationUrl} style={{ ...link, wordBreak: 'break-all' }}>{confirmationUrl}</Link></Text>
         <Text style={footer}>
           If you didn't create an account, you can safely ignore this email.
         </Text>
+        <Text style={footer}>No ads. We never sell your family’s data.</Text>
       </Container>
     </Body>
   </Html>
@@ -60,36 +63,10 @@ export const SignupEmail = ({
 
 export default SignupEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
-  color: '#000000',
-  margin: '0 0 20px',
-}
-const text = {
-  fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
-  margin: '0 0 25px',
-}
+const main = brand.body
+const container = brand.container
+const h1 = brand.title
+const text = brand.text
 const link = { color: 'inherit', textDecoration: 'underline' }
-const button = {
-  backgroundColor: '#000000',
-  color: '#ffffff',
-  fontSize: '14px',
-  border: '1px solid #000000',
-  borderRadius: '8px',
-  padding: '12px 20px',
-  textDecoration: 'none',
-}
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
-// Rendered as a text child, which React may HTML-escape: keep this CSS free of >, &, and quotes.
-const darkModeCss = `
-  @media (prefers-color-scheme: dark) {
-    .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  }
-  [data-ogsc] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-  [data-ogsb] .dm-btn { background-color: #ffffff !important; color: #000000 !important; }
-`
+const button = brand.button
+const footer = brand.footer

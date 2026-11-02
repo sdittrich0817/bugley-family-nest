@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "Bugley Family Nest"
+const SITE_NAME = "Bugley"
 const SENDER_DOMAIN = "notify.bugley.app"
 const ROOT_DOMAIN = "bugley.app"
 const FROM_DOMAIN = "notify.bugley.app"
@@ -28,7 +28,7 @@ export const Route = createFileRoute("/lovable/email/auth/webhook")({
           sendUrl: process.env['LOVABLE_SEND_URL'],
           emails: {
             signup: {
-              subject: 'Confirm your email',
+              subject: 'Welcome to Bugley — verify your parent email',
               render: (data) =>
                 React.createElement(SignupEmail, {
                   siteName: SITE_NAME,
