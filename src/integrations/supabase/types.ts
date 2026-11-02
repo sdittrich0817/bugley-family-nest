@@ -867,6 +867,7 @@ export type Database = {
           image_path: string
           key: string
           name: string
+          owner_parent: string | null
           power: string
           rare: boolean
           synonyms: string[]
@@ -879,6 +880,7 @@ export type Database = {
           image_path: string
           key: string
           name: string
+          owner_parent?: string | null
           power?: string
           rare?: boolean
           synonyms?: string[]
@@ -891,6 +893,7 @@ export type Database = {
           image_path?: string
           key?: string
           name?: string
+          owner_parent?: string | null
           power?: string
           rare?: boolean
           synonyms?: string[]
