@@ -130,7 +130,6 @@ function KidHome({ child, onBug }: { child: ChildProfile; onBug: (b: BugConfig) 
   const speak = () => { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(greeting); u.rate = 0.9; u.pitch = 1.2; s.speak(u); };
   useEffect(() => { if (band === "sprouts") speak(); return () => window.speechSynthesis?.cancel(); }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const sprouts = band === "sprouts", builders = band === "builders";
-  const qc = useQueryClient();
   const { data: m } = useQuery({ queryKey: ["curriculum", "child", child.id], queryFn: () => getChildMission({ data: { childId: child.id } }) });
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
   if (building) return <BugBuilder childId={child.id} start={toBug(child.bug ?? child.avatar, child.id)} big={sprouts} onClose={() => setBuilding(false)} onSaved={(b) => { onBug(b); setBuilding(false); toast.success(sprouts ? "Cool bug!" : "Your bug is saved!"); }} />;
