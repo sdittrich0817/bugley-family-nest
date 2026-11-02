@@ -34,8 +34,9 @@
 - PLAY launches through PlayStudio with bounded private sessions, reusable safe stickers and server-rendered doodles; persistence and rewards follow src/lib/AGENTS.md. Why: games share safety and rewards without exposing family data.
 - ExtraRound games keep private answers server-side. Glow Dash uses shared Matter.js replay grading and parent-scoped allow-listed remixes; local ml-knn learns checked Jump/Wait examples and produces replayable inputs, never scores. Why: visible learning without client-controlled rewards or generated code.
 
-- Subdirectories may have their own `AGENTS.md` (see `src/lib/AGENTS.md` for Studio makers and books); read it before changing files there.
-- Scroll-to-top on navigation is handled once in the root shell after each page resolves; screens that switch steps without changing the URL call `useScrollTopOn` from `src/lib/scroll.ts`. Why: every new page or step starts at the top.
+- Read subdirectory `AGENTS.md` before editing there, especially `src/lib/AGENTS.md`.
+- Router alone owns navigation scroll/hash/history; same-URL steps use `useScrollTopOn`. Why: prevent competing scroll resets.
+- Navigation keeps the shell, blocks unchecked content, and shares pending/progress UI without keyed Outlet remounts; only public nav preloads. Why: smooth transitions without weakening access.
 - Child avatars retain allow-listed parts in children.bug with optional server-saved private image paths; AI bug portraits use images.server and atomic service-only attempt claims/completion, with signed URLs added only to owned family reads. Why: kids can draw their own safe bug without client-controlled quota, charges or foreign image paths.
 - Create V3 reuses owned records for drafts and outputs; story layouts share StoryPageCanvas across readers/previews, coaching never writes prose, and formatting generates no art. Why: durable child-led work without duplicate entries or charges.
 - Player restoration checks family/device authority and per-child login policy without renewing timestamps; resolveDevice enforces trusted expiry server-side. New-create remounts and clears project search. Why: no expiry bypass or unnecessary PIN prompts.
