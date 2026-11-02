@@ -170,9 +170,13 @@ export const completeFamilySession = createServerFn({ method: "POST" }).middlewa
   if (ids.length !== data.childIds.length) throw new Error("We couldn’t find one of those players.");
   const { data: session } = await sb.from("sessions").select("id,unit_id").eq("id", data.sessionId).single();
   if (!session) throw new Error("We couldn’t find this session.");
-  const { data: acts } = await sb.from("activities").select("id").eq("session_id", session.id);
-  const rows = ids.flatMap((c) => (acts ?? []).map((a) => ({ child_id: c, activity_id: a.id, parent_id: context.userId })));
+  const { data: allActs } = await sb.from("activities").select("id,step").eq("session_id", session.id);
+  const campfire = (allActs ?? []).filter((a: any) => a.step === "campfire");
+  // Quest chapters: the Campfire only records the shared moment; map lights come from each child's own solo steps.
+  const acts = campfire.length ? campfire : allActs;
+  const rows = ids.flatMap((c) => (acts ?? []).map((a: any) => ({ child_id: c, activity_id: a.id, parent_id: context.userId })));
   if (rows.length) { const { error } = await sb.from("child_activity_progress").upsert(rows, { ignoreDuplicates: true }); if (error) throw new Error("We couldn’t save progress."); }
+  if (campfire.length) return { awarded: [] as string[], badge: null };
   const { error: se } = await sb.from("child_session_progress").upsert(ids.map((c) => ({ child_id: c, session_id: session.id, parent_id: context.userId })), { ignoreDuplicates: true });
   if (se) throw new Error("We couldn’t save progress.");
   const { data: unitSessions } = await sb.from("sessions").select("id").eq("unit_id", session.unit_id);
