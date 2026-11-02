@@ -15,8 +15,8 @@ async function safe(ctx:any,kid:any,text:string) { const { guardChildText } = aw
 async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=false) {
   const base=[...STARTER_STICKERS,...STARTER_CREATURES].find(s=>s.key===word||s.key===normalizeWord(word)||s.synonyms.includes(normalizeWord(word)));
   if(base)return {key:base.key,name:base.name,power:base.power??'',rare:base.rare??false};
-  const a=await admin(); const key=creature?word:normalizeWord(word);
-  const {data:rows}=await a.from('game_stickers').select('*').eq('active',true).or(`key.eq.${key.replace(/[^a-z0-9 +]/g,'')},synonyms.cs.{${normalizeWord(word)}}`).limit(1);
+  const a=await admin(); const key=`${creature?word:normalizeWord(word)}`;const ownKey=`f-${String(ctx.userId).slice(0,8)}-${key}`;
+  const {data:rows}=await a.from('game_stickers').select('*').eq('active',true).or(`owner_parent.is.null,owner_parent.eq.${ctx.userId}`).or(`key.eq.${key.replace(/[^a-z0-9 +]/g,'')},synonyms.cs.{${normalizeWord(word)}}`).limit(1);
   if(rows?.[0])return {key:rows[0].key,name:rows[0].name,power:rows[0].power,rare:rows[0].rare};
   if(!make)throw new Error('NEW_STICKER');
   // Share only the checked object concept, never a child’s original message or identity.
@@ -25,7 +25,7 @@ async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=fals
   if(!style?.[0])throw new Error('Bugley’s paintbrush isn’t ready.');
   const result=await generateImage(ctx.supabase,ctx.userId,{childId:kid.id,description:creature?`One friendly original cartoon creature combining ${word.split('+').join(' and ')}. White background, whole creature visible.`:`One cartoon ${key}, isolated on plain white background. No people, no names, no scenery.`,styleKey:style[0].key,mode:'sketch',characterIds:[]});
   if(!result.ok)throw new Error(result.reply);
-  const row={key,name:creature?`${word.split('+').join(' ')} buddy`:key,synonyms:[],image_path:result.path,creature,power:creature?'Makes wonderfully silly surprises!':'',rare:false};
+  const row={owner_parent:ctx.userId as string,key,name:creature?`${word.split('+').join(' ')} buddy`:key,synonyms:[],image_path:result.path,creature,power:creature?'Makes wonderfully silly surprises!':'',rare:false};
   const {error}=await a.from('game_stickers').upsert(row,{onConflict:'key',ignoreDuplicates:true});if(error)throw new Error('The sticker couldn’t be saved.');
   return {key,name:row.name,power:row.power,rare:false};
 }
