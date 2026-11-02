@@ -26,6 +26,7 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
+import { GameGallery, ComicAndStoryLook } from "@/components/site/StudioShowcase";
 import comicAdventure from "@/assets/illustrations/studio-comic-adventure.jpg";
 import comicMystery from "@/assets/illustrations/studio-comic-mystery.jpg";
 import comicSpace from "@/assets/illustrations/studio-comic-space.jpg";
@@ -293,6 +294,9 @@ function StudioPreview() {
             Every example here is stand-in art we made for this preview. A real shelf will be full of your kids' work.
           </p>
 
+          <h3 className="mt-12 font-display text-2xl text-foreground">What a comic and a story page look like</h3>
+          <div className="mt-6"><ComicAndStoryLook /></div>
+
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <figure className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
               <img
@@ -377,20 +381,11 @@ function StudioPreview() {
           </figure>
         </div>
 
-        <h3 className="mt-14 font-display text-2xl text-foreground">Play with Bugley</h3>
-        <div className="mt-6 grid gap-5 sm:grid-cols-3">
-          {PLAY_GAMES.map(({ icon: Icon, title, body }) => (
-            <BugleyCard key={title} className="flex flex-col gap-3">
-              <Glow size="sm" className="self-start">
-                <span className="grid size-12 place-items-center rounded-2xl bg-sky text-sky-foreground">
-                  <Icon className="size-6" />
-                </span>
-              </Glow>
-              <p className="font-display text-lg text-foreground">{title}</p>
-              <p className="text-sm text-muted-foreground">{body}</p>
-            </BugleyCard>
-          ))}
-        </div>
+        <h3 className="mt-14 font-display text-2xl text-foreground">The nine games inside Bugley</h3>
+        <p className="mt-2 text-muted-foreground">
+          Every one is a quick, under-five-minute adventure that quietly teaches how AI thinks — and where it slips up.
+        </p>
+        <div className="mt-6"><GameGallery /></div>
 
         <h3 className="mt-14 font-display text-2xl text-foreground">Make your own</h3>
         <div className="mt-6 grid gap-5 sm:grid-cols-3">

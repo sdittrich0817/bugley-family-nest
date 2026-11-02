@@ -7,6 +7,7 @@ import { SectionHeader } from "@/components/brand/SectionHeader";
 import { Glow } from "@/components/brand/Glow";
 import { Bugley, BUGLEY_STAGES } from "@/components/brand/Bugley";
 import { useWaitlist } from "@/components/site/WaitlistModal";
+import { GameGallery, ComicAndStoryLook } from "@/components/site/StudioShowcase";
 import kitchenDusk from "@/assets/illustrations/hero-creativity-vivid-wide.jpg";
 import kitchenPortrait from "@/assets/illustrations/hero-creativity-vivid-mobile.jpg";
 import fieldJournal from "@/assets/illustrations/hilltop-horizon.jpg";
@@ -131,6 +132,22 @@ function Home() {
             </ol>
           </div>
           <img src={fieldJournal} alt="A parent and child on a hilltop at dusk, pointing at a path of firefly lights" loading="lazy" className="aspect-[4/3] w-full rounded-3xl object-cover shadow-soft" width={1280} height={960} />
+        </div>
+      </section>
+
+      {/* Studio showcase */}
+      <section className="container-page py-14 sm:py-20">
+        <SectionHeader
+          eyebrow="Bugley's Studio"
+          title="Games that teach AI. Comics and stories that are all theirs."
+          description="Here's a peek at what your kids actually play and make inside Bugley."
+        />
+        <div className="mt-10"><GameGallery limit={3} /></div>
+        <div className="mt-8"><ComicAndStoryLook /></div>
+        <div className="mt-8 text-center">
+          <Link to="/studio-preview" className="inline-flex items-center gap-1 font-display text-foreground underline-offset-4 hover:underline">
+            See all nine games and more <ArrowRight className="size-4" />
+          </Link>
         </div>
       </section>
 
