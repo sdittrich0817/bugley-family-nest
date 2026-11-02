@@ -32,9 +32,28 @@ Easy parent setup, independent child entry, home-screen access, and dependable p
 ## Confirmed architectural strengths
 Hashed child/device secrets; trusted selected-child/family checks; explicit expiring parent-approved pairing; stale/revoked-device fail-closed behavior; parent PIN does not grant parent-data access; server-enforced trusted 24-hour remembrance without timestamp renewal; local parent-session signout during device handoff.
 
-## Pending audit sections
-- Full recording coverage, concerning-event categories, parent notification configuration and actual external delivery.
-- Deep security scan results.
+## Priority findings: parent oversight and alerts
+1. **Alerts are saved in-app, not externally delivered.** `src/lib/studio.server.ts:64–69` inserts a notification; Hub fetches it. No child-safety email/push preferences or sending/retry/receipt pipeline was found in the inspected repository. Auth emails do not establish safety-alert delivery. Parents outside the Hub are not proactively contacted by this path.
+2. **Unsafe content does not produce the same prominent alert.** `studio.server.ts:33–38,62–70` classifies bullying/self-harm/sexual/violent content as unsafe and logs it, but creates a notification only for personal-information decisions. Define distinct concerning-content severity and escalation rather than treating every age-inappropriate fantasy as an emergency or making clinical judgments.
+3. **Read acknowledgement can falsely succeed.** `src/lib/studio.functions.ts:112–116` ignores the update error and always returns success. Check persistence before showing acknowledged status.
+4. **Pen-name approval tasks masquerade as privacy incidents.** `src/lib/book.functions.ts:104–109` reuses the notification format without checking insert errors; Hub/history label all these rows as personal disclosures. Add typed tasks/alerts and checked writes.
+5. **Parent work lists can silently omit entries.** Book/game parent fetchers catch individual load failures and skip them (`book.functions.ts:134–140`, `game-builder.functions.ts:41–46`). Show unavailable-item/error state rather than pretending the list is complete.
+6. **History is not every interaction or edit.** FamilyHistory reconstructs creation/latest-update/deletion records from current state; it does not expose full workspace revisions. Local Guesses/Dragon/Meadow play is not included; server games expose start/finish summaries rather than every move. Permanent purges remove creation evidence. Define a bounded retained activity contract and honest exclusions, preserving privacy and no-reward rules.
+7. **Learning can partially succeed without complete evidence.** `src/lib/curriculum.functions.ts:70–85,108` ignores downstream completion/badge errors and can treat failed reads as empty lists. Check failures and ensure consistent completion recording.
+8. **Safety claims need correction and legal review.** `/safety` says no child personal information is collected, but blocked input is retained in private events/alerts. It also describes a universal answer safety/fact check and AI writing prose that are not established by this audit and conflict with child-led authorship. Do not claim certified compliance or total oversight without supporting evidence. Review actual moderation processing, retention and parent-visible coverage before changing public promises.
+
+## Recommended approval sequence
+1. **Access safety and recovery:** unify server child authorization; preserve adult separation; invalidate remembered verification on credential reset; safe forgotten-PIN/password recovery. Add direct-request and database-backed tests.
+2. **Parent-ready handoff:** integrated profile → secret → parent PIN → this/another device → approval → home-screen guide → test child sign-in. Clearly distinguish device trust expiry from remembered login policy; retain Always default and 24-hour option.
+3. **Dependable parent alerts:** typed privacy/concern/approval/service-error events, clear settings and severity, verified contact delivery, retry/deduplication and read status. Default to minimal content in external messages and an authenticated Hub link rather than sending child text by email/push. Channel choices and escalation wording require product approval.
+4. **Honest complete-enough oversight:** fix swallowed errors, show missing evidence, document local-play/edit exclusions or approve extra recording, expose child/date filters and report limitations, review safety/privacy language and retention.
+5. **Site polish:** lazily load expanded panels, deduplicate concurrent checks without weakening authorization, make install help discoverable, improve keyboard focus/child targets, and measure transitions/font cost on real devices. Keep Shea's reviewed news prominent.
+
+## Remaining verification and blockers
+- Deep security scan results are pending; no clean-security certification.
+- Successful unlocked parent and fresh child workflows require normal user unlock/sign-in; available restored session remains locked. No credentials were requested, reset, exposed or bypassed.
+- Real iPhone/iPad/Android installation and background email/push delivery require implementation plus published-device checks; desktop preview cannot establish them.
+- Existing legal, printing, billing, art-budget and Wave 2 blockers in roadmap remain outside this audit's implementation scope.
 
 ## Implementation boundary
 No application behavior changed. Fixes should be presented in a phased approval plan after consolidating all findings. Keep independent child access separate from parent authority. Do not change offline support, billing, rewards, family credentials or published commentary as part of this audit.
