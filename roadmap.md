@@ -1,3 +1,4 @@
+- [ ] Smooth page navigation: retain the site frame during access checks, provide immediate loading feedback, remove competing scroll resets, and verify forward/back navigation without changing access protections.
 - [x] Promote news above the crew in a prominent full-width band; add per-child 7/30-day/all-time interaction reports, exact request/reply evidence, safety counts and text downloads. Four report calculation tests pass; build OK.
 - [ ] Verify child report opening/download and promoted news layout live (blocked: parent session still redirects to locked Kid Zone; normal parent unlock needed). Reports describe recorded activity, not personality or complete screen time.
 - [x] Add Google News family-AI shortlist discovery, admin response/guidance prompts and reviewed Parent Hub publication; real feed returned 10 draft candidates, 9 publication/access tests pass, build OK. No commentary generated or published.
