@@ -1,3 +1,5 @@
+- [x] Promote news above the crew in a prominent full-width band; add per-child 7/30-day/all-time interaction reports, exact request/reply evidence, safety counts and text downloads. Four report calculation tests pass; build OK.
+- [ ] Verify child report opening/download and promoted news layout live (blocked: parent session still redirects to locked Kid Zone; normal parent unlock needed). Reports describe recorded activity, not personality or complete screen time.
 - [x] Add Google News family-AI shortlist discovery, admin response/guidance prompts and reviewed Parent Hub publication; real feed returned 10 draft candidates, 9 publication/access tests pass, build OK. No commentary generated or published.
 - [ ] Verify news discovery/save/publish and family readback live (blocked: parent/admin preview session redirects to locked Kid Zone; normal parent unlock needed).
 - [x] Build simpler Parent Hub: important updates, expandable recorded child history, reassuring AI guidance and per-child Always/default or 24-hour remembered login; boundary and restoration tests pass; build OK.
