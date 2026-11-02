@@ -3,7 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
 import { requireParentDevice } from './parent-device.functions';
-import { familyActivityDone, gradeChoice, pickCurrentSession, questStates, soloActivities, soloDone } from "@/lib/curriculum";
+import { familyActivityDone, gradeChoice, pickCurrentSession, questStates, soloDone } from "@/lib/curriculum";
 
 type Ctx = { supabase: any; userId: string };
 const TREE = "id,number,title,kind,units(id,number,title,published,lead_strand,family_question,dinner_question,story_prompt,mission_project,badge_name,badge_description,journal_prompt,sessions(id,week_number,title,parent_primer,script,source_news_id,activities(id,position,title,strand,step,kind,offscreen,activity_versions(age_band,kid_title,instructions,minutes,choices)),printables(id,title,file_path)))";
