@@ -76,9 +76,6 @@ function Home() {
             </p>
             <div className="home-hero-actions flex gap-3">
               <Button onClick={() => open("start_free")}>Start free</Button>
-              <Button variant="secondary" asChild>
-                <Link to="/co-ops">Book a co-op demo</Link>
-              </Button>
             </div>
           </div>
         </div>
@@ -175,8 +172,8 @@ function Home() {
       <section className="container-page py-14 sm:py-20">
         <BugleyCard variant="glow" className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-2xl text-foreground sm:text-3xl">Teaching a co-op?</h2>
-            <p className="mt-2 text-lg text-muted-foreground">Bugley is ready for mixed-age groups.</p>
+            <h2 className="text-2xl text-foreground sm:text-3xl">Homeschooling or teaching a co-op?</h2>
+            <p className="mt-2 text-lg text-muted-foreground">Bugley is ready for one kitchen table or mixed-age groups. Book a demo and see it with your own kids.</p>
           </div>
           <Button size="lg" variant="secondary" asChild>
             <Link to="/co-ops">Book a demo</Link>
