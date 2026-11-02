@@ -4,7 +4,7 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Wordmark } from "@/components/brand/Wordmark";
-import { mainNav } from "@/lib/nav";
+import { headerNav, mainNav } from "@/lib/nav";
 import { useWaitlist } from "./WaitlistModal";
 import { useParentSession } from "./ParentSession";
 
@@ -15,18 +15,26 @@ export function SiteHeader() {
   const linkCls =
     "rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary";
 
+  const moreTrigger = (
+    <SheetTrigger asChild>
+      <Button variant="ghost" size="icon" aria-label="More pages"><Menu /></Button>
+    </SheetTrigger>
+  );
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-md">
+      <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
       <div className="container-page flex h-16 items-center justify-between gap-4 lg:h-20">
         <Wordmark />
 
-        <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
-          {mainNav.map((l) => (
+        <div className="hidden items-center gap-1 lg:flex">
+          {headerNav.map((l) => (
             <Link key={l.to} to={l.to} preload="intent" className={linkCls} activeProps={{ className: "text-foreground bg-secondary" }}>
               {l.label}
             </Link>
           ))}
-        </nav>
+          {moreTrigger}
+        </div>
 
         <div className="hidden items-center gap-2 lg:flex">
           <Button variant="ghost" size="sm" asChild><Link to="/kids">Kids</Link></Button>
@@ -36,33 +44,32 @@ export function SiteHeader() {
         <div className="flex items-center gap-2 lg:hidden">
           <Button variant="ghost" size="sm" asChild><Link to="/kids">Kids</Link></Button>
           {user ? <Button asChild size="sm"><Link to="/hub">Parent Hub</Link></Button> : <Button variant="secondary" size="sm" asChild><Link to="/login">Log in</Link></Button>}
-          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Open menu"><Menu /></Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="flex w-[85vw] max-w-sm flex-col gap-6 bg-background p-6">
-              <SheetTitle className="sr-only">Menu</SheetTitle>
-              <Wordmark />
-              <nav aria-label="Mobile" className="flex flex-col gap-1">
-                {mainNav.map((l) => (
-                  <Link
-                    key={l.to}
-                    to={l.to}
-                    preload="intent"
-                    onClick={() => setMenuOpen(false)}
-                    className="rounded-xl px-3 py-3 font-display text-lg text-foreground hover:bg-secondary"
-                  >
-                    {l.label}
-                  </Link>
-                ))}
-              </nav>
-              <div className="mt-auto flex flex-col gap-3">
-                {user ? <Button variant="secondary" onClick={() => { setMenuOpen(false); void signOut(); }}>Log out</Button> : <><Button variant="secondary" onClick={() => { setMenuOpen(false); open("log_in"); }}>Log in</Button><Button onClick={() => { setMenuOpen(false); open("start_free"); }}>Start free</Button></>}
-              </div>
-            </SheetContent>
-          </Sheet>
+          {moreTrigger}
         </div>
       </div>
+
+
+          <SheetContent side="right" className="flex w-[85vw] max-w-sm flex-col gap-6 bg-background p-6">
+            <SheetTitle className="sr-only">Menu</SheetTitle>
+            <Wordmark />
+            <nav aria-label="Menu" className="flex flex-col gap-1">
+              {mainNav.map((l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  preload="intent"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-3 py-3 font-display text-lg text-foreground hover:bg-secondary"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="mt-auto flex flex-col gap-3">
+              {user ? <Button variant="secondary" onClick={() => { setMenuOpen(false); void signOut(); }}>Log out</Button> : <><Button variant="secondary" onClick={() => { setMenuOpen(false); open("log_in"); }}>Log in</Button><Button onClick={() => { setMenuOpen(false); open("start_free"); }}>Start free</Button></>}
+            </div>
+          </SheetContent>
+        </Sheet>
     </header>
   );
 }
