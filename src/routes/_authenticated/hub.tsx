@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { FamilyHistory } from "@/components/site/FamilyHistory";
 import { FamilyNews } from "@/components/site/FamilyNews";
 import { ChildReport } from "@/components/site/ChildReport";
+import { TabletSetup } from "@/components/site/TabletSetup";
 import { studioActivityOptions, markNotificationRead } from "@/lib/studio.functions";
 import { setPlayerPolicies } from "@/lib/kid-zone";
 import { useServerFn } from "@tanstack/react-start";
@@ -59,9 +60,11 @@ function Hub() {
       </div>
       <PlanNotice />
       <ImportantUpdates kids={family.children} />
+      <TabletSetup />
       <FamilyNews />
       <Section title="Your crew"><div className="grid gap-4 md:grid-cols-2">{family.children.map(c=><div key={c.id} className={card}>
         <div className="flex items-center gap-3"><ChildAvatar avatar={c.bug??c.avatar} seed={c.id} className="size-16 shrink-0"/><div className="min-w-0 flex-1"><h3 className="break-words text-xl">{c.nickname}</h3><p className="mt-1 text-sm capitalize text-muted-foreground">{c.age_band} · {(cur.badges[c.id]??[]).length} badges</p></div><Bugley stage={c.bugley_stage} expression="happy" size={54}/></div>
+        <p className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground"><span>Remember login: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).remember_login==='always'?'Always':'24 hours'}</strong></span><span>Daily limit: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).daily_minutes==null?'No limit':`${(controls[c.id]??DEFAULT_CONTROLS).daily_minutes} min`}</strong></span></p>
         <ChildReport child={c}/>
         <details className="mt-4 border-t border-border pt-4"><summary className="cursor-pointer font-semibold">Time &amp; Studio controls</summary><ControlsCard child={c} value={controls[c.id]??DEFAULT_CONTROLS}/></details>
         <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">Learning progress</summary><KidCard child={c} badges={cur.badges[c.id]??[]} skills={cur.skills[c.id]??{}} totals={cur.strandTotals}/></details>
