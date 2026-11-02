@@ -22,7 +22,7 @@ export function SiteHeader() {
 
         <nav aria-label="Main" className="hidden items-center gap-1 lg:flex">
           {mainNav.map((l) => (
-            <Link key={l.to} to={l.to} className={linkCls} activeProps={{ className: "text-foreground bg-secondary" }}>
+            <Link key={l.to} to={l.to} preload="intent" className={linkCls} activeProps={{ className: "text-foreground bg-secondary" }}>
               {l.label}
             </Link>
           ))}
@@ -48,6 +48,7 @@ export function SiteHeader() {
                   <Link
                     key={l.to}
                     to={l.to}
+                    preload="intent"
                     onClick={() => setMenuOpen(false)}
                     className="rounded-xl px-3 py-3 font-display text-lg text-foreground hover:bg-secondary"
                   >

@@ -13,7 +13,7 @@ import { useLocation, useNavigate } from "@tanstack/react-router";
 import { isKidZoneLocked, isKidZonePath, isKidZoneRecoveryPath, kidZoneRedirect, subscribeKidZone, setKidZoneLocked } from "@/lib/kid-zone";
 import { getDeviceMode, lockKidDevice } from '@/lib/parent-device.functions';
 import { useParentSession } from '@/components/site/ParentSession';
-import { scrollToTop } from "@/lib/scroll";
+import { NavigationProgress, PageContent, PagePending } from '@/components/site/PageNavigation';
 import { kidDeviceStatus } from '@/lib/kid-device.functions';
 import { registerKidsWorker } from '@/lib/kids-pwa';
 import { KidsConnectivity } from '@/components/site/KidsConnectivity';
@@ -151,7 +151,6 @@ function RootComponent() {
 function KidZoneShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const router = useRouter();
   const {user}=useParentSession();
   const [checkedPath,setCheckedPath]=useState('');
   const [deviceChecked,setDeviceChecked]=useState(false);
@@ -162,32 +161,20 @@ function KidZoneShell() {
   // Do not redirect using stale browser state while the server check is pending.
   const target = pathname !== '/game-playground' && checkedPath === pathname ? kidZoneRedirect(pathname, locked) : null;
   useEffect(() => { if (target) void navigate({ to: "/kids", replace: true }); }, [target, navigate]);
-  // Every new page starts at the top once it has finished loading and drawing.
-  // Links to a #section still jump there, and Back/Forward keep their old spot.
-  useEffect(() => {
-    let wentBack = false;
-    const onPop = () => { wentBack = true; };
-    window.addEventListener("popstate", onPop);
-    const toTop = () => {
-      if (wentBack) { wentBack = false; return; }
-      if (window.location.hash) return;
-      scrollToTop();
-      // Pages that finish drawing a moment later (signed-in pages) get a second nudge.
-      requestAnimationFrame(() => { if (!window.location.hash) scrollToTop(); });
-    };
-    const offResolved = router.subscribe("onResolved", toTop);
-    return () => { offResolved(); window.removeEventListener("popstate", onPop); };
-  }, [router]);
+  // TanStack Router alone owns navigation scroll resets, hash jumps and history restoration.
   // The public game experiment has no family reads, rewards, or private state.
   if (pathname === '/game-playground') return <main><Outlet /></main>;
-  if (target || (user && checkedPath!==pathname) || !deviceChecked) return <div className="flex min-h-screen items-center justify-center"><Bugley stage="scout" expression="happy" glow size={120}/></div>;
-  if (isKidZonePath(pathname) || pathname==='/kids-entry' || pathname==='/pair') return <main className="min-h-screen"><KidsConnectivity><Outlet /></KidsConnectivity></main>;
-  if (pathname === "/table") return <main className="min-h-screen"><Outlet /></main>;
+  const checking = Boolean(target || (user && checkedPath!==pathname) || !deviceChecked);
+  const content = checking ? <PagePending /> : <PageContent><Outlet /></PageContent>;
+  // Keep the appropriate frame stable, but never render the destination until its checks pass.
+  if (isKidZonePath(pathname) || pathname==='/kids-entry' || pathname==='/pair') return <main className="min-h-screen"><NavigationProgress checking={checking}/><KidsConnectivity>{content}</KidsConnectivity></main>;
+  if (pathname === "/table") return <main className="min-h-screen"><NavigationProgress checking={checking}/>{content}</main>;
   return (
     <div className="flex min-h-screen flex-col">
+      <NavigationProgress checking={checking}/>
       <SiteHeader />
       <main className="flex-1">
-        <Outlet />
+        {content}
       </main>
       <SiteFooter />
     </div>

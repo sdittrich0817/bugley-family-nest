@@ -13,7 +13,15 @@ export const Route = createFileRoute("/resources/$slug")({
   },
   head: ({ params, loaderData }) => {
     const a = loaderData?.article;
-    if (!a) return { meta: [{ title: "Article not found — Bugley" }, { name: "robots", content: "noindex" }] };
+    if (!a) return { meta: [
+      { title: "Article not found — Bugley" },
+      { name: "description", content: "This family AI resource is unavailable. Explore more parent resources from Bugley." },
+      { property: "og:title", content: "Article not found — Bugley" },
+      { property: "og:description", content: "Explore family AI resources and guidance from Bugley." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "robots", content: "noindex" },
+    ] };
     const title = `${a.title} — Bugley`;
     return {
       meta: [
