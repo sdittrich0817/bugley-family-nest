@@ -232,6 +232,20 @@
       "when": 1793583293109,
       "tag": "0032_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793583873616,
+      "tag": "0033_learning_quest",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793584973479,
+      "tag": "0034_site_feedback",
+      "breakpoints": true
     }
   ]
 }

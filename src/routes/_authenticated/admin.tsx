@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { FeedbackInbox } from "@/components/site/FeedbackInbox";
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -27,12 +28,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
 });
 
-type Field = { key: string; label: string; kind: "text" | "long" | "int" | "bool" | "strand" | "step" };
+type Field = { key: string; label: string; kind: "text" | "long" | "int" | "bool" | "strand" | "step" | "akind" };
 const FIELDS: Record<EntityTable, Field[]> = {
   seasons: [{ key: "number", label: "Season number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "description", label: "Description", kind: "long" }, { key: "published", label: "Published (families can see it)", kind: "bool" }],
-  units: [{ key: "number", label: "Unit number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "lead_strand", label: "Lead strand", kind: "strand" }, { key: "family_question", label: "Family question", kind: "long" }, { key: "dinner_question", label: "Dinner question", kind: "long" }, { key: "story_prompt", label: "Story Studio prompt", kind: "text" }, { key: "mission_project", label: "Mission Week project", kind: "long" }, { key: "badge_name", label: "Badge name", kind: "text" }, { key: "badge_description", label: "Badge description", kind: "text" }, { key: "journal_prompt", label: "Field journal prompt", kind: "long" }],
+  units: [{ key: "published", label: "Published (side quests stay hidden until on)", kind: "bool" }, { key: "number", label: "Unit / chapter number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "lead_strand", label: "Lead strand", kind: "strand" }, { key: "family_question", label: "Family question", kind: "long" }, { key: "dinner_question", label: "Dinner question", kind: "long" }, { key: "story_prompt", label: "Story Studio prompt", kind: "text" }, { key: "mission_project", label: "Mission Week project", kind: "long" }, { key: "badge_name", label: "Badge name", kind: "text" }, { key: "badge_description", label: "Badge description", kind: "text" }, { key: "journal_prompt", label: "Field journal prompt", kind: "long" }],
   sessions: [{ key: "week_number", label: "Week number", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "parent_primer", label: "5-minute parent primer", kind: "long" }, { key: "script", label: "Session script (one step per line)", kind: "long" }],
-  activities: [{ key: "position", label: "Order", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "strand", label: "Strand", kind: "strand" }, { key: "step", label: "Family Table step", kind: "step" }, { key: "offscreen", label: "Off-screen activity", kind: "bool" }],
+  activities: [{ key: "position", label: "Order", kind: "int" }, { key: "title", label: "Title", kind: "text" }, { key: "strand", label: "Strand", kind: "strand" }, { key: "step", label: "Family Table step", kind: "step" }, { key: "offscreen", label: "Off-screen activity", kind: "bool" }, { key: "kind", label: "Kid answer type", kind: "akind" }],
 };
 const PARENT_KEY: Partial<Record<EntityTable, string>> = { units: "season_id", sessions: "unit_id", activities: "session_id" };
 const LABEL: Record<EntityTable, string> = { seasons: "Season", units: "Unit", sessions: "Session", activities: "Activity" };
@@ -75,6 +76,7 @@ function AdminArea() {
       <div>{sel ? <Editor key={`${sel.table}-${sel.id ?? "new"}-${sel.parentId ?? ""}`} sel={sel} row={find(sel)} onSaved={(id) => setSel({ ...sel, id })} onDeleted={() => setSel(null)} /> : <p className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">Pick something on the left to edit, or add a new Season.</p>}</div>
     </div>
     <GlowAdmin />
+    <FeedbackInbox />
     <FamilyNewsEditor />
     <ImageAdmin />
     <GameAdmin />
@@ -112,7 +114,7 @@ function FamilyRow({ f, onSaved }: { f: { parentId: string; name: string; plan: 
 function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved: (id: string) => void; onDeleted: () => void }) {
   const qc = useQueryClient();
   const fields = FIELDS[sel.table];
-  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "strand" ? "understand" : f.kind === "step" ? "make" : "")])));
+  const [values, setValues] = useState<Record<string, any>>(() => Object.fromEntries(fields.map((f) => [f.key, row?.[f.key] ?? (f.kind === "bool" ? false : f.kind === "int" ? 1 : f.kind === "strand" ? "understand" : f.kind === "step" ? "make" : f.kind === "akind" ? "done" : "")])));
   const [busy, setBusy] = useState(false);
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin-tree"] }).then(() => qc.invalidateQueries({ queryKey: ["curriculum"] }));
   async function save() {
@@ -135,7 +137,8 @@ function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved:
         {f.kind === "long" ? <Textarea rows={4} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />
           : f.kind === "int" ? <Input type="number" min={1} value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: Number(e.target.value) })} />
           : f.kind === "bool" ? <Switch checked={values[f.key]} onCheckedChange={(c) => setValues({ ...values, [f.key]: c })} />
-          : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it" } as Record<string, string>)[s]}</option>)}</select>
+          : f.kind === "step" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STEP_KEYS.map((s) => <option key={s} value={s}>{({ warmup: "Unplugged warm-up", make: "Make it", break: "Break it", think: "Think about it", story: "Quest: story", try: "Quest: try it", idea: "Quest: my idea", campfire: "Quest: campfire (together)" } as Record<string, string>)[s]}</option>)}</select>
+          : f.kind === "akind" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}><option value="done">Tap to continue</option><option value="choice">Multiple choice</option><option value="free">Child types an idea (safety-checked)</option></select>
           : f.kind === "strand" ? <select className="h-10 w-full rounded-lg border border-input bg-background px-3 capitalize" value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })}>{STRAND_KEYS.map((s) => <option key={s} value={s}>{s}</option>)}</select>
           : <Input value={values[f.key]} onChange={(e) => setValues({ ...values, [f.key]: e.target.value })} />}
       </label>)}
@@ -147,7 +150,7 @@ function Editor({ sel, row, onSaved, onDeleted }: { sel: Sel; row: any; onSaved:
 }
 
 function Versions({ activityId, existing, onSaved }: { activityId: string; existing: any[]; onSaved: () => Promise<unknown> }) {
-  const [v, setV] = useState(() => BANDS.map((b) => { const e = existing.find((x) => x.age_band === b); return { age_band: b, kid_title: e?.kid_title ?? "", instructions: e?.instructions ?? "", minutes: e?.minutes ?? 10 }; }));
+  const [v, setV] = useState(() => BANDS.map((b) => { const e = existing.find((x) => x.age_band === b); return { age_band: b, kid_title: e?.kid_title ?? "", instructions: e?.instructions ?? "", minutes: e?.minutes ?? 10, choices: (e?.choices ?? []) as { label: string; correct: boolean; why: string }[] }; }));
   const set = (i: number, patch: object) => setV(v.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   async function save() { try { await saveVersions({ data: { activityId, versions: v } }); await onSaved(); toast.success("Age versions saved"); } catch (e) { toast.error(e instanceof Error ? e.message : "Fill in every age version."); } }
   return <div className="space-y-4 rounded-2xl border border-border bg-card p-5">
@@ -155,7 +158,9 @@ function Versions({ activityId, existing, onSaved }: { activityId: string; exist
     {v.map((x, i) => <div key={x.age_band} className="space-y-2 rounded-xl bg-muted p-4"><Badge variant="secondary" className="capitalize">{x.age_band}</Badge>
       <Input placeholder="Title kids see" value={x.kid_title} onChange={(e) => set(i, { kid_title: e.target.value })} />
       <Textarea rows={3} placeholder="Instructions" value={x.instructions} onChange={(e) => set(i, { instructions: e.target.value })} />
-      <label className="flex items-center gap-2 text-sm">Minutes <Input type="number" className="w-24" min={1} max={120} value={x.minutes} onChange={(e) => set(i, { minutes: Number(e.target.value) })} /></label></div>)}
+      <label className="flex items-center gap-2 text-sm">Minutes <Input type="number" className="w-24" min={1} max={120} value={x.minutes} onChange={(e) => set(i, { minutes: Number(e.target.value) })} /></label>
+      <label className="block text-sm">Choices (multiple choice only): one per line, start the right one with *, optional “| why”
+        <Textarea rows={3} defaultValue={x.choices.map((c) => `${c.correct ? "*" : ""}${c.label}${c.why ? ` | ${c.why}` : ""}`).join("\n")} onBlur={(e) => set(i, { choices: e.target.value.split("\n").map((l) => l.trim()).filter(Boolean).map((l) => { const [lab, why = ""] = l.split("|").map((t) => t.trim()); return { label: lab!.replace(/^\*\s*/, ""), correct: lab!.startsWith("*"), why }; }) })} /></label></div>)}
     <Button onClick={() => void save()}>Save age versions</Button>
   </div>;
 }

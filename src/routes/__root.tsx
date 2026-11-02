@@ -26,6 +26,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { WaitlistProvider } from "@/components/site/WaitlistModal";
 import { Bugley } from "@/components/brand/Bugley";
 import { Toaster } from "@/components/ui/sonner";
+import { FeedbackWidget } from "@/components/site/FeedbackWidget";
 import { Button } from "@/components/ui/button";
 import { isChunkLoadError, recoverChunkLoad } from '@/lib/chunk-recovery';
 import { ParentSessionProvider } from "@/components/site/ParentSession";
@@ -175,6 +176,7 @@ function KidZoneShell() {
   return (
     <div className="flex min-h-screen flex-col">
       <NavigationProgress checking={checking}/>
+      <FeedbackWidget />
       <SiteHeader />
       <main className="flex-1">
         {content}

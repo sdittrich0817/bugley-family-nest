@@ -57,3 +57,41 @@ export const addPrintable = createServerFn({ method: "POST" }).middleware([requi
     if (error) throw new Error("Couldn’t save the printable.");
     return { ok: true };
   });
+
+const draftBand = z.object({ story: z.string(), question: z.string(), choices: z.array(z.object({ label: z.string(), correct: z.boolean() })).min(2).max(4), idea: z.string(), campfire: z.string() });
+const draftSchema = z.object({ title: z.string(), primer: z.string(), why: z.string(), sprouts: draftBand, explorers: draftBand, builders: draftBand });
+
+/** Drafts a hidden "Fresh from the news" side quest from a published story. It stays unpublished until the admin reviews and switches it on. */
+export const draftNewsQuest = createServerFn({ method: "POST" }).middleware([requireParentDevice])
+  .inputValidator((i: unknown) => z.object({ newsId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const sb = context.supabase;
+    const { data: news } = await sb.from("family_ai_news").select("id,title,summary,response,family_guidance,status").eq("id", data.newsId).maybeSingle();
+    if (!news || news.status !== "published") throw new Error("Publish the story with your take first.");
+    const { data: existing } = await sb.from("sessions").select("id").eq("source_news_id", news.id).limit(1);
+    if (existing?.length) throw new Error("This story already has a side quest draft.");
+    const { aiObject } = await import("./studio-ai.server");
+    const d = await aiObject(draftSchema,
+      `Write a short bonus chapter for "Bugley's Quest", an AI-literacy adventure for children aged 5-12 with Bugley the friendly firefly. Base it ONLY on the news story and the founder's take provided. Give three age versions: sprouts (5-6, very simple, 2-3 short sentences), explorers (7-9), builders (10-12, slightly more grown-up). For each: story (3-4 sentences set in the Glimmerwood forest that explains the real idea through a kid-friendly metaphor; no scary details), question (one multiple-choice question), choices (3 options, exactly one correct), idea (an open question asking for the child's own idea, reminding them not to share real names or places), campfire (one question plus one quick no-screens family game). title: a fun place name in the forest (max 5 words). primer: 2 sentences for parents on what the child learned. why: one short praise line for the correct answer.`,
+      `Headline: ${news.title}\nSummary: ${news.summary}\nFounder's take: ${news.response}\nFamily guidance: ${news.family_guidance}`);
+    if (!d) throw new Error("Bugley couldn’t draft that one. Try again.");
+    const { data: season } = await sb.from("seasons").select("id").eq("kind", "news").order("number").limit(1).maybeSingle();
+    if (!season) throw new Error("The news season is missing.");
+    const { data: last } = await sb.from("units").select("number").eq("season_id", season.id).order("number", { ascending: false }).limit(1);
+    const { data: unit, error: ue } = await sb.from("units").insert({ season_id: season.id, number: (last?.[0]?.number ?? 0) + 1, title: d.title.slice(0, 120), lead_strand: "discern", family_question: d.explorers.campfire, dinner_question: d.explorers.campfire, story_prompt: d.explorers.idea, mission_project: "", badge_name: "News Scout", badge_description: "You explored AI in the news.", journal_prompt: d.builders.idea, published: false }).select("id").single();
+    if (ue || !unit) throw new Error("Couldn’t save the side quest.");
+    const { data: session, error: se } = await sb.from("sessions").insert({ unit_id: unit.id, week_number: 1, title: d.title.slice(0, 160), parent_primer: d.primer, script: "", source_news_id: news.id }).select("id").single();
+    if (se || !session) throw new Error("Couldn’t save the side quest.");
+    const steps = [["story", "done", "Bugley's story"], ["try", "choice", "Try it"], ["idea", "free", "My idea"], ["campfire", "done", "Campfire"]] as const;
+    for (const [p, [step, kind, title]] of steps.entries()) {
+      const { data: act } = await sb.from("activities").insert({ session_id: session.id, position: p + 1, title, strand: "discern", step, kind, offscreen: step === "campfire" }).select("id").single();
+      if (!act) throw new Error("Couldn’t save the side quest.");
+      const rows = (["sprouts", "explorers", "builders"] as const).map((b) => { const v = d[b];
+        const text = step === "story" ? v.story : step === "try" ? v.question : step === "idea" ? v.idea : v.campfire;
+        return { activity_id: act.id, age_band: b, kid_title: title, instructions: text, minutes: step === "campfire" ? 5 : 3, choices: step === "try" ? v.choices.map((c) => ({ ...c, why: c.correct ? d.why : "Not quite — try another!" })) : [] }; });
+      const { error } = await sb.from("activity_versions").insert(rows);
+      if (error) throw new Error("Couldn’t save the side quest.");
+    }
+    return { unitId: unit.id as string, title: d.title };
+  });

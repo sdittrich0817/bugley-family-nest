@@ -65,6 +65,7 @@ function Hub() {
       <Section title="Your crew"><div className="grid gap-4 md:grid-cols-2">{family.children.map(c=><div key={c.id} className={card}>
         <div className="flex items-center gap-3"><ChildAvatar avatar={c.bug??c.avatar} seed={c.id} className="size-16 shrink-0"/><div className="min-w-0 flex-1"><h3 className="break-words text-xl">{c.nickname}</h3><p className="mt-1 text-sm capitalize text-muted-foreground">{c.age_band} · {(cur.badges[c.id]??[]).length} badges</p></div><Bugley stage={c.bugley_stage} expression="happy" size={54}/></div>
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground"><span>Remember login: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).remember_login==='always'?'Always':'24 hours'}</strong></span><span>Daily limit: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).daily_minutes==null?'No limit':`${(controls[c.id]??DEFAULT_CONTROLS).daily_minutes} min`}</strong></span></p>
+        <QuestStrip quest={cur.quest?.[c.id]} ideas={(cur.ideas??[]).filter((x:any)=>x.childId===c.id)}/>
         <ChildReport child={c}/>
         <details className="mt-4 border-t border-border pt-4"><summary className="cursor-pointer font-semibold">Time &amp; Studio controls</summary><ControlsCard child={c} value={controls[c.id]??DEFAULT_CONTROLS}/></details>
         <details className="mt-3"><summary className="cursor-pointer text-sm font-semibold">Learning progress</summary><KidCard child={c} badges={cur.badges[c.id]??[]} skills={cur.skills[c.id]??{}} totals={cur.strandTotals}/></details>
@@ -109,6 +110,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 function SettingRow({ to, icon, label, hint }: { to: "/settings" | "/account"; icon: React.ReactNode; label: string; hint: string }) {
   return <li><Link to={to} className="flex items-center gap-3 px-5 py-4 hover:bg-muted [&_svg]:size-5">{icon}<span className="flex-1"><span className="block font-medium">{label}</span><span className="text-sm text-muted-foreground">{hint}</span></span><ChevronRight /></Link></li>;
+}
+
+function QuestStrip({ quest, ideas }: { quest?: { done: number; total: number; next: string | null } | undefined; ideas: { answer: string; chapter: string; at: string }[] }) {
+  if (!quest || !quest.total) return null;
+  return <div className="mt-4 rounded-2xl bg-muted/60 p-3">
+    <p className="text-sm font-semibold">Bugley’s Quest · {quest.done} of {quest.total} chapters</p>
+    <div className="mt-2 flex gap-1" aria-hidden>{Array.from({ length: quest.total }, (_, i) => <span key={i} className={`h-2 flex-1 rounded-full ${i < quest.done ? "bg-glow" : "bg-border"}`} />)}</div>
+    <p className="mt-2 text-xs text-muted-foreground">{quest.next ? `Next: ${quest.next}` : "Every chapter lit!"}</p>
+    {ideas.length > 0 && <details className="mt-2"><summary className="cursor-pointer text-xs font-semibold">Their ideas ({ideas.length})</summary><ul className="mt-2 space-y-1 text-sm">{ideas.slice(0, 6).map((x, i) => <li key={i}><span className="text-muted-foreground">{x.chapter}:</span> “{x.answer}”</li>)}</ul></details>}
+  </div>;
 }
 
 function ThisWeek({ current }: { current: any }) {
