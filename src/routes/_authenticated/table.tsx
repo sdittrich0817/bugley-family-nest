@@ -30,6 +30,7 @@ function FamilyTable() {
   const [finished, setFinished] = useState(false); useScrollTopOn(`${i}|${finished}`);
   if (!s) return <Shell><div className="flex flex-1 flex-col items-center justify-center gap-6 text-center"><Bugley stage="scout" expression="sleepy" size={200} /><p className="text-4xl">No session is ready yet.</p><Button asChild size="lg"><Link to="/hub">Back to Parent Hub</Link></Button></div></Shell>;
   if (finished) return <EndScreen session={s} kids={family.children} />;
+  if (s.activities.some((a: any) => a.step === "campfire")) return <Campfire s={s} kids={family.children} onDone={() => setFinished(true)} />;
   const step = TABLE_STEPS[i]!;
   const minutes = stepMinutes(step.key, s.activities);
   return <Shell>
@@ -130,6 +131,35 @@ function Think({ s, kids, onDone }: { s: any; kids: ChildProfile[]; onDone: () =
       <Button size="lg" className="mt-6 h-16 px-10 text-2xl" disabled={!picked.size || busy} onClick={() => void finish()}>{busy ? "Saving…" : "We did it! Finish session"}</Button>
     </div>
   </div>;
+}
+
+/** Quest chapters: kids do the solo steps in the Kid Zone; this is the shared Campfire moment. */
+function Campfire({ s, kids, onDone }: { s: any; kids: ChildProfile[]; onDone: () => void }) {
+  const qc = useQueryClient();
+  const [picked, setPicked] = useState<Set<string>>(() => new Set(kids.map((k) => k.id)));
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function finish() {
+    setBusy(true); setError("");
+    try { await completeFamilySession({ data: { sessionId: s.id, childIds: [...picked] } }); await qc.invalidateQueries({ queryKey: ["curriculum"] }); onDone(); }
+    catch (e) { setError(e instanceof Error ? e.message : "We couldn’t save. Try again."); } finally { setBusy(false); }
+  }
+  return <Shell>
+    <header className="flex items-center gap-4 px-6 pt-5 md:px-10"><Button asChild variant="ghost" size="sm"><Link to="/hub"><X />Exit</Link></Button><p className="flex-1 text-xl text-muted-foreground">{s.season.title} · Chapter {s.unit.number}</p><Timer minutes={5} /></header>
+    <main className="flex flex-1 flex-col gap-8 px-6 py-8 md:px-10">
+      <div className="flex flex-col items-center gap-6 text-center md:flex-row md:text-left"><Bugley stage="scout" expression="happy" glow size={180} /><div><p className="text-xl font-semibold uppercase tracking-wide text-muted-foreground">Campfire</p><h1 className="mt-1 text-5xl md:text-6xl">{s.unit.title}</h1></div></div>
+      <div className="rounded-3xl bg-accent p-6"><p className="text-lg font-semibold">What your child just learned</p><p className="mt-2 text-2xl leading-relaxed">{s.parent_primer}</p></div>
+      <ScreensDown />
+      <ActivityStep acts={s.activities.filter((a: any) => a.step === "campfire")} kids={kids} />
+      <div>
+        <p className="text-2xl font-semibold">Who sat at the campfire?</p>
+        <div className="mt-4 flex flex-wrap gap-4">{kids.map((k) => { const on = picked.has(k.id); return <button key={k.id} aria-pressed={on} onClick={() => { const n = new Set(picked); on ? n.delete(k.id) : n.add(k.id); setPicked(n); }} className={cn("flex items-center gap-3 rounded-full border-4 px-5 py-3 text-2xl", on ? "border-primary bg-card" : "border-border opacity-60")}>
+          <ChildAvatar avatar={k.bug ?? k.avatar} seed={k.id} className="size-14" /><span className="font-display">{k.nickname}</span>{on && <Check className="size-7" />}</button>; })}</div>
+        {error && <p role="alert" className="mt-4 text-xl text-destructive">{error}</p>}
+        <Button size="lg" className="mt-6 h-16 px-10 text-2xl" disabled={!picked.size || busy} onClick={() => void finish()}>{busy ? "Saving…" : "We did it! Light the campfire"}</Button>
+      </div>
+    </main>
+  </Shell>;
 }
 
 function EndScreen({ session, kids }: { session: any; kids: ChildProfile[] }) {
