@@ -15,7 +15,7 @@ async function safe(ctx:any,kid:any,text:string) { const { guardChildText } = aw
 async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=false) {
   const base=[...STARTER_STICKERS,...STARTER_CREATURES].find(s=>s.key===word||s.key===normalizeWord(word)||s.synonyms.includes(normalizeWord(word)));
   if(base)return {key:base.key,name:base.name,power:base.power??'',rare:base.rare??false};
-  const a=await admin(); const key=`${creature?word:normalizeWord(word)}`;const ownKey=`f-${String(ctx.userId).slice(0,8)}-${key}`;
+  const a=await admin(); const key=`${creature?word:normalizeWord(word)}`;
   const {data:rows}=await a.from('game_stickers').select('*').eq('active',true).or(`owner_parent.is.null,owner_parent.eq.${ctx.userId}`).or(`key.eq.${key.replace(/[^a-z0-9 +]/g,'')},synonyms.cs.{${normalizeWord(word)}}`).limit(1);
   if(rows?.[0])return {key:rows[0].key,name:rows[0].name,power:rows[0].power,rare:rows[0].rare};
   if(!make)throw new Error('NEW_STICKER');
