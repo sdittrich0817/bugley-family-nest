@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { returnUrlSchema } from "./return-url";
 import { z } from "zod";
 import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -86,7 +87,7 @@ export const quotePrint = createServerFn({ method: "POST" }).middleware([require
   });
 
 export const startPrintCheckout = createServerFn({ method: "POST" }).middleware([requireParentDevice])
-  .inputValidator((i: unknown) => orderInput.extend({ returnUrl: z.string().url() }).parse(i))
+  .inputValidator((i: unknown) => orderInput.extend({ returnUrl: returnUrlSchema }).parse(i))
   .handler(async ({ data, context }): Promise<{ clientSecret: string; orderId: string } | { error: string }> => {
     try {
       const q = await quote(context.supabase, context.userId, data);

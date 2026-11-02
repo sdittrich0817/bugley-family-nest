@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { returnUrlSchema } from "./return-url";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import type Stripe from "stripe";
@@ -44,7 +45,7 @@ export async function resolveOrCreateCustomer(stripe: Stripe, options: { email?:
 }
 
 export const createCheckoutSession = createServerFn({ method: "POST" }).middleware([requireParentDevice])
-  .inputValidator((i: unknown) => z.object({ priceId: z.enum(PRICE_IDS), returnUrl: z.string().url(), environment: envSchema }).parse(i))
+  .inputValidator((i: unknown) => z.object({ priceId: z.enum(PRICE_IDS), returnUrl: returnUrlSchema, environment: envSchema }).parse(i))
   .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
     const existing = await latestSub(context.supabase, context.userId, data.environment);
     if (hasAccess(existing)) return { error: "Your family already has a plan. Use Manage billing to switch plans." };
@@ -73,7 +74,7 @@ export const createCheckoutSession = createServerFn({ method: "POST" }).middlewa
   });
 
 export const createPortalSession = createServerFn({ method: "POST" }).middleware([requireParentDevice])
-  .inputValidator((i: unknown) => z.object({ returnUrl: z.string().url(), environment: envSchema }).parse(i))
+  .inputValidator((i: unknown) => z.object({ returnUrl: returnUrlSchema, environment: envSchema }).parse(i))
   .handler(async ({ data, context }): Promise<{ url: string } | { error: string }> => {
     const sub = await latestSub(context.supabase, context.userId, data.environment);
     if (!sub?.stripe_customer_id) return { error: "No plan found yet. Start your free trial first." };
