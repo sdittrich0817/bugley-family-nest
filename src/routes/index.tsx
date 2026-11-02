@@ -76,9 +76,6 @@ function Home() {
             </p>
             <div className="home-hero-actions flex gap-3">
               <Button onClick={() => open("start_free")}>Start free</Button>
-              <Button variant="secondary" asChild>
-                <Link to="/co-ops">Book a co-op demo</Link>
-              </Button>
             </div>
           </div>
         </div>
