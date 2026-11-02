@@ -1,4 +1,4 @@
-- [ ] Tester mode: full payment flow visible with clear "no real payment" messaging; testers can register and send feedback.
+- [x] Tester mode: full payment flow visible with clear "no real payment" messaging; testers can register and send feedback.
 - [x] Bugley's Quest: Glimmerwood map, solo chapters, Campfire on Family Table, Hub quest progress, admin news side-quest drafts. Glimmerwood saved unpublished for Shea review.
 - [x] Simplify parent-led tablet handoff in setup/Hub/settings, expose home-screen instructions and pairing at child entry, and show remembered login/daily limits per child. Public entry/install/pair navigation verified at 390/768/1024px without overflow or page errors; 18 login/access tests pass, build OK. Parent handoff and physical installation remain blocked by parent unlock/device availability as tracked below; no email/push delivery added.
 - [x] Complete read-only site/source audit of parent setup, child entry, installation, oversight and alerts; public screens verified, 30 targeted tests pass. Consolidated findings in .lovable/family-access-audit.md; no application changes. Signed-in and physical-device claims remain unverified.
