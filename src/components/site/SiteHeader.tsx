@@ -49,7 +49,6 @@ export function SiteHeader() {
       </div>
 
 
-        <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
           <SheetContent side="right" className="flex w-[85vw] max-w-sm flex-col gap-6 bg-background p-6">
             <SheetTitle className="sr-only">Menu</SheetTitle>
             <Wordmark />
