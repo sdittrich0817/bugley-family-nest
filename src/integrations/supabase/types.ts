@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          kind: string
           offscreen: boolean
           position: number
           session_id: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          kind?: string
           offscreen?: boolean
           position?: number
           session_id: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          kind?: string
           offscreen?: boolean
           position?: number
           session_id?: string
@@ -59,6 +62,7 @@ export type Database = {
         Row: {
           activity_id: string
           age_band: string
+          choices: Json
           id: string
           instructions: string
           kid_title: string
@@ -67,6 +71,7 @@ export type Database = {
         Insert: {
           activity_id: string
           age_band: string
+          choices?: Json
           id?: string
           instructions: string
           kid_title: string
@@ -75,6 +80,7 @@ export type Database = {
         Update: {
           activity_id?: string
           age_band?: string
+          choices?: Json
           id?: string
           instructions?: string
           kid_title?: string
@@ -1556,11 +1562,57 @@ export type Database = {
         }
         Relationships: []
       }
+      quest_responses: {
+        Row: {
+          activity_id: string
+          answer: string
+          child_id: string
+          correct: boolean | null
+          created_at: string
+          id: string
+          parent_id: string
+        }
+        Insert: {
+          activity_id: string
+          answer: string
+          child_id: string
+          correct?: boolean | null
+          created_at?: string
+          id?: string
+          parent_id: string
+        }
+        Update: {
+          activity_id?: string
+          answer?: string
+          child_id?: string
+          correct?: boolean | null
+          created_at?: string
+          id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quest_responses_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quest_responses_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       seasons: {
         Row: {
           created_at: string
           description: string
           id: string
+          kind: string
           number: number
           published: boolean
           title: string
@@ -1569,6 +1621,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          kind?: string
           number: number
           published?: boolean
           title: string
@@ -1577,6 +1630,7 @@ export type Database = {
           created_at?: string
           description?: string
           id?: string
+          kind?: string
           number?: number
           published?: boolean
           title?: string
@@ -1589,6 +1643,7 @@ export type Database = {
           id: string
           parent_primer: string
           script: string
+          source_news_id: string | null
           title: string
           unit_id: string
           week_number: number
@@ -1598,6 +1653,7 @@ export type Database = {
           id?: string
           parent_primer?: string
           script?: string
+          source_news_id?: string | null
           title: string
           unit_id: string
           week_number: number
@@ -1607,11 +1663,19 @@ export type Database = {
           id?: string
           parent_primer?: string
           script?: string
+          source_news_id?: string | null
           title?: string
           unit_id?: string
           week_number?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sessions_source_news_id_fkey"
+            columns: ["source_news_id"]
+            isOneToOne: false
+            referencedRelation: "family_ai_news"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sessions_unit_id_fkey"
             columns: ["unit_id"]
@@ -1884,6 +1948,7 @@ export type Database = {
           lead_strand: string
           mission_project: string
           number: number
+          published: boolean
           season_id: string
           story_prompt: string
           title: string
@@ -1899,6 +1964,7 @@ export type Database = {
           lead_strand: string
           mission_project?: string
           number: number
+          published?: boolean
           season_id: string
           story_prompt?: string
           title: string
@@ -1914,6 +1980,7 @@ export type Database = {
           lead_strand?: string
           mission_project?: string
           number?: number
+          published?: boolean
           season_id?: string
           story_prompt?: string
           title?: string
