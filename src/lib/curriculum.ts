@@ -1,7 +1,9 @@
 import { z } from "zod";
 export const STRAND_KEYS = ["understand", "create", "discern", "decide"] as const;
 export const BANDS = ["sprouts", "explorers", "builders"] as const;
-export const STEP_KEYS = ["warmup", "make", "break", "think"] as const;
+export const STEP_KEYS = ["warmup", "make", "break", "think", "story", "try", "idea", "campfire"] as const;
+export const QUEST_STEPS = ["story", "try", "idea"] as const;
+export const ACTIVITY_KINDS = ["done", "choice", "free"] as const;
 export type Band = (typeof BANDS)[number];
 
 /** The current session is the first one (in Season → Unit → Week order) not yet completed; after everything is done, the last one. */
@@ -18,12 +20,32 @@ export function familyCompleted(sessionIds: string[], childIds: string[], done: 
 const text = (max = 4000) => z.string().trim().max(max);
 export const entitySchemas = {
   seasons: z.object({ number: z.number().int().min(1), title: text(120).min(1), description: text(), published: z.boolean() }),
-  units: z.object({ season_id: z.string().uuid(), number: z.number().int().min(1), title: text(120).min(1), lead_strand: z.enum(STRAND_KEYS), family_question: text(), dinner_question: text(), story_prompt: text(), mission_project: text(), badge_name: text(80), badge_description: text(), journal_prompt: text() }),
+  units: z.object({ published: z.boolean().default(true), season_id: z.string().uuid(), number: z.number().int().min(1), title: text(120).min(1), lead_strand: z.enum(STRAND_KEYS), family_question: text(), dinner_question: text(), story_prompt: text(), mission_project: text(), badge_name: text(80), badge_description: text(), journal_prompt: text() }),
   sessions: z.object({ unit_id: z.string().uuid(), week_number: z.number().int().min(1), title: text(160).min(1), parent_primer: text(), script: text(8000) }),
-  activities: z.object({ session_id: z.string().uuid(), position: z.number().int().min(1), title: text(120).min(1), strand: z.enum(STRAND_KEYS), step: z.enum(STEP_KEYS), offscreen: z.boolean() }),
+  activities: z.object({ session_id: z.string().uuid(), position: z.number().int().min(1), title: text(120).min(1), strand: z.enum(STRAND_KEYS), step: z.enum(STEP_KEYS), offscreen: z.boolean(), kind: z.enum(ACTIVITY_KINDS).default("done") }),
 } as const;
 export type EntityTable = keyof typeof entitySchemas;
-export const versionSchema = z.object({ age_band: z.enum(BANDS), kid_title: text(120).min(1), instructions: text().min(1), minutes: z.number().int().min(1).max(120) });
+export const choiceSchema = z.object({ label: text(120).min(1), correct: z.boolean(), why: text(300) });
+export const versionSchema = z.object({ age_band: z.enum(BANDS), kid_title: text(120).min(1), instructions: text().min(1), minutes: z.number().int().min(1).max(120), choices: z.array(choiceSchema).max(6).default([]) });
+
+/** A quest chapter counts for the child once the solo steps are done; the Campfire is shared with a grown-up. */
+export function soloActivities<T extends { step: string }>(acts: T[]) { return acts.filter((a) => a.step !== "campfire"); }
+export function soloDone(acts: { id: string; step: string }[], done: Set<string>) { const solo = soloActivities(acts); return solo.length > 0 && solo.every((a) => done.has(a.id)); }
+/** Map states in order: finished chapters are lit, the first unfinished one is open, the rest stay locked. */
+export function questStates<T extends { id: string }>(ordered: T[], done: Set<string>): ("done" | "current" | "locked")[] {
+  let open = false;
+  return ordered.map((s) => { if (done.has(s.id)) return "done"; if (!open) { open = true; return "current"; } return "locked"; });
+}
+/** The family's Campfire is the first session where some child still has an unfinished activity (Campfire included). */
+export function familyActivityDone(sessions: { id: string; activities: { id: string }[] }[], childIds: string[], done: { child_id: string; activity_id: string }[]) {
+  const set = new Set(done.map((d) => `${d.child_id}:${d.activity_id}`));
+  return new Set(childIds.length ? sessions.filter((s) => s.activities.length > 0 && childIds.every((c) => s.activities.every((a) => set.has(`${c}:${a.id}`)))).map((s) => s.id) : []);
+}
+/** Checks a multiple-choice answer on the server; the correct flags never go to the browser. */
+export function gradeChoice(choices: { label: string; correct: boolean; why: string }[], index: number) {
+  const c = choices[index]; if (!c) throw new Error("Pick one of the answers.");
+  return { label: c.label, correct: c.correct, why: c.why || (c.correct ? "Nice thinking!" : "Not quite — try another!") };
+}
 
 export const TABLE_STEPS = [
   { key: "hello", label: "Bugley’s Hello", minutes: 5, unplugged: false },
