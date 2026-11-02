@@ -14,8 +14,13 @@ Object.assign(process.env, loadEnv(process.env['NODE_ENV'] === 'production' ? 'p
 
 export default defineConfig({
   vite: { resolve: { alias: {
-    'entities/lib/decode.js': path.resolve(process.cwd(), 'node_modules/entities/lib/decode.js'),
-    'entities/lib/encode.js': path.resolve(process.cwd(), 'node_modules/entities/lib/encode.js'),
+    // Older and newer htmlparser2 versions use different decoder entry points.
+    // Resolve both to actual bundled files before the root package alias matches.
+    'entities/decode': path.resolve(process.cwd(), 'node_modules/entities/lib/esm/decode.js'),
+    'entities/escape': path.resolve(process.cwd(), 'node_modules/entities/lib/esm/escape.js'),
+    'entities/lib/decode.js': path.resolve(process.cwd(), 'node_modules/entities/lib/esm/decode.js'),
+    'entities/lib/encode.js': path.resolve(process.cwd(), 'node_modules/entities/lib/esm/encode.js'),
+    'entities/lib/escape.js': path.resolve(process.cwd(), 'node_modules/entities/lib/esm/escape.js'),
     'entities': path.resolve(process.cwd(), 'node_modules/entities'),
   } }, plugins: [VitePWA({registerType:'autoUpdate',injectRegister:null,devOptions:{enabled:false},manifest:false,scope:'/kids',workbox:{globPatterns:['**/*.{js,css,woff2}'],navigateFallback:null,runtimeCaching:[{urlPattern:({request,url})=>request.mode==='navigate'&&/^\/kids(?:\/|$)/.test(url.pathname),handler:'NetworkFirst',options:{cacheName:'bugley-kids-public-navigation',networkTimeoutSeconds:3,cacheableResponse:{statuses:[]},precacheFallback:{fallbackURL:'/kids-offline.html'}}},{urlPattern:({url})=>url.origin===self.location.origin&&/\/assets\/.+-[\w-]+\.(js|css|woff2)$/.test(url.pathname),handler:'CacheFirst',options:{cacheName:'bugley-kids-assets',expiration:{maxEntries:150,maxAgeSeconds:30*86400}}}],additionalManifestEntries:[{url:'/kids-offline.html',revision:'kids-offline-v1'}]}})] },
   tanstackStart: {
