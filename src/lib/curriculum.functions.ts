@@ -100,7 +100,7 @@ export const getQuestChapter = createServerFn({ method: "POST" }).middleware([re
   const answers = new Map((ans ?? []).map((r: any) => [r.activity_id, r]));
   return {
     sessionId: s.id, title: s.unit.title, badge: s.unit.badge_name,
-    steps: s.activities.map((a: any): QuestStep => { const v = a.activity_versions.find((x: any) => x.age_band === child.age_band) ?? a.activity_versions[0]; const r: any = answers.get(a.id);
+    steps: (s.activities as any[]).map((a: any): QuestStep => { const v = a.activity_versions.find((x: any) => x.age_band === child.age_band) ?? a.activity_versions[0]; const r: any = answers.get(a.id);
       return { id: a.id, step: a.step as string, kind: a.kind as string, title: v?.kid_title ?? a.title, text: v?.instructions ?? "", choices: ((v?.choices ?? []) as any[]).map((c) => c.label as string), done: doneSet.has(a.id), answer: r?.answer ?? null, correct: r?.correct ?? null }; }),
   };
 });
