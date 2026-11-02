@@ -17,6 +17,7 @@ import { NavigationProgress, PageContent, PagePending } from '@/components/site/
 import { kidDeviceStatus } from '@/lib/kid-device.functions';
 import { registerKidsWorker } from '@/lib/kids-pwa';
 import { KidsConnectivity } from '@/components/site/KidsConnectivity';
+import { KidsInstallPromptProvider } from '@/components/site/KidsInstallPrompt';
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -140,7 +141,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ParentSessionProvider>
       <WaitlistProvider>
+        <KidsInstallPromptProvider>
         <KidZoneShell />
+        </KidsInstallPromptProvider>
         <Toaster />
       </WaitlistProvider>
       </ParentSessionProvider>
