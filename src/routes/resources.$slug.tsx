@@ -60,6 +60,7 @@ function ArticlePage() {
         <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
           <Clock className="size-4" aria-hidden /> {a.readMinutes} min read
         </span>
+        <p className="text-sm text-muted-foreground">Updated <time dateTime={a.updatedAt}>{new Intl.DateTimeFormat('en-US', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${a.updatedAt}T00:00:00Z`))}</time></p>
       </header>
       <img src={a.image} alt={a.imageAlt} className="mt-8 aspect-[16/9] w-full rounded-2xl object-cover" />
       <div className="mt-8 flex flex-col gap-5 text-lg leading-relaxed text-foreground">
@@ -75,6 +76,10 @@ function ArticlePage() {
           ),
         )}
       </div>
+      <section className="mt-10 border-t border-border pt-6">
+        <h2 className="text-xl">Sources &amp; further reading</h2>
+        <ul className="mt-4 space-y-3 text-sm">{a.sources.map(source => <li key={source.url}><a href={source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4">{source.title}</a></li>)}</ul>
+      </section>
       <div className="mt-12 rounded-2xl bg-muted p-6 text-center sm:p-8">
         <h2 className="text-2xl text-foreground">Ready to figure out AI, together?</h2>
         <Button className="mt-4" onClick={() => open("start_free")}>Start free</Button>
