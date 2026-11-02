@@ -1,4 +1,4 @@
-- [ ] Replace three parent resource placeholders with substantive current guidance and source links; add recent factual family AI news drafts without publishing Shea’s response.
+- [x] Replace three parent resource placeholders with substantive guidance updated November 2, 2026 and October source links; all three public articles verified live without errors. Four recent sourced stories saved/read back as unpublished news drafts with empty response/guidance; nine editorial tests pass; build OK. Admin UI readback remains blocked by existing parent lock.
 - [x] Smooth page navigation: stable site frame during unchanged access checks, shared progress/pending feedback without artificial minimum delay, public-nav intent preloading, subtle reduced-motion-aware arrival, and router-only scroll restoration. Live slow-load/header and forward/top/back-to-750px checks passed; 22 access/restoration/recovery tests pass; build OK.
 - [ ] Verify unlocked parent-to-parent and child-to-child transitions live (blocked: injected parent session still redirects /hub to locked /kids; successful parent unlock and child login unavailable). No access checks skipped or cached.
 - [x] Promote news above the crew in a prominent full-width band; add per-child 7/30-day/all-time interaction reports, exact request/reply evidence, safety counts and text downloads. Four report calculation tests pass; build OK.
@@ -19,7 +19,7 @@
 - [x] Name the studio: one Bugley's Studio with two doors, Stories and Games; add the Games door to the site.
 - [ ] Confirm the print partner's real limits (minimum page count, sizes, layouts) and replace the provisional wording on /studio-preview.
 - [ ] Confirm the COPPA answer on /safety with legal review before it stays published.
-- [ ] Replace placeholder article text on /resources with real parent posts.
+- [x] Replace placeholder article text on /resources with real parent posts and current source links.
 - [x] Build private /setup, child profiles and credentials, and parent child settings for ages 5–12.
 - [ ] Verify saved family setup, editing/removal and family isolation with an active parent session (blocked: no signed-up parent exists).
 - [ ] Add email notifications for new co-op demo requests and waitlist entries.
