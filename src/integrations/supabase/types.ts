@@ -398,6 +398,79 @@ export type Database = {
           },
         ]
       }
+      child_onboarding: {
+        Row: {
+          child_id: string
+          choice: string | null
+          completed_at: string | null
+          parent_id: string
+          shown_at: string | null
+          skipped_at: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          child_id: string
+          choice?: string | null
+          completed_at?: string | null
+          parent_id: string
+          shown_at?: string | null
+          skipped_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          child_id?: string
+          choice?: string | null
+          completed_at?: string | null
+          parent_id?: string
+          shown_at?: string | null
+          skipped_at?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_onboarding_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: true
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      child_onboarding_events: {
+        Row: {
+          child_id: string
+          created_at: string
+          id: string
+          kind: string
+          parent_id: string
+        }
+        Insert: {
+          child_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          parent_id: string
+        }
+        Update: {
+          child_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "child_onboarding_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "children"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       child_session_progress: {
         Row: {
           child_id: string
@@ -1170,6 +1243,21 @@ export type Database = {
           content?: Json
           created_at?: string
           id?: string
+        }
+        Relationships: []
+      }
+      onboarding_settings: {
+        Row: {
+          id: number
+          welcome_launched_at: string
+        }
+        Insert: {
+          id?: number
+          welcome_launched_at?: string
+        }
+        Update: {
+          id?: number
+          welcome_launched_at?: string
         }
         Relationships: []
       }
