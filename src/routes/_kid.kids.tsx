@@ -11,6 +11,8 @@ import { useServerFn } from '@tanstack/react-start';
 import { getChildMission } from "@/lib/curriculum.functions";
 import { getChildGlow } from "@/lib/glow.functions";
 import { GlowMeter } from "@/components/studio/GlowMeter";
+import { FirstSessionWelcome } from "@/components/kids/FirstSessionWelcome";
+import { getWelcomeState, recordWelcome } from "@/lib/onboarding.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Check } from "lucide-react";
@@ -132,8 +134,15 @@ function KidHome({ child, onBug }: { child: ChildProfile; onBug: (b: BugConfig) 
   const sprouts = band === "sprouts", builders = band === "builders";
   const { data: m } = useQuery({ queryKey: ["curriculum", "child", child.id], queryFn: () => getChildMission({ data: { childId: child.id } }) });
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
+  const [welcome, setWelcome] = useState(false);
+  const logWelcome = useServerFn(recordWelcome);
+  const welcomeState = useServerFn(getWelcomeState);
+  const log = (kind: "shown" | "skipped" | "chose_play" | "chose_create" | "replayed") => { void logWelcome({ data: { childId: child.id, kind } }).catch(() => {}); };
+  useEffect(() => { let on = true; void welcomeState({ data: { childId: child.id } }).then((r) => { if (on && r.autoShow) { setWelcome(true); log("shown"); } }).catch(() => {}); return () => { on = false; }; }, [child.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (building) return <BugBuilder childId={child.id} start={toBug(child.bug ?? child.avatar, child.id)} big={sprouts} onClose={() => setBuilding(false)} onSaved={(b) => { onBug(b); setBuilding(false); toast.success(sprouts ? "Cool bug!" : "Your bug is saved!"); }} />;
   return <section className="mx-auto max-w-5xl px-4 pb-16">
+    {welcome && <FirstSessionWelcome name={child.nickname} band={band} stage={child.bugley_stage} onSkip={() => { setWelcome(false); log("skipped"); }} onChoose={(c) => { setWelcome(false); log(c === "play" ? "chose_play" : "chose_create"); }} />}
+    <div className="mb-3 flex justify-end"><Button variant="outline" className="min-h-12" onClick={() => { setWelcome(true); log("replayed"); }}><Sparkles />Show me around</Button></div>
     <button onClick={() => setBuilding(true)} className="mb-4 flex w-full items-center gap-4 rounded-3xl border-2 border-border bg-card p-4 text-left shadow-soft transition hover:border-primary">
       <ChildAvatar avatar={child.bug ?? child.avatar} seed={child.id} className="size-16 shrink-0" />
       <span><span className="block font-display text-xl">{child.bug ? "My bug" : "Build your bug!"}</span><span className="text-sm text-muted-foreground">{child.bug ? "Tap to change it" : "Pick a beetle, bee, spider and more"}</span></span>
