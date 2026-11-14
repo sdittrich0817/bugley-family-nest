@@ -25,3 +25,5 @@
 - Glow spends accept an idempotency op key (glow_ops table) and failed generations refund through glow_refund (daily balance first, then bonus). Why: retries never double-charge and refunds restore the right balance.
 - Bugley can offer actionable suggestion chips from the allow-list in src/lib/studio-actions.ts (bugleyActions intent map); the client only executes those exact ids. Why: suggestions do things without trusting model output.
 - Workspace metadata lives within existing creation details and survives production parsers; drafts are production-shaped, and server actions validate attachments, reference style and owned preview provenance. Why: early resume reuses existing readers without creating a second project store.
+
+- The child first-session welcome auto-opens only for children created after the stored `onboarding_settings.welcome_launched_at` who haven't skipped/finished it; records and events are written only by server functions after child verification, hold no child content, and never touch Glow or rewards. Why: existing children aren't surprised and onboarding stays private and side-effect free.
