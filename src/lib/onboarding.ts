@@ -12,7 +12,7 @@ export function welcomeAutoShow(childCreatedAt: string, launchedAt: string | nul
 
 /** Fields to write for an event; first timestamps are kept, never overwritten. */
 export function welcomePatch(kind: WelcomeKind, rec: WelcomeRecord, now: string) {
-  const p: Record<string, string> = {};
+  const p: { shown_at?: string; skipped_at?: string; completed_at?: string; choice?: "play" | "create" } = {};
   if (kind === "shown" || kind === "replayed") { if (!rec?.shown_at) p.shown_at = now; }
   if (kind === "skipped" && !rec?.skipped_at && !rec?.completed_at) p.skipped_at = now;
   if (kind === "chose_play" || kind === "chose_create") {

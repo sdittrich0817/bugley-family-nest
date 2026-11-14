@@ -24,8 +24,8 @@ export function FirstSessionWelcome({ name, band, stage, onSkip, onChoose }: { n
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") onSkip();
       if (e.key !== "Tab" || !box.current) return;
-      const f = [...box.current.querySelectorAll<HTMLElement>("button,a")]; if (!f.length) return;
-      const [first, last] = [f[0], f[f.length - 1]];
+      const f = [...box.current.querySelectorAll<HTMLElement>("button,a")];
+      const first = f[0], last = f[f.length - 1]; if (!first || !last) return;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     };
