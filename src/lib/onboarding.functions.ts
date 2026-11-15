@@ -53,7 +53,7 @@ export const getWelcomeOverview = createServerFn({ method: "GET" }).middleware([
   for (const k of kids.data ?? []) {
     const band = (["sprouts", "explorers", "builders"].includes(k.age_band) ? k.age_band : "explorers") as WelcomeBand;
     const game = ARCADE_GAMES.find((g) => g.id === FIRST_PLAY[band])?.name ?? "a game";
-    out[k.id] = welcomeParentStatus(k.created_at, settings.data?.welcome_launched_at ?? null, (byChild.get(k.id) as WelcomeRecord) ?? null, game);
+    out[k.id] = welcomeParentStatus(k.created_at ?? "1970-01-01T00:00:00Z", settings.data?.welcome_launched_at ?? null, (byChild.get(k.id) as WelcomeRecord) ?? null, game);
   }
   return out;
 });
