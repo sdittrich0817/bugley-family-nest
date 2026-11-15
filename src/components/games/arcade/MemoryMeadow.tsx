@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { useScrollTopOn } from '@/lib/scroll';
 import { cn } from '@/lib/utils';
+import { meadowTakeaway } from '@/lib/takeaways';
 import { makeMeadow, meadowGuess, meadowMatch, teachMeadow, MEADOW_ROUND_MS, type MeadowCard, type MeadowItem, type MeadowLearning } from '@/lib/memory-meadow';
 import meadow from '@/assets/games/world-meadow.jpg';
 import butterfly from '@/assets/games/specimen-butterfly.png';
@@ -68,7 +69,7 @@ export function MemoryMeadow({ stage, onExit }: { stage: Stage; onExit: () => vo
       <Bugley stage={stage} size={145} expression="celebrating" glow className="mx-auto studio-guide-fly" /><h2 className="text-3xl">{timedOut ? 'A little meadow break!' : 'The meadow is glowing!'}</h2>
       <p className="text-xl font-bold">{matched.length} pairs found · {caught} Bugley {caught === 1 ? 'mistake' : 'mistakes'} caught</p>
       <div className="flex justify-center gap-3">{deck.filter(c => c.key.endsWith('-0') && matched.includes(c.item.id)).map(c => <div className="meadow-keepsake" key={c.key}><MeadowBug item={c.item} /></div>)}</div>
-      <div className="border-y-2 border-primary py-4"><h3 className="text-xl">Small details make a big difference.</h3><p className="mx-auto mt-2 max-w-lg">My little AI matches features, not whole pictures. You taught it to notice {learned.length ? learned.map(c => c === 'blue' ? 'wing shape and body length' : 'dots and stripes').join(' and ') : 'that similar-looking bugs can be different'}. Those details stay with me when we play again!</p></div>
+      {(() => { const t = meadowTakeaway({ pairs: matched.length, caught, learned }); return <div className="border-y-2 border-primary py-4"><h3 className="text-xl">{t.title}</h3><p className="mx-auto mt-2 max-w-lg">{t.body}</p></div>; })()}
       <div className="flex flex-wrap justify-center gap-3"><Button size="lg" onClick={start}><RotateCcw />Play again</Button><Button size="lg" variant="outline" onClick={onExit}><ArrowLeft />All games</Button></div>
     </div> : <>
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl">{phase === 'peek' ? 'Take a good look…' : feedback ? matched.length === 4 ? 'You found every twin!' : 'Look at those little details!' : selected.length ? 'Find its twin!' : 'Pick a leaf!'}</h2><span className="font-bold">🌼 {matched.length}/4 pairs</span></div>
