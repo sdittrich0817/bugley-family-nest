@@ -20,6 +20,7 @@ describe('Dragon Catch', () => {
       if (finish) break;
     }
     expect(screen.getByText(/6 of 6 dragon photos/)).toBeTruthy();
+    expect(screen.getByText(/You caught the camera’s mistakes!|You taught Dragon Eye!/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(screen.getByRole('button', { name: 'Snap photo' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'All games' }));
