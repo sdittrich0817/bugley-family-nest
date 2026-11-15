@@ -6,6 +6,8 @@ import { BugleyMature } from "@/components/brand/BugleyMature";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Band } from "@/lib/kid-zone";
+import { FIRST_CREATE_PATH, FIRST_LINES, FIRST_PLAY } from "@/lib/onboarding";
+import { ARCADE_ART } from "@/lib/arcade-art";
 
 const LINES: Record<Band, (n: string) => string> = {
   sprouts: (n) => `Hi ${n}! I'm Bugley. Want to play or make something?`,
@@ -14,10 +16,10 @@ const LINES: Record<Band, (n: string) => string> = {
 };
 
 export function FirstSessionWelcome({ name, band, stage, onSkip, onChoose }: { name: string; band: Band; stage: string; onSkip: () => void; onChoose: (c: "play" | "create") => void }) {
-  const line = LINES[band](name);
+  const line = LINES[band](name); const first = FIRST_LINES[band];
   const sprouts = band === "sprouts", builders = band === "builders";
   const box = useRef<HTMLDivElement>(null);
-  const say = () => { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(line); u.rate = 0.9; u.pitch = 1.2; s.speak(u); };
+  const say = () => { const s = window.speechSynthesis; if (!s) return; s.cancel(); const u = new SpeechSynthesisUtterance(sprouts ? `${line} ${first.play} Or, ${first.create}` : line); u.rate = 0.9; u.pitch = 1.2; s.speak(u); };
   useEffect(() => {
     box.current?.querySelector<HTMLElement>("button,a")?.focus();
     if (sprouts) say();
@@ -42,11 +44,15 @@ export function FirstSessionWelcome({ name, band, stage, onSkip, onChoose }: { n
       </div>
       {sprouts && <div className="mt-3 flex justify-center"><Button variant="outline" size="lg" className="min-h-16" onClick={say}><Volume2 />Hear Bugley</Button></div>}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Link to="/kids/studio/games" onClick={() => onChoose("play")} className={cn(card, "bg-primary text-primary-foreground")}>
-          <Gamepad2 className={sprouts ? "size-14" : "size-10"} /><span className={cn("font-display", sprouts ? "text-4xl" : "text-3xl")}>Play</span>
+        <Link to="/kids/studio/games" search={{ play: FIRST_PLAY[band] }} onClick={() => onChoose("play")} className={cn(card, "bg-primary text-primary-foreground")}>
+          <img src={ARCADE_ART[FIRST_PLAY[band]]} alt="" width={1024} height={768} className="aspect-[4/3] w-full max-w-56 rounded-2xl object-cover" />
+          <span className={cn("flex items-center gap-2 font-display", sprouts ? "text-4xl" : "text-3xl")}><Gamepad2 className={sprouts ? "size-10" : "size-8"} />Play</span>
+          <span className={cn("font-semibold", sprouts ? "text-lg" : "text-base")}>{first.play}</span>
         </Link>
-        <Link to="/kids/studio" onClick={() => onChoose("create")} className={cn(card, "bg-primary text-primary-foreground")}>
-          <Palette className={sprouts ? "size-14" : "size-10"} /><span className={cn("font-display", sprouts ? "text-4xl" : "text-3xl")}>Create</span>
+        <Link to={FIRST_CREATE_PATH} onClick={() => onChoose("create")} className={cn(card, "bg-primary text-primary-foreground")}>
+          <span className="flex aspect-[4/3] w-full max-w-56 items-center justify-center rounded-2xl bg-card text-card-foreground"><Palette className="size-20" aria-hidden /></span>
+          <span className={cn("flex items-center gap-2 font-display", sprouts ? "text-4xl" : "text-3xl")}><Palette className={sprouts ? "size-10" : "size-8"} />Create</span>
+          <span className={cn("font-semibold", sprouts ? "text-lg" : "text-base")}>{first.create}</span>
         </Link>
       </div>
     </div>
