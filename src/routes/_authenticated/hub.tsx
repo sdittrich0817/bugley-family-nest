@@ -82,7 +82,7 @@ function Hub() {
   </section>;
 }
 
-function WelcomeLine({ status }: { status?: { label: string; detail: string; at: string | null } }) {
+function WelcomeLine({ status }: { status: { label: string; detail: string; at: string | null } | undefined }) {
   if (!status) return null;
   return <p className="mt-3 flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm"><Sparkles className="mt-0.5 size-4 shrink-0 text-muted-foreground"/><span><strong>First welcome: {status.label}</strong>{status.at && <span className="text-muted-foreground"> · {new Date(status.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}<span className="block text-muted-foreground">{status.detail}</span></span></p>;
 }
