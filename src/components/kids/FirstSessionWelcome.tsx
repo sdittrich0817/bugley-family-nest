@@ -34,9 +34,9 @@ export function FirstSessionWelcome({ name, band, stage, onSkip, onChoose }: { n
     window.addEventListener("keydown", key);
     return () => { window.removeEventListener("keydown", key); window.speechSynthesis?.cancel(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const card = "flex min-h-40 flex-col items-center justify-center gap-3 rounded-3xl p-6 text-center shadow-soft transition hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0";
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="welcome-line">
-    <div ref={box} className="relative w-full max-w-2xl rounded-3xl border-2 border-border bg-card p-6 shadow-glow sm:p-8">
+  const card = "flex min-h-40 flex-col items-center justify-center gap-2 rounded-3xl p-4 sm:gap-3 sm:p-6 text-center shadow-soft transition hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  return <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-background/90 p-4 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-labelledby="welcome-line">
+    <div ref={box} className="relative my-auto w-full max-w-2xl rounded-3xl border-2 border-border bg-card p-6 shadow-glow sm:p-8">
       <Button variant="ghost" onClick={onSkip} className="absolute right-3 top-3 min-h-16 px-4 text-base"><X />Skip</Button>
       <div className={cn("flex items-center gap-4 pr-24", sprouts && "flex-col pr-0 pt-12 text-center")}>
         {builders ? <BugleyMature variant="headphones" size={80} /> : <Bugley stage={stage as never} expression="happy" glow size={sprouts ? 140 : 100} />}
@@ -45,12 +45,12 @@ export function FirstSessionWelcome({ name, band, stage, onSkip, onChoose }: { n
       {sprouts && <div className="mt-3 flex justify-center"><Button variant="outline" size="lg" className="min-h-16" onClick={say}><Volume2 />Hear Bugley</Button></div>}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <Link to="/kids/studio/games" search={{ play: FIRST_PLAY[band] }} onClick={() => onChoose("play")} className={cn(card, "bg-primary text-primary-foreground")}>
-          <img src={ARCADE_ART[FIRST_PLAY[band]]} alt="" width={1024} height={768} className="aspect-[4/3] w-full max-w-56 rounded-2xl object-cover" />
+          <img src={ARCADE_ART[FIRST_PLAY[band]]} alt="" width={1024} height={768} className="aspect-[4/3] w-full max-w-40 rounded-2xl object-cover sm:max-w-56" />
           <span className={cn("flex items-center gap-2 font-display", sprouts ? "text-4xl" : "text-3xl")}><Gamepad2 className={sprouts ? "size-10" : "size-8"} />Play</span>
           <span className={cn("font-semibold", sprouts ? "text-lg" : "text-base")}>{first.play}</span>
         </Link>
         <Link to={FIRST_CREATE_PATH} onClick={() => onChoose("create")} className={cn(card, "bg-primary text-primary-foreground")}>
-          <span className="flex aspect-[4/3] w-full max-w-56 items-center justify-center rounded-2xl bg-card text-card-foreground"><Palette className="size-20" aria-hidden /></span>
+          <span className="flex aspect-[4/3] w-full max-w-40 items-center sm:max-w-56 justify-center rounded-2xl bg-card text-card-foreground"><Palette className="size-20" aria-hidden /></span>
           <span className={cn("flex items-center gap-2 font-display", sprouts ? "text-4xl" : "text-3xl")}><Palette className={sprouts ? "size-10" : "size-8"} />Create</span>
           <span className={cn("font-semibold", sprouts ? "text-lg" : "text-base")}>{first.create}</span>
         </Link>
