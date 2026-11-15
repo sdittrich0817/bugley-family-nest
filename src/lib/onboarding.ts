@@ -21,3 +21,14 @@ export function welcomePatch(kind: WelcomeKind, rec: WelcomeRecord, now: string)
   }
   return p;
 }
+
+/** Phase B: each welcome card opens an existing, band-available activity. */
+export type WelcomeBand = "sprouts" | "explorers" | "builders";
+export const FIRST_PLAY = { sprouts: "memory_meadow", explorers: "dragon_catch", builders: "cosmic_maze" } as const satisfies Record<WelcomeBand, string>;
+/** Create opens the existing character-first Create start; the child picks picture, comic or story there. */
+export const FIRST_CREATE_PATH = "/kids/studio/v3" as const;
+export const FIRST_LINES: Record<WelcomeBand, { play: string; create: string }> = {
+  sprouts: { play: "Memory Meadow: find the bug twins!", create: "Make up a character, then draw a picture!" },
+  explorers: { play: "Dragon Catch: snap dragons, spot the camera’s mistakes", create: "Invent a hero, then make your first comic" },
+  builders: { play: "Cosmic Maze: program your rocket with if-then rules", create: "Invent a character, then write a story" },
+};
