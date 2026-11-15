@@ -20,6 +20,7 @@ describe('Dragon Catch', () => {
       if (finish) break;
     }
     expect(screen.getByText(/6 of 6 dragon photos/)).toBeTruthy();
+    expect(screen.getByText(/You caught the camera’s mistakes!|You taught Dragon Eye!/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(screen.getByRole('button', { name: 'Snap photo' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'All games' }));
@@ -30,6 +31,7 @@ describe('Dragon Catch', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Let’s fly!' }));
     act(() => { vi.advanceTimersByTime(ROUND_MS); });
     expect(screen.getByText('Time to land!')).toBeTruthy();
+    expect(screen.getByText('Dragon Eye is still learning.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Snap photo' })).toBeNull();
   });
 });

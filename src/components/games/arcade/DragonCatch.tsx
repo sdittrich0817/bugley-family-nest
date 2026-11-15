@@ -3,6 +3,7 @@ import { ArrowDown, ArrowLeft, ArrowUp, Camera, Check, RotateCcw, Volume2, X } f
 import { Button } from '@/components/ui/button';
 import { Bugley } from '@/components/brand/Bugley';
 import { useScrollTopOn } from '@/lib/scroll';
+import { dragonTakeaway } from '@/lib/takeaways';
 import { cameraGuess, checkPhoto, flightSpeed, makeFlight, PHOTO_GOAL, ROUND_MS, teachCamera, type CameraMemory, type Sighting } from '@/lib/dragon-catch';
 import { cn } from '@/lib/utils';
 import valley from '@/assets/games/world-dragon.jpg';
@@ -79,7 +80,7 @@ export function DragonCatch({ stage, band, onExit }: { stage: Stage; band: strin
     <p className="text-xl font-bold">📸 {good} of {PHOTO_GOAL} dragon photos · {corrections} camera mistakes caught</p>
     <div className="flex flex-wrap justify-center gap-3">{photos.filter(p => p.correct && p.sighting.dragon).map(p => <div key={p.sighting.id} className="dragon-print"><Subject sighting={p.sighting} /><span>{p.sighting.name}</span></div>)}</div>
     {misses > 0 && <p>{misses} {misses === 1 ? 'picture flew' : 'pictures flew'} past. Let’s try another flight!</p>}
-    <div className="border-y-2 border-primary py-4"><h3 className="text-xl">You taught Dragon Eye!</h3><p className="mx-auto mt-2 max-w-xl">Your checked pictures help my practice camera recognize those shapes next flight. I can still miss new ones. Even a very sure guess can be wrong!</p></div>
+    {(() => { const t = dragonTakeaway({ checked: photos.filter(p => p.correct).length, corrections }); return <div className="border-y-2 border-primary py-4"><h3 className="text-xl">{t.title}</h3><p className="mx-auto mt-2 max-w-xl">{t.body}</p></div>; })()}
     <div className="flex flex-wrap justify-center gap-2"><Button size="lg" onClick={start}><RotateCcw />Play again</Button><Button size="lg" variant="outline" onClick={onExit}><ArrowLeft />All games</Button></div>
   </div>;
   if (!sighting || !guess) return null;
