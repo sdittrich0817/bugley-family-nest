@@ -15,6 +15,7 @@ describe('Memory Meadow rounds', () => {
       fireEvent.click(screen.getByRole('button', { name: n === 3 ? 'See my meadow' : 'Keep finding twins' }));
     }
     expect(screen.getByText(/4 pairs found/)).toBeTruthy();
+    expect(screen.getByText(/Your pairs taught me to notice/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
     expect(screen.getByText('Take a good look…')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'All games' }));
@@ -25,6 +26,8 @@ describe('Memory Meadow rounds', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Let’s find twins!' }));
     act(() => { vi.advanceTimersByTime(MEADOW_ROUND_MS); });
     expect(screen.getByText('A little meadow break!')).toBeTruthy();
+    expect(screen.getByText('Twins can be tricky!')).toBeTruthy();
+    expect(screen.queryByText(/taught/)).toBeNull();
     expect(screen.queryByRole('button', { name: 'Hide the bugs — I’m ready!' })).toBeNull();
   });
 });

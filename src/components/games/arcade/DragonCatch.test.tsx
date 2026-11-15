@@ -30,6 +30,7 @@ describe('Dragon Catch', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Let’s fly!' }));
     act(() => { vi.advanceTimersByTime(ROUND_MS); });
     expect(screen.getByText('Time to land!')).toBeTruthy();
+    expect(screen.getByText('Dragon Eye is still learning.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Snap photo' })).toBeNull();
   });
 });
