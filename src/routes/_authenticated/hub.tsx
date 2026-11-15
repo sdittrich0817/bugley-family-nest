@@ -21,6 +21,7 @@ import { familyOptions } from "@/lib/family.functions";
 import { controlsOptions, saveChildControls } from "@/lib/hub.functions";
 import { DEFAULT_CONTROLS, STRANDS, TIME_LIMITS, type ChildControls } from "@/lib/hub";
 import { familyCurriculumOptions } from "@/lib/curriculum.functions";
+import { welcomeOverviewOptions } from "@/lib/onboarding.functions";
 import { isAdminOptions } from "@/lib/admin.functions";
 import type { ChildProfile } from "@/lib/family";
 import { accountHead } from "@/lib/parent-auth";
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/hub")({
   loader: async ({ context }) => {
     const family = await context.queryClient.ensureQueryData(familyOptions);
     if (!family.completed) throw redirect({ to: "/setup" });
-    await Promise.all([context.queryClient.ensureQueryData(controlsOptions), context.queryClient.ensureQueryData(familyCurriculumOptions), context.queryClient.ensureQueryData(isAdminOptions)]);
+    await Promise.all([context.queryClient.ensureQueryData(controlsOptions), context.queryClient.ensureQueryData(familyCurriculumOptions), context.queryClient.ensureQueryData(isAdminOptions), context.queryClient.ensureQueryData(welcomeOverviewOptions)]);
   },
   errorComponent: ({ error }) => <div role="alert" className="container-page py-16 text-center">{error instanceof Error ? error.message : "Something went wrong."}</div>,
   component: Hub,
@@ -51,6 +52,7 @@ function Hub() {
   const { data: controls } = useSuspenseQuery(controlsOptions);
   const { data: cur } = useSuspenseQuery(familyCurriculumOptions);
   const { data: isAdmin } = useSuspenseQuery(isAdminOptions);
+  const { data: welcome } = useSuspenseQuery(welcomeOverviewOptions);
   useEffect(() => { const tz = Intl.DateTimeFormat().resolvedOptions().timeZone; if (tz) void setFamilyTimezone({ data: { tz } }).catch(() => {}); }, []);
   return <section className="container-page py-8 sm:py-12">
     <div className="mx-auto max-w-5xl space-y-8">
@@ -65,6 +67,7 @@ function Hub() {
       <Section title="Your crew"><div className="grid gap-4 md:grid-cols-2">{family.children.map(c=><div key={c.id} className={card}>
         <div className="flex items-center gap-3"><ChildAvatar avatar={c.bug??c.avatar} seed={c.id} className="size-16 shrink-0"/><div className="min-w-0 flex-1"><h3 className="break-words text-xl">{c.nickname}</h3><p className="mt-1 text-sm capitalize text-muted-foreground">{c.age_band} · {(cur.badges[c.id]??[]).length} badges</p></div><Bugley stage={c.bugley_stage} expression="happy" size={54}/></div>
         <p className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground"><span>Remember login: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).remember_login==='always'?'Always':'24 hours'}</strong></span><span>Daily limit: <strong className="text-foreground">{(controls[c.id]??DEFAULT_CONTROLS).daily_minutes==null?'No limit':`${(controls[c.id]??DEFAULT_CONTROLS).daily_minutes} min`}</strong></span></p>
+        <WelcomeLine status={welcome[c.id]}/>
         <QuestStrip quest={cur.quest?.[c.id]} ideas={(cur.ideas??[]).filter((x:any)=>x.childId===c.id)}/>
         <ChildReport child={c}/>
         <details className="mt-4 border-t border-border pt-4"><summary className="cursor-pointer font-semibold">Time &amp; Studio controls</summary><ControlsCard child={c} value={controls[c.id]??DEFAULT_CONTROLS}/></details>
@@ -77,6 +80,11 @@ function Hub() {
       <section className="border-t border-border pt-6"><h2 className="mb-3 text-xl">Account &amp; family</h2><ul className="divide-y divide-border"><SettingRow to="/settings" icon={<Users/>} label="Children & trusted devices" hint="Profiles, secrets and device access"/><SettingRow to="/account" icon={<ShieldCheck/>} label="Your account & consent" hint="Parent details and privacy"/><BillingRow/></ul></section>
     </div>
   </section>;
+}
+
+function WelcomeLine({ status }: { status: { label: string; detail: string; at: string | null } | undefined }) {
+  if (!status) return null;
+  return <p className="mt-3 flex items-start gap-2 rounded-lg bg-muted/60 px-3 py-2 text-sm"><Sparkles className="mt-0.5 size-4 shrink-0 text-muted-foreground"/><span><strong>First welcome: {status.label}</strong>{status.at && <span className="text-muted-foreground"> · {new Date(status.at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>}<span className="block text-muted-foreground">{status.detail}</span></span></p>;
 }
 
 function ImportantUpdates({ kids }: { kids: ChildProfile[] }) {

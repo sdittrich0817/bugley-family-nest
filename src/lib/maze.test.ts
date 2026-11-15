@@ -17,7 +17,7 @@ describe('cosmic maze levels', () => {
 });
 describe('arcade progress', () => {
   it('keeps the 4 most recent games without duplicates', () => {
-    let p = { recent: [], best: {}, level: {}, found: [] } as any;
+    let p = { recent: [], plays: {}, best: {}, level: {}, found: [] } as any;
     for (const id of ['ocean_quest', 'cosmic_maze', 'doodle_duel', 'story_blanks', 'ocean_quest'] as const) p = markPlayed(p, id);
     expect(p.recent).toEqual(['ocean_quest', 'story_blanks', 'doodle_duel', 'cosmic_maze']);
   });

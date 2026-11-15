@@ -32,3 +32,17 @@ export const FIRST_LINES: Record<WelcomeBand, { play: string; create: string }> 
   explorers: { play: "Dragon Catch: snap dragons, spot the camera’s mistakes", create: "Invent a hero, then make your first comic" },
   builders: { play: "Cosmic Maze: program your rocket with if-then rules", create: "Invent a character, then write a story" },
 };
+
+/** Phase D: one plain-language welcome status line for the Parent Hub. */
+export type WelcomeParentStatus = { label: string; detail: string; at: string | null };
+export function welcomeParentStatus(childCreatedAt: string, launchedAt: string | null, rec: WelcomeRecord, firstGameName: string): WelcomeParentStatus {
+  if (rec?.completed_at) {
+    return rec.choice === "create"
+      ? { label: "Chose Create", detail: "Started by making a character for a picture, comic or story.", at: rec.completed_at }
+      : { label: "Chose Play", detail: `Started with ${firstGameName}.`, at: rec.completed_at };
+  }
+  if (rec?.skipped_at) return { label: "Skipped the welcome", detail: "They can open it again with “Show me around” in the Kid Zone.", at: rec.skipped_at };
+  if (rec?.shown_at) return { label: "Saw the welcome", detail: "Hasn’t picked Play or Create from it yet.", at: rec.shown_at };
+  if (welcomeAutoShow(childCreatedAt, launchedAt, rec)) return { label: "Welcome waiting", detail: "Bugley’s welcome opens the first time they enter the Kid Zone.", at: null };
+  return { label: "Welcome available", detail: "It won’t pop up on its own. They can open it with “Show me around” in the Kid Zone.", at: null };
+}
