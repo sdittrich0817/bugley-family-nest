@@ -1,80 +1,86 @@
-# Comic Creator 2.0 — Phase A2 Proposal (Story Memory)
+# Comic Creator 2.0 — Phase A2: Story Memory and Long-Comic Consistency
 
-You haven't sent a written A2 brief, so this proposal builds on the "next phase" from the audit and the A1 test results. Please approve, change or trim it. Nothing will be built until you approve.
+Updated from your A2 approval (sections 1–5). Section 6 onward of your document was cut off, so this plan is waiting on that part. A3 (making things simpler for children) is not part of this work.
 
-## Why A2
-A1 raised the average comic score from 2.8 to 4.9 on 4-panel stories. The remaining gaps:
-- **Long comics forget.** The "story so far" keeps the last 3 panels in full and shortens older ones. In 8- and 12-panel comics, a place or object from panel 1 can fade by panel 9.
-- **New friends added mid-comic aren't frozen.** If a child adds a second character after the first draw, that comic goes back to using live characters, so later character edits can change it.
-- **Covers ignore the frozen characters and the story.** "Paint a new cover" uses the live character and only the first panel's words.
-- **Small changes can still spill over.** In the "make the sky purple" test, the sun also turned purple. Nothing measures this today.
+## 1. Story Memory (stored in the comic itself, no new tables)
+- After a panel is drawn and saved, Bugley records what that panel established:
+  - places, important objects, supporting characters and key events;
+  - each item keeps the panel it came from and the child's exact words it came from;
+  - items stay in story order.
+- **Exact words first.** Each item is a short excerpt copied from the child's description, not a summary. Items that aren't found word for word in that panel's text are thrown out.
+- **No guesses.** Items that are uncertain or contradict each other are dropped. Bugley never adds motivations, relationships or events.
+- **Newer wins.** When a later panel explicitly changes something ("the crystal breaks", "now they're in the snow"), the newer item replaces the older one for drawing. The current panel always comes first.
+- **Never blocks a save.** Memory is recorded after the panel saves. If recording fails, the panel stays saved and drawing uses the A1 "story so far" as today.
 
-## What A2 would do
+## 2. Keeping memory in step with the comic
+- Each memory item is tied to the exact version of its panel (its words and picture). Memory only counts for a panel while that version is still current.
+- Memory stays correct when a panel is:
+  - edited: its items no longer count until it is redrawn;
+  - redrawn: its items are recorded again;
+  - cleared: its items are removed;
+  - restored to an earlier version: memory is rebuilt from the restored panels;
+  - added: new panels start with no memory.
+- A slow, out-of-date memory update can never overwrite newer work. It saves only if the comic and that panel haven't changed since it started; otherwise it's thrown away.
+- Older comics with no memory work exactly as today.
 
-### 1. Comic Story Memory (no new tables)
-- After each panel draws successfully, Bugley notes what that panel *established*, using only the child's words for that panel:
-  - **places** (the kitchen, the snowy mountain)
-  - **important objects** (the purple star crystal, the red sail)
-  - **story friends** who aren't My Cast characters (Bo the yellow duck with a blue bow tie)
-  - **key events** (Pip found the map)
-- Saved inside the comic itself, with the panel each note came from.
-- **Facts only from the child.** Every note must use words from the child's own description; anything that doesn't is dropped. Bugley never invents events, and his picture notes never become facts.
-- **Stays in sync.** If the child rewrites or redraws a panel, that panel's notes are replaced. If a panel is cleared, its notes go.
-- The drawing instructions get a short "Established in this story" list (most relevant first), plus the last few panels' words as today. The current panel still wins when the story changes on purpose.
-- Costs no Glow (one small text check per finished panel, on Bugley's side). If the note-taking fails, the panel still saves normally, with today's continuity.
-- Older comics: memory builds from their saved panels the next time a panel is drawn. Saved data otherwise stays as it is.
+## 3. Frozen characters for everyone in the comic
+- Each character gets their own frozen copy. A character added after the first panel is frozen before they are ever drawn.
+- A frozen copy is never swapped for the live character.
+- If a needed frozen copy can't be made, drawing stops **before any Glow is charged**. The child sees a friendly "try again" message.
+- Characters can still only use their own family's pictures.
 
-### 2. Freeze every comic character
-- Characters added after the first draw get their own frozen copy, added to the comic's existing ones. Characters already frozen are never re-copied.
-- Restoring earlier work keeps the frozen copies, the same as in A1.
+## 4. Covers
+- Painted covers use the comic's frozen characters and the established story details.
+- The child's own cover words come first, if they wrote any.
+- Same price (3 Glow) and same steps.
 
-### 3. Covers use the comic's characters and story
-- "Paint a new cover" and the automatic cover use the frozen characters and the Story Memory, so the cover matches the comic. Price unchanged (3 Glow).
+## 5. Revision measurement (report only)
+- After a "change something" redraw, a private check compares the old and new pictures:
+  - was the requested change made?
+  - did anything else change?
+- It only records the result. There is no automatic redraw, and the child's Glow and steps don't change.
+- The log uses the existing private image-check log and keeps no child words: only the panel, the outcome and a short category of what changed.
 
-### 4. Measure unwanted changes on revisions (report only)
-- After a "Change something in the picture" redraw, a quick picture check compares the old and new pictures. It notes whether anything changed that the child didn't ask for.
-- The result is logged only. No automatic redraw, and no change to what the child sees or pays. This gives us real numbers before deciding on a fix in a later phase.
-
-## What A2 does not change
-- No new screens or buttons in the comic maker. Story Memory works behind the scenes. (See decision 1.)
-- Glow prices, image model and provider, safety screening, character creation, My Cast, stories, pictures, games, Quest, Parent Hub, billing and accounts all stay as they are.
-- Older comics and their saved versions stay readable and unchanged.
-- No previous-panel images are attached. Continuity stays text-only, as approved in A1.
+## What stays the same
+- Screens, buttons and wording in the comic maker.
+- Glow prices, image model and provider, and safety screening.
+- My Cast, stories, pictures, games, Quest, Parent Hub, billing and accounts.
+- Existing comics and their saved versions stay readable and unchanged.
+- Earlier panels' pictures are not sent along for new panels.
 
 ## Testing
 - New automated tests:
-  - memory notes come only from the child's words;
-  - rewriting or clearing a panel replaces its notes;
-  - "the current panel wins" still applies;
-  - memory size limits never cut the child's current words;
-  - a character added later gets frozen, and existing copies stay untouched;
-  - covers use the frozen copies;
-  - older comics without memory still work;
-  - a failed note-taking step doesn't block a panel.
-- Full regression suite, currently 361 tests.
-- **Controlled picture test** (temporary test family, deleted afterward; no real child or Glow):
-  - three long comics (8, 10 and 12 panels) in which a panel-1 place, object or friend must come back late in the story;
-  - a mid-comic added character, followed by a character edit;
-  - a cover check;
-  - three one-detail revisions to collect the unwanted-change numbers.
-  - Before and after, same model and settings. Hard cap of **$15** in drawing credit (about $8 expected), with a spend counter that stops first.
-- Outputs: side-by-side sheets and a scoring sheet with blank columns for your scores, saved to Files.
+  - memory items come only from the child's exact words, linked to their panel and in order;
+  - newer facts replace older ones;
+  - the current panel wins;
+  - uncertain or contradictory items are rejected;
+  - edit, redraw, clear, restore and new-panel cases;
+  - an out-of-date memory update is discarded;
+  - a failed memory update still saves the panel;
+  - a late-added character is frozen before drawing;
+  - a failed freeze stops before charging Glow;
+  - covers use frozen copies, with the child's cover words first;
+  - the revision log stores no child text;
+  - older comics without memory still work.
+- Full regression suite (361 tests).
+- Controlled picture test with a temporary test family, deleted afterward: long comics, a late-added character, covers and one-detail revisions. **Budget waits on the rest of your document** (the earlier proposal was a $15 cap).
 
-## Decisions for you
-1. **Should children see what Bugley remembers?** The default is hidden (no screen changes). Option: a small "Bugley remembers…" card on the panel screen where the child can remove a note that's wrong. That card would be a small screen addition.
-2. **Revision check:** report only (default), or also allow one automatic free redraw when a big unwanted change is detected? A redraw costs us drawing credit, never the child's Glow, and adds about 30–60 seconds of waiting.
-3. **Picture test budget:** is a $15 cap OK?
+## Waiting on you
+- Section 6 onward of your approval was cut off at "Do not add the proposed…". Please resend that part, especially the user-experience, testing/budget and stop instructions.
 
 ## Technical details
-- `src/lib/comic-continuity.ts`:
-  - `StoryMemory` type and pure `mergeMemory`, `dropPanelMemory` and `memoryPrompt` helpers;
-  - a grounding check that keeps a note only if its key words appear in that panel's child description;
-  - `buildPanelPrompt` gains a budgeted `memory` part, trimmed before the child's words.
-- `src/lib/comic-memory.server.ts` (new): `notePanel(details, panel)` calls `aiObject` with a strict schema (places/objects/friends/events, max 15 words each), treats input as data, then grounds the result and merges it into `details.storyMemory` keyed by panel id. Called after a successful save in `paintV3Scene`, best effort, then a second optimistic persist that does not touch paint state.
-- `src/lib/workspace.server.ts`: `snapshotCast` gets an append mode for ids missing from `castSnapshot`. `pickCastSnapshot` stays all-or-nothing, so partial coverage never mixes frozen and live characters silently.
-- `src/lib/comic.functions.ts` cover path: for V3 comics with a `castSnapshot`, pass it to `generateImage` and add `memoryPrompt` to the cover description.
-- Revision check: after a successful V3 comic revision, one vision call (old vs new picture plus the child's change) writes `{ unrequestedChange: none|small|big, note }` to the existing `drift_checks` log with a `revision` tag. No schema change if the existing columns fit; otherwise one additive nullable column.
-- `restoreWorkspace` keeps `storyMemory` together with the restored version's panels, so memory always matches the panels it describes.
-- Rules added to `src/lib/AGENTS.md`. No changes to Glow functions, prices, models or providers.
+- `comic-continuity.ts` (pure helpers):
+  - `StoryMemory` items `{ kind, excerpt, panelId, panelStamp, order, supersedes? }`;
+  - `panelStamp` = hash of the description and image path;
+  - `groundItems` keeps an item only if its excerpt appears in the panel text; it rejects duplicates, conflicting items and unconfirmed supersede links;
+  - `liveMemory` keeps only items whose stamp matches the current panel, then applies supersedes;
+  - `memoryPrompt` is budgeted below the child's words in `buildPanelPrompt`.
+- `comic-memory.server.ts` (new): `notePanel` makes one strict-schema `aiObject` call with excerpts only. It returns `excerpt` plus `supersedes` indexes into the existing memory, and input is treated as data. The result is written with a compare-and-set on `updated_at`, plus a re-check of the panel stamp; on a mismatch it is dropped. Best effort, called after the successful save in `paintV3Scene`.
+- `restoreWorkspace` filters memory to the restored panels' stamps.
+- `snapshotCast` append mode for missing ids, run before the claim and charge. Its failure throws a recoverable error with no claim made.
+- `pickCastSnapshot` also stays strict: any missing snapshot means stop, not fall back. Older comics that never had a snapshot keep their current behavior.
+- V3 comic cover path in `comic.functions.ts`: passes `castSnapshot` and puts the child's cover text first, then `memoryPrompt`.
+- Revision check: one vision call after a successful V3 comic revision. It writes `{ changeApplied, unrelatedChange: none|small|big, category }` to `drift_checks` (service-role only), with no child text.
+- Rules added to `src/lib/AGENTS.md`. No Glow, price, model or provider changes.
 
-Stop after A2 and report: files and functions changed, any migration, test results, picture-test findings, cost and remaining limits.
+Stop after A2 and report: changes, any migration, test results, picture-test findings, cost and limits.
