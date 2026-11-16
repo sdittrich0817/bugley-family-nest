@@ -73,3 +73,6 @@ export function pickCastSnapshot(snapshots: CastSnapshot[] | undefined, ids: str
   if (picked.some(s => !s || s.styleKey !== styleKey || !s.dna || !s.refs.length || s.refs.some(r => !r.startsWith(prefix) || r.includes("..")))) return null;
   return picked as CastSnapshot[];
 }
+
+/** Restored comic/story snapshots never come back busy. */
+export function restoredPaintState(state: unknown) { return state === "painting" || state === "failed" ? "ready" : (typeof state === "string" ? state : "ready"); }
