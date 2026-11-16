@@ -26,7 +26,14 @@ async function stickerFor(ctx:any,kid:any,word:string,make:boolean,creature=fals
   const result=await generateImage(ctx.supabase,ctx.userId,{childId:kid.id,description:creature?`One friendly original cartoon creature combining ${word.split('+').join(' and ')}. White background, whole creature visible.`:`One cartoon ${key}, isolated on plain white background. No people, no names, no scenery.`,styleKey:style[0].key,mode:'sketch',characterIds:[]});
   if(!result.ok)throw new Error(result.reply);
   const row={owner_parent:ctx.userId as string,key,name:creature?`${word.split('+').join(' ')} buddy`:key,synonyms:[],image_path:result.path,creature,power:creature?'Makes wonderfully silly surprises!':'',rare:false};
-  const {error}=await a.from('game_stickers').upsert(row,{onConflict:'key',ignoreDuplicates:true});if(error)throw new Error('The sticker couldn’t be saved.');
+  // Family-made stickers live only in this family's row (unique per owner_parent + key); never touch shared rows.
+  const {error}=await a.from('game_stickers').insert(row);
+  if(error){
+    if(error.code!=='23505')throw new Error('The sticker couldn’t be saved.');
+    const {data:own}=await a.from('game_stickers').select('key,name,power,rare').eq('owner_parent',ctx.userId).eq('key',key).maybeSingle();
+    if(!own)throw new Error('The sticker couldn’t be saved.');
+    return {key:own.key,name:own.name,power:own.power,rare:own.rare};
+  }
   return {key,name:row.name,power:row.power,rare:false};
 }
 export const getPlayHome=createServerFn({method:'POST'}).middleware([requireKidOrParentAuth]).inputValidator((i:unknown)=>z.object({childId:id,environment}).parse(i)).handler(async({data,context})=>{
