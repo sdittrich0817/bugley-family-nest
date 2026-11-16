@@ -37,6 +37,19 @@ export async function refundGlow(sb: SupabaseClient<any>, userId: string, childI
   return data as { total: number };
 }
 
+/** Refund exactly once per charged operation (key `refund:<op>`); amount comes from the recorded charge. Failures alert admins and rethrow. */
+export async function refundGlowOnce(sb: SupabaseClient<any>, userId: string, childId: string, op: string, reason: string) {
+  await assertOwnsChild(sb, userId, childId);
+  const a = await admin();
+  const { data, error } = await a.rpc("glow_refund_op", { _child: childId, _op: op, _reason: reason });
+  if (error) {
+    console.error("glow refund failed", op, error.message);
+    await a.from("admin_alerts").insert({ parent_id: userId, message: `Glow refund failed for op ${op.slice(0, 60)} (child ${childId}). Check the glow ledger.` }).then(() => {}, () => {});
+    throw new Error("We couldn’t refund glow right now.");
+  }
+  return data as { refunded: boolean; reason?: string; amount?: number; total?: number };
+}
+
 export async function giftGlowServer(sb: SupabaseClient<any>, userId: string, childId: string, amount: number, reason: string) {
   await assertOwnsChild(sb, userId, childId);
   const { data, error } = await (await admin()).rpc("glow_gift", { _child: childId, _amount: amount, _reason: reason });

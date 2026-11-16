@@ -3,7 +3,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
-import { chargeGlow, refundGlow } from "@/lib/glow.server";
+import { chargeGlow, refundGlow, refundGlowOnce } from "@/lib/glow.server";
+import { pickCastSnapshot, type CastSnapshot } from "./comic-continuity";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
@@ -186,7 +187,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined; castSnapshot?: CastSnapshot[] | undefined }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -233,7 +234,8 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   let locked: Locked[] = [];
   if (withChars) {
     if (!takesRefs(model, ids.length)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
-    const l = await loadLocked(sb, userId, child.id, ids, input.styleKey);
+    const snap = pickCastSnapshot(input.castSnapshot, ids, `${userId}/${child.id}/`, input.styleKey);
+    const l = snap ? await Promise.all(snap.map(async c => { const refs = await signPaths(c.refs); if (refs.some(r => !r)) throw new Error('Bugley couldn’t open every character reference.'); return { title: c.title, dna: c.dna, refs }; })) : await loadLocked(sb, userId, child.id, ids, input.styleKey);
     if (!l) return { ok: false, reply: "Choose a hero with matching reference pictures in this look. Your words are safe." };
     locked = l;
     if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade || input.editPath ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
@@ -242,7 +244,13 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
   const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch", input.op);
   if (!charge.ok) return { ok: false, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
-  const refund = () => refundGlow(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work").catch(() => {});
+  // Refunds are keyed by the op when present (never twice); failures are reported, not swallowed.
+  let refundOk = true;
+  const refund = async () => {
+    try { if (input.op) await refundGlowOnce(sb, userId, child.id, input.op, "Refund: picture didn’t work"); else await refundGlow(sb, userId, child.id, charge.cost ?? (upgrade ? 2 : kind === "picture" ? 3 : 1), "Refund: picture didn’t work"); }
+    catch (e) { refundOk = false; console.error("image refund failed", e); }
+  };
+  const back = (msg: string) => refundOk ? msg : msg.replace(/Your glow is back[.!]?/g, "A grown-up at Bugley will return your glow.");
   try {
     // 3) server-built prompt; Character DNA inserted word for word
     const dna = locked.map((c) => `${c.title} — ${c.dna}`).join(" | ");
@@ -251,7 +259,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     const prompt = buildPrompt(style.recipe, description, input.mode);
     const previewRefs = input.editPath ? await signPaths([input.editPath]) : upgrade && input.previewPath ? await signPaths([input.previewPath]) : [];
     const refs = [...previewRefs, ...locked.flatMap((c) => c.refs)];
-    const paintPrompt = input.editPath ? `${prompt}. The first reference is the existing scene. Change ONLY what the scene instructions request; retain its composition, subjects, poses, details and colors wherever not changed. Other references lock the characters.` : upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
+    const paintPrompt = input.editPath ? `${prompt}. The first reference is the existing scene. Change ONLY what the scene instructions request; keep its layout, background, colors, objects, poses, character placement and camera angle the same wherever not changed. Other references lock the characters.` : upgrade ? `${prompt}. The first reference is the child's chosen preview: preserve its exact composition, subjects, poses, setting and colors; refine details and clarity at full print resolution.` : prompt;
     // 4–6) model, safety, drift (up to 2 free retries; keep the best match)
     let best: { src: string; score: number } | null = null;
     const requestId = crypto.randomUUID();
@@ -261,7 +269,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
         if (attempt < 3 && locked.length) continue;
         await refund();
         await a.from("studio_events").insert({ parent_id: userId, child_id: child.id, source: input.mode, input: input.description.slice(0, 2000), decision: "unsafe", reply: "Image blocked by safety check" });
-        return { ok: false, reply: "Hmm, that picture didn’t come out right, so I tossed it. Your glow is back! Let’s try a new idea.", chips: ["Try it a little differently", "Pick a new style"] };
+        return { ok: false, reply: back("Hmm, that picture didn’t come out right, so I tossed it. Your glow is back! Let’s try a new idea."), chips: ["Try it a little differently", "Pick a new style"] };
       }
       if (!locked.length) { best = { src, score: 100 }; break; }
       const d = await driftCheck(src, locked.flatMap((c) => c.refs), dna, style.name, input.description);
@@ -283,7 +291,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   } catch (e) {
     await refund();
     console.error("image pipeline", e);
-    return { ok: false, reply: e instanceof Error && e.message.startsWith("Bugley") ? e.message : "Oops, my paintbrush slipped! Your glow is back. Try again?" };
+    return { ok: false, reply: back(e instanceof Error && e.message.startsWith("Bugley") ? e.message : "Oops, my paintbrush slipped! Your glow is back. Try again?") };
   }
 }
 
