@@ -1725,6 +1725,27 @@ export type Database = {
         }
         Relationships: []
       }
+      service_notices: {
+        Row: {
+          active: boolean
+          key: string
+          message: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          key: string
+          message: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          key?: string
+          message?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sessions: {
         Row: {
           created_at: string
