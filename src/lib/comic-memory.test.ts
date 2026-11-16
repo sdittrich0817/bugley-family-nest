@@ -103,7 +103,7 @@ describe("memory in prompts", () => {
       { id: "e", kind: "event" as const, excerpt: "x".repeat(200), panelId: "p", stamp: "s", order: 0, supersedes: [], panel: 1 },
       { id: "o", kind: "object" as const, excerpt: "a red sail", panelId: "p", stamp: "s", order: 1, supersedes: [], panel: 1 },
     ];
-    const out = memoryPrompt(items, 220);
+    const out = memoryPrompt(items, 300);
     expect(out).toContain("a red sail");
     expect(out).not.toContain("xxxx");
   });
@@ -139,7 +139,7 @@ describe("character snapshots", () => {
   it("comic saves keep frozen copies and memory (they were dropped by comic edits before A2)", () => {
     const details = { genre: "Adventure", styleKey: "cartoon", characterIds: [], map: { hero: "", want: "", problem: "", world: "", ending: "" }, pages: [{ id: "00000000-0000-4000-8000-000000000001", layout: "one", panels: [] }], finished: false, cover: null, castSnapshot: [snap("h1")], storyMemory: built() };
     const parsed = comicSchema.safeParse(details);
-    if (!parsed.success) return; // page/panel shape is covered elsewhere; this test is about the two fields
+    expect(parsed.success).toBe(true); if (!parsed.success) return;
     expect(parsed.data.castSnapshot).toEqual([snap("h1")]);
     expect(parsed.data.storyMemory).toEqual(built());
   });
