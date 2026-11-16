@@ -116,4 +116,4 @@
 - [x] Build and verify Memory Meadow: illustrated four-pair matching, real local feature-based guesses and immediate checked-pair learning retained in replay. Dawnie completed 4/4 and caught a mistake; replay/All games and 390px layout verified without errors. Ten focused tests pass; build OK. Four-minute cap, no Glow or rewards; Wave 2 remains approval-gated.
 - [ ] Wave 2 and Part 2 — blocked on explicit approval
 
-- [ ] Comic Creator Phase A2 (Story Memory, late-added character snapshots, cover consistency, report-only revision check): plan updated from approval sections 1–5; waiting on the cut-off remainder of the approval (section 6 onward). A3 not started.
+- [ ] Comic Creator Phase A2 (Story Memory, late-added character snapshots, cover consistency, report-only revision check): built in preview; picture test running; then report and wait for Shea (not published). A3 not started.
