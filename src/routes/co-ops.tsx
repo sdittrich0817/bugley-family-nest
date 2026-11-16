@@ -168,7 +168,7 @@ function DemoForm() {
           <Textarea id="notes" name="notes" maxLength={1000} rows={4} className="rounded-xl" placeholder="Anything we should know about your group?" />
         </Field>
         {status === "error" && <p className="text-sm text-destructive">Something hiccuped. Please try again in a moment.</p>}
-        {status === "limited" && <p className="text-sm text-destructive">Thanks! We’ve already received several requests from you. Please try again later, or email us directly.</p>}
+        {status === "limited" && <p className="text-sm text-destructive">Thanks! We’ve already received several requests from you. Please try again a little later.</p>}
         <Button type="submit" size="lg" disabled={status === "sending"}>
           {status === "sending" ? "Sending…" : "Book a demo"}
         </Button>
