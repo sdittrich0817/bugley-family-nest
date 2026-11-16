@@ -288,6 +288,13 @@
       "when": 1794843067137,
       "tag": "0040_temporary_service_notices",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1794853248496,
+      "tag": "0041_restrict_role_and_plan_checks",
+      "breakpoints": true
     }
   ]
 }

@@ -2190,6 +2190,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      caller_may_inspect: { Args: { _user_id: string }; Returns: boolean }
       claim_bug_avatar: {
         Args: { _child: string; _op: string; _parent: string }
         Returns: Json
