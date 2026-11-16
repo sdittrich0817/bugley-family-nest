@@ -2219,6 +2219,10 @@ export type Database = {
         Args: { _amount: number; _child: string; _reason: string }
         Returns: Json
       }
+      glow_refund_op: {
+        Args: { _child: string; _op: string; _reason: string }
+        Returns: Json
+      }
       glow_spend:
         | {
             Args: { _child: string; _kind: string; _reason: string }

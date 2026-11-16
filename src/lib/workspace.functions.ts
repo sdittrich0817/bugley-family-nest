@@ -127,6 +127,8 @@ export const restoreWorkspace = createServerFn({ method: "POST" }).middleware([r
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error("Ask a grown-up to open your Studio plan.");
   const { loadWorkspace, persistWorkspace } = await import("./workspace.server"); const p = await loadWorkspace(context.supabase, context.userId, data.childId, data.id);
   if (p.updatedAt !== data.updatedAt) throw new Error("Reopen your creation first; it changed in another window.");
+  const { recoverStalePaint } = await import("./workspace.server");
+  if (await recoverStalePaint(context.supabase, context.userId, data.childId, p) !== p) throw new Error("Your last drawing was interrupted and has been reset. Reopen your creation, then try again.");
   assertWorkspaceIdle(p.details);
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const { data: row } = await a.from("studio_project_history").select("snapshot").eq("id", data.versionId).eq("creation_id", p.id).eq("parent_id", context.userId).eq("child_id", data.childId).maybeSingle();
@@ -141,8 +143,9 @@ export const restoreWorkspace = createServerFn({ method: "POST" }).middleware([r
   const lockedStyle = p.details.artLock || p.details.modelLock || p.details.bookId || (p.details.characterIds ?? p.details.characters ?? []).length;
   if (lockedStyle && snap.style_key !== p.styleKey) throw new Error("That version used a different look. Your locked drawings are safe.");
   p.title = snap.title; p.body = snap.body; p.images = snap.images ?? [];
-  p.details = { ...snap.details, ...(p.details.artLock ? { artLock: p.details.artLock } : {}), ...(p.details.modelLock ? { modelLock: p.details.modelLock } : {}), ...(p.details.bookId ? { bookId: p.details.bookId } : {}) };
+  p.details = { ...snap.details, ...(p.details.artLock ? { artLock: p.details.artLock } : {}), ...(p.details.modelLock ? { modelLock: p.details.modelLock } : {}), ...(p.details.bookId ? { bookId: p.details.bookId } : {}), ...(p.details.castSnapshot ? { castSnapshot: p.details.castSnapshot } : {}) };
   p.workspace = (await import("./workspace")).workspaceOf(p.details, p.body ?? ""); p.styleKey = snap.style_key ?? p.styleKey;
+  if (p.kind !== "picture") { const { restoredPaintState } = await import("./comic-continuity"); p.details.paintState = restoredPaintState(p.details.paintState); delete p.details.paintOp; delete p.details.paintStartedAt; }
   if (p.kind === "picture") { p.details.paintState = "done"; p.details.upgradeState = p.details.mode === "final" ? "done" : "ready"; delete p.details.paintOp; }
   await persistWorkspace(context.userId, data.childId, p); return loadWorkspace(context.supabase, context.userId, data.childId, p.id);
 });

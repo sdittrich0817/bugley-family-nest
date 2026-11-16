@@ -155,15 +155,20 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
   const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
-  const p = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
+  let p = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
   if (p.updatedAt !== data.updatedAt) throw new Error("Your work changed. Reopen it first.");
+  const { recoverStalePaint, snapshotCast } = await import("./workspace.server");
+  const recovered = await recoverStalePaint(context.supabase, context.userId, child.id, p);
+  if (recovered !== p) throw new Error("Your last drawing was interrupted, so Bugley reset it. Your glow is safe. Tap draw again.");
   const { assertWorkspaceIdle } = await import("./workspace"); assertWorkspaceIdle(p.details);
   if (p.details.finished) throw new Error("Open your creation to keep working first.");
+  const cc = await import("./comic-continuity");
   const items: any[] = p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages ?? [];
   const item = items.find(x => x.id === data.itemId);
   if (p.kind !== "picture" && !item) throw new Error("Choose a scene first.");
   const words = data.text ?? (p.kind === "picture" ? p.workspace.originalIdea : p.kind === "comic" ? item.description : item.text);
   if (!words?.trim()) throw new Error("Describe your scene first.");
+  if (p.kind === "comic" && words.trim().length > cc.CHILD_SCENE_LIMIT) throw new Error(`Your scene is a little long for one picture. Can you make it shorter than ${cc.CHILD_SCENE_LIMIT} letters?`);
   for (const text of [words, data.revision, data.description].filter(Boolean) as string[]) {
     const g = await s.guardChildText(context.supabase, context.userId, child, text, "story");
     if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
@@ -176,24 +181,33 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id));
   }
   let description = data.description || (p.kind === "story" ? item.description || words.slice(0, 600) : words.slice(0, 600));
+  let notes: string | undefined;
   if (data.revision) {
     const { aiObject } = await import("./studio-ai.server");
-    const out = await aiObject(z.object({ description: z.string().max(600) }), "Produce internal illustration instructions only: apply the child's requested change to the existing scene, preserve everything not requested, same characters. Do not author story prose or dialogue.", JSON.stringify({ scene: description, change: data.revision }));
+    // The planner only adds visual notes; the child's exact scene and change are sent separately.
+    const out = await aiObject(z.object({ description: z.string().max(600) }), "Produce short internal illustration notes only (what to adjust visually) for applying the child's requested change to the existing scene. Never contradict, drop or reword the child's scene or change; preserve everything not requested; same characters. Do not author story prose or dialogue.", JSON.stringify({ scene: p.kind === "comic" ? item.description || words : description, change: data.revision }));
     if (!out) throw new Error("Bugley couldn’t plan that change. Your original picture is safe.");
-    description = out.description;
+    if (p.kind === "comic") notes = out.description; else description = out.description;
   }
-  if (p.details.genre) description = `${p.details.genre} mood, colors and lighting. ${description}`.slice(0, 600);
-  if (p.kind === "comic") description = `${description}`.slice(0, 480) + " One single seamless full-bleed illustration filling the whole frame: no panel borders, frames, gutters, strips, split panels or empty boxes. Let natural open scenery such as sky, wall or ceiling sit above the characters, with faces in the lower two-thirds.";
+  if (p.kind === "comic") {
+    const panels = p.details.pages.flatMap((page: any) => page.panels);
+    description = cc.buildPanelPrompt({ scene: item.description || words, change: data.revision, notes, genre: p.details.genre, continuity: cc.buildContinuity(panels, item.id) });
+    const ids: string[] = p.details.characterIds ?? p.details.characters ?? [];
+    if (ids.length && !p.details.castSnapshot) {
+      const snap = await snapshotCast(context.supabase, context.userId, child.id, p.id, ids, p.styleKey);
+      if (snap) { p.details.castSnapshot = snap; await persistWorkspace(context.userId, child.id, p); Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id)); }
+    }
+  } else if (p.details.genre) description = `${p.details.genre} mood, colors and lighting. ${description}`.slice(0, 600);
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const claimedAt = new Date().toISOString();
-  const { data: claim } = await a.from("studio_creations").update({ details: { ...p.details, paintState: "painting", paintOp: data.op }, updated_at: claimedAt }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("updated_at", p.updatedAt).select("id").maybeSingle();
+  const { data: claim } = await a.from("studio_creations").update({ details: { ...p.details, paintState: "painting", paintOp: data.op, paintStartedAt: claimedAt }, updated_at: claimedAt }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("updated_at", p.updatedAt).select("id").maybeSingle();
   if (!claim) throw new Error("Your scene changed. Reopen it first.");
   p.updatedAt = claimedAt;
   let charged = false;
   try {
     const { generateImage } = await import("./images.server");
     const prior = p.kind === "picture" ? p.images[0] : item.image;
-    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op });
+    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op, castSnapshot: p.kind === "comic" ? p.details.castSnapshot : undefined });
     if (!result.ok) throw new Error(result.reply);
     charged = true;
     const { data: lockRow } = await a.from("studio_creations").select("details").eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();
@@ -210,11 +224,14 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
       if (p.kind === "comic") target.dialogueDone = false;
       else target.text = words;
     }
-    p.details.paintState = "done"; p.details.paintOp = data.op;
+    // Only the op that still owns the claim may save (persistWorkspace also checks updated_at).
+    const { data: owner } = await a.from("studio_creations").select("details").eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();
+    if ((owner?.details as any)?.paintOp !== data.op || (owner?.details as any)?.paintState !== "painting") throw new Error("This drawing was replaced by a newer one. Your newest picture is safe.");
+    p.details.paintState = "done"; p.details.paintOp = data.op; delete p.details.paintStartedAt;
     await persistWorkspace(context.userId, child.id, p);
     return loadWorkspace(context.supabase, context.userId, child.id, p.id);
   } catch (e) {
-    if (charged) await (await import("./glow.server")).refundGlow(context.supabase, context.userId, child.id, p.kind === "picture" ? 1 : 3, "Refund: revised scene could not save");
+    if (charged) { try { await (await import("./glow.server")).refundGlowOnce(context.supabase, context.userId, child.id, data.op, "Refund: revised scene could not save"); } catch { /* reported to admins inside refundGlowOnce */ } }
     await a.from("studio_creations").update({ details: { ...(await loadWorkspace(context.supabase, context.userId, child.id, p.id)).details, paintState: "failed" }, updated_at: new Date().toISOString() }).eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("updated_at", claimedAt);
     throw e;
   }
