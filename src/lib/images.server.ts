@@ -321,7 +321,8 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   }));
   const paths = results.flatMap((r) => r.status === "fulfilled" ? [r.value] : []);
   if (!paths.length) {
-    await refundGlow(sb, userId, child.id, charge.cost ?? 1, "Refund: hero didn’t work").catch(() => {});
+    try { if (input.op) await refundGlowOnce(sb, userId, child.id, input.op, "Refund: hero didn’t work"); else await refundGlow(sb, userId, child.id, charge.cost ?? 1, "Refund: hero didn’t work"); }
+    catch (e) { console.error("hero refund failed", e); return { ok: false as const, reply: "Oops, my paintbrush slipped! A grown-up at Bugley will return your glow." }; }
     return { ok: false as const, reply: "Oops, my paintbrush slipped! Your glow is back. Try again?" };
   }
   const urls = await signPaths(paths);
