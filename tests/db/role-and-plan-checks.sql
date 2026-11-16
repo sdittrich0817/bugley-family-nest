@@ -4,9 +4,10 @@ begin;
 set local session_replication_role = replica; -- skip signup triggers/FKs for made-up users
 insert into auth.users (id, email) values
   ('00000000-0000-4000-a000-0000000000a1','t-admin@example.invalid'),
+  ('00000000-0000-4000-a000-0000000000a2','t-admin2@example.invalid'),
   ('00000000-0000-4000-a000-0000000000b1','t-parent-a@example.invalid'),
   ('00000000-0000-4000-a000-0000000000b2','t-parent-b@example.invalid');
-insert into public.user_roles (user_id, role) values ('00000000-0000-4000-a000-0000000000a1','admin');
+insert into public.user_roles (user_id, role) values ('00000000-0000-4000-a000-0000000000a1','admin'), ('00000000-0000-4000-a000-0000000000a2','admin');
 insert into public.subscriptions (user_id, stripe_subscription_id, stripe_customer_id, product_id, price_id, status, environment, current_period_end) values
   ('00000000-0000-4000-a000-0000000000b1','sub_t_a','cus_t_a','p','pr','active','live', now() + interval '30 days'),
   ('00000000-0000-4000-a000-0000000000b2','sub_t_b','cus_t_b','p','pr','active','live', now() + interval '30 days');
@@ -41,7 +42,7 @@ reset role;
 select set_config('request.jwt.claims','{"role":"authenticated","sub":"00000000-0000-4000-a000-0000000000a1"}',true);
 set local role authenticated;
 insert into r select 'admin: own admin check true', public.has_role('00000000-0000-4000-a000-0000000000a1','admin');
-insert into r select 'admin: can check another account role', not public.has_role('00000000-0000-4000-a000-0000000000b1','admin');
+insert into r select 'admin: can check another admin account', public.has_role('00000000-0000-4000-a000-0000000000a2','admin');
 insert into r select 'admin: can check another account plan', public.has_active_subscription('00000000-0000-4000-a000-0000000000b2','live');
 insert into r select 'admin: admin-only rows readable (RLS)', (select count(*) from public.site_feedback where message = 'role-check probe') = 1;
 reset role;
