@@ -234,9 +234,10 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   let locked: Locked[] = [];
   if (withChars) {
     if (!takesRefs(model, ids.length)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
-    const snap = pickCastSnapshot(input.castSnapshot, ids, `${userId}/${child.id}/`, input.styleKey);
-    // A comic with frozen characters never silently falls back to live ones.
-    if (input.castSnapshot?.length && !snap) return { ok: false, reply: "Bugley couldn’t open this comic’s saved characters. Your glow is safe. Please try again." };
+    // A comic with frozen characters never silently falls back to live ones (checked before any charge).
+    const cast = resolveCast(input.castSnapshot, ids, `${userId}/${child.id}/`, input.styleKey);
+    if (cast.mode === "refuse") return { ok: false, reply: "Bugley couldn’t open this comic’s saved characters. Your glow is safe. Please try again." };
+    const snap = cast.mode === "snapshot" ? cast.cast : null;
     const l = snap ? await Promise.all(snap.map(async c => { const refs = await signPaths(c.refs); if (refs.some(r => !r)) throw new Error('Bugley couldn’t open every character reference.'); return { title: c.title, dna: c.dna, refs }; })) : await loadLocked(sb, userId, child.id, ids, input.styleKey);
     if (!l) return { ok: false, reply: "Choose a hero with matching reference pictures in this look. Your words are safe." };
     locked = l;

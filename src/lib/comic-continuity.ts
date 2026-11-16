@@ -78,3 +78,10 @@ export function pickCastSnapshot(snapshots: CastSnapshot[] | undefined, ids: str
 
 /** Restored comic/story snapshots never come back busy. */
 export function restoredPaintState(state: unknown) { return state === "painting" || state === "failed" ? "ready" : (typeof state === "string" ? state : "ready"); }
+
+/** Which character references a drawing may use: the comic's frozen copies, live characters (only comics that never froze any), or refuse. */
+export function resolveCast(snapshots: CastSnapshot[] | undefined, ids: string[], prefix: string, styleKey: string): { mode: "snapshot"; cast: CastSnapshot[] } | { mode: "live" } | { mode: "refuse" } {
+  if (!snapshots?.length) return { mode: "live" };
+  const cast = pickCastSnapshot(snapshots, ids, prefix, styleKey);
+  return cast ? { mode: "snapshot", cast } : { mode: "refuse" };
+}
