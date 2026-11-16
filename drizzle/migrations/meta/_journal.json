@@ -260,6 +260,13 @@
       "when": 1794779680764,
       "tag": "0036_parents_read_welcome_launch",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794839732504,
+      "tag": "0037_family_sticker_keys_and_waitlist_checks",
+      "breakpoints": true
     }
   ]
 }
