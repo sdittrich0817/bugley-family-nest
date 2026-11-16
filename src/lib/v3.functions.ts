@@ -248,10 +248,10 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if ((owner?.details as any)?.paintOp !== data.op || (owner?.details as any)?.paintState !== "painting") throw new Error("This drawing was replaced by a newer one. Your newest picture is safe.");
     p.details.paintState = "done"; p.details.paintOp = data.op; delete p.details.paintStartedAt;
     await persistWorkspace(context.userId, child.id, p);
-    if (p.kind === "comic" && data.revision && item.image) {
-      const after = p.details.pages.flatMap((page: any) => page.panels).find((x: any) => x.id === data.itemId)?.image;
+    if (p.kind === "comic" && data.revision && prior && result.path !== prior) {
+      // `prior` was captured before the panel object was updated, so this compares the old picture with the new one.
       const mem = await import("./comic-memory.server");
-      if (after) await mem.withTimeout(mem.logRevisionCheck({ parentId: context.userId, childId: child.id, creationId: p.id, styleKey: p.styleKey, model: p.details.modelLock?.model ?? "unknown", before: item.image, after, change: data.revision }), 15_000);
+      await mem.withTimeout(mem.logRevisionCheck({ parentId: context.userId, childId: child.id, creationId: p.id, styleKey: p.styleKey, model: p.details.modelLock?.model ?? "unknown", before: prior, after: result.path, change: data.revision }), 15_000);
     }
     return loadWorkspace(context.supabase, context.userId, child.id, p.id);
   } catch (e) {
