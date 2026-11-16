@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { coverDescription, groundItems, liveMemory, MEMORY_PROMPT_LIMIT, memoryPrompt, mergeNotes, mergeSnapshots, missingSnapshotIds, panelsToNote, panelStamp, readMemory, revisionLogRow, type RawMemoryItem, type StoryMemory } from "./comic-memory";
 import { buildPanelPrompt, resolveCast, type CastSnapshot } from "./comic-continuity";
-import { comicSchema } from "./comic";
+import { comicSchema, EMPTY_MAP, newComicPage } from "./comic";
 
 const raw = (kind: string, excerpt: string, extra: Partial<RawMemoryItem> = {}): RawMemoryItem => ({ kind, excerpt, supersedes: [], certain: true, ...extra });
 const empty: StoryMemory = { v: 1, items: [], noted: {} };
@@ -137,7 +137,7 @@ describe("character snapshots", () => {
     expect(resolveCast(undefined, ["h1"], "p/c/", "cartoon").mode).toBe("live"); // older comics
   });
   it("comic saves keep frozen copies and memory (they were dropped by comic edits before A2)", () => {
-    const details = { genre: "Adventure", styleKey: "cartoon", characterIds: [], map: { hero: "", want: "", problem: "", world: "", ending: "" }, pages: [{ id: "00000000-0000-4000-8000-000000000001", layout: "one", panels: [] }], finished: false, cover: null, castSnapshot: [snap("h1")], storyMemory: built() };
+    const details = { genre: "Adventure", styleKey: "cartoon", characterIds: [], map: EMPTY_MAP, pages: [newComicPage("four")], finished: false, cover: null, castSnapshot: [snap("h1")], storyMemory: built() };
     const parsed = comicSchema.safeParse(details);
     expect(parsed.success).toBe(true); if (!parsed.success) return;
     expect(parsed.data.castSnapshot).toEqual([snap("h1")]);
