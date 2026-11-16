@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { kidFamilyOptions as familyOptions, kidPlanOptions as billingOptions, useStudioPlayer } from "@/lib/kid-family";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { ComicJourney } from "@/components/studio/v3/ComicJourney";
+import { DrawingRestNotice } from "@/components/studio/DrawingRestNotice";
 import type { SidekickChild } from "@/components/studio/Sidekick";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +34,7 @@ function V3Page() {
   if (!child) return null;
   return <div className={cn("min-h-screen bg-background text-foreground", `skin-${child.age_band}`)}>
     <div className="mx-auto max-w-3xl px-4 pb-32 pt-5">
+      <DrawingRestNotice />
       <ComicJourney key={journey} child={child as SidekickChild} projectId={project} draftId={draft} characterId={character} startKind={kind}
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
         onDraft={id => void navigate({ to: "/kids/studio/v3", search: id ? { draft: id } : {}, replace: true })}
