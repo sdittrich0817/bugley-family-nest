@@ -15,8 +15,6 @@
 - The root error boundary recovers recognized stale module downloads with one guarded document reload and a manual refresh fallback, without clearing authentication or player storage. Why: old preview tabs can recover without reload loops or child lockouts.
 - Nav link lists live in `src/lib/nav.ts`; every entry must have a matching route file. Why: no broken links.
 - Brand tokens (colors, fonts, spacing, radii, glow) live only in `src/styles.css`; components use semantic classes and cva variants. Why: consistent theming.
-- Co-op demo requests insert server-side via `submitDemoRequest` with per-IP and per-email limits on the shared attempt counter; the anonymous direct-insert policy is retired only after that code is published. Why: spam cannot bypass limits and live submissions never break mid-release.
-- `has_role`/`has_active_subscription` answer anon/authenticated callers only about themselves unless the caller is admin (`caller_may_inspect`); service_role and direct DB contexts are unrestricted. DB checks live in `tests/db/`. Why: no cross-account role/plan disclosure while every RLS `has_role(auth.uid(), …)` check keeps working.
 - Waitlist submissions go through the `joinWaitlist` server function (publishable client, insert-only RLS). Why: anonymous visitors can add but never read entries.
 - Bugley the character is one code-drawn SVG (`src/components/brand/Bugley.tsx`) with stage/expression props; never use raster images of Bugley. Why: identical everywhere at any size.
 - Age-band looks are CSS classes (`skin-sprouts`, `skin-explorers`, `skin-builders`) that override tokens on a subtree. Why: one component set, three themes.
