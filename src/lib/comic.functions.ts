@@ -130,8 +130,21 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
       if (panel) panel.angle = planned.angle;
     }
     if (!description || description.length < 3) throw new Error("Describe what happens first.");
+    let castSnapshot: any[] | undefined;
+    if (data.action === "cover" && comic.data.workspace?.v3) {
+      // V3 covers use the comic's frozen characters and established story; the child's words lead.
+      const cm = await import("./comic-memory");
+      const missing = cm.missingSnapshotIds(comic.data.castSnapshot, comic.data.characterIds);
+      if (missing.length) {
+        const snap = await (await import("./workspace.server")).snapshotCast(context.supabase, context.userId, child.id, comic.id, missing, comic.data.styleKey);
+        if (!snap || snap.length !== missing.length) throw new Error("Bugley couldn’t save a copy of your characters for this cover. Your glow is safe. Please try again.");
+        comic.data.castSnapshot = cm.mergeSnapshots(comic.data.castSnapshot, snap);
+      }
+      castSnapshot = comic.data.castSnapshot;
+      description = cm.coverDescription(description, cm.memoryPrompt(cm.liveMemory(cm.readMemory(comic.data.storyMemory), comic.data.pages.flatMap((p) => p.panels))));
+    }
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot });
     if (!r.ok) throw new Error(r.reply);
     if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;

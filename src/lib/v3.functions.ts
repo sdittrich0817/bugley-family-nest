@@ -189,13 +189,26 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if (!out) throw new Error("Bugley couldn’t plan that change. Your original picture is safe.");
     if (p.kind === "comic") notes = out.description; else description = out.description;
   }
+  const cm = await import("./comic-memory");
+  let notesJob: Promise<import("./comic-memory").PanelNote[] | null> = Promise.resolve(null);
   if (p.kind === "comic") {
-    const panels = p.details.pages.flatMap((page: any) => page.panels);
-    description = cc.buildPanelPrompt({ scene: item.description || words, change: data.revision, notes, genre: p.details.genre, continuity: cc.buildContinuity(panels, item.id) });
+    // Every character is frozen before it is ever drawn; a missing copy stops here, before any claim or charge.
     const ids: string[] = p.details.characterIds ?? p.details.characters ?? [];
-    if (ids.length && !p.details.castSnapshot) {
-      const snap = await snapshotCast(context.supabase, context.userId, child.id, p.id, ids, p.styleKey);
-      if (snap) { p.details.castSnapshot = snap; await persistWorkspace(context.userId, child.id, p); Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id)); }
+    const missing = cm.missingSnapshotIds(p.details.castSnapshot, ids);
+    if (missing.length) {
+      const snap = await snapshotCast(context.supabase, context.userId, child.id, p.id, missing, p.styleKey);
+      if (!snap || snap.length !== missing.length) throw new Error("Bugley couldn’t save a copy of your characters for this comic. Your glow is safe. Please try again.");
+      p.details.castSnapshot = cm.mergeSnapshots(p.details.castSnapshot, snap); await persistWorkspace(context.userId, child.id, p); Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id));
+    }
+    const panels = p.details.pages.flatMap((page: any) => page.panels);
+    const current = panels.find((x: any) => x.id === item.id) ?? item;
+    const memory = cm.readMemory(p.details.storyMemory);
+    description = cc.buildPanelPrompt({ scene: current.description || words, change: data.revision, notes, genre: p.details.genre, memory: cm.memoryPrompt(cm.liveMemory(memory, panels, item.id)), continuity: cc.buildContinuity(panels, item.id) });
+    // Memory notes run alongside the drawing and never block it.
+    const toNote = cm.panelsToNote(memory, panels, item.id);
+    if (toNote.length) {
+      const known = memory.items.filter(i => i.stamp === cm.panelStamp(panels.find((x: any) => x.id === i.panelId)?.description));
+      notesJob = import("./comic-memory.server").then(m => m.extractPanelNotes(toNote, known, (p.details.castSnapshot ?? []).map((c: any) => c.title))).catch(() => null);
     }
   } else if (p.details.genre) description = `${p.details.genre} mood, colors and lighting. ${description}`.slice(0, 600);
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
@@ -221,7 +234,13 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
       if (!target) throw new Error("Your scene couldn’t be found.");
       // Comic panel descriptions are the child's own scene words; never replace them with hidden drawing instructions.
       Object.assign(target, replaceV3Art(target, result, p.kind === "comic" ? target.description : description));
-      if (p.kind === "comic") target.dialogueDone = false;
+      if (p.kind === "comic") {
+        target.dialogueDone = false;
+        try {
+          const notes = await (await import("./comic-memory.server")).withTimeout(notesJob, 10_000);
+          if (notes?.length) p.details.storyMemory = cm.mergeNotes(cm.readMemory(p.details.storyMemory), p.details.pages.flatMap((page: any) => page.panels), notes);
+        } catch (e) { console.error("story memory merge skipped", e); }
+      }
       else target.text = words;
     }
     // Only the op that still owns the claim may save (persistWorkspace also checks updated_at).
@@ -229,6 +248,11 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     if ((owner?.details as any)?.paintOp !== data.op || (owner?.details as any)?.paintState !== "painting") throw new Error("This drawing was replaced by a newer one. Your newest picture is safe.");
     p.details.paintState = "done"; p.details.paintOp = data.op; delete p.details.paintStartedAt;
     await persistWorkspace(context.userId, child.id, p);
+    if (p.kind === "comic" && data.revision && item.image) {
+      const after = p.details.pages.flatMap((page: any) => page.panels).find((x: any) => x.id === data.itemId)?.image;
+      const mem = await import("./comic-memory.server");
+      if (after) await mem.withTimeout(mem.logRevisionCheck({ parentId: context.userId, childId: child.id, creationId: p.id, styleKey: p.styleKey, model: p.details.modelLock?.model ?? "unknown", before: item.image, after, change: data.revision }), 15_000);
+    }
     return loadWorkspace(context.supabase, context.userId, child.id, p.id);
   } catch (e) {
     if (charged) { try { await (await import("./glow.server")).refundGlowOnce(context.supabase, context.userId, child.id, data.op, "Refund: revised scene could not save"); } catch { /* reported to admins inside refundGlowOnce */ } }

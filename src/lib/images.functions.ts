@@ -221,7 +221,7 @@ export const saveStyle = createServerFn({ method: "POST" }).middleware([requireP
 /** Drift Report: drift-check failure rates by model and style. */
 export const getDriftReport = createServerFn({ method: "GET" }).middleware([requireParentDevice]).handler(async ({ context }) => {
   await assertAdmin(context);
-  const { data } = await context.supabase.from("drift_checks").select("model,style_key,passed,score,notes,created_at").order("created_at", { ascending: false }).limit(2000);
+  const { data } = await context.supabase.from("drift_checks").select("model,style_key,passed,score,notes,created_at").gt("attempt", 0).order("created_at", { ascending: false }).limit(2000);
   const groups = new Map<string, { model: string; style: string; checks: number; fails: number; scoreSum: number }>();
   for (const r of (data ?? []) as any[]) {
     const k = `${r.model}|${r.style_key}`;
