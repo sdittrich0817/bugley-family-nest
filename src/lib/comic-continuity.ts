@@ -52,8 +52,8 @@ export function legacyPanelPrompt(input: { scene: string; plannedRevision?: stri
   return d.slice(0, 480) + " " + COMIC_FRAMING;
 }
 
-/** Paint claims older than this are treated as interrupted. Generation (3 attempts × ~55s create + polling + checks) stays well below. */
-export const STALE_PAINT_MS = 10 * 60 * 1000;
+/** Paint claims older than this are treated as interrupted. Observed draws take ~1–2 min per attempt, with one 25-minute provider outlier; an early reset is still safe (the late op cannot save and refunds at most once). */
+export const STALE_PAINT_MS = 30 * 60 * 1000;
 export function isStalePaint(details: { paintState?: string; paintStartedAt?: string } | null | undefined, updatedAt: string, now = Date.now()) {
   if (details?.paintState !== "painting") return false;
   const started = Date.parse(details.paintStartedAt ?? updatedAt);

@@ -62,7 +62,7 @@ describe("character snapshots", () => {
 
 describe("generation lifecycle", () => {
   const t = Date.parse("2026-11-16T10:00:00Z");
-  it("treats painting older than 10 minutes as stale, not newer or finished ones", () => {
+  it("treats painting older than 30 minutes as stale, not newer or finished ones", () => {
     expect(isStalePaint({ paintState: "painting", paintStartedAt: new Date(t - STALE_PAINT_MS - 1).toISOString() }, "", t)).toBe(true);
     expect(isStalePaint({ paintState: "painting", paintStartedAt: new Date(t - 60_000).toISOString() }, "", t)).toBe(false);
     expect(isStalePaint({ paintState: "done", paintStartedAt: new Date(0).toISOString() }, "", t)).toBe(false);
