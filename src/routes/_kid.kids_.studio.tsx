@@ -16,6 +16,7 @@ import { kidPlanOptions as billingOptions } from '@/lib/kid-family';
 import { getStripeEnvironment } from "@/lib/stripe";
 import { StudioDashboard } from "@/components/studio/StudioDashboard";
 import { GlowMeter } from "@/components/studio/GlowMeter";
+import { DrawingRestNotice } from "@/components/studio/DrawingRestNotice";
 import { Sidekick, useBugleyChat, type SidekickChild } from "@/components/studio/Sidekick";
 import { BugleyGuide } from "@/components/studio/Guided";
 import { BugleyStep, type StepChoice } from "@/components/studio/BugleyStep";
@@ -113,6 +114,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
     <div className="mx-auto max-w-4xl space-y-6 px-4 pb-32 pt-5">
       {!["home", "create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
+        {view !== "album" && <DrawingRestNotice />}
         {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
           : view === "home" ? <StudioDashboard child={child} glow={glow} onAlbum={() => setView("album")} />
           : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />

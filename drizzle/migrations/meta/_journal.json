@@ -281,6 +281,13 @@
       "when": 1794842177757,
       "tag": "0039_glow_ledger_allow_refund_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794843067137,
+      "tag": "0040_temporary_service_notices",
+      "breakpoints": true
     }
   ]
 }
