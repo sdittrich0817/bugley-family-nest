@@ -116,4 +116,5 @@
 - [x] Build and verify Memory Meadow: illustrated four-pair matching, real local feature-based guesses and immediate checked-pair learning retained in replay. Dawnie completed 4/4 and caught a mistake; replay/All games and 390px layout verified without errors. Ten focused tests pass; build OK. Four-minute cap, no Glow or rewards; Wave 2 remains approval-gated.
 - [ ] Wave 2 and Part 2 — blocked on explicit approval
 
-- [ ] Comic Creator Phase A2 (Story Memory, late-added character snapshots, cover consistency, report-only revision check): built in preview; picture test running; then report and wait for Shea (not published). A3 not started.
+- [x] Comic Creator Phase A2 built in preview (Story Memory, late-added character snapshots, snapshot covers, private revision check). 388 tests pass. Picture test: 54 pictures, $7.96 of $15; comparison sheets + scoring sheet in Files; temporary test family fully removed. Fixed during testing: comic edits dropped frozen copies/memory; revision check compared the new picture with itself.
+- [ ] Shea to score the A2 sheets and give GO / NO-GO (not published). Open observation: the one A2 cover sample left out Luna. A3 not started.
