@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
 import { chargeGlow, refundGlow, refundGlowOnce } from "@/lib/glow.server";
-import { pickCastSnapshot, type CastSnapshot } from "./comic-continuity";
+import { resolveCast, type CastSnapshot } from "./comic-continuity";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
