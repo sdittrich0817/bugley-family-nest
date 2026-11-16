@@ -21,6 +21,8 @@ insert into r select 'db: has_role(admin)', public.has_role('00000000-0000-4000-
 insert into r select 'db: anon cannot execute has_active_subscription', not has_function_privilege('anon','public.has_active_subscription(uuid,text)','execute');
 insert into r select 'db: anon cannot execute caller_may_inspect', not has_function_privilege('anon','public.caller_may_inspect(uuid)','execute');
 insert into r select 'db: authenticated cannot execute caller_may_inspect', not has_function_privilege('authenticated','public.caller_may_inspect(uuid)','execute');
+insert into r select 'db: anon cannot insert demo_requests', not has_table_privilege('anon','public.demo_requests','insert');
+insert into r select 'db: service role can insert demo_requests', has_table_privilege('service_role','public.demo_requests','insert');
 
 -- anonymous visitor
 select set_config('request.jwt.claims','{"role":"anon"}',true);
