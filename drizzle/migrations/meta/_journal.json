@@ -302,6 +302,13 @@
       "when": 1794853326747,
       "tag": "0042_caller_may_inspect_null_safe",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1794854594464,
+      "tag": "0043_close_direct_demo_insert",
+      "breakpoints": true
     }
   ]
 }
