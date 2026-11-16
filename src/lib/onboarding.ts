@@ -29,7 +29,7 @@ export const FIRST_PLAY = { sprouts: "memory_meadow", explorers: "dragon_catch",
 export const FIRST_CREATE_PATH = "/kids/studio/v3" as const;
 export const FIRST_LINES: Record<WelcomeBand, { play: string; create: string }> = {
   sprouts: { play: "Memory Meadow: find the bug twins!", create: "Make up a character, then draw a picture!" },
-  explorers: { play: "Dragon Catch: snap dragons, spot the camera’s mistakes", create: "Invent a hero, then make your first comic" },
+  explorers: { play: "Dragon Catch: snap dragons, spot the camera’s mistakes", create: "Create your own character and bring their story to life!" },
   builders: { play: "Cosmic Maze: program your rocket with if-then rules", create: "Invent a character, then write a story" },
 };
 
