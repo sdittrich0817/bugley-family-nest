@@ -117,6 +117,14 @@ describe("memory in prompts", () => {
     expect(out).not.toContain("Pip dances"); // the hero's name alone doesn't make a detail relevant
     expect(out.length).toBeLessThanOrEqual(400);
   });
+  it("keeps details established alongside a place the current panel returns to, and drops events that restate them", () => {
+    const at = (id: string, panel: number, kind: "object" | "place" | "event" | "character", excerpt: string) => ({ id, kind, excerpt, panelId: `p${panel}`, stamp: "s", order: 0, supersedes: [], panel });
+    const items = [at("g", 2, "place", "a secret garden behind a red door"), at("f", 2, "object", "a round blue fountain"), at("ge", 2, "event", "Pip discovers a secret garden behind a red door"),
+      ...Array.from({ length: 10 }, (_, i) => at(`c${i}`, 3 + i, "character", `a friendly helper number ${i}`))];
+    const out = memoryPrompt(items, 330, "Pip goes back to the secret garden", ["Pip"]);
+    expect(out).toContain("a round blue fountain");
+    expect(out).not.toContain("Pip discovers");
+  });
   it("short story-friend names count as a match", () => {
     const items = [{ id: "b", kind: "character" as const, excerpt: "A tiny yellow duck named Bo with a blue bow tie", panelId: "p2", stamp: "s", order: 0, supersedes: [], panel: 2 },
       ...Array.from({ length: 20 }, (_, i) => ({ id: `e${i}`, kind: "object" as const, excerpt: `a shiny seashell number ${i}`, panelId: "p3", stamp: "s", order: i, supersedes: [], panel: 3 }))];

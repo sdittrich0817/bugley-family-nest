@@ -138,11 +138,17 @@ export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, fo
   const head = "Established earlier in this story (the child's exact words, oldest first; newer details already replace older ones):";
   const tail = "Keep these consistent where they appear, but the current panel's instructions win.";
   const words = new Map(items.map(i => [i.id, keyWords(i.excerpt)]));
-  let list = items.filter(i => !items.some(o => o !== i && o.kind === i.kind && words.get(o.id)!.size > words.get(i.id)!.size && [...words.get(i.id)!].every(w => words.get(o.id)!.has(w))));
   // The main heroes appear everywhere, so their names say nothing about relevance.
   const hero = keyWords(heroes.join(" "));
+  const own = (i: LiveItem) => [...words.get(i.id)!].filter(w => !hero.has(w));
+  // Leave out shorter repeats of a detail, and events that mostly restate a described place, friend or object.
+  let list = items.filter(i => !items.some(o => o !== i && o.kind === i.kind && words.get(o.id)!.size > words.get(i.id)!.size && [...words.get(i.id)!].every(w => words.get(o.id)!.has(w))));
+  list = list.filter(i => { if (i.kind !== "event") return true; const w = own(i); const covered = w.filter(x => list.some(o => o.kind !== "event" && words.get(o.id)!.has(x))).length; return !w.length || covered / w.length < 0.6; });
   const want = new Set([...keyWords(focus)].filter(w => !hero.has(w)));
-  const rank = (i: LiveItem) => ([...words.get(i.id)!].some(w => want.has(w)) ? 0 : 1 + ["character", "object", "place", "event"].indexOf(i.kind));
+  const direct = new Set(list.filter(i => own(i).some(w => want.has(w))).map(i => i.id));
+  // Details established alongside a place or friend the current panel mentions (the garden's fountain) come next.
+  const nearby = new Set(list.filter(i => !direct.has(i.id) && i.kind !== "event" && list.some(o => direct.has(o.id) && o.panelId === i.panelId && (o.kind === "place" || o.kind === "character"))).map(i => i.id));
+  const rank = (i: LiveItem) => (direct.has(i.id) ? 0 : nearby.has(i.id) ? 1 : 2 + ["character", "object", "place", "event"].indexOf(i.kind));
   const text = () => `${head} ${list.map(i => `${LABEL[i.kind]} (panel ${i.panel}): "${i.excerpt}".`).join(" ")} ${tail}`;
   while (list.length && text().length > budget) {
     const worst = Math.max(...list.map(rank));
