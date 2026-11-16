@@ -4,6 +4,7 @@ export const CHILD_SCENE_LIMIT = 600;
 export const CHILD_CHANGE_LIMIT = 600;
 const NOTES_LIMIT = 400;
 const CONTINUITY_LIMIT = 700;
+const MEMORY_LIMIT = 600;
 export const COMIC_FRAMING = "One single seamless full-bleed illustration filling the whole frame: no panel borders, frames, gutters, strips, split panels or empty boxes. Let natural open scenery such as sky, wall or ceiling sit above the characters, with faces in the lower two-thirds.";
 export const KEEP_UNCHANGED = "Change ONLY what the child's requested change asks for. Keep the layout, background, colors, objects, poses, character placement and camera angle of the existing scene the same.";
 
@@ -31,7 +32,7 @@ export function buildContinuity(panels: PanelLike[], currentId: string, budget =
 export class ChildTextTooLong extends Error {}
 
 /** Labelled panel description passed to the image pipeline (which then adds DNA, style recipe and safety suffix). */
-export function buildPanelPrompt(input: { scene: string; change?: string | undefined; notes?: string | undefined; genre?: string | undefined; continuity?: string | undefined }): string {
+export function buildPanelPrompt(input: { scene: string; change?: string | undefined; notes?: string | undefined; genre?: string | undefined; continuity?: string | undefined; memory?: string | undefined }): string {
   const scene = input.scene.trim(), change = input.change?.trim();
   if (!scene) throw new ChildTextTooLong("Describe your scene first.");
   if (scene.length > CHILD_SCENE_LIMIT) throw new ChildTextTooLong(`Your scene is a little long for one picture. Can you make it shorter than ${CHILD_SCENE_LIMIT} letters?`);
@@ -40,6 +41,7 @@ export function buildPanelPrompt(input: { scene: string; change?: string | undef
   if (change) parts.push(`Requested change (the child's exact words): ${change}. ${KEEP_UNCHANGED}`);
   if (input.notes?.trim()) parts.push(`Illustration notes (must not contradict the child's words): ${clip(input.notes.trim(), NOTES_LIMIT)}`);
   if (input.genre?.trim()) parts.push(`${input.genre.trim()} mood, colors and lighting.`);
+  if (input.memory?.trim()) parts.push(clip(input.memory.trim(), MEMORY_LIMIT));
   if (input.continuity?.trim()) parts.push(clip(input.continuity.trim(), CONTINUITY_LIMIT));
   parts.push(COMIC_FRAMING);
   return parts.join(" ");
@@ -76,3 +78,10 @@ export function pickCastSnapshot(snapshots: CastSnapshot[] | undefined, ids: str
 
 /** Restored comic/story snapshots never come back busy. */
 export function restoredPaintState(state: unknown) { return state === "painting" || state === "failed" ? "ready" : (typeof state === "string" ? state : "ready"); }
+
+/** Which character references a drawing may use: the comic's frozen copies, live characters (only comics that never froze any), or refuse. */
+export function resolveCast(snapshots: CastSnapshot[] | undefined, ids: string[], prefix: string, styleKey: string): { mode: "snapshot"; cast: CastSnapshot[] } | { mode: "live" } | { mode: "refuse" } {
+  if (!snapshots?.length) return { mode: "live" };
+  const cast = pickCastSnapshot(snapshots, ids, prefix, styleKey);
+  return cast ? { mode: "snapshot", cast } : { mode: "refuse" };
+}

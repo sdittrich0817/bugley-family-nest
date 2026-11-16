@@ -1,6 +1,6 @@
 # Comic Creator 2.0 — Phase A2: Story Memory and Long-Comic Consistency
 
-Updated from your A2 approval (sections 1–5). Section 6 onward of your document was cut off, so this plan is waiting on that part. A3 (making things simpler for children) is not part of this work.
+Matches your full A2 approval (sections 1–10). No screen changes; A3 (making things simpler for children) is not part of this work.
 
 ## 1. Story Memory (stored in the comic itself, no new tables)
 - After a panel is drawn and saved, Bugley records what that panel established:
@@ -63,10 +63,7 @@ Updated from your A2 approval (sections 1–5). Section 6 onward of your documen
   - the revision log stores no child text;
   - older comics without memory still work.
 - Full regression suite (361 tests).
-- Controlled picture test with a temporary test family, deleted afterward: long comics, a late-added character, covers and one-detail revisions. **Budget waits on the rest of your document** (the earlier proposal was a $15 cap).
-
-## Waiting on you
-- Section 6 onward of your approval was cut off at "Do not add the proposed…". Please resend that part, especially the user-experience, testing/budget and stop instructions.
+- Controlled picture test with a temporary test family, deleted afterward: long comics, a late-added character, covers and one-detail revisions. Hard cap: $15 in drawing credit, with a running spend counter.
 
 ## Technical details
 - `comic-continuity.ts` (pure helpers):
