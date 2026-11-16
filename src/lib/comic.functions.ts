@@ -141,7 +141,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
         comic.data.castSnapshot = cm.mergeSnapshots(comic.data.castSnapshot, snap);
       }
       castSnapshot = comic.data.castSnapshot;
-      description = cm.coverDescription(description, cm.memoryPrompt(cm.liveMemory(cm.readMemory(comic.data.storyMemory), comic.data.pages.flatMap((p) => p.panels))));
+      description = cm.coverDescription(description, cm.memoryPrompt(cm.liveMemory(cm.readMemory(comic.data.storyMemory), comic.data.pages.flatMap((p) => p.panels)), undefined, `${description} ${comic.title}`));
     }
     const { generateImage } = await import("./images.server");
     const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot });

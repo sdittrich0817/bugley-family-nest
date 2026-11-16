@@ -120,16 +120,31 @@ export function liveMemory(memory: StoryMemory, panels: PanelText[], currentId?:
 }
 
 const LABEL: Record<MemoryKind, string> = { place: "Place", object: "Important object", character: "Story friend", event: "Happened" };
-/** Budgeted prompt part. Drops the oldest events first, then the oldest other details. */
-export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT): string {
+const STOP = new Set("the and with his her their they them then that this there from into onto over under for are was were has have had its it's a an of to in on at by up down out off all too very big small little some just like when where who what then also back again".split(" "));
+/** Content words used to tell which remembered details the current panel is about (names count even when short). */
+export function keyWords(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const m of collapse(text).matchAll(/[A-Za-z][A-Za-z'-]*/g)) {
+    const w = m[0], low = w.toLowerCase().replace(/'s$/, "");
+    if (STOP.has(low)) continue;
+    if (low.length >= 3 || (/^[A-Z]/.test(w) && low.length >= 2)) out.add(low.length > 3 ? low.replace(/(es|s)$/, "") : low);
+  }
+  return out;
+}
+/** Budgeted prompt part, oldest first. Shorter repeats of a detail already described are left out. When space runs out, details the current
+ *  panel mentions are kept longest, then story friends, objects, places and finally events (oldest dropped first in each group). */
+export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, focus = ""): string {
   if (!items.length) return "";
   const head = "Established earlier in this story (the child's exact words, oldest first; newer details already replace older ones):";
   const tail = "Keep these consistent where they appear, but the current panel's instructions win.";
-  let list = [...items];
+  const words = new Map(items.map(i => [i.id, keyWords(i.excerpt)]));
+  let list = items.filter(i => !items.some(o => o !== i && o.kind === i.kind && words.get(o.id)!.size > words.get(i.id)!.size && [...words.get(i.id)!].every(w => words.get(o.id)!.has(w))));
+  const want = keyWords(focus);
+  const rank = (i: LiveItem) => ([...words.get(i.id)!].some(w => want.has(w)) ? 0 : 1 + ["character", "object", "place", "event"].indexOf(i.kind));
   const text = () => `${head} ${list.map(i => `${LABEL[i.kind]} (panel ${i.panel}): "${i.excerpt}".`).join(" ")} ${tail}`;
   while (list.length && text().length > budget) {
-    const ev = list.findIndex(i => i.kind === "event");
-    list.splice(ev >= 0 ? ev : 0, 1);
+    const worst = Math.max(...list.map(rank));
+    list.splice(list.findIndex(i => rank(i) === worst), 1);
   }
   return list.length ? text() : "";
 }

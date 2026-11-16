@@ -203,7 +203,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
     const panels = p.details.pages.flatMap((page: any) => page.panels);
     const current = panels.find((x: any) => x.id === item.id) ?? item;
     const memory = cm.readMemory(p.details.storyMemory);
-    description = cc.buildPanelPrompt({ scene: current.description || words, change: data.revision, notes, genre: p.details.genre, memory: cm.memoryPrompt(cm.liveMemory(memory, panels, item.id)), continuity: cc.buildContinuity(panels, item.id) });
+    description = cc.buildPanelPrompt({ scene: current.description || words, change: data.revision, notes, genre: p.details.genre, memory: cm.memoryPrompt(cm.liveMemory(memory, panels, item.id), undefined, `${current.description || words} ${data.revision ?? ""}`), continuity: cc.buildContinuity(panels, item.id) });
     // Memory notes run alongside the drawing and never block it.
     const toNote = cm.panelsToNote(memory, panels, item.id);
     if (toNote.length) {

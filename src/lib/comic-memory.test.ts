@@ -107,6 +107,20 @@ describe("memory in prompts", () => {
     expect(out).toContain("a red sail");
     expect(out).not.toContain("xxxx");
   });
+  it("keeps the detailed early description of something the current panel mentions, over later short repeats and small details", () => {
+    const at = (id: string, panel: number, kind: "object" | "place" | "event" | "character", excerpt: string) => ({ id, kind, excerpt, panelId: `p${panel}`, stamp: "s", order: 0, supersedes: [], panel });
+    const items = [at("c1", 1, "object", "a glowing purple star crystal with three sparkly points"), at("f1", 1, "place", "under a big mushroom in the forest"),
+      ...Array.from({ length: 12 }, (_, i) => at(`x${i}`, i + 2, "place", `a muddy little puddle number ${i}`)), at("c7", 7, "object", "the crystal")];
+    const out = memoryPrompt(items, 400, "Pip puts the crystal on top of the old stone tower");
+    expect(out).toContain("a glowing purple star crystal with three sparkly points");
+    expect(out).not.toContain('"the crystal"');
+    expect(out.length).toBeLessThanOrEqual(400);
+  });
+  it("short story-friend names count as a match", () => {
+    const items = [{ id: "b", kind: "character" as const, excerpt: "A tiny yellow duck named Bo with a blue bow tie", panelId: "p2", stamp: "s", order: 0, supersedes: [], panel: 2 },
+      ...Array.from({ length: 20 }, (_, i) => ({ id: `e${i}`, kind: "object" as const, excerpt: `a shiny seashell number ${i}`, panelId: "p3", stamp: "s", order: i, supersedes: [], panel: 3 }))];
+    expect(memoryPrompt(items, 300, "Bo comes back riding a big wave")).toContain("Bo with a blue bow tie");
+  });
   it("covers put the child's cover words first, then the established story", () => {
     const out = coverDescription("The Crystal Quest: Pip finds a crystal", memoryPrompt(liveMemory(built(), [p1, p2, p3, p4])));
     expect(out.startsWith("Cover (the child's words; follow them first): The Crystal Quest: Pip finds a crystal")).toBe(true);
