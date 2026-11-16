@@ -163,14 +163,12 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   const { assertWorkspaceIdle } = await import("./workspace"); assertWorkspaceIdle(p.details);
   if (p.details.finished) throw new Error("Open your creation to keep working first.");
   const cc = await import("./comic-continuity");
-  if (p.kind === "comic") {
-    try { cc.buildPanelPrompt({ scene: data.text ?? "x", change: data.revision }); } catch (e) { if (e instanceof cc.ChildTextTooLong && (data.text ?? "x").trim()) throw e; }
-  }
   const items: any[] = p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages ?? [];
   const item = items.find(x => x.id === data.itemId);
   if (p.kind !== "picture" && !item) throw new Error("Choose a scene first.");
   const words = data.text ?? (p.kind === "picture" ? p.workspace.originalIdea : p.kind === "comic" ? item.description : item.text);
   if (!words?.trim()) throw new Error("Describe your scene first.");
+  if (p.kind === "comic" && words.trim().length > cc.CHILD_SCENE_LIMIT) throw new Error(`Your scene is a little long for one picture. Can you make it shorter than ${cc.CHILD_SCENE_LIMIT} letters?`);
   for (const text of [words, data.revision, data.description].filter(Boolean) as string[]) {
     const g = await s.guardChildText(context.supabase, context.userId, child, text, "story");
     if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up scene.");
