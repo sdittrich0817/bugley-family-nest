@@ -111,9 +111,10 @@ describe("memory in prompts", () => {
     const at = (id: string, panel: number, kind: "object" | "place" | "event" | "character", excerpt: string) => ({ id, kind, excerpt, panelId: `p${panel}`, stamp: "s", order: 0, supersedes: [], panel });
     const items = [at("c1", 1, "object", "a glowing purple star crystal with three sparkly points"), at("f1", 1, "place", "under a big mushroom in the forest"),
       ...Array.from({ length: 12 }, (_, i) => at(`x${i}`, i + 2, "place", `a muddy little puddle number ${i}`)), at("c7", 7, "object", "the crystal")];
-    const out = memoryPrompt(items, 400, "Pip puts the crystal on top of the old stone tower");
+    const out = memoryPrompt([...items, at("e2", 2, "event", "Pip dances in the rain")], 400, "Pip puts the crystal on top of the old stone tower", ["Pip"]);
     expect(out).toContain("a glowing purple star crystal with three sparkly points");
     expect(out).not.toContain('"the crystal"');
+    expect(out).not.toContain("Pip dances"); // the hero's name alone doesn't make a detail relevant
     expect(out.length).toBeLessThanOrEqual(400);
   });
   it("short story-friend names count as a match", () => {

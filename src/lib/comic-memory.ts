@@ -133,13 +133,15 @@ export function keyWords(text: string): Set<string> {
 }
 /** Budgeted prompt part, oldest first. Shorter repeats of a detail already described are left out. When space runs out, details the current
  *  panel mentions are kept longest, then story friends, objects, places and finally events (oldest dropped first in each group). */
-export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, focus = ""): string {
+export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, focus = "", heroes: string[] = []): string {
   if (!items.length) return "";
   const head = "Established earlier in this story (the child's exact words, oldest first; newer details already replace older ones):";
   const tail = "Keep these consistent where they appear, but the current panel's instructions win.";
   const words = new Map(items.map(i => [i.id, keyWords(i.excerpt)]));
   let list = items.filter(i => !items.some(o => o !== i && o.kind === i.kind && words.get(o.id)!.size > words.get(i.id)!.size && [...words.get(i.id)!].every(w => words.get(o.id)!.has(w))));
-  const want = keyWords(focus);
+  // The main heroes appear everywhere, so their names say nothing about relevance.
+  const hero = keyWords(heroes.join(" "));
+  const want = new Set([...keyWords(focus)].filter(w => !hero.has(w)));
   const rank = (i: LiveItem) => ([...words.get(i.id)!].some(w => want.has(w)) ? 0 : 1 + ["character", "object", "place", "event"].indexOf(i.kind));
   const text = () => `${head} ${list.map(i => `${LABEL[i.kind]} (panel ${i.panel}): "${i.excerpt}".`).join(" ")} ${tail}`;
   while (list.length && text().length > budget) {
