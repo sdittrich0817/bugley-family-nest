@@ -95,7 +95,7 @@ function CoOps() {
 function DemoForm() {
   const submit = useServerFn(requestDemo);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "done" | "error" | "limited">("idle");
   const [name, setName] = useState("");
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -120,7 +120,7 @@ function DemoForm() {
     setStatus("sending");
     try {
       const res = await submit({ data: parsed.data });
-      if (res.ok) { setName(parsed.data.leaderName); setStatus("done"); } else setStatus("error");
+      if (res.ok) { setName(parsed.data.leaderName); setStatus("done"); } else setStatus("limited" in res && res.limited ? "limited" : "error");
     } catch { setStatus("error"); }
   }
 
@@ -168,6 +168,7 @@ function DemoForm() {
           <Textarea id="notes" name="notes" maxLength={1000} rows={4} className="rounded-xl" placeholder="Anything we should know about your group?" />
         </Field>
         {status === "error" && <p className="text-sm text-destructive">Something hiccuped. Please try again in a moment.</p>}
+        {status === "limited" && <p className="text-sm text-destructive">Thanks! We’ve already received several requests from you. Please try again later, or email us directly.</p>}
         <Button type="submit" size="lg" disabled={status === "sending"}>
           {status === "sending" ? "Sending…" : "Book a demo"}
         </Button>
