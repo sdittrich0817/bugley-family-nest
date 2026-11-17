@@ -118,4 +118,5 @@
 
 - [x] Comic Creator Phase A2 built in preview (Story Memory, late-added character snapshots, snapshot covers, private revision check). 388 tests pass. Picture test: 54 pictures, $7.96 of $15; comparison sheets + scoring sheet in Files; temporary test family fully removed. Fixed during testing: comic edits dropped frozen copies/memory; revision check compared the new picture with itself.
 - [x] A2 missing-cover-character investigation: cause found (cover words only named the first hero; the character check accepted a missing friend) and fixed; 3/3 retest covers show both characters; $1.21 of $5; 390 tests pass; test family removed.
-- [ ] Shea to score the A2 sheets and give GO / NO-GO (not published). A3 not started.
+- [x] A2 published to bugley.app after Shea's approval; live smoke test passed (drawing, Story Memory, mid-comic frozen copies, covers with both characters, private change report, Glow, interrupted-drawing refund once only, older comics); test family removed; report in Files.
+- [ ] Cover rule vs. child's words: covers always ask for every character, even when the child's words leave one out (blocked: Shea to approve a fix). A3 not started.
