@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { coverDescription, groundItems, liveMemory, MEMORY_PROMPT_LIMIT, memoryPrompt, mergeNotes, mergeSnapshots, missingSnapshotIds, panelsToNote, panelStamp, readMemory, revisionLogRow, type RawMemoryItem, type StoryMemory } from "./comic-memory";
+import { castNames, coverDescription, groundItems, liveMemory, MEMORY_PROMPT_LIMIT, memoryPrompt, mergeNotes, mergeSnapshots, missingSnapshotIds, panelsToNote, panelStamp, readMemory, revisionLogRow, type RawMemoryItem, type StoryMemory } from "./comic-memory";
 import { buildPanelPrompt, resolveCast, type CastSnapshot } from "./comic-continuity";
 import { comicSchema, EMPTY_MAP, newComicPage } from "./comic";
 
@@ -136,6 +136,22 @@ describe("memory in prompts", () => {
     expect(out).toContain("a raft with a red sail");
     expect(out).toContain("the child's cover words win");
     expect(coverDescription("Just my words", "")).toBe("Cover (the child's words; follow them first): Just my words");
+  });
+  it("covers name every frozen character, even when the cover words only mention the first hero", () => {
+    const snaps = [{ id: "luna", title: "Luna", dna: "purple owl", styleKey: "s", refs: ["p/c/snapshots/x/luna-1/0.png"], version: "1" }, { id: "pip", title: "Pip", dna: "orange fox", styleKey: "s", refs: ["p/c/snapshots/x/pip-1/0.png"], version: "1" }];
+    const names = castNames(snaps, ["pip", "luna"]);
+    expect(names).toEqual(["Pip", "Luna"]);
+    const out = coverDescription("The Lighthouse Key: Pip finds a shiny golden key", "", names);
+    expect(out.startsWith("Cover (the child's words; follow them first): The Lighthouse Key: Pip finds a shiny golden key")).toBe(true);
+    expect(out).toContain("Show all 2 main characters together on the cover, each one clearly and fully visible: Pip and Luna.");
+    expect(coverDescription("Pip alone", "", ["Pip"])).toBe("Cover (the child's words; follow them first): Pip alone");
+  });
+  it("a full story memory never pushes a character's name out of the cover words", () => {
+    const items = Array.from({ length: 30 }, (_, i) => ({ id: `o${i}`, kind: "object" as const, excerpt: `a shiny golden seashell number ${i} on the sand`, panelId: "p1", stamp: "s", order: i, supersedes: [], panel: 1 }));
+    const memory = memoryPrompt(items, MEMORY_PROMPT_LIMIT, "lighthouse key", ["Pip", "Luna"]);
+    expect(memory.length).toBeLessThanOrEqual(MEMORY_PROMPT_LIMIT);
+    const out = coverDescription("The Lighthouse Key: Pip finds a key", memory, ["Pip", "Luna", "Bo"]);
+    expect(out).toContain("Pip, Luna and Bo.");
   });
 });
 

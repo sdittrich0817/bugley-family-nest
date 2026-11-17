@@ -157,10 +157,18 @@ export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, fo
   return list.length ? text() : "";
 }
 
-/** Cover: the child's own words lead; story details follow and are the only part that may be shortened. */
-export function coverDescription(childText: string, memory: string): string {
+/** Names of the comic's frozen characters, in the comic's own character order. */
+export function castNames(snapshots: CastSnapshot[] | undefined | null, ids: string[]): string[] {
+  return [...new Set(ids)].map(id => (snapshots ?? []).find(s => s.id === id)?.title?.trim()).filter((t): t is string => !!t);
+}
+const joinNames = (n: string[]) => n.length < 3 ? n.join(" and ") : `${n.slice(0, -1).join(", ")} and ${n[n.length - 1]}`;
+/** Cover: the child's own words lead; every main character is named next (the cover words are usually just the title and
+ *  panel 1, which may not mention a friend who joined later); story details follow and are the only part that may be shortened. */
+export function coverDescription(childText: string, memory: string, cast: string[] = []): string {
   const words = childText.trim();
-  return [words && `Cover (the child's words; follow them first): ${words}`, memory && memory.replace("but the current panel's instructions win", "but the child's cover words win")].filter(Boolean).join(" ");
+  const names = [...new Set(cast.map(c => c.trim()).filter(Boolean))];
+  const together = names.length > 1 ? `Show all ${names.length} main characters together on the cover, each one clearly and fully visible: ${joinNames(names)}.` : "";
+  return [words && `Cover (the child's words; follow them first): ${words}`, together, memory && memory.replace("but the current panel's instructions win", "but the child's cover words win")].filter(Boolean).join(" ");
 }
 
 /** Characters in the comic that don't have a frozen copy yet. */
