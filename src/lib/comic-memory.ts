@@ -2,6 +2,7 @@
 // description, tied to that panel's text version (stamp). Items only count while their panel still says the same
 // thing and is drawn, and only for later panels. Nothing here invents facts.
 import type { CastSnapshot } from "./comic-continuity";
+import { coverCastLine, type CoverCast } from "./cover-cast";
 
 export const MEMORY_KINDS = ["place", "object", "character", "event"] as const;
 export type MemoryKind = (typeof MEMORY_KINDS)[number];
@@ -161,14 +162,24 @@ export function memoryPrompt(items: LiveItem[], budget = MEMORY_PROMPT_LIMIT, fo
 export function castNames(snapshots: CastSnapshot[] | undefined | null, ids: string[]): string[] {
   return [...new Set(ids)].map(id => (snapshots ?? []).find(s => s.id === id)?.title?.trim()).filter((t): t is string => !!t);
 }
-const joinNames = (n: string[]) => n.length < 3 ? n.join(" and ") : `${n.slice(0, -1).join(", ")} and ${n[n.length - 1]}`;
-/** Cover: the child's own words lead; every main character is named next (the cover words are usually just the title and
- *  panel 1, which may not mention a friend who joined later); story details follow and are the only part that may be shortened. */
-export function coverDescription(childText: string, memory: string, cast: string[] = []): string {
+/** Cover: the child's own words lead; the intended cast (see cover-cast.ts) is named next — by default every main character,
+ *  since the cover words are usually just the title and panel 1 — and story details follow; only those may be shortened.
+ *  A plain list of names means the default plan. */
+export function coverDescription(childText: string, memory: string, cast: string[] | CoverCast = []): string {
   const words = childText.trim();
-  const names = [...new Set(cast.map(c => c.trim()).filter(Boolean))];
-  const together = names.length > 1 ? `Show all ${names.length} main characters together on the cover, each one clearly and fully visible: ${joinNames(names)}.` : "";
+  const plan: CoverCast = Array.isArray(cast) ? defaultCoverCast(cast) : cast;
+  const together = coverCastLine(plan);
   return [words && `Cover (the child's words; follow them first): ${words}`, together, memory && memory.replace("but the current panel's instructions win", "but the child's cover words win")].filter(Boolean).join(" ");
+}
+function defaultCoverCast(cast: string[]): CoverCast {
+  const names = [...new Set(cast.map(c => c.trim()).filter(Boolean))];
+  return { mode: "default", ids: names, names, excluded: [], mustShow: names.length > 1 ? names : [], reason: "default" };
+}
+/** Story details for a cover, minus any that mention a character the child's words leave off it. */
+export function coverMemoryItems(items: LiveItem[], excluded: string[]): LiveItem[] {
+  if (!excluded.length) return items;
+  const out = excluded.map(n => new RegExp(`(?<![A-Za-z])${n.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![A-Za-z])`, "i"));
+  return items.filter(i => !out.some(r => r.test(i.excerpt)));
 }
 
 /** Characters in the comic that don't have a frozen copy yet. */

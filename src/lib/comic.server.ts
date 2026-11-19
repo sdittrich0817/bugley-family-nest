@@ -61,17 +61,23 @@ export async function placeComicBubble(path: string, hero: string, page: ComicPa
   return { ...out, x: Math.min(out.x, 100 - out.w), y: Math.min(out.y, 100 - out.h) };
 }
 
-/** V3 cover words: freezes any character still missing a copy (before any charge), then the child's words, every frozen
- *  character by name, and the relevant established story. Shared by the cover action and the cover evaluation. */
+/** V3 cover words: freezes any character still missing a copy (before any charge), then decides the intended cover cast
+ *  from the child's words (default: every frozen character), and builds the description from the child's words, that
+ *  cast and the relevant established story. The returned ids/mustShow drive both the picture and the character check.
+ *  Shared by the cover action and the cover evaluation. */
 export async function prepareV3Cover(sb: SupabaseClient<any>, userId: string, childId: string, comic: Comic, childText: string) {
   const cm = await import("./comic-memory");
+  const { intendedCoverCast } = await import("./cover-cast");
   const missing = cm.missingSnapshotIds(comic.data.castSnapshot, comic.data.characterIds);
   if (missing.length) {
     const snap = await (await import("./workspace.server")).snapshotCast(sb, userId, childId, comic.id, missing, comic.data.styleKey);
     if (!snap || snap.length !== missing.length) throw new Error("Bugley couldn’t save a copy of your characters for this cover. Your glow is safe. Please try again.");
     comic.data.castSnapshot = cm.mergeSnapshots(comic.data.castSnapshot, snap);
   }
-  const names = cm.castNames(comic.data.castSnapshot, comic.data.characterIds);
-  const memory = cm.memoryPrompt(cm.liveMemory(cm.readMemory(comic.data.storyMemory), comic.data.pages.flatMap((p) => p.panels)), undefined, `${childText} ${comic.title}`, names);
-  return { description: cm.coverDescription(childText, memory, names), castSnapshot: comic.data.castSnapshot as import("./comic-continuity").CastSnapshot[] };
+  const snaps = (comic.data.castSnapshot ?? []) as import("./comic-continuity").CastSnapshot[];
+  const members = [...new Set(comic.data.characterIds)].map((id) => ({ id, name: snaps.find((s) => s.id === id)?.title?.trim() ?? "" })).filter((m) => m.name);
+  const plan = intendedCoverCast(childText, members);
+  const live = cm.coverMemoryItems(cm.liveMemory(cm.readMemory(comic.data.storyMemory), comic.data.pages.flatMap((p) => p.panels)), plan.excluded);
+  const memory = cm.memoryPrompt(live, undefined, `${childText} ${comic.title}`, plan.names);
+  return { description: cm.coverDescription(childText, memory, plan), castSnapshot: snaps, characterIds: plan.ids, mustShow: plan.mustShow, plan };
 }

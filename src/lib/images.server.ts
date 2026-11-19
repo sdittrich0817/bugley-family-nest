@@ -8,6 +8,7 @@ import { resolveCast, type CastSnapshot } from "./comic-continuity";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
+import { presenceRule } from './cover-cast';
 import { imageFileType, MAX_IMAGE_BYTES, allowedImageContentType } from './image-file';
 import { avatarCost, type BugConfig } from './bug-avatar';
 import { ImageServiceError, imageServiceFailure } from './image-failure';
@@ -90,8 +91,8 @@ async function imageIsSafe(url: string) {
 
 const driftSchema = z.object({ pass: z.boolean(), score: z.number().min(0).max(100), issues: z.string().max(300) });
 async function driftCheck(image: string, refs: string[], dna: string, style: string, request: string, mustShow: string[] = []) {
-  // Covers name every character; a missing one fails the check so the existing free retries redraw it.
-  const presence = mustShow.length > 1 ? ` Every one of these locked characters must appear in the scene: ${mustShow.join(", ")}. If any one is missing, pass=false and score below 50.` : "";
+  // Covers require exactly the characters their instructions named; a missing one fails the check so the existing free retries redraw it.
+  const presence = presenceRule(mustShow);
   const v = await aiObject(driftSchema,
     "You check character consistency for a children's book. The FIRST image is a new scene; the others are the character reference set. Compare each locked character in the scene to its references and DNA: same colors, same outfit, same special item, same features and markings, same art style. Changes the request explicitly asks for are allowed. score 0-100 for match; pass=true only if every locked character clearly matches (score >= 70)." + presence,
     `Character DNA: ${dna}\nArt style: ${style}\nScene request: ${request}`, [image, ...refs.slice(0, 6)]);
@@ -189,7 +190,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined; castSnapshot?: CastSnapshot[] | undefined; everyCharacter?: boolean }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined; castSnapshot?: CastSnapshot[] | undefined; mustShow?: string[] | undefined }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -277,7 +278,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
         return { ok: false, reply: back("Hmm, that picture didn’t come out right, so I tossed it. Your glow is back! Let’s try a new idea."), chips: ["Try it a little differently", "Pick a new style"] };
       }
       if (!locked.length) { best = { src, score: 100 }; break; }
-      const d = await driftCheck(src, locked.flatMap((c) => c.refs), dna, style.name, input.description, input.everyCharacter ? locked.map((c) => c.title) : []);
+      const d = await driftCheck(src, locked.flatMap((c) => c.refs), dna, style.name, input.description, (input.mustShow ?? []).filter((n) => locked.some((c) => c.title === n)));
       const passed = passesCharacterCheck(d);
       const { error: logError } = await a.from("drift_checks").insert({ parent_id: userId, child_id: child.id, model: model.model, model_version: model.version, request_id: requestId, creation_id: input.lockId ?? null, style_key: input.styleKey, attempt, passed, score: Math.round(d.score), notes: d.issues, checker_available: d.issues !== 'check unavailable', delivered: passed });
       if (logError) throw new Error('Character check couldn’t be recorded.');

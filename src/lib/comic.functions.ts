@@ -131,13 +131,16 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
     }
     if (!description || description.length < 3) throw new Error("Describe what happens first.");
     let castSnapshot: any[] | undefined;
+    let characterIds = comic.data.characterIds;
+    let mustShow: string[] | undefined;
     if (data.action === "cover" && comic.data.workspace?.v3) {
-      // V3 covers use the comic's frozen characters and established story; the child's words lead and every character is named.
+      // V3 covers use the comic's frozen characters and established story; the child's words lead and decide who is on
+      // the cover (default: every character). The same decision picks the references and what the character check requires.
       const prepared = await (await import("./comic.server")).prepareV3Cover(context.supabase, context.userId, child.id, comic, description);
-      description = prepared.description; castSnapshot = prepared.castSnapshot;
+      description = prepared.description; castSnapshot = prepared.castSnapshot; characterIds = prepared.characterIds; mustShow = prepared.mustShow;
     }
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds: comic.data.characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot, everyCharacter: !!castSnapshot });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot, mustShow });
     if (!r.ok) throw new Error(r.reply);
     if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;
