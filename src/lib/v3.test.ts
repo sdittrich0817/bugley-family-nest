@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { comicExtendProblem, draftRev, draftSaveDecision, replaceV3Art, v3ComicPages, v3Details, v3StoryPages } from "./v3";
+import { comicExtendProblem, draftConflictIsOwn, draftSaveDecision, draftVersion, savedDraftVersion, replaceV3Art, v3ComicPages, v3Details, v3StoryPages } from "./v3";
 
 describe("character-first Create rules", () => {
   it("creates the child's exact chosen panel count across pages", () => {
@@ -75,22 +75,39 @@ d3("A3.1 comic naming at the end", () => {
   });
 });
 
-describe("A3.2 character idea saves", () => {
-  const at = (s: number) => new Date(Date.UTC(2026, 10, 19, 19, 0, s)).toISOString();
-  it("creates a new idea", () => expect(draftSaveDecision(null, at(1))).toBe("insert"));
-  it("never lets an older save overwrite a newer one", () =>
-    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(3))).toBe("stale"));
-  it("an identical save time is not written twice", () =>
-    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(5))).toBe("stale"));
-  it("a newer save replaces the older words", () =>
-    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(9))).toBe("update"));
-  it("an idea saved before A3.2 (no save time) can be updated", () =>
-    expect(draftSaveDecision({ details: { characterDraftV3: true } }, at(1))).toBe("update"));
-  it("an idea that already became a character is never reopened", () =>
-    expect(draftSaveDecision({ details: { characterDraftV3: true, closed: true } }, at(9))).toBe("stale"));
-  it("save times must be fixed-width ISO so text order is time order", () => {
-    expect(draftRev.safeParse(at(1)).success).toBe(true);
-    expect(draftRev.safeParse("2026-11-19").success).toBe(false);
+describe("A3.2 character idea saves (server versions)", () => {
+  const row = (details: object) => ({ details: { characterDraftV3: true, ...details } });
+  it("creates a new idea", () => expect(draftSaveDecision(null, 0)).toEqual({ action: "insert", expect: 0 }));
+  it("a save based on the newest version is written as the next version", () =>
+    expect(draftSaveDecision(row({ draftVersion: 4 }), 4)).toEqual({ action: "update", expect: 4 }));
+  it("a delayed save based on an older version is never written", () =>
+    expect(draftSaveDecision(row({ draftVersion: 5 }), 3).action).toBe("conflict"));
+  it("two devices that both saw version 2: once one saves, the other is a conflict", () => {
+    expect(draftSaveDecision(row({ draftVersion: 2 }), 2).action).toBe("update");
+    expect(draftSaveDecision(row({ draftVersion: 3 }), 2).action).toBe("conflict");
+  });
+  it("a device that claims a version newer than the server's is a conflict, not a write", () =>
+    expect(draftSaveDecision(row({ draftVersion: 2 }), 7).action).toBe("conflict"));
+  it("an idea saved before versioning counts as version 0", () => {
+    expect(savedDraftVersion({ characterDraftV3: true, draftRev: "2026-11-19T19:00:00.000Z" })).toBe(0);
+    expect(draftSaveDecision(row({}), 0)).toEqual({ action: "update", expect: 0 });
+  });
+  it("an idea that already became a character is never reopened, whatever the version", () => {
+    expect(draftSaveDecision(row({ closed: true, draftVersion: 3 }), 3).action).toBe("closed");
+    expect(draftSaveDecision(row({ closed: true }), undefined).action).toBe("closed");
+  });
+  it("device clocks play no part: only whole, non-negative version numbers are accepted", () => {
+    expect(draftVersion.safeParse(3).success).toBe(true);
+    expect(draftVersion.safeParse(-1).success).toBe(false);
+    expect(draftVersion.safeParse(1.5).success).toBe(false);
+    expect(draftVersion.safeParse("2026-11-19T19:00:00.000Z").success).toBe(false);
+    expect(savedDraftVersion({ draftVersion: "9" })).toBe(0);
+  });
+  it("a conflict with this device's own late save is adopted; another device's words are not", () => {
+    const mine = [{ description: "Pip the cat", style: "crayon" }];
+    expect(draftConflictIsOwn({ description: "Pip the cat", style: "crayon" }, mine)).toBe(true);
+    expect(draftConflictIsOwn({ description: "Pip the orange cat", style: "crayon" }, mine)).toBe(false);
+    expect(draftConflictIsOwn({ description: "Pip the cat", style: "cartoon" }, mine)).toBe(false);
   });
 });
 

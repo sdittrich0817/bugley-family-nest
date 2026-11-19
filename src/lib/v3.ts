@@ -33,19 +33,29 @@ export function v3CoverWords(title: string, titlePending: boolean, firstWords: s
   return `${titlePending ? "" : `${title}: `}${firstWords ?? ""}`.slice(0, 600);
 }
 
-/** A3.2 character-idea saves carry the time the child last changed their words (fixed-width ISO, so text order is time order). */
-export const draftRev = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+/** A3.2 character-idea saves are versioned by the server: each successful save adds one to `draftVersion`. */
+export const draftVersion = z.number().int().min(0).max(1_000_000);
+export function savedDraftVersion(details: unknown) {
+  const v = (details as { draftVersion?: unknown } | null)?.draftVersion;
+  return typeof v === "number" && Number.isInteger(v) && v >= 0 ? v : 0;
+}
 /**
- * Should this character-idea save be written? An older save never overwrites a newer one,
- * and an idea that already became a character (closed) is never reopened by a late save.
+ * Should this character-idea save be written? The client sends the server version it last saw (`base`). A save based
+ * on an older version (a delayed request, or another device saved first) is a conflict and is never written; an idea
+ * that already became a character (closed) is never reopened. `expect` is the version the conditional write requires.
+ * A missing base comes only from a version published before A3.2's versioning and writes over the current version.
  */
-export function draftSaveDecision(old: { details: unknown } | null, rev: string | undefined): "insert" | "update" | "stale" {
-  if (!old) return "insert";
-  const d = (old.details ?? {}) as { closed?: boolean; draftRev?: unknown };
-  if (d.closed) return "stale";
-  const saved = typeof d.draftRev === "string" ? d.draftRev : undefined;
-  if (rev && saved && rev <= saved) return "stale";
-  return "update";
+export function draftSaveDecision(old: { details: unknown } | null, base: number | undefined): { action: "insert" | "update" | "conflict" | "closed"; expect: number } {
+  if (!old) return { action: "insert", expect: 0 };
+  if ((old.details as { closed?: boolean } | null)?.closed) return { action: "closed", expect: 0 };
+  const current = savedDraftVersion(old.details);
+  if (base !== undefined && base !== current) return { action: "conflict", expect: current };
+  return { action: "update", expect: current };
+}
+/** After a conflict: the newer server words are this device's own (an earlier request that landed late, or the same
+ * words), so the device can simply adopt the version; otherwise another device changed the idea and the child chooses. */
+export function draftConflictIsOwn(server: { description: string; style: string }, mine: { description: string; style: string }[]) {
+  return mine.some((m) => m.description === server.description && m.style === server.style);
 }
 
 /**

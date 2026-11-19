@@ -1,5 +1,6 @@
-// A3.2: one microphone control for every comic box. Uses only the browser's own speech recognition;
-// Bugley never records, uploads or keeps audio. Recognised words go into the child's box, where they can edit them,
+// A3.2: one microphone control for comic boxes. Uses only the browser's own speech recognition: Bugley's code never
+// records, uploads or keeps audio, but the browser itself may send the sound to its maker's speech service (Chrome:
+// Google; Safari: Apple) to turn it into words. Recognised words go into the child's box, where they can edit them,
 // and are saved and safety-checked exactly like typed words.
 import { useEffect, useRef, useState } from "react";
 import { Check, Keyboard, Mic, Square } from "lucide-react";
@@ -26,6 +27,13 @@ const recognizer = (): (new () => Recognizer) | undefined =>
 
 // Only one microphone listens at a time across the page.
 let active: Recognizer | null = null;
+
+/**
+ * Pending founder approval of the A3.2 voice privacy review: boxes that had no microphone before A3.2 (character
+ * "what to change", comic name, speech bubbles) stay without one until consent/disclosure decisions are made.
+ * Boxes that already had a microphone keep it.
+ */
+export const VOICE_IN_NEW_BOXES = false;
 
 export type VoiceState = "idle" | "listening" | "heard" | "problem";
 

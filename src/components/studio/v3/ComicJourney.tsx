@@ -22,7 +22,7 @@ import { DeleteCreationButton } from "../DeleteCreationButton";
 import { ComicReader, PanelCanvas } from "../ComicMaker";
 import { StoryReader } from "../StoryMaker";
 import type { SidekickChild } from "../Sidekick";
-import { VoiceButton } from "./VoiceInput";
+import { VoiceButton, VOICE_IN_NEW_BOXES } from "./VoiceInput";
 import { BugleyCompanion, BugleyMagic, Confetti } from "./BugleyCompanion";
 import { ComicSlideshow } from "./ComicSlideshow";
 import { StoryBookPreview } from "./StoryBookPreview";
@@ -66,7 +66,7 @@ import type { OutputKind, WorkspaceProject } from "@/lib/workspace";
 import { childFriendlyError } from "@/lib/kid-errors";
 import { comicTitleIdeas } from "@/lib/comic-title";
 import { liveMemory, readMemory } from "@/lib/comic-memory";
-import { v3CoverWords } from "@/lib/v3";
+import { draftConflictIsOwn, v3CoverWords } from "@/lib/v3";
 import {
   COMIC_LENGTHS,
   GENRE_EMOJI,
@@ -166,7 +166,14 @@ export function ComicJourney({
   const ownDraft = useRef<string | undefined>(undefined);
   const draftSaved = useRef<{ description: string; style: string } | null>(null);
   const draftFailed = useRef("");
-  const editedAt = useRef("");
+  // Server-assigned save versions per idea, this device's recent save attempts, and the one-at-a-time save queue.
+  const draftVersions = useRef(new Map<string, number>());
+  const draftSent = useRef<{ description: string; style: string }[]>([]);
+  const draftChain = useRef<Promise<unknown>>(Promise.resolve());
+  const closedDrafts = useRef(new Set<string>());
+  const [draftClash, setDraftClash] = useState<{ id: string; description: string; styleKey: string } | null>(null);
+  const clashRef = useRef(draftClash);
+  clashRef.current = draftClash;
   const draftNow = useRef<{ description: string; style: string } | null>(null);
   const startKey = useRef<string | null>(null);
   const running = useRef(false);
@@ -229,6 +236,7 @@ export function ComicJourney({
       setBranch("new");
       void loadDraft({ data: { childId: child.id, id: draftId } })
         .then((d) => {
+          draftVersions.current.set(draftId, d.version);
           draftSaved.current = { description: d.description, style: d.styleKey };
           setDescription(d.description);
           setStyle(d.styleKey);
@@ -298,6 +306,7 @@ export function ComicJourney({
     window.scrollTo({ top: 0, behavior: "smooth" });
     try {
       if (pendingSave.current) await pendingSave.current.catch(() => {});
+      await draftChain.current;
       await fn();
     } catch (e) {
       setNote(childFriendlyError(e));
@@ -329,38 +338,61 @@ export function ComicJourney({
     startKey.current = null;
     setBranch("setup");
   }
-  // A3.2 quiet character-idea save. Each save carries when the child last changed their words, so an older save
-  // never replaces a newer one. Same safety check as "Meet my character"; no Glow; only the words and style are kept.
+  // A3.2 quiet character-idea save. The server numbers every save and only writes one based on the newest number, so a
+  // delayed request or another device's older view never replaces newer words. Same safety check as "Meet my
+  // character"; no Glow; only the words and style are kept.
   if (branch === "new" && !adding && !project) draftNow.current = { description, style };
-  useEffect(() => {
-    editedAt.current = new Date().toISOString();
-  }, [description, style]);
+  /** Queues one save at a time. Resolves true once these words are the saved ones. */
+  function sendDraft(key: string, snap: { description: string; style: string }, explicit: boolean) {
+    const job = draftChain.current.then(async () => {
+      if (closedDrafts.current.has(key)) return false;
+      if (draftSaved.current?.description === snap.description && draftSaved.current.style === snap.style) return true;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        draftSent.current = [...draftSent.current.slice(-4), snap];
+        const r = await saveDraft({
+          data: { childId: child.id, id: key, description: snap.description, styleKey: snap.style, environment: env, kind: wanted.current, base: draftVersions.current.get(key) ?? 0 },
+        });
+        draftVersions.current.set(key, r.version);
+        if (r.saved) {
+          draftSaved.current = snap;
+          return true;
+        }
+        if (r.closed || !r.conflict) {
+          closedDrafts.current.add(key);
+          return false;
+        }
+        const theirs = { description: r.conflict.description, style: r.conflict.styleKey };
+        if (theirs.description === snap.description && theirs.style === snap.style) {
+          draftSaved.current = snap;
+          return true;
+        }
+        // This device's own earlier save landed late, or the child tapped "Meet my character": save on top of it.
+        if (explicit || draftConflictIsOwn(theirs, draftSent.current.slice(0, -1))) continue;
+        // Another device changed this idea: the child chooses which words to keep.
+        setDraftClash({ id: key, ...r.conflict });
+        return false;
+      }
+      return false;
+    });
+    draftChain.current = job.catch(() => {});
+    return job;
+  }
   async function quietDraftSave(snap: { description: string; style: string } | null) {
-    if (!snap || snap.description.trim().length < 3) return;
+    if (!snap || snap.description.trim().length < 3 || clashRef.current) return;
     if (draftSaved.current?.description === snap.description && draftSaved.current.style === snap.style) return;
     const sig = `${snap.style}|${snap.description}`;
     if (draftFailed.current === sig) return;
     const key = (draftKey.current ??= crypto.randomUUID());
-    const rev = editedAt.current || new Date().toISOString();
-    if (pendingSave.current) await pendingSave.current.catch(() => {});
-    pendingSave.current = (async () => {
-      try {
-        await saveDraft({
-          data: { childId: child.id, id: key, description: snap.description, styleKey: snap.style, environment: env, kind: wanted.current, rev },
-        });
-        draftSaved.current = snap;
-        if (ownDraft.current !== key && draftKey.current === key) {
-          ownDraft.current = key;
-          onDraft(key);
-        }
-      } catch {
-        // Not retried for the same words (a safety check already explained itself, or the next change tries again).
-        draftFailed.current = sig;
+    try {
+      const ok = await sendDraft(key, snap, false);
+      if (ok && ownDraft.current !== key && draftKey.current === key) {
+        ownDraft.current = key;
+        onDraft(key);
       }
-    })().finally(() => {
-      pendingSave.current = null;
-    });
-    await pendingSave.current;
+    } catch {
+      // Not retried for the same words (a safety check already explained itself, or the next change tries again).
+      draftFailed.current = sig;
+    }
   }
   const flushDraft = useRef(quietDraftSave);
   flushDraft.current = quietDraftSave;
@@ -407,18 +439,9 @@ export function ComicJourney({
     await run("Bugley is reading about your character…", async () => {
       draftKey.current ??= crypto.randomUUID();
       if (!adding) {
-        await saveDraft({
-          data: {
-            childId: child.id,
-            id: draftKey.current,
-            description: value,
-            styleKey: style,
-            environment: env,
-            kind: wanted.current,
-            rev: new Date().toISOString(),
-          },
-        });
-        draftSaved.current = { description: value, style };
+        clashRef.current = null;
+        setDraftClash(null);
+        await sendDraft(draftKey.current, { description: value, style }, true);
         ownDraft.current = draftKey.current;
         onDraft(draftKey.current);
       }
@@ -701,6 +724,41 @@ export function ComicJourney({
       {facts?.question && (
         <p className="text-sm font-semibold text-muted-foreground">What you’ve told Bugley so far:</p>
       )}
+      {draftClash && draftClash.id === draftKey.current && (
+        <div role="status" className="space-y-2 rounded-2xl border-2 border-primary bg-card p-3">
+          <p className="font-display text-lg">Your idea was changed on another screen too.</p>
+          <p className="text-muted-foreground">The other screen says: “{draftClash.description}”</p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              disabled={!!busy}
+              onClick={() => {
+                clashRef.current = null;
+                setDraftClash(null);
+                void quietDraftSave(draftNow.current);
+              }}
+            >
+              Keep my words here
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!!busy}
+              onClick={() => {
+                draftSaved.current = { description: draftClash.description, style: draftClash.styleKey };
+                setDescription(draftClash.description);
+                setStyle(draftClash.styleKey);
+                setFacts(null);
+                setOptions([]);
+                clashRef.current = null;
+                setDraftClash(null);
+              }}
+            >
+              Use the other words
+            </Button>
+          </div>
+        </div>
+      )}
       <Textarea
         aria-label="Describe your character"
         maxLength={600}
@@ -833,12 +891,14 @@ export function ComicJourney({
               className="mt-2"
             />
           </label>
-          <VoiceButton
-            ageBand={child.age_band}
-            what="what to change"
-            disabled={!!busy}
-            onText={(t) => setHeroChange((v) => appendWords(v, t, 120))}
-          />
+          {VOICE_IN_NEW_BOXES && (
+            <VoiceButton
+              ageBand={child.age_band}
+              what="what to change"
+              disabled={!!busy}
+              onText={(t) => setHeroChange((v) => appendWords(v, t, 120))}
+            />
+          )}
           <Button variant="secondary" disabled={!!busy || !heroChange.trim()}>
             <Paintbrush />
             Change it · 1 Glow
@@ -954,12 +1014,14 @@ export function ComicJourney({
           Use this name
         </Button>
       </form>
-      <VoiceButton
-        ageBand={child.age_band}
-        what="your comic name"
-        disabled={!!busy}
-        onText={(t) => setNameText((v) => appendWords(v, t, 80))}
-      />
+      {VOICE_IN_NEW_BOXES && (
+        <VoiceButton
+          ageBand={child.age_band}
+          what="your comic name"
+          disabled={!!busy}
+          onText={(t) => setNameText((v) => appendWords(v, t, 80))}
+        />
+      )}
     </div>
   );
   const allArt = (
@@ -2004,12 +2066,14 @@ export function ComicJourney({
                     placeholder={`${cast.find((c) => selectedIds.includes(c.id))?.title ?? "Hero"}: “Look at that!”`}
                     onChange={(e) => setDialogue(e.target.value)}
                   />
-                  <VoiceButton
-                    ageBand={child.age_band}
-                    what="the speech bubble words"
-                    disabled={!!busy}
-                    onText={(t) => setDialogue((v) => appendWords(v, t, 200))}
-                  />
+                  {VOICE_IN_NEW_BOXES && (
+                    <VoiceButton
+                      ageBand={child.age_band}
+                      what="the speech bubble words"
+                      disabled={!!busy}
+                      onText={(t) => setDialogue((v) => appendWords(v, t, 200))}
+                    />
+                  )}
                   <div className="flex flex-wrap gap-2">
                     <Button disabled={!!busy || !dialogue.trim()} onClick={() => void keepPanel(dialogue)}>
                       Add words
