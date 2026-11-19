@@ -910,7 +910,7 @@ export function ComicJourney({
           role="alert"
           className="fixed inset-x-3 bottom-24 z-40 mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-2xl border-4 border-destructive bg-card p-4 text-card-foreground shadow-lift"
         >
-          <p className="min-w-0 flex-1 font-semibold">{note}</p>
+          <p className="min-w-0 flex-1 basis-56 font-semibold">{note}</p>
           <div className="flex flex-wrap gap-2">
             {projectId && !project ? (
               <Button
