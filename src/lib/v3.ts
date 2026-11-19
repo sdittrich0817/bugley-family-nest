@@ -14,8 +14,13 @@ export function v3StoryPages(count: number) {
   z.number().int().min(5).max(12).parse(count);
   return Array.from({ length: count }, (_, i) => newStoryPage(STORY_STEPS[Math.floor(i * 5 / count)] ?? "Ending"));
 }
-export function v3Details(kind: "comic" | "story" | "picture", count: number, character: { id: string; title: string; styleKey: string }, genre = "Adventure") {
-  const workspace = { version: 1, v3: true, originalIdea: "", activity: "make", outlineApproved: true, castVersions: {} };
+/** Temporary internal comic title until the child names it at the end. Built only from the approved character's name. */
+export function v3TempTitle(heroTitle: string) {
+  const name = heroTitle.trim() || "My";
+  return (name === "My" ? "My comic" : `${name}${/s$/i.test(name) ? "’" : "’s"} comic`).slice(0, 80);
+}
+export function v3Details(kind: "comic" | "story" | "picture", count: number, character: { id: string; title: string; styleKey: string }, genre = "Adventure", titlePending = false) {
+  const workspace = { version: 1, v3: true, originalIdea: "", activity: "make", outlineApproved: true, castVersions: {}, ...(titlePending ? { titlePending: true } : {}) };
   if (kind === "picture") return { workspace, genre, characters: [character.id], mode: "draft", pictureFlow: true };
   return { workspace, genre, styleKey: character.styleKey, characterIds: [character.id], map: { hero: character.title, want: "", place: "", problem: "", ending: "" }, pages: kind === "comic" ? v3ComicPages(count) : v3StoryPages(count), finished: false, cover: null, followups: [] };
 }
@@ -23,4 +28,7 @@ export function v3Details(kind: "comic" | "story" | "picture", count: number, ch
 export function replaceV3Art<T extends { image: string | null; description: string; text?: string }>(item: T, result: { ok: boolean; path?: string }, description: string): T {
   if (!result.ok || !result.path) return item;
   return { ...item, description: description.slice(0, 600), image: result.path };
+}/** Cover words: the child's comic name (once they have chosen one) and their first panel. A temporary name is left out. */
+export function v3CoverWords(title: string, titlePending: boolean, firstWords: string | null | undefined) {
+  return `${titlePending ? "" : `${title}: `}${firstWords ?? ""}`.slice(0, 600);
 }

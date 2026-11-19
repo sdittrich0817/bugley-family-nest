@@ -78,7 +78,7 @@ export const updateWorkspace = createServerFn({ method: "POST" }).middleware([re
   if (project.updatedAt !== data.updatedAt) throw new Error("Your creation changed in another window. Reopen it; your words are still here.");
   assertWorkspaceIdle(project.details);
   const check = async (text: string) => { if (!text.trim()) return; const g = await s.guardChildText(context.supabase, context.userId, child, text, "story"); if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up idea."); };
-  if (data.title) { await check(data.title); project.title = data.title; }
+  if (data.title) { await check(data.title); project.title = data.title; delete project.workspace.titlePending; }
   if (data.idea && data.idea !== project.workspace.originalIdea) { await check(data.idea); project.workspace.originalIdea = data.idea; project.workspace.facts = undefined; project.workspace.outlineApproved = false; if (project.kind === "picture") { project.body = data.idea; if (!project.workspace.v3) invalidatePicture(project); } }
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   if (data.styleKey && data.styleKey !== project.styleKey) {

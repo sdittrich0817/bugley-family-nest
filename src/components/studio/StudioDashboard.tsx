@@ -33,13 +33,16 @@ const DEFAULT_GAMES: ArcadeId[] = ["dragon_catch", "mystery_manor", "doodle_duel
 
 export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild & { bug?: unknown; avatar?: unknown }; glow?: { total: number } | undefined; onAlbum: () => void }) {
   const navigate = useNavigate();
-  const { data: cast = [] } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
-  const { data: open = [] } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
+  const { data: cast = [], isFetched: castFetched } = useQuery({ queryKey: ["cast", child.id], queryFn: () => listCast({ data: { childId: child.id } }) });
+  const { data: open = [], isFetched: openFetched } = useQuery({ queryKey: ["in-progress", child.id], queryFn: () => listInProgress({ data: { childId: child.id } }) });
   const [favs, setFavs] = useState<ArcadeId[]>([]);
   useEffect(() => { setFavs(favoriteGames(readProgress(child.id))); }, [child.id]);
   const games = (favs.length ? favs : DEFAULT_GAMES).map((id) => ARCADE_GAMES.find((g) => g.id === id)!).filter(Boolean);
-  const start = () => void navigate({ to: "/kids/studio/v3" });
+  // A3.1: the card the child tapped (comic, picture or story) travels with them into character creation.
+  const start = (kind?: "picture" | "comic" | "story") => void navigate({ to: "/kids/studio/v3", search: kind ? { kind } : {} });
   const [pickFor, setPickFor] = useState<(typeof JOURNEYS)[number] | null>(null);
+  // A fast tap before the characters have loaded waits for them instead of dropping the choice.
+  useEffect(() => { if (pickFor && castFetched && !cast.length) start(pickFor.key); }, [pickFor, castFetched, cast.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const [bugOpen, setBugOpen] = useState(false);
   const [bug, setBug] = useState<unknown>(child.bug ?? child.avatar);
   const qc = useQueryClient();
@@ -54,7 +57,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
         <div className="shrink-0">
           <button onClick={() => setBugOpen(true)} aria-label="Update my bug picture" className="group relative rounded-full ring-4 ring-primary transition hover:scale-105"><ChildAvatar avatar={bug} seed={child.id} className="size-28" /><span className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-glow"><Pencil className="size-4" /></span></button></div>
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-widest opacity-80">Welcome back</p>
+          <p className="min-h-5 text-sm font-semibold uppercase tracking-widest opacity-80">{castFetched && openFetched ? (cast.length || open.length ? "Welcome back" : "Welcome!") : ""}</p>
           <h1 className="font-display text-4xl sm:text-5xl">{child.nickname}’s Studio</h1>
           <p className="max-w-md opacity-90">Make it. Play it. Learn how AI really works.</p>
         </div>
@@ -82,17 +85,18 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
     <section className="space-y-4">
       <SectionTitle title="Create" note={<span className="flex items-center gap-1"><Zap className="size-4 fill-current text-primary" />Uses Glow</span>} />
       <ol className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
-        <Step n={1} label="Pick or invent a character" /><ArrowRight className="size-4" /><Step n={2} label="Choose what to make" /><ArrowRight className="size-4" /><Step n={3} label="Describe it. Bugley helps." />
+        <Step n={1} label="Choose what to make" /><ArrowRight className="size-4" /><Step n={2} label="Pick or invent a character" /><ArrowRight className="size-4" /><Step n={3} label="Describe it. Bugley helps." />
       </ol>
-      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={() => cast.length ? setPickFor(j) : start()} aria-pressed={pickFor?.key === j.key} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={() => castFetched && !cast.length ? start(j.key) : setPickFor(j)} aria-pressed={pickFor?.key === j.key} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
         <img src={j.art} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent" aria-hidden />
         <span className="absolute inset-x-0 bottom-0 p-4 text-background"><span className="block font-display text-2xl">{j.title}</span><span className="block text-sm opacity-90">{j.line}</span><span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Pick a character<ArrowRight className="size-3" /></span></span>
       </button>)}</div>
       {pickFor && <div className="step-enter space-y-3 rounded-3xl border-4 border-primary bg-card p-4 shadow-glow">
         <div className="flex items-center justify-between gap-2"><h3 className="font-display text-xl">Who’s starring in your {pickFor.key}?</h3><Button variant="ghost" size="icon" aria-label="Close" onClick={() => setPickFor(null)}><X /></Button></div>
+        {!castFetched && <p role="status" className="text-sm font-semibold text-muted-foreground">Finding your characters…</p>}
         <ul className="flex snap-x gap-3 overflow-x-auto pb-1">
-          <li className="w-24 shrink-0"><button onClick={start} className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-dashed border-primary/60 text-sm font-semibold hover:border-primary"><Plus className="size-6 text-primary" />New</button></li>
+          <li className="w-24 shrink-0"><button onClick={() => start(pickFor.key)} className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-dashed border-primary/60 text-sm font-semibold hover:border-primary"><Plus className="size-6 text-primary" />New</button></li>
           {cast.map((m) => <li key={m.id} className="w-24 shrink-0 text-center"><button onClick={() => startWith(m.id, pickFor.key)} className="block w-full">{m.url ? <img src={m.url} alt="" className="aspect-square w-full rounded-full border-4 border-background object-cover shadow-soft transition hover:scale-105 hover:border-primary" /> : <span className="flex aspect-square items-center justify-center rounded-full bg-primary/15 text-3xl">🐾</span>}<span className="mt-1 block truncate text-sm font-semibold">{m.title}</span></button></li>)}
         </ul>
       </div>}
@@ -102,7 +106,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
     <section className="space-y-3">
       <SectionTitle title="My characters" note="Tap one to star them in something new" />
       <ul className="flex snap-x gap-3 overflow-x-auto pb-2">
-        <li className="w-28 shrink-0 snap-start"><button onClick={start} className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-full border-4 border-dashed border-primary/60 bg-card text-sm font-semibold transition hover:border-primary hover:shadow-glow"><Plus className="size-7 text-primary" />New</button></li>
+        <li className="w-28 shrink-0 snap-start"><button onClick={() => start()} className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-full border-4 border-dashed border-primary/60 bg-card text-sm font-semibold transition hover:border-primary hover:shadow-glow"><Plus className="size-7 text-primary" />New</button></li>
         {cast.map((m) => <li key={m.id} className="w-28 shrink-0 snap-start text-center"><button onClick={() => void navigate({ to: "/kids/studio/v3", search: { character: m.id } })} className="block w-full">
           {m.url ? <img src={m.url} alt="" loading="lazy" className="aspect-square w-full rounded-full border-4 border-card object-cover shadow-soft transition hover:scale-105 hover:border-primary" /> : <span className="flex aspect-square items-center justify-center rounded-full bg-primary/15 text-4xl" aria-hidden>🐾</span>}
           <span className="mt-1 block truncate text-sm font-semibold">{m.title}</span>

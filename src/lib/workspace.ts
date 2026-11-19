@@ -11,6 +11,8 @@ export const workspaceSchema = z.object({
   characterDraft: z.object({ name: z.string().max(40), kind: z.string().max(160), special: z.string().max(160), personality: z.string().max(80),
     options: z.array(z.object({ path: z.string(), url: z.string().optional() })).max(3).default([]) }).optional(),
   castVersions: z.record(z.string(), z.string()).default({}),
+  // A3.1: comics start with a temporary title; the child names the comic at the end (optional).
+  titlePending: z.boolean().optional(),
 });
 export type WorkspaceMeta = z.infer<typeof workspaceSchema>;
 export type OutputKind = "comic" | "story" | "picture";

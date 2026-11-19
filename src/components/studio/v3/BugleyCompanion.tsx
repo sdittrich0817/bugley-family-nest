@@ -28,7 +28,8 @@ export function BugleyCompanion({ child, text, busy = false, hint }: { child: Si
   </div>;
 }
 
-const MAGIC_LINES = ["Sketching the shapes…", "Mixing the perfect colors…", "Adding tiny details…", "Sprinkling in some sparkle…", "Checking every corner…", "Almost ready to show you!"];
+// Honest waiting (A3.1): no made-up progress bar or "almost ready" claims; painting time varies.
+const MAGIC_LINES = ["Bugley is painting your picture.", "Your words are saved.", "Painting can take a little while.", "Bugley shows you as soon as it’s ready."];
 
 /** Full-screen magic show while Bugley paints, so waiting feels exciting. */
 export function BugleyMagic({ child, label }: { child: SidekickChild; label: string }) {
@@ -44,8 +45,7 @@ export function BugleyMagic({ child, label }: { child: SidekickChild; label: str
     </div>
     <h2 className="font-display text-3xl">{label}</h2>
     <p key={line} className="step-enter text-xl text-muted-foreground">{MAGIC_LINES[line]}</p>
-    <div className="h-4 w-full max-w-md overflow-hidden rounded-full bg-muted"><div className="studio-paint-bar h-full rounded-full bg-primary" style={{ animationDuration: "40s" }} /></div>
-    <p className="text-sm text-muted-foreground">Great art takes a little time. Your picture is on its way!</p>
+    <p className="text-sm text-muted-foreground">Please keep this screen open.</p>
   </div>;
 }
 

@@ -7,7 +7,7 @@ import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { EMPTY_MAP, ideaGenre } from "./story";
 import { newComicPage } from "./comic";
-import { v3Count, v3Details, replaceV3Art } from "./v3";
+import { v3Count, v3Details, v3TempTitle, replaceV3Art } from "./v3";
 import { cleanSparks, storyCoachingInstructions } from "./story";
 import { formatStoryPage, storyCoachContext, storyLayoutSchema } from "./story-presentation";
 
@@ -84,11 +84,16 @@ export const readV3Character = createServerFn({ method: "POST" }).middleware([re
   return out;
 });
 
-export const startV3Creation = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ kind: z.enum(["comic", "story", "picture"]), title: z.string().trim().min(1).max(80), count: v3Count, characterId: z.string().uuid(), genre: z.enum(COMIC_GENRES).optional(), environment }).parse(i)).handler(async ({ data, context }) => {
+export const startV3Creation = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ kind: z.enum(["comic", "story", "picture"]), title: z.string().trim().max(80).default(""), count: v3Count, characterId: z.string().uuid(), genre: z.enum(COMIC_GENRES).optional(), environment }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server"); const child = await s.loadChild(context.supabase, context.userId, data.childId);
-  const g = await s.guardChildText(context.supabase, context.userId, child, data.title, "story_title");
-  if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up title.");
+  // A3.1: comics may start unnamed (named at the end); pictures and stories still need a title here.
+  const pending = data.kind === "comic" && !data.title;
+  if (!pending && !data.title) throw new Error("Give it a name first.");
+  if (!pending) {
+    const g = await s.guardChildText(context.supabase, context.userId, child, data.title, "story_title");
+    if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up title.");
+  }
   const { data: hero } = await context.supabase.from("studio_creations").select("id,title,style_key,details,updated_at").eq("id", data.characterId).eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").is("deleted_at", null).maybeSingle();
   if (!hero?.style_key || !(hero.details as any)?.dna || !(hero.details as any)?.refs?.length) throw new Error("Choose an approved character first.");
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
@@ -97,9 +102,9 @@ export const startV3Creation = createServerFn({ method: "POST" }).middleware([re
     if (existing.parent_id !== context.userId || existing.child_id !== child.id || existing.kind !== data.kind) throw new Error("Choose your own creation.");
     return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
   }
-  const details = v3Details(data.kind, data.count, { id: hero.id, title: hero.title, styleKey: hero.style_key }, data.genre);
+  const details = v3Details(data.kind, data.count, { id: hero.id, title: hero.title, styleKey: hero.style_key }, data.genre, pending);
   details.workspace.castVersions = { [hero.id]: hero.updated_at };
-  const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: data.kind, title: data.title, body: "", style_key: hero.style_key, details: details as never });
+  const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: data.kind, title: pending ? v3TempTitle(hero.title) : data.title, body: "", style_key: hero.style_key, details: details as never });
   if (error) throw new Error("Your creation couldn’t start. Your character is safe.");
   return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
 });

@@ -44,3 +44,33 @@ t2("comic keeps the child's chosen comic type", () => {
   e2((details2("comic", 4, { id: "c", title: "Mayo", styleKey: "cartoon" }, "Mystery") as any).genre).toBe("Mystery");
   e2((details2("comic", 4, { id: "c", title: "Mayo", styleKey: "cartoon" }) as any).genre).toBe("Adventure");
 });
+
+import { v3CoverWords, v3TempTitle } from "./v3";
+import { workspaceOf } from "./workspace";
+import { intendedCoverCast } from "./cover-cast";
+import { describe as d3, it as i3, expect as e3 } from "vitest";
+d3("A3.1 comic naming at the end", () => {
+  i3("starts a comic with a temporary name from the character", () => {
+    e3(v3TempTitle("Pip")).toBe("Pip’s comic");
+    e3(v3TempTitle("Captain Paws")).toBe("Captain Paws’ comic");
+    e3(v3TempTitle("  ")).toBe("My comic");
+  });
+  i3("marks only unnamed comics as waiting for a name", () => {
+    const hero = { id: "c", title: "Pip", styleKey: "cartoon" };
+    e3((v3Details("comic", 4, hero, "Adventure", true) as any).workspace.titlePending).toBe(true);
+    e3((v3Details("comic", 4, hero) as any).workspace.titlePending).toBeUndefined();
+  });
+  i3("keeps the waiting-for-a-name mark when the saved comic is reopened or restored", () => {
+    const details = v3Details("comic", 4, { id: "c", title: "Pip", styleKey: "cartoon" }, "Adventure", true);
+    e3(workspaceOf(JSON.parse(JSON.stringify(details))).titlePending).toBe(true);
+  });
+  i3("leaves a temporary name out of the cover words", () => {
+    e3(v3CoverWords("Pip’s comic", true, "Pip finds a crystal.")).toBe("Pip finds a crystal.");
+    e3(v3CoverWords("The Crystal Cave", false, "Pip finds a crystal.")).toBe("The Crystal Cave: Pip finds a crystal.");
+  });
+  i3("a temporary name never changes who is on the cover", () => {
+    const cast = [{ id: "p", name: "Pip" }, { id: "l", name: "Luna" }];
+    e3(intendedCoverCast(v3CoverWords("Pip’s comic", true, "Pip and Luna fly."), cast).mode).toBe("default");
+    e3(intendedCoverCast(v3CoverWords("Pip’s comic", true, "Only Pip is here. Luna stayed home asleep."), cast).mode).toBe("explicit");
+  });
+});
