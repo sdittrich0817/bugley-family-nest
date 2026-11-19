@@ -122,6 +122,7 @@
 - [x] A2 cover correction (preview only): the child's words decide who is on the cover; unclear words keep every character; one decision drives both the picture and the character check. 398 tests pass; Pip-only preview cover passed first try, $0.31 of $2; test family removed.
 - [x] A2 cover correction published to bugley.app (19 Nov): live Pip-only cover passed the character check with only Pip's frozen pictures sent; both frozen copies kept; 3 Glow charged once; 12/12 existing comics and 20/20 pictures present; ~$0.46; test family removed.
 - [x] **Comic Creator 2.0 Phase A2 complete.** Known limitations: unusual or unclear English cover wording falls back to the full cast; one-detail changes can still alter unrelated details; cover layout and likeness aren't guaranteed on every drawing.
-- [ ] A3 (child-experience simplification) — not started; waits on Shea's separate approval.
+- [x] A3 discovery report delivered (no app changes); preview test family deleted.
+- [ ] A3 build (A3.1 first) — waits on Shea's decisions and approval.
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
