@@ -120,5 +120,8 @@
 - [x] A2 missing-cover-character investigation: cause found (cover words only named the first hero; the character check accepted a missing friend) and fixed; 3/3 retest covers show both characters; $1.21 of $5; 390 tests pass; test family removed.
 - [x] A2 published to bugley.app after Shea's approval; live smoke test passed (drawing, Story Memory, mid-comic frozen copies, covers with both characters, private change report, Glow, interrupted-drawing refund once only, older comics); test family removed; report in Files.
 - [x] A2 cover correction (preview only): the child's words decide who is on the cover; unclear words keep every character; one decision drives both the picture and the character check. 398 tests pass; Pip-only preview cover passed first try, $0.31 of $2; test family removed.
-- [ ] Shea to review the cover correction and decide on publishing it (not published). A3 not started.
-- [ ] Cover rule vs. child's words: covers always ask for every character, even when the child's words leave one out (blocked: Shea to approve a fix). A3 not started.
+- [x] A2 cover correction published to bugley.app (19 Nov): live Pip-only cover passed the character check with only Pip's frozen pictures sent; both frozen copies kept; 3 Glow charged once; 12/12 existing comics and 20/20 pictures present; ~$0.46; test family removed.
+- [x] **Comic Creator 2.0 Phase A2 complete.** Known limitations: unusual or unclear English cover wording falls back to the full cast; one-detail changes can still alter unrelated details; cover layout and likeness aren't guaranteed on every drawing.
+- [ ] A3 (child-experience simplification) — not started; waits on Shea's separate approval.
+- [x] Shea reviewed and approved publishing the cover correction.
+- [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
