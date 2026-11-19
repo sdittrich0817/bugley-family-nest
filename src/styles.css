@@ -440,10 +440,10 @@
 /* Bugley wanders across the companion row */
 @keyframes bugley-wander {
   0%, 100% { transform: translate(0, 0) rotate(-4deg); }
-  20% { transform: translate(28%, -14%) rotate(6deg); }
-  40% { transform: translate(55%, 6%) rotate(-3deg); }
-  60% { transform: translate(30%, -10%) rotate(8deg) scaleX(-1); }
-  80% { transform: translate(8%, 8%) rotate(-6deg) scaleX(-1); }
+  20% { transform: translate(12%, -12%) rotate(6deg); }
+  40% { transform: translate(24%, 6%) rotate(-3deg); }
+  60% { transform: translate(14%, -10%) rotate(8deg) scaleX(-1); }
+  80% { transform: translate(4%, 8%) rotate(-6deg) scaleX(-1); }
 }
 .bugley-wander { animation: bugley-wander 9s ease-in-out infinite; }
 @keyframes bugley-loop {

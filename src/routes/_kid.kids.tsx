@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { BAND_COPY, getActivePlayer, setActivePlayer, setKidZoneLocked, type Band } from "@/lib/kid-zone";
 import { PICTURES, type ChildProfile } from "@/lib/family";
+import { kidSignInError } from "@/lib/kid-errors";
 import { ChildAvatar, PictureIcon } from "@/components/site/ChildAvatar";
 import { Bugley } from "@/components/brand/Bugley";
 import { BugBuilder } from "@/components/site/BugBuilder";
@@ -101,7 +102,7 @@ function ChildLogin({ child, onBack, onSuccess }: { child: ChildProfile; onBack:
     const credential = isPin ? { kind: "pin" as const, pin: entry.join("") } : { kind: "pictures" as const, pictures: entry as (typeof PICTURES)[number][] };
     kidDeviceStatus().then(d=>(d.trusted?verifyTrustedChild:verifyChildLogin)({ data: { childId: child.id, credential, environment: getStripeEnvironment() } }))
       .then((r) => { if ("paused" in r && r.paused) { setError("The Kid Zone is paused. Ask a grown-up!"); setEntry([]); } else if (r.ok) onSuccess(); else { setError("Oops! Not quite. Try again."); setEntry([]); } })
-      .catch(() => { setError("Something went wrong. Try again."); setEntry([]); })
+      .catch((e) => { setError(kidSignInError(e)); setEntry([]); })
       .finally(() => setBusy(false));
   }, [entry]); // eslint-disable-line react-hooks/exhaustive-deps
   const add = (v: string) => { if (!busy && entry.length < need) { setError(""); setEntry([...entry, v]); } };

@@ -15,7 +15,8 @@ export function BugleyCompanion({ child, text, busy = false, hint }: { child: Si
   useEffect(() => { const t = setInterval(() => setMood(m => (m + 1) % MOODS.length), 3200); return () => clearInterval(t); }, []);
   const expression = busy ? "thinking" : MOODS[mood] ?? "happy";
   return <div className="step-enter flex items-center gap-3 py-3" aria-live="polite">
-    <div className="relative shrink-0" style={{ width: "var(--bugley-help-size)", height: "var(--bugley-help-size)" }}>
+    {/* Room on the right for Bugley's wander (max 24% of his width) so he never covers the words. */}
+    <div className="relative shrink-0" style={{ width: "var(--bugley-help-size)", height: "var(--bugley-help-size)", marginRight: "calc(var(--bugley-help-size) * 0.24)" }}>
       <div className={cn("bugley-companion pointer-events-none", busy ? "bugley-thinking-glow studio-bugley-paint" : "bugley-wander")}>
         {child.age_band === "builders" ? <BugleyMature variant="headphones" size="100%" /> : <Bugley stage={child.bugley_stage} expression={expression} size="100%" glow />}
       </div>

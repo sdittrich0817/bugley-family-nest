@@ -126,8 +126,13 @@ export const listInProgress = createServerFn({ method: "POST" }).middleware([req
       const art: string[] = r.kind === "comic" ? (r.details.pages ?? []).flatMap((p: any) => (p.panels ?? []).map((x: any) => x.image)).filter(Boolean) : r.kind === "story" ? (r.details.pages ?? []).map((p: any) => p.image).filter(Boolean) : r.images ?? [];
       return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: r.title as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? r.details.characters ?? []) as string[], art: art[art.length - 1] as string | undefined };
     });
+    // A3.1: an unfinished character idea (saved when the child tapped "Meet my character") can be picked up too,
+    // and remembers whether it was for a picture, comic or story.
+    const { data: drafts } = await context.supabase.from("studio_creations").select("id,updated_at,details").eq("child_id", data.childId).eq("parent_id", context.userId).eq("kind", "character").is("deleted_at", null).contains("details", { characterDraftV3: true }).order("updated_at", { ascending: false }).limit(6);
+    const ideas = (drafts ?? []).filter((r: any) => !r.details?.closed).slice(0, 3).map((r: any) => ({ id: r.id as string, kind: "character" as const, intendedKind: (["picture", "comic", "story"].includes(r.details?.intendedKind) ? r.details.intendedKind : undefined) as "picture" | "comic" | "story" | undefined, title: "My character idea", updatedAt: r.updated_at as string, characterIds: [] as string[], art: undefined as string | undefined }));
     const { signPaths } = await import("@/lib/images.server");
     const paths = open.map(o => o.art).filter((p): p is string => !!p && !p.startsWith("http"));
     const urls = await signPaths(paths); const map = new Map(paths.map((p, i) => [p, urls[i] ?? ""]));
-    return open.map(o => ({ ...o, art: o.art ? map.get(o.art) ?? o.art : undefined }));
+    const work = open.map(o => ({ ...o, intendedKind: undefined as "picture" | "comic" | "story" | undefined, art: o.art ? map.get(o.art) ?? o.art : undefined }));
+    return [...work, ...ideas].sort((x, y) => y.updatedAt.localeCompare(x.updatedAt));
   });

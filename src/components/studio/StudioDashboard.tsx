@@ -72,10 +72,10 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
     {open.length > 0 && <section className="space-y-3">
       <SectionTitle title="Pick up where you left off" />
       <ul className="flex snap-x gap-3 overflow-x-auto pb-2">{open.slice(0, 8).map((w) => <li key={w.id} className="relative w-40 shrink-0 snap-start">
-        <button onClick={() => void navigate({ to: "/kids/studio/v3", search: { project: w.id } })} className="group block w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary">
+        <button onClick={() => void navigate({ to: "/kids/studio/v3", search: w.kind === "character" ? { draft: w.id, ...(w.intendedKind ? { kind: w.intendedKind } : {}) } : { project: w.id } })} className="group block w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary">
           {w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}
           <span className="block truncate px-3 pt-2 font-display">{w.title}</span>
-          <span className="flex items-center gap-1 px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind} · Continue <ArrowRight className="size-3" /></span>
+          <span className="flex items-center gap-1 px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind === "character" ? (w.intendedKind ? `For your ${w.intendedKind}` : "Character") : w.kind} · Continue <ArrowRight className="size-3" /></span>
         </button>
         <div className="absolute right-1 top-1 rounded-full bg-background/85"><DeleteCreationButton childId={child.id} id={w.id} title={w.title} /></div>
       </li>)}</ul>

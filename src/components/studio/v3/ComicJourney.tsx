@@ -29,6 +29,7 @@ import { StoryBookPreview } from "./StoryBookPreview";
 import { StoryPageDesign } from "./StoryPageDesign";
 import {
   getV3CharacterDraft,
+  closeV3CharacterDraft,
   saveV3CharacterDraft,
   readV3Character,
   startV3Creation,
@@ -84,6 +85,7 @@ export function ComicJourney({
   startKind,
   onProject,
   onDraft,
+  onCharacter,
   onBook,
   onExit,
   onLibrary,
@@ -96,6 +98,8 @@ export function ComicJourney({
   startKind?: "picture" | "comic" | "story" | undefined;
   onProject: (id: string) => void;
   onDraft: (id: string) => void;
+  /** A3.1: remembers the chosen/new character in the address so a reload returns to the same setup. */
+  onCharacter?: (id: string, kind?: OutputKind) => void;
   onBook: (id: string) => void;
   onExit: () => void;
   onLibrary: () => void;
@@ -155,7 +159,8 @@ export function ComicJourney({
     paintHero = useServerFn(makeHeroOptions),
     approve = useServerFn(saveHero);
   const saveDraft = useServerFn(saveV3CharacterDraft),
-    loadDraft = useServerFn(getV3CharacterDraft);
+    loadDraft = useServerFn(getV3CharacterDraft),
+    closeDraft = useServerFn(closeV3CharacterDraft);
   const coach = useServerFn(helpV3Scene),
     paint = useServerFn(paintV3Scene),
     comicEdit = useServerFn(editComic),
@@ -198,6 +203,11 @@ export function ComicJourney({
         .then((d) => {
           setDescription(d.description);
           setStyle(d.styleKey);
+          // A3.1: an idea started from Comics (or Stories/Pictures) carries on to that same creation.
+          if (!wanted.current && d.kind) {
+            wanted.current = d.kind;
+            setKind(d.kind);
+          }
         })
         .catch((e) => setNote(childFriendlyError(e)));
     }
@@ -297,7 +307,8 @@ export function ComicJourney({
       setHero(c);
       if (wanted.current) toSetup(wanted.current);
       else setBranch("output");
-      onDraft("");
+      if (onCharacter) onCharacter(c.id, wanted.current);
+      else onDraft("");
       return;
     }
     await run("Meeting your character…", async () => {
@@ -318,7 +329,7 @@ export function ComicJourney({
       draftKey.current ??= crypto.randomUUID();
       if (!adding) {
         await saveDraft({
-          data: { childId: child.id, id: draftKey.current, description: value, styleKey: style, environment: env },
+          data: { childId: child.id, id: draftKey.current, description: value, styleKey: style, environment: env, kind: wanted.current },
         });
         onDraft(draftKey.current);
       }
@@ -383,7 +394,11 @@ export function ComicJourney({
         setHero(c);
         if (wanted.current) toSetup(wanted.current);
         else setBranch("output");
-        onDraft("");
+        const made = draftKey.current;
+        draftKey.current = undefined;
+        if (made) void closeDraft({ data: { childId: child.id, id: made } }).catch(() => {});
+        if (onCharacter) onCharacter(c.id, wanted.current);
+        else onDraft("");
       }
       setOptions([]);
     });

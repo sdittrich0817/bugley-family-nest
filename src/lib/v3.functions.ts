@@ -40,7 +40,7 @@ export const startV3Comic = createServerFn({ method: "POST" }).middleware([requi
 });
 
 /** Character draft is separate from the eventual output, and never appears in approved cast. */
-export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment }).parse(i)).handler(async ({ data, context }) => {
+export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment, kind: z.enum(["picture", "comic", "story"]).optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -51,7 +51,7 @@ export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middlewar
   const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
   const { data: old } = await a.from("studio_creations").select("parent_id,child_id,details").eq("id", data.id).maybeSingle();
   if (old && (old.parent_id !== context.userId || old.child_id !== child.id || !(old.details as any)?.characterDraftV3)) throw new Error("Choose your own character draft.");
-  const value = { body: data.description, style_key: data.styleKey, details: { characterDraftV3: true }, updated_at: new Date().toISOString() };
+  const value = { body: data.description, style_key: data.styleKey, details: { characterDraftV3: true, ...(data.kind ? { intendedKind: data.kind } : {}) }, updated_at: new Date().toISOString() };
   const result = old ? await a.from("studio_creations").update(value).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id) : await a.from("studio_creations").insert({ ...value, id: data.id, parent_id: context.userId, child_id: child.id, kind: "character", title: "My character idea", images: [] });
   if (result.error) throw new Error("Your character idea couldn’t save. Try again.");
   return { id: data.id };
@@ -62,7 +62,19 @@ export const getV3CharacterDraft = createServerFn({ method: "POST" }).middleware
   await loadChild(context.supabase, context.userId, data.childId);
   const { data: row } = await context.supabase.from("studio_creations").select("body,style_key,details").eq("id", data.id).eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).maybeSingle();
   if (!row || !(row.details as any)?.characterDraftV3) throw new Error("That character idea couldn’t open.");
-  return { description: row.body ?? "", styleKey: row.style_key ?? "cartoon" };
+  const intended = (row.details as any)?.intendedKind;
+  return { description: row.body ?? "", styleKey: row.style_key ?? "cartoon", kind: (["picture", "comic", "story"].includes(intended) ? intended : undefined) as "picture" | "comic" | "story" | undefined };
+});
+
+/** A3.1: once the character is made, its idea stops showing under "Pick up where you left off". Owner-only; changes nothing else. */
+export const closeV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {
+  const s = await import("./studio.server");
+  const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+  const { data: old } = await a.from("studio_creations").select("details").eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").maybeSingle();
+  if (!old || !(old.details as any)?.characterDraftV3) return { ok: false };
+  const { error } = await a.from("studio_creations").update({ details: { ...(old.details as object), closed: true } }).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id);
+  return { ok: !error };
 });
 
 export const readV3Character = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), description: z.string().trim().min(2).max(600), help: z.boolean().default(false), writing: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {

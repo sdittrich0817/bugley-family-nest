@@ -38,6 +38,7 @@ function V3Page() {
       <ComicJourney key={journey} child={child as SidekickChild} projectId={project} draftId={draft} characterId={character} startKind={kind}
         onProject={id => void navigate({ to: "/kids/studio/v3", search: { project: id }, replace: true })}
         onDraft={id => void navigate({ to: "/kids/studio/v3", search: { ...(id ? { draft: id } : {}), ...(kind ? { kind } : {}) }, replace: true })}
+        onCharacter={(id, chosen) => { const k = kind ?? chosen; void navigate({ to: "/kids/studio/v3", search: { character: id, ...(k ? { kind: k } : {}) }, replace: true }); }}
         onBook={id => void navigate({ to: "/kids/studio", search: { book: id } })}
         onLibrary={() => void navigate({ to: "/kids/studio", search: { album: true } })}
         onCreateMore={() => { void navigate({ to: "/kids/studio/v3", search: {} }).then(() => setJourney(value => value + 1)); }}
