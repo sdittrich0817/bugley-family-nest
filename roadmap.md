@@ -131,6 +131,7 @@
 - [x] A3.2 extra (Shea's suggestion): after a short comic's last panel, Bugley celebrates and offers "Keep my story going!" to add panels to the same comic.
 - [x] A3.2 final checks: voice privacy audit (founder decisions requested; the three new voice boxes held back), server-versioned character-idea saves (two-screen, delayed and reload tests), paid extension test (panel 3 drawn with frozen Pip and Story Memory; Glow once per delivered panel), 459 tests, three ages × three screen sizes.
 - [ ] A3.2 panel-4 drawing check — waits on Shea approving up to $0.45 more (budget $2 nearly used: $1.65).
+- [ ] Turn off every child microphone ("Say it") — typing only until consent and privacy policy are updated (Shea: turn them off now).
 - [ ] A3.2 voice consent/disclosure changes — wait on Shea's decisions (and legal review of the privacy policy).
 - [ ] Remove the A3.2 temporary test family once the panel-4 decision is made.
 - [ ] A3.3, A3.4 — each waits on separate approval.
