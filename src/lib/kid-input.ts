@@ -1,4 +1,11 @@
 // A3.2: shared helpers for words a child adds by voice or by tapping an idea spark.
+
+/**
+ * Founder decision (Nov 2026): every child microphone is off — typing only — until parental consent and the privacy
+ * policy explain that browsers may send speech to Google or Apple. Browser microphone permission is not parental
+ * consent. Every microphone (VoiceButton and useVoiceInput) reads this one switch.
+ */
+export const CHILD_VOICE_ENABLED = false;
 // The child's existing words are never changed or reordered; new words only go on the end.
 
 /** Add words to the end of what the child already has, within the box's limit. */

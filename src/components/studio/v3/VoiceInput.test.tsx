@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VoiceButton } from "./VoiceInput";
 
 vi.mock("../Sidekick", () => ({ speak: vi.fn() }));
+// These cover how "Say it" behaves once microphones are switched back on (they are off for children today).
+vi.mock("@/lib/kid-input", async (orig) => ({ ...(await orig<typeof import("@/lib/kid-input")>()), CHILD_VOICE_ENABLED: true }));
 
 class FakeRecognition {
   static last: FakeRecognition | null = null;

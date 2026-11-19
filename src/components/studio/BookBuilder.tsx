@@ -24,6 +24,7 @@ import { Bugley } from "@/components/brand/Bugley";
 import { StylePicker } from "./Makers";
 import { PageGrid } from "./ComicMaker";
 import { speak, useVoiceInput, type BugleyChat, type SidekickChild } from "./Sidekick";
+import { CHILD_VOICE_ENABLED } from "@/lib/kid-input";
 import { listCast } from "@/lib/images.functions";
 import { requestPrint } from "@/lib/print.functions";
 import { createBook, editBook, getBook, startChapter } from "@/lib/book.functions";
@@ -766,7 +767,8 @@ function BookWords({
   onChange: (text: string) => void;
   maxLength: number;
 }) {
-  const [typing, setTyping] = useState(false);
+  // With microphones off, the typing box is open from the start.
+  const [typing, setTyping] = useState(!CHILD_VOICE_ENABLED);
   const voice = useVoiceInput((text) => onChange(text.slice(0, maxLength)));
   return (
     <div className="space-y-2">

@@ -7,7 +7,7 @@ import { Check, Keyboard, Mic, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { speak } from "../Sidekick";
-import { readResults, voiceProblem, VOICE_MESSAGES, type VoiceProblem } from "@/lib/kid-input";
+import { CHILD_VOICE_ENABLED, readResults, voiceProblem, VOICE_MESSAGES, type VoiceProblem } from "@/lib/kid-input";
 import { bandOf } from "@/lib/comic-setup";
 
 type Recognizer = {
@@ -46,7 +46,7 @@ export function useVoice(onFinal: (words: string) => void) {
   const cb = useRef(onFinal);
   cb.current = onFinal;
   useEffect(() => {
-    setSupported(!!recognizer());
+    setSupported(CHILD_VOICE_ENABLED && !!recognizer());
     return () => {
       if (rec.current) {
         rec.current.onend = rec.current.onerror = rec.current.onresult = null;
@@ -56,6 +56,7 @@ export function useVoice(onFinal: (words: string) => void) {
     };
   }, []);
   const start = () => {
+    if (!CHILD_VOICE_ENABLED) return;
     const SR = recognizer();
     if (!SR) {
       setSupported(false);
@@ -142,7 +143,8 @@ export function VoiceButton({
     if (v.state === "heard") speak("Got it!");
     else if (v.state === "problem" && problemMsg) speak(problemMsg);
   }, [v.state, problemMsg, band]);
-  if (v.supported === null) return null;
+  // Microphones switched off for children: show nothing, so no "doesn't work in this browser" notice either.
+  if (!CHILD_VOICE_ENABLED || v.supported === null) return null;
   if (!v.supported)
     return band === "builders" ? null : (
       <p className={cn("flex items-center gap-2 text-sm font-semibold text-muted-foreground", className)}>

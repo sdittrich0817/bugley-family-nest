@@ -7,6 +7,7 @@ import { askBugley } from "@/lib/studio.functions";
 import { getStripeEnvironment } from "@/lib/stripe";
 import { cn } from "@/lib/utils";
 import { STUDIO_ACTIONS, type StudioAction } from "@/lib/studio-actions";
+import { CHILD_VOICE_ENABLED } from "@/lib/kid-input";
 
 export type SidekickChild = { id: string; nickname: string; age_band: string; bugley_stage: BugleyStage };
 type Msg = { from: "bugley" | "kid"; text: string };
@@ -52,13 +53,14 @@ export function useBugleyChat(child: SidekickChild, context: string, opening: st
 }
 export type BugleyChat = ReturnType<typeof useBugleyChat>;
 
-/** Browser speech-to-text for Sprouts. Kids speak; nothing is uploaded or stored. */
+/** Browser speech-to-text. Off for every child while CHILD_VOICE_ENABLED is false (typing only). */
 export function useVoiceInput(onText: (t: string) => void) {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(false);
   const rec = useRef<any>(null);
-  useEffect(() => { setSupported(!!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)); }, []);
+  useEffect(() => { setSupported(CHILD_VOICE_ENABLED && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)); }, []);
   const start = () => {
+    if (!CHILD_VOICE_ENABLED) return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) return;
     const r = new SR(); r.lang = "en-US"; r.interimResults = false; r.maxAlternatives = 1;
