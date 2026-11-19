@@ -9,7 +9,6 @@ import {
   History,
   Library,
   Lightbulb,
-  Mic,
   Paintbrush,
   Plus,
   Sparkles,
@@ -22,7 +21,8 @@ import { GlowMeter } from "../GlowMeter";
 import { DeleteCreationButton } from "../DeleteCreationButton";
 import { ComicReader, PanelCanvas } from "../ComicMaker";
 import { StoryReader } from "../StoryMaker";
-import { useVoiceInput, type SidekickChild } from "../Sidekick";
+import type { SidekickChild } from "../Sidekick";
+import { VoiceButton } from "./VoiceInput";
 import { BugleyCompanion, BugleyMagic, Confetti } from "./BugleyCompanion";
 import { ComicSlideshow } from "./ComicSlideshow";
 import { StoryBookPreview } from "./StoryBookPreview";
@@ -67,6 +67,18 @@ import { childFriendlyError } from "@/lib/kid-errors";
 import { comicTitleIdeas } from "@/lib/comic-title";
 import { liveMemory, readMemory } from "@/lib/comic-memory";
 import { v3CoverWords } from "@/lib/v3";
+import {
+  COMIC_LENGTHS,
+  GENRE_EMOJI,
+  SPROUTS_GENRES,
+  SPROUTS_LENGTHS,
+  bandOf,
+  comicPlanLine,
+  defaultCount,
+  setupStartsCollapsed,
+  visibleStyles,
+} from "@/lib/comic-setup";
+import { appendWords, hasWords, sparkWords } from "@/lib/kid-input";
 
 type CharacterFacts = {
   name: string;
@@ -122,7 +134,14 @@ export function ComicJourney({
   const [finale, setFinale] = useState(false);
   const [nameText, setNameText] = useState("");
   const [title, setTitle] = useState("");
-  const [count, setCount] = useState(4);
+  const band = bandOf(child.age_band);
+  const [count, setCount] = useState(() => defaultCount(startKind ?? "comic", child.age_band));
+  // A3.2: Sprouts and Explorers start from a ready-made comic plan with "Change"; Builders see every choice.
+  const [setupOpen, setSetupOpen] = useState(!setupStartsCollapsed(child.age_band));
+  const [moreLooks, setMoreLooks] = useState(false);
+  const [moreKinds, setMoreKinds] = useState(false);
+  const [moreLengths, setMoreLengths] = useState(false);
+  const bigSetup = band === "sprouts" && kind === "comic";
   const [genre, setGenre] = useState<(typeof COMIC_GENRES)[number]>("Adventure");
   const [heroChange, setHeroChange] = useState("");
   const [slides, setSlides] = useState(false);
@@ -143,6 +162,12 @@ export function ComicJourney({
   const [adding, setAdding] = useState(false);
   const [versions, setVersions] = useState<{ id: string; created_at: string }[] | null>(null);
   const draftKey = useRef(draftId);
+  // A3.2: the character idea saves quietly while the child types or speaks, before "Meet my character".
+  const ownDraft = useRef<string | undefined>(undefined);
+  const draftSaved = useRef<{ description: string; style: string } | null>(null);
+  const draftFailed = useRef("");
+  const editedAt = useRef("");
+  const draftNow = useRef<{ description: string; style: string } | null>(null);
   const startKey = useRef<string | null>(null);
   const running = useRef(false);
   const skipSync = useRef(false);
@@ -197,10 +222,14 @@ export function ComicJourney({
   }, [projectId, child.id]);
   useEffect(() => {
     if (draftId && !projectId) {
+      // Our own quiet save just put this idea in the address: keep the words on screen (they may be newer).
+      if (draftId === ownDraft.current) return;
       draftKey.current = draftId;
+      ownDraft.current = draftId;
       setBranch("new");
       void loadDraft({ data: { childId: child.id, id: draftId } })
         .then((d) => {
+          draftSaved.current = { description: d.description, style: d.styleKey };
           setDescription(d.description);
           setStyle(d.styleKey);
           // A3.1: an idea started from Comics (or Stories/Pictures) carries on to that same creation.
@@ -217,13 +246,8 @@ export function ComicJourney({
       const c = cast.find((c) => c.id === characterId);
       if (c) {
         setHero(c);
-        if (startKind) {
-          setKind(startKind);
-          setCount(startKind === "story" ? 5 : 4);
-          setTitle("");
-          startKey.current = null;
-          setBranch("setup");
-        } else setBranch("output");
+        if (startKind) toSetup(startKind);
+        else setBranch("output");
       }
     }
   }, [characterId, cast, projectId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -297,11 +321,66 @@ export function ComicJourney({
   };
   function toSetup(k: OutputKind) {
     setKind(k);
-    setCount(k === "story" ? 5 : 4);
+    setCount(defaultCount(k, child.age_band));
+    setSetupOpen(!setupStartsCollapsed(child.age_band));
+    setMoreKinds(false);
+    setMoreLengths(false);
     setTitle("");
     startKey.current = null;
     setBranch("setup");
   }
+  // A3.2 quiet character-idea save. Each save carries when the child last changed their words, so an older save
+  // never replaces a newer one. Same safety check as "Meet my character"; no Glow; only the words and style are kept.
+  if (branch === "new" && !adding && !project) draftNow.current = { description, style };
+  useEffect(() => {
+    editedAt.current = new Date().toISOString();
+  }, [description, style]);
+  async function quietDraftSave(snap: { description: string; style: string } | null) {
+    if (!snap || snap.description.trim().length < 3) return;
+    if (draftSaved.current?.description === snap.description && draftSaved.current.style === snap.style) return;
+    const sig = `${snap.style}|${snap.description}`;
+    if (draftFailed.current === sig) return;
+    const key = (draftKey.current ??= crypto.randomUUID());
+    const rev = editedAt.current || new Date().toISOString();
+    if (pendingSave.current) await pendingSave.current.catch(() => {});
+    pendingSave.current = (async () => {
+      try {
+        await saveDraft({
+          data: { childId: child.id, id: key, description: snap.description, styleKey: snap.style, environment: env, kind: wanted.current, rev },
+        });
+        draftSaved.current = snap;
+        if (ownDraft.current !== key && draftKey.current === key) {
+          ownDraft.current = key;
+          onDraft(key);
+        }
+      } catch {
+        // Not retried for the same words (a safety check already explained itself, or the next change tries again).
+        draftFailed.current = sig;
+      }
+    })().finally(() => {
+      pendingSave.current = null;
+    });
+    await pendingSave.current;
+  }
+  const flushDraft = useRef(quietDraftSave);
+  flushDraft.current = quietDraftSave;
+  useEffect(() => {
+    if (branch !== "new" || adding || project || busy) return;
+    const t = setTimeout(() => void quietDraftSave(draftNow.current), 2500);
+    return () => clearTimeout(t);
+  }, [description, style, branch, adding, project?.id, busy]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Leaving the character screen, hiding the app or closing the page saves the latest words straight away.
+  useEffect(() => {
+    if (branch !== "new") return;
+    const hide = () => {
+      if (document.visibilityState === "hidden") void flushDraft.current(draftNow.current);
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      document.removeEventListener("visibilitychange", hide);
+      void flushDraft.current(draftNow.current);
+    };
+  }, [branch]);
   async function attach(c: CastMember) {
     if (!project) {
       setHero(c);
@@ -329,8 +408,18 @@ export function ComicJourney({
       draftKey.current ??= crypto.randomUUID();
       if (!adding) {
         await saveDraft({
-          data: { childId: child.id, id: draftKey.current, description: value, styleKey: style, environment: env, kind: wanted.current },
+          data: {
+            childId: child.id,
+            id: draftKey.current,
+            description: value,
+            styleKey: style,
+            environment: env,
+            kind: wanted.current,
+            rev: new Date().toISOString(),
+          },
         });
+        draftSaved.current = { description: value, style };
+        ownDraft.current = draftKey.current;
         onDraft(draftKey.current);
       }
       setDescription(value);
@@ -396,6 +485,7 @@ export function ComicJourney({
         else setBranch("output");
         const made = draftKey.current;
         draftKey.current = undefined;
+        draftNow.current = null;
         if (made) void closeDraft({ data: { childId: child.id, id: made } }).catch(() => {});
         if (onCharacter) onCharacter(c.id, wanted.current);
         else onDraft("");
@@ -559,16 +649,6 @@ export function ComicJourney({
     }, 2500);
     return () => clearTimeout(timer);
   }, [text, project?.updatedAt, busy, changing, at]);
-  const voice = useVoiceInput((t) => {
-    if (branch === "new" || adding) {
-      if (facts?.question) setFollowup((v) => `${v} ${t}`.trim().slice(0, 300));
-      else {
-        setDescription((v) => `${v} ${t}`.trim().slice(0, 600));
-        setFacts(null);
-      }
-    } else if (changing) setRevision((v) => `${v} ${t}`.trim().slice(0, 600));
-    else setText((v) => `${v} ${t}`.trim().slice(0, project?.kind === "story" ? 20000 : 600));
-  });
   const newCharacter = (
     <div className="space-y-4">
       <BugleyCompanion
@@ -606,6 +686,12 @@ export function ComicJourney({
               onChange={(e) => setFollowup(e.target.value)}
             />
           </label>
+          <VoiceButton
+            ageBand={child.age_band}
+            what="your answer"
+            disabled={!!busy}
+            onText={(t) => setFollowup((v) => appendWords(v, t, 300))}
+          />
           <Button disabled={!!busy || !followup.trim()}>
             Tell Bugley
             <ArrowRight />
@@ -629,11 +715,23 @@ export function ComicJourney({
         }}
         className="text-lg"
       />
+      {!facts?.question && (
+        <VoiceButton
+          ageBand={child.age_band}
+          what="about your character"
+          disabled={!!busy}
+          onText={(t) => {
+            setDescription((v) => appendWords(v, t, 600));
+            setFacts(null);
+            setOptions([]);
+          }}
+        />
+      )}
       {!adding && (
         <fieldset className="space-y-3">
           <legend className="font-display text-xl">Choose your drawing style</legend>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-            {styles.map((s) => (
+          <div className={band === "sprouts" && !moreLooks ? "grid grid-cols-2 gap-3 sm:grid-cols-4" : "grid grid-cols-2 gap-2 sm:grid-cols-5"}>
+            {visibleStyles(styles, child.age_band, style, moreLooks).map((s) => (
               <Button
                 type="button"
                 key={s.key}
@@ -655,10 +753,16 @@ export function ComicJourney({
                     <Check className="size-4" />
                   </span>
                 )}
-                <span>{s.name}</span>
+                <span className={band === "sprouts" && !moreLooks ? "text-lg" : undefined}>{s.name}</span>
               </Button>
             ))}
           </div>
+          {visibleStyles(styles, child.age_band, style, moreLooks).length < styles.length && (
+            <Button type="button" variant="outline" disabled={!!busy} onClick={() => setMoreLooks(true)}>
+              <Sparkles />
+              More looks
+            </Button>
+          )}
         </fieldset>
       )}
       <div className="flex flex-wrap gap-2">
@@ -678,11 +782,6 @@ export function ComicJourney({
           <Lightbulb />
           Help me think
         </Button>
-        {voice.supported && (
-          <Button variant="outline" size="icon" aria-label="Say your character idea" onClick={voice.start}>
-            <Mic />
-          </Button>
-        )}
       </div>
       {facts?.ideas.map((idea) => (
         <Button
@@ -734,6 +833,12 @@ export function ComicJourney({
               className="mt-2"
             />
           </label>
+          <VoiceButton
+            ageBand={child.age_band}
+            what="what to change"
+            disabled={!!busy}
+            onText={(t) => setHeroChange((v) => appendWords(v, t, 120))}
+          />
           <Button variant="secondary" disabled={!!busy || !heroChange.trim()}>
             <Paintbrush />
             Change it · 1 Glow
@@ -849,6 +954,12 @@ export function ComicJourney({
           Use this name
         </Button>
       </form>
+      <VoiceButton
+        ageBand={child.age_band}
+        what="your comic name"
+        disabled={!!busy}
+        onText={(t) => setNameText((v) => appendWords(v, t, 80))}
+      />
     </div>
   );
   const allArt = (
@@ -1073,13 +1184,7 @@ export function ComicJourney({
                     key={k}
                     variant="secondary"
                     className="h-auto min-h-28 flex-col gap-1 whitespace-normal rounded-3xl p-4 text-center"
-                    onClick={() => {
-                      setKind(k);
-                      setCount(k === "story" ? 5 : 4);
-                      setTitle("");
-                      startKey.current = null;
-                      setBranch("setup");
-                    }}
+                    onClick={() => toSetup(k)}
                   >
                     <Icon className="size-8" />
                     <span className="font-display text-2xl">{label}</span>
@@ -1126,7 +1231,9 @@ export function ComicJourney({
                   (kind === "picture"
                     ? "What will you call your picture?"
                     : kind === "comic"
-                      ? "What kind of comic shall we make?"
+                      ? setupOpen
+                        ? "What kind of comic shall we make?"
+                        : `Let’s make your ${genre} comic with ${count} ${count === 1 ? "panel" : "panels"}!`
                       : "What’s the name of your adventure?")
                 }
                 hint={
@@ -1135,7 +1242,9 @@ export function ComicJourney({
                     : kind === "picture"
                       ? "Give it a fun name. You’ll describe it next!"
                       : kind === "comic"
-                        ? "Pick what kind of comic it is and how long it should be. You’ll name it at the end!"
+                        ? setupOpen
+                          ? "Pick what kind of comic it is and how long it should be. You’ll name it at the end!"
+                          : "Tap “Let’s make it!”, or “Change” to pick another kind or length. You’ll name it at the end!"
                         : `Pick a name, what kind of ${kind} it is, and how long it should be.`
                 }
               />
@@ -1175,23 +1284,53 @@ export function ComicJourney({
                     />
                   </label>
                 )}
+                {kind === "comic" && !setupOpen ? (
+                  <div className="space-y-3 rounded-3xl border-4 border-primary bg-card p-4 shadow-glow">
+                    <p className="text-sm font-semibold text-muted-foreground">Your comic plan</p>
+                    <p className="flex items-center gap-3 font-display text-2xl">
+                      <span aria-hidden className="text-4xl">
+                        {GENRE_EMOJI[genre]}
+                      </span>
+                      {comicPlanLine(genre, count)}
+                    </p>
+                    <PanelDots count={count} />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      aria-expanded={false}
+                      disabled={!!busy}
+                      onClick={() => setSetupOpen(true)}
+                    >
+                      <Paintbrush />
+                      Change
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <fieldset className="space-y-2">
                   <legend className="font-semibold">What kind of {kind}?</legend>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {COMIC_GENRES.map((g) => (
+                    {(bigSetup && !moreKinds && SPROUTS_GENRES.includes(genre) ? SPROUTS_GENRES : COMIC_GENRES).map((g) => (
                       <Button
                         type="button"
                         key={g}
                         variant={genre === g ? "default" : "outline"}
                         aria-pressed={genre === g}
                         disabled={!!busy}
-                        className="h-auto min-h-12 whitespace-normal"
+                        className={bigSetup ? "h-auto min-h-20 flex-col gap-1 whitespace-normal text-lg" : "h-auto min-h-12 whitespace-normal"}
                         onClick={() => setGenre(g)}
                       >
+                        {bigSetup && <span aria-hidden className="text-3xl">{GENRE_EMOJI[g]}</span>}
                         {g}
                       </Button>
                     ))}
                   </div>
+                  {bigSetup && !moreKinds && SPROUTS_GENRES.includes(genre) && (
+                    <Button type="button" variant="ghost" disabled={!!busy} onClick={() => setMoreKinds(true)}>
+                      <Plus />
+                      More kinds
+                    </Button>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     Bugley draws every picture with this mood, in {hero.title}’s art style.
                   </p>
@@ -1199,8 +1338,35 @@ export function ComicJourney({
                 {kind !== "picture" && (
                   <div className="space-y-2">
                     <p className="font-semibold">How many {kind === "comic" ? "panels" : "pages"}?</p>
+                    {bigSetup && !moreLengths && SPROUTS_LENGTHS.some((l) => l.count === count) ? (
+                      <>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          {SPROUTS_LENGTHS.map((l) => (
+                            <Button
+                              type="button"
+                              key={l.count}
+                              variant={count === l.count ? "default" : "outline"}
+                              aria-pressed={count === l.count}
+                              disabled={!!busy}
+                              className="h-auto min-h-20 flex-col gap-2 whitespace-normal text-lg"
+                              onClick={() => setCount(l.count)}
+                            >
+                              <span>
+                                {l.label} · {l.count} panels
+                              </span>
+                              <PanelDots count={l.count} />
+                            </Button>
+                          ))}
+                        </div>
+                        <Button type="button" variant="ghost" disabled={!!busy} onClick={() => setMoreLengths(true)}>
+                          <Plus />
+                          More lengths
+                        </Button>
+                      </>
+                    ) : (
+                      <>
                     <div className="flex flex-wrap gap-2">
-                      {(kind === "comic" ? [1, 2, 4, 6, 8, 12] : [5, 6, 8, 10, 12]).map((n) => (
+                      {(kind === "comic" ? COMIC_LENGTHS : [5, 6, 8, 10, 12]).map((n) => (
                         <Button
                           type="button"
                           key={n}
@@ -1232,12 +1398,18 @@ export function ComicJourney({
                           : "5–12 pages"}
                       </span>
                     </label>
+                      </>
+                    )}
                   </div>
+                )}
+                  </>
                 )}
                 <Button
                   disabled={
                     !!busy || (kind !== "comic" && !title.trim()) || count < (kind === "story" ? 5 : 1) || count > 12
                   }
+                  size={band === "sprouts" ? "lg" : "default"}
+                  className={band === "sprouts" ? "h-16 w-full text-xl sm:w-auto" : undefined}
                 >
                   Let’s make it!
                   <ArrowRight />
@@ -1474,7 +1646,7 @@ export function ComicJourney({
                   (changing
                     ? "What should I change in this picture?"
                     : finaleOn
-                      ? "Your comic is ready! 🎉"
+                      ? `You finished ${items.length === 1 ? "your panel" : items.length === 2 ? "both panels" : `all ${items.length} panels`}! Your comic is ready! 🎉`
                       : drawnComic
                         ? step === "words"
                           ? `Does anyone talk in panel ${at + 1}?`
@@ -1604,6 +1776,19 @@ export function ComicJourney({
                   className="text-lg"
                 />
               ) : null}
+              {(changing || editing) && (
+                <VoiceButton
+                  key={changing ? "change" : `scene-${at}`}
+                  ageBand={child.age_band}
+                  what={changing ? "what to change" : project.kind === "story" ? "your story words" : "your scene"}
+                  disabled={!!busy}
+                  onText={(t) =>
+                    changing
+                      ? setRevision((v) => appendWords(v, t, 600))
+                      : setText((v) => appendWords(v, t, project.kind === "story" ? 20000 : 600))
+                  }
+                />
+              )}
               {drawnComic && step === "react" && (
                 <div className="grid grid-cols-2 gap-3">
                   <Button
@@ -1630,11 +1815,44 @@ export function ComicJourney({
                   </Button>
                 </div>
               )}
-              {editing && help?.ideas.map((idea) => (
-                <p key={idea} className="font-semibold text-muted-foreground">
-                  ✦ {idea}
-                </p>
-              ))}
+              {editing && !!help?.ideas.length && project.kind === "story" &&
+                help.ideas.map((idea) => (
+                  <p key={idea} className="font-semibold text-muted-foreground">
+                    ✦ {idea}
+                  </p>
+                ))}
+              {/* A3.2: comic and picture sparks are tappable starters. They only add the spark to the end of the
+                  child's own words; the child finishes the idea and decides whether to keep it. */}
+              {editing && !!help?.ideas.length && project.kind !== "story" && (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    Tap a spark to add it to your words, then finish the idea your way. Your call!
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {help.ideas.map((idea) => {
+                      const added = hasWords(text, idea);
+                      return (
+                        <Button
+                          key={idea}
+                          type="button"
+                          variant={added ? "secondary" : "outline"}
+                          aria-pressed={added}
+                          disabled={!!busy || added}
+                          className="h-auto min-h-12 whitespace-normal"
+                          onClick={() =>
+                            setText((v) =>
+                              appendWords(v, v.trim() ? sparkWords(idea, cast.filter((c) => selectedIds.includes(c.id)).map((c) => c.title)) : idea, 600),
+                            )
+                          }
+                        >
+                          {added ? <Check /> : <Sparkles />}
+                          {idea}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
               {project.kind === "story" && !changing && item && (
                 <>
                   <Button
@@ -1720,11 +1938,6 @@ export function ComicJourney({
                         : "Draw this scene"}{" "}
                   · {project.kind === "picture" ? "1" : "3"} Glow
                 </Button>
-                {voice.supported && (
-                  <Button variant="outline" size="icon" aria-label="Say your scene" onClick={voice.start}>
-                    <Mic />
-                  </Button>
-                )}
                 {changing ? (
                   <Button variant="ghost" onClick={() => setChanging(false)}>
                     Never mind
@@ -1790,6 +2003,12 @@ export function ComicJourney({
                     disabled={!!busy}
                     placeholder={`${cast.find((c) => selectedIds.includes(c.id))?.title ?? "Hero"}: “Look at that!”`}
                     onChange={(e) => setDialogue(e.target.value)}
+                  />
+                  <VoiceButton
+                    ageBand={child.age_band}
+                    what="the speech bubble words"
+                    disabled={!!busy}
+                    onText={(t) => setDialogue((v) => appendWords(v, t, 200))}
                   />
                   <div className="flex flex-wrap gap-2">
                     <Button disabled={!!busy || !dialogue.trim()} onClick={() => void keepPanel(dialogue)}>
@@ -1865,6 +2084,42 @@ export function ComicJourney({
               )}
               {((project.kind === "story" && items.every((p) => p.image) && at === items.length - 1) || finaleOn) && (
                 <div className={finaleOn ? "space-y-5" : "space-y-3 border-t border-border pt-5"}>
+                  {finaleOn && items.length + 2 <= 12 && (
+                    // A3.2: grow the same comic instead of starting over. New panels cost Glow only when drawn.
+                    <div className="space-y-3 rounded-2xl border-2 border-primary bg-card p-4">
+                      <h2 className="text-2xl">Want a longer adventure?</h2>
+                      <p className="text-muted-foreground">
+                        Add more panels to this comic. Everything you made stays just as it is. Each new panel is 3 Glow
+                        when Bugley draws it.
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {([2, 4] as const)
+                          .filter((more) => items.length + more <= 12 && (more === 2 || band !== "sprouts"))
+                          .map((more) => (
+                            <Button
+                              key={more}
+                              size={band === "sprouts" ? "lg" : "default"}
+                              variant={more === 2 ? "default" : "outline"}
+                              className={band === "sprouts" ? "h-16 text-xl" : undefined}
+                              disabled={!!busy}
+                              onClick={() =>
+                                void run("Adding your panels…", async () => {
+                                  const first = items.length;
+                                  if (text.trim() && text !== item?.description) await saveWords();
+                                  await comicEdit({ data: { ...id(), action: "extend", more } });
+                                  await reload();
+                                  setFinale(false);
+                                  setAt(first);
+                                })
+                              }
+                            >
+                              <Plus />
+                              {band === "sprouts" || more === 2 ? "Keep my story going!" : "Keep going"} · {more} more panels
+                            </Button>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                   {finaleOn && nameBlock}
                   <h2 className="text-2xl">{finaleOn ? "Pick your cover" : "Your adventure is ready! Time for a cover"}</h2>
                   {project.details.cover && (
@@ -1974,5 +2229,16 @@ export function ComicJourney({
         </>
       )}
     </section>
+  );
+}
+
+/** A row of little boxes, one per panel, so younger children can see how long their comic is. */
+function PanelDots({ count }: { count: number }) {
+  return (
+    <span aria-hidden className="flex flex-wrap gap-1">
+      {Array.from({ length: Math.max(0, Math.min(count, 12)) }, (_, i) => (
+        <span key={i} className="size-4 rounded-sm border-2 border-current opacity-70" />
+      ))}
+    </span>
   );
 }

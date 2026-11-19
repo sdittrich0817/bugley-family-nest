@@ -4,6 +4,7 @@ import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, LENGTHS, defaultLength, lengthBand, storyMapSchema } from "./story";
 import { ANGLE_PROMPT, comicPageSchema, layerSchema, movePage, newComicPage, readyToFinishComic, EMPTY_MAP, type ComicData, guidedComicPages, dialogueLayers } from "./comic";
+import { comicExtendProblem } from "./v3";
 
 const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() });
 const env = z.enum(["sandbox", "live"]);
@@ -39,7 +40,7 @@ export const createComic = createServerFn({ method: "POST" }).middleware([requir
 const browserPage = comicPageSchema.extend({ panels: z.array(z.object({ id: z.string().uuid(), description: z.string().max(600), angle: comicPageSchema.shape.panels.element.shape.angle, layers: z.array(layerSchema).max(12) })).min(1).max(6) });
 
 export const editComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({
-  action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers", "undo", "reopen"]), environment: env,
+  action: z.enum(["map", "page", "add", "remove", "move", "sketch", "final", "cover", "finish", "panel", "dialogue", "review", "title", "layers", "undo", "reopen", "extend"]), environment: env, more: z.union([z.literal(2), z.literal(4)]).optional(),
   map: storyMapSchema.optional(), page: browserPage.optional(), pageId: z.string().uuid().optional(), panelId: z.string().uuid().optional(), to: z.number().int().min(0).optional(), description: z.string().max(600).optional(), text: z.string().max(200).optional(), sfx: z.enum(["POW!", "WHOOSH!", "ZAP!", "SPLASH!"]).optional(), title: z.string().trim().min(1).max(80).optional(), layers: z.array(layerSchema).max(12).optional(), op: z.string().max(64).optional(),
 }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
@@ -105,6 +106,10 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
     const oldTexts = new Set(old.panels.flatMap((p) => [p.description, ...p.layers.map((l) => l.text)]));
     for (const panel of incoming.panels) for (const t of [panel.description, ...panel.layers.map((l) => l.text)]) if (!oldTexts.has(t)) await check(t);
     comic.data.pages[i] = { id: old.id, layout: incoming.layout, widePanelId: old.widePanelId, panels: incoming.panels.map((p) => { const prev = oldPanels.get(p.id); const same = prev && prev.description === p.description && prev.angle === p.angle; return { ...p, dialogueDone: prev?.dialogueDone, bubblePlacement: prev?.bubblePlacement, sketch: same ? prev.sketch : prev?.sketch ?? null, image: same ? prev.image : null }; }) };
+  } else if (data.action === "extend") {
+    const problem = comicExtendProblem(comic.data as never, data.more ?? 0);
+    if (problem) throw new Error(problem);
+    comic.data.pages.push(newComicPage(data.more === 2 ? "two" : "four"));
   } else if (data.action === "add") {
     if (Object.values(comic.data.map).some((v) => !v.trim())) throw new Error("Finish your Story Map first.");
     if (comic.data.guidedBand) throw new Error("Start the next issue for another adventure.");

@@ -127,6 +127,8 @@
 - [x] A3.1 quick wins (preview only): keep Comic choice through character creation, fix fast-tap race, first-visit wording, child-friendly stable errors, honest checking vs painting wait, Love it!/Change it, comic name optional until the end with own-words suggestions, post-drawing heading, "Comic name" wording. Tests + 3-age walkthroughs, max 1 paid drawing. Don't publish. — built and preview-tested (413 tests pass, 1 paid drawing); report delivered, awaiting publish approval.
 - [x] A3.1 final checks before publish: phone error box at 390/320, child-friendly PIN lockout message, Bugley/heading overlap, resume a Comics character idea after leaving or reloading (before and after the character is made), full tests + walkthroughs.
 - [x] Publish A3.1 (approved once checks pass) and live smoke test — published 19 Nov ~18:41 UTC, live check passed, test family deleted.
-- [ ] A3.2, A3.3, A3.4 — each waits on separate approval.
+- [x] A3.2 (preview only): age defaults (Sprouts 2 panels, 4 looks + More looks; Explorers plan + Change; Builders open), clear voice with Listening/Stop/Got it/typing fallback, tappable comic sparks, quiet character-idea saving, tests, report. Don't publish. — built and preview-tested (457 tests pass, $0 drawings); report delivered, awaiting Shea's review and real-device mic test.
+- [x] A3.2 extra (Shea's suggestion): after a short comic's last panel, Bugley celebrates and offers "Keep my story going!" to add panels to the same comic.
+- [ ] A3.3, A3.4 — each waits on separate approval.
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).

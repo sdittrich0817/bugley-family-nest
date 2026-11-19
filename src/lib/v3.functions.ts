@@ -7,7 +7,7 @@ import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { EMPTY_MAP, ideaGenre } from "./story";
 import { newComicPage } from "./comic";
-import { v3Count, v3Details, v3TempTitle, replaceV3Art } from "./v3";
+import { v3Count, v3Details, v3TempTitle, replaceV3Art, draftRev, draftSaveDecision } from "./v3";
 import { cleanSparks, storyCoachingInstructions } from "./story";
 import { formatStoryPage, storyCoachContext, storyLayoutSchema } from "./story-presentation";
 
@@ -39,22 +39,39 @@ export const startV3Comic = createServerFn({ method: "POST" }).middleware([requi
   return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
 });
 
-/** Character draft is separate from the eventual output, and never appears in approved cast. */
-export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment, kind: z.enum(["picture", "comic", "story"]).optional() }).parse(i)).handler(async ({ data, context }) => {
+/** Character draft is separate from the eventual output, and never appears in approved cast.
+ * A3.2: also saved quietly while the child types or speaks (before "Meet my character"). Each save carries the time of
+ * the child's latest change; an older save never overwrites a newer one, and a finished (closed) idea is never reopened. */
+export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment, kind: z.enum(["picture", "comic", "story"]).optional(), rev: draftRev.optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+  const { data: old } = await a.from("studio_creations").select("parent_id,child_id,details").eq("id", data.id).maybeSingle();
+  if (old && (old.parent_id !== context.userId || old.child_id !== child.id || !(old.details as any)?.characterDraftV3)) throw new Error("Choose your own character draft.");
+  // Checked before the safety check, so an out-of-date save costs nothing and logs nothing.
+  if (draftSaveDecision(old, data.rev) === "stale") return { id: data.id, saved: false };
   if (data.description.trim()) {
     const g = await s.guardChildText(context.supabase, context.userId, child, data.description, "character_details");
     if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up character.");
   }
-  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
-  const { data: old } = await a.from("studio_creations").select("parent_id,child_id,details").eq("id", data.id).maybeSingle();
-  if (old && (old.parent_id !== context.userId || old.child_id !== child.id || !(old.details as any)?.characterDraftV3)) throw new Error("Choose your own character draft.");
-  const value = { body: data.description, style_key: data.styleKey, details: { characterDraftV3: true, ...(data.kind ? { intendedKind: data.kind } : {}) }, updated_at: new Date().toISOString() };
-  const result = old ? await a.from("studio_creations").update(value).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id) : await a.from("studio_creations").insert({ ...value, id: data.id, parent_id: context.userId, child_id: child.id, kind: "character", title: "My character idea", images: [] });
+  const value = { body: data.description, style_key: data.styleKey, details: { characterDraftV3: true, ...(data.kind ? { intendedKind: data.kind } : {}), ...(data.rev ? { draftRev: data.rev } : {}) }, updated_at: new Date().toISOString() };
+  const update = async () => {
+    let q = a.from("studio_creations").update(value).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").contains("details", { characterDraftV3: true }).not("details", "cs", JSON.stringify({ closed: true }));
+    // Re-checked in the write itself, so two saves finishing out of order can't let the older one win.
+    if (data.rev) q = q.or(`details->>draftRev.is.null,details->>draftRev.lt."${data.rev}"`);
+    const r = await q.select("id");
+    return { error: r.error, saved: (r.data?.length ?? 0) > 0 };
+  };
+  let result: { error: unknown; saved: boolean };
+  if (old) result = await update();
+  else {
+    const ins = await a.from("studio_creations").insert({ ...value, id: data.id, parent_id: context.userId, child_id: child.id, kind: "character", title: "My character idea", images: [] });
+    // Another save created it a moment ago: fall back to the guarded update.
+    result = ins.error?.code === "23505" ? await update() : { error: ins.error, saved: !ins.error };
+  }
   if (result.error) throw new Error("Your character idea couldn’t save. Try again.");
-  return { id: data.id };
+  return { id: data.id, saved: result.saved };
 });
 
 export const getV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.parse(i)).handler(async ({ data, context }) => {

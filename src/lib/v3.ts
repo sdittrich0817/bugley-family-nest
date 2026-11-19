@@ -32,3 +32,33 @@ export function replaceV3Art<T extends { image: string | null; description: stri
 export function v3CoverWords(title: string, titlePending: boolean, firstWords: string | null | undefined) {
   return `${titlePending ? "" : `${title}: `}${firstWords ?? ""}`.slice(0, 600);
 }
+
+/** A3.2 character-idea saves carry the time the child last changed their words (fixed-width ISO, so text order is time order). */
+export const draftRev = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+/**
+ * Should this character-idea save be written? An older save never overwrites a newer one,
+ * and an idea that already became a character (closed) is never reopened by a late save.
+ */
+export function draftSaveDecision(old: { details: unknown } | null, rev: string | undefined): "insert" | "update" | "stale" {
+  if (!old) return "insert";
+  const d = (old.details ?? {}) as { closed?: boolean; draftRev?: unknown };
+  if (d.closed) return "stale";
+  const saved = typeof d.draftRev === "string" ? d.draftRev : undefined;
+  if (rev && saved && rev <= saved) return "stale";
+  return "update";
+}
+
+/**
+ * A3.2 "Keep my story going!": a finished-drawing (not yet published) comic can grow by 2 or 4 panels on a new page,
+ * up to the usual 12. Existing pages, art, words, frozen characters and cover are untouched; new panels cost the
+ * normal Glow only when drawn. Returns why not, or null when allowed.
+ */
+export function comicExtendProblem(details: { finished?: boolean; workspace?: { v3?: boolean }; pages: { panels: { image: string | null }[] }[] }, more: number) {
+  if (!details.workspace?.v3) return "Start the next issue for another adventure.";
+  if (details.finished) return "This comic is finished. You can read it in your album.";
+  if (more !== 2 && more !== 4) return "Choose 2 or 4 more panels.";
+  const panels = details.pages.flatMap((p) => p.panels);
+  if (panels.some((p) => !p.image)) return "Finish drawing your panels first.";
+  if (panels.length + more > 12) return "Comics can have up to 12 panels.";
+  return null;
+}

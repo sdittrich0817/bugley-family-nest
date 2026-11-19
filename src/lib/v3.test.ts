@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { replaceV3Art, v3ComicPages, v3Details, v3StoryPages } from "./v3";
+import { comicExtendProblem, draftRev, draftSaveDecision, replaceV3Art, v3ComicPages, v3Details, v3StoryPages } from "./v3";
 
 describe("character-first Create rules", () => {
   it("creates the child's exact chosen panel count across pages", () => {
@@ -73,4 +73,34 @@ d3("A3.1 comic naming at the end", () => {
     e3(intendedCoverCast(v3CoverWords("Pip’s comic", true, "Pip and Luna fly."), cast).mode).toBe("default");
     e3(intendedCoverCast(v3CoverWords("Pip’s comic", true, "Only Pip is here. Luna stayed home asleep."), cast).mode).toBe("explicit");
   });
+});
+
+describe("A3.2 character idea saves", () => {
+  const at = (s: number) => new Date(Date.UTC(2026, 10, 19, 19, 0, s)).toISOString();
+  it("creates a new idea", () => expect(draftSaveDecision(null, at(1))).toBe("insert"));
+  it("never lets an older save overwrite a newer one", () =>
+    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(3))).toBe("stale"));
+  it("an identical save time is not written twice", () =>
+    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(5))).toBe("stale"));
+  it("a newer save replaces the older words", () =>
+    expect(draftSaveDecision({ details: { characterDraftV3: true, draftRev: at(5) } }, at(9))).toBe("update"));
+  it("an idea saved before A3.2 (no save time) can be updated", () =>
+    expect(draftSaveDecision({ details: { characterDraftV3: true } }, at(1))).toBe("update"));
+  it("an idea that already became a character is never reopened", () =>
+    expect(draftSaveDecision({ details: { characterDraftV3: true, closed: true } }, at(9))).toBe("stale"));
+  it("save times must be fixed-width ISO so text order is time order", () => {
+    expect(draftRev.safeParse(at(1)).success).toBe(true);
+    expect(draftRev.safeParse("2026-11-19").success).toBe(false);
+  });
+});
+
+describe("A3.2 Keep my story going", () => {
+  const comic = (drawn: number, total: number, extra: object = {}) => ({ workspace: { v3: true }, finished: false, pages: [{ panels: Array.from({ length: total }, (_, i) => ({ image: i < drawn ? "x.png" : null })) }], ...extra });
+  it("a finished-drawing 2-panel comic can add 2 more panels", () => expect(comicExtendProblem(comic(2, 2), 2)).toBeNull());
+  it("can add 4 more panels", () => expect(comicExtendProblem(comic(2, 2), 4)).toBeNull());
+  it("waits until every panel is drawn", () => expect(comicExtendProblem(comic(1, 2), 2)).toBe("Finish drawing your panels first."));
+  it("never goes past 12 panels", () => expect(comicExtendProblem(comic(12, 12), 2)).toBe("Comics can have up to 12 panels."));
+  it("only 2 or 4 more panels", () => expect(comicExtendProblem(comic(2, 2), 3)).toBe("Choose 2 or 4 more panels."));
+  it("a published comic can't grow", () => expect(comicExtendProblem(comic(2, 2, { finished: true }), 2)).not.toBeNull());
+  it("older comics don't use this", () => expect(comicExtendProblem(comic(2, 2, { workspace: {} }), 2)).not.toBeNull());
 });
