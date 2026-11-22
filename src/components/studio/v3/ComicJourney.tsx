@@ -27,6 +27,7 @@ import { BugleyCompanion, BugleyMagic, Confetti } from "./BugleyCompanion";
 import { ComicSlideshow } from "./ComicSlideshow";
 import { StoryBookPreview } from "./StoryBookPreview";
 import { StoryPageDesign } from "./StoryPageDesign";
+import { ChangeChoices, CoverPicker, GlowConfirm } from "./PictureChoices";
 import {
   getV3CharacterDraft,
   closeV3CharacterDraft,
@@ -131,6 +132,8 @@ export function ComicJourney({
   if (startKind) wanted.current = startKind;
   // A3.1 comic panels: after a picture the child sees only "Love it!" / "Change it"; speech is its own step.
   const [step, setStep] = useState<"react" | "change" | "words">("react");
+  // A3.3: inside "Change it" the child first sees three choices; "redraw" shows their words and the Glow check.
+  const [changeMode, setChangeMode] = useState<"pick" | "redraw">("pick");
   const [finale, setFinale] = useState(false);
   const [nameText, setNameText] = useState("");
   const [title, setTitle] = useState("");
@@ -286,6 +289,7 @@ export function ComicJourney({
   }, [project?.id, project?.updatedAt, at]);
   useEffect(() => {
     setStep("react");
+    setChangeMode("pick");
   }, [project?.id, at]);
   useEffect(() => {
     setFinale(false);
@@ -623,6 +627,8 @@ export function ComicJourney({
   }
   useEffect(() => {
     if (!project || project.details.finished || busy || changing || !text.trim()) return;
+    // A3.3: words typed while deciding on a paid redraw are saved by the drawing itself, so "Cancel" changes nothing.
+    if (project.kind === "comic" && step === "change" && changeMode === "redraw") return;
     const saved =
       project.kind === "picture"
         ? project.workspace.originalIdea
@@ -671,7 +677,7 @@ export function ComicJourney({
       });
     }, 2500);
     return () => clearTimeout(timer);
-  }, [text, project?.updatedAt, busy, changing, at]);
+  }, [text, project?.updatedAt, busy, changing, at, step, changeMode]);
   const newCharacter = (
     <div className="space-y-4">
       <BugleyCompanion
@@ -964,7 +970,9 @@ export function ComicJourney({
       .join(" & ") || "your character";
   const finaleOn = project?.kind === "comic" && finale && !project.details.finished;
   const drawnComic = project?.kind === "comic" && !!item?.image && !changing && !finaleOn;
-  const editing = !finaleOn && (!drawnComic || step === "change");
+  const editing = !finaleOn && (!drawnComic || (step === "change" && changeMode === "redraw"));
+  // A3.3: paid comic-panel changes show what Bugley will do, the Glow and a Cancel before anything is drawn.
+  const comicChange = project?.kind === "comic" && !!item?.image && !finaleOn && (changing || step === "change");
   const titlePending = project?.kind === "comic" && !!project.workspace?.titlePending;
   const comicPanels: any[] = project?.kind === "comic" ? items : [];
   const nameIdeas = titlePending
@@ -1706,14 +1714,18 @@ export function ComicJourney({
                   busy ||
                   help?.question ||
                   (changing
-                    ? "What should I change in this picture?"
+                    ? project.kind === "comic"
+                      ? "What would you like to change in this picture?"
+                      : "What should I change in this picture?"
                     : finaleOn
                       ? `You finished ${items.length === 1 ? "your panel" : items.length === 2 ? "both panels" : `all ${items.length} panels`}! Your comic is ready! 🎉`
                       : drawnComic
                         ? step === "words"
                           ? `Does anyone talk in panel ${at + 1}?`
                           : step === "change"
-                            ? `How shall we change panel ${at + 1}?`
+                            ? changeMode === "redraw"
+                              ? `Let’s try a new picture for panel ${at + 1}!`
+                              : `How shall we change panel ${at + 1}?`
                             : `Here’s panel ${at + 1}! Do you love it?`
                         : project.kind === "picture"
                       ? `Where is ${heroNames} and what are they doing?`
@@ -1731,14 +1743,18 @@ export function ComicJourney({
                     : help?.question
                       ? "Add a detail if you want, or keep your idea as it is. Your call!"
                       : changing
-                        ? "Say exactly what to change. Bugley keeps everything else the same."
+                        ? project.kind === "comic"
+                          ? "Tell Bugley what you’d like to change in this picture. Bugley tries to keep the rest the same, but some little things might look a bit different."
+                          : "Say exactly what to change. Bugley keeps everything else the same."
                         : finaleOn
                           ? "Give it a name if you like, pick a cover, then publish it to your shelf."
                           : drawnComic
                             ? step === "words"
                               ? "Type what they say, starting with their name. Or tap “No words needed”."
                               : step === "change"
-                                ? "Change one thing in the picture, or change your words and draw it again."
+                                ? changeMode === "redraw"
+                                  ? "Check your words below. You can change them first. Bugley only draws when you tap “Yes, draw it”."
+                                  : "Fix one thing, draw a new one, or keep this picture. Your call!"
                                 : "Tap “Love it!” to keep it, or “Change it” to make it different."
                             : project.kind === "story"
                           ? "Your words, your book. I’m here if you get stuck."
@@ -1869,6 +1885,7 @@ export function ComicJourney({
                     disabled={!!busy}
                     onClick={() => {
                       setHelp(null);
+                      setChangeMode("pick");
                       setStep("change");
                     }}
                   >
@@ -1876,6 +1893,22 @@ export function ComicJourney({
                     Change it
                   </Button>
                 </div>
+              )}
+              {drawnComic && step === "change" && changeMode === "pick" && (
+                <ChangeChoices
+                  band={band}
+                  busy={!!busy}
+                  onFix={() => {
+                    setChanging(true);
+                    setRevision("");
+                    setHelp(null);
+                  }}
+                  onRedraw={() => {
+                    setHelp(null);
+                    setChangeMode("redraw");
+                  }}
+                  onKeep={() => setStep("react")}
+                />
               )}
               {editing && !!help?.ideas.length && project.kind === "story" &&
                 help.ideas.map((idea) => (
@@ -1987,7 +2020,56 @@ export function ComicJourney({
                   />
                 </>
               )}
-              {(editing || changing) && (
+              {comicChange && changing && (
+                <GlowConfirm
+                  band={band}
+                  have={glow?.total}
+                  busy={!!busy}
+                  ready={!!revision.trim() && !!text.trim()}
+                  what={
+                    revision.trim()
+                      ? `Bugley will change “${revision.trim()}” in panel ${at + 1}. Bugley tries to keep the rest the same, but some little things might look a bit different. Your words for this panel stay the same.`
+                      : "Type what to change in the box above, then Bugley shows you what it will do."
+                  }
+                  confirmLabel="Yes, make this change"
+                  onConfirm={() => void draw()}
+                  onCancel={() => {
+                    setChanging(false);
+                    setRevision("");
+                  }}
+                />
+              )}
+              {comicChange && !changing && step === "change" && changeMode === "redraw" && (
+                <>
+                  <GlowConfirm
+                    band={band}
+                    have={glow?.total}
+                    busy={!!busy}
+                    ready={!!text.trim()}
+                    what={`Bugley will draw a brand-new picture for panel ${at + 1} from your words. Your picture stays until the new one is ready.`}
+                    confirmLabel={help?.question ? "Yes, draw with my details" : "Yes, draw it"}
+                    onConfirm={() => void draw()}
+                    onCancel={() => {
+                      setText(item?.description ?? "");
+                      setHelp(null);
+                      setChangeMode("pick");
+                    }}
+                  />
+                  <Button
+                    variant="ghost"
+                    disabled={!!busy}
+                    onClick={() =>
+                      void run("Thinking of a few sparks…", async () =>
+                        setHelp(await coach({ data: { ...id(), itemId: item?.id, text: text.slice(0, 600), help: true } })),
+                      )
+                    }
+                  >
+                    <Lightbulb />
+                    Help with my adventure
+                  </Button>
+                </>
+              )}
+              {(editing || changing) && !comicChange && (
               <div className="flex flex-wrap gap-2">
                 <Button disabled={!!busy || !text.trim() || (changing && !revision.trim())} onClick={() => void draw()}>
                   <Paintbrush />
@@ -2164,7 +2246,7 @@ export function ComicJourney({
                               key={more}
                               size={band === "sprouts" ? "lg" : "default"}
                               variant={more === 2 ? "default" : "outline"}
-                              className={band === "sprouts" ? "h-16 text-xl" : undefined}
+                              className={band === "sprouts" ? "h-auto min-h-16 whitespace-normal text-xl" : "h-auto min-h-12 whitespace-normal"}
                               disabled={!!busy}
                               onClick={() =>
                                 void run("Adding your panels…", async () => {
@@ -2185,107 +2267,153 @@ export function ComicJourney({
                     </div>
                   )}
                   {finaleOn && nameBlock}
-                  <h2 className="text-2xl">{finaleOn ? "Pick your cover" : "Your adventure is ready! Time for a cover"}</h2>
-                  {project.details.cover && (
-                    <img
-                      src={project.urls[project.details.cover]}
-                      alt="Your cover"
-                      className="mx-auto max-h-64 rounded-xl border-4 border-primary object-contain shadow-glow"
-                    />
-                  )}
-                  <p className="font-semibold">
-                    Tap one of your pictures to use it as the cover (free), or let Bugley paint a brand-new one.
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {items
-                      .filter((p) => p.image)
-                      .map((p, i) => (
-                        <button
-                          key={p.id}
-                          aria-label={`Use ${project.kind === "comic" ? "panel" : "page"} ${i + 1} as the cover`}
-                          aria-pressed={project.details.cover === p.image}
-                          disabled={!!busy}
-                          onClick={() =>
-                            void run("Setting your cover…", async () => {
-                              setProject(
-                                await pickCover({ data: { childId: child.id, id: project.id, itemId: p.id } }),
-                              );
-                            })
-                          }
-                          className={`overflow-hidden rounded-xl border-4 ${project.details.cover === p.image ? "border-primary shadow-glow" : "border-transparent"}`}
-                        >
-                          <img src={project.urls[p.image]} alt="" className="aspect-square w-full object-cover" />
-                        </button>
-                      ))}
-                  </div>
-                  {project.details.cover && (
-                    <Button
-                      variant="outline"
-                      disabled={!!busy}
-                      onClick={() =>
+                  {finaleOn ? (
+                    <CoverPicker
+                      band={band}
+                      have={glow?.total}
+                      busy={!!busy}
+                      cover={project.details.cover}
+                      coverUrl={project.details.cover ? project.urls[project.details.cover] : undefined}
+                      panels={items
+                        .filter((p) => p.image && project.urls[p.image])
+                        .map((p, i) => ({ id: p.id, image: p.image, url: project.urls[p.image] ?? "", label: `panel ${i + 1}` }))}
+                      onPick={(itemId) =>
+                        void run("Setting your cover…", async () => {
+                          const next = await pickCover({ data: { childId: child.id, id: project.id, itemId } });
+                          projectRef.current = next;
+                          setProject(next);
+                        })
+                      }
+                      onPaint={() =>
                         void run("Painting the cover…", async () => {
-                          await (project.kind === "comic" ? comicEdit : storyEdit)({
-                            data: {
-                              ...id(),
-                              action: "cover",
-                              description: coverWords(),
-                              op: crypto.randomUUID(),
-                            },
-                          } as any);
+                          await comicEdit({ data: { ...id(), action: "cover", description: coverWords(), op: crypto.randomUUID() } });
                           await reload();
                         })
                       }
-                    >
-                      <Paintbrush />
-                      Paint a new cover instead · 3 Glow
-                    </Button>
-                  )}
-                  <Button
-                    disabled={!!busy}
-                    onClick={() =>
-                      void run(
-                        project.details.cover ? "Publishing your adventure…" : "Painting the cover…",
-                        async () => {
-                          const action = project.details.cover ? "finish" : "cover";
-                          if (project.kind === "comic") {
-                            for (const p of items.filter((p) => !p.dialogueDone))
-                              await comicEdit({
-                                data: {
-                                  ...id(),
-                                  action: "dialogue",
-                                  pageId: p.pageId,
-                                  panelId: p.id,
-                                  text: p.id === item?.id ? dialogue : "",
-                                },
-                              });
+                      onPublish={() =>
+                        void run("Publishing your adventure…", async () => {
+                          for (const p of items.filter((p) => !p.dialogueDone))
                             await comicEdit({
                               data: {
                                 ...id(),
-                                action,
-                                description: coverWords(),
-                                op: crypto.randomUUID(),
+                                action: "dialogue",
+                                pageId: p.pageId,
+                                panelId: p.id,
+                                text: p.id === item?.id ? dialogue : "",
                               },
                             });
-                          } else
-                            await storyEdit({
+                          await comicEdit({ data: { ...id(), action: "finish", description: coverWords(), op: crypto.randomUUID() } });
+                          await reload();
+                          setParty(true);
+                          setTimeout(() => setParty(false), 4000);
+                        })
+                      }
+                    />
+                  ) : (
+                    <>
+                    <h2 className="text-2xl">{finaleOn ? "Pick your cover" : "Your adventure is ready! Time for a cover"}</h2>
+                    {project.details.cover && (
+                      <img
+                        src={project.urls[project.details.cover]}
+                        alt="Your cover"
+                        className="mx-auto max-h-64 rounded-xl border-4 border-primary object-contain shadow-glow"
+                      />
+                    )}
+                    <p className="font-semibold">
+                      Tap one of your pictures to use it as the cover (free), or let Bugley paint a brand-new one.
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {items
+                        .filter((p) => p.image)
+                        .map((p, i) => (
+                          <button
+                            key={p.id}
+                            aria-label={`Use ${project.kind === "comic" ? "panel" : "page"} ${i + 1} as the cover`}
+                            aria-pressed={project.details.cover === p.image}
+                            disabled={!!busy}
+                            onClick={() =>
+                              void run("Setting your cover…", async () => {
+                                setProject(
+                                  await pickCover({ data: { childId: child.id, id: project.id, itemId: p.id } }),
+                                );
+                              })
+                            }
+                            className={`overflow-hidden rounded-xl border-4 ${project.details.cover === p.image ? "border-primary shadow-glow" : "border-transparent"}`}
+                          >
+                            <img src={project.urls[p.image]} alt="" className="aspect-square w-full object-cover" />
+                          </button>
+                        ))}
+                    </div>
+                    {project.details.cover && (
+                      <Button
+                        variant="outline"
+                        disabled={!!busy}
+                        onClick={() =>
+                          void run("Painting the cover…", async () => {
+                            await (project.kind === "comic" ? comicEdit : storyEdit)({
                               data: {
                                 ...id(),
-                                action,
+                                action: "cover",
                                 description: coverWords(),
                                 op: crypto.randomUUID(),
                               },
-                            });
-                          await reload();
-                          if (action === "finish") {
-                            setParty(true);
-                            setTimeout(() => setParty(false), 4000);
-                          }
-                        },
-                      )
-                    }
-                  >
-                    {project.details.cover ? "Publish to my shelf! 🎉" : "Make the cover · 3 Glow"}
-                  </Button>
+                            } as any);
+                            await reload();
+                          })
+                        }
+                      >
+                        <Paintbrush />
+                        Paint a new cover instead · 3 Glow
+                      </Button>
+                    )}
+                    <Button
+                      disabled={!!busy}
+                      onClick={() =>
+                        void run(
+                          project.details.cover ? "Publishing your adventure…" : "Painting the cover…",
+                          async () => {
+                            const action = project.details.cover ? "finish" : "cover";
+                            if (project.kind === "comic") {
+                              for (const p of items.filter((p) => !p.dialogueDone))
+                                await comicEdit({
+                                  data: {
+                                    ...id(),
+                                    action: "dialogue",
+                                    pageId: p.pageId,
+                                    panelId: p.id,
+                                    text: p.id === item?.id ? dialogue : "",
+                                  },
+                                });
+                              await comicEdit({
+                                data: {
+                                  ...id(),
+                                  action,
+                                  description: coverWords(),
+                                  op: crypto.randomUUID(),
+                                },
+                              });
+                            } else
+                              await storyEdit({
+                                data: {
+                                  ...id(),
+                                  action,
+                                  description: coverWords(),
+                                  op: crypto.randomUUID(),
+                                },
+                              });
+                            await reload();
+                            if (action === "finish") {
+                              setParty(true);
+                              setTimeout(() => setParty(false), 4000);
+                            }
+                          },
+                        )
+                      }
+                    >
+                      {project.details.cover ? "Publish to my shelf! 🎉" : "Make the cover · 3 Glow"}
+                    </Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
