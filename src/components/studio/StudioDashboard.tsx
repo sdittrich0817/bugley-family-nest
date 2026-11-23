@@ -11,6 +11,7 @@ import { DeleteCreationButton } from "@/components/studio/DeleteCreationButton";
 import type { SidekickChild } from "@/components/studio/Sidekick";
 import { listCast } from "@/lib/images.functions";
 import { listInProgress } from "@/lib/studio.functions";
+import { ideaFirstAllowed } from "@/lib/comic-idea";
 import { ARCADE_GAMES, earnsGlow, favoriteGames, readProgress, type ArcadeId } from "@/lib/arcade";
 import { ARCADE_ART } from "@/lib/arcade-art";
 import pictureArt from "@/assets/illustrations/studio-picture.jpg";
@@ -41,8 +42,11 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
   // A3.1: the card the child tapped (comic, picture or story) travels with them into character creation.
   const start = (kind?: "picture" | "comic" | "story") => void navigate({ to: "/kids/studio/v3", search: kind ? { kind } : {} });
   const [pickFor, setPickFor] = useState<(typeof JOURNEYS)[number] | null>(null);
+  // A3.4.1: Explorers and Builders can start a comic from their idea, so first-time children still see the picker.
+  const ideaFor = (key: string) => key === "comic" && ideaFirstAllowed(child.age_band);
+  const startIdea = () => void navigate({ to: "/kids/studio/v3", search: { kind: "comic", start: "idea" } });
   // A fast tap before the characters have loaded waits for them instead of dropping the choice.
-  useEffect(() => { if (pickFor && castFetched && !cast.length) start(pickFor.key); }, [pickFor, castFetched, cast.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (pickFor && castFetched && !cast.length && !ideaFor(pickFor.key)) start(pickFor.key); }, [pickFor, castFetched, cast.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const [bugOpen, setBugOpen] = useState(false);
   const [bug, setBug] = useState<unknown>(child.bug ?? child.avatar);
   const qc = useQueryClient();
@@ -75,7 +79,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
         <button onClick={() => void navigate({ to: "/kids/studio/v3", search: w.kind === "character" ? { draft: w.id, ...(w.intendedKind ? { kind: w.intendedKind } : {}) } : { project: w.id } })} className="group block w-full overflow-hidden rounded-3xl border-2 border-border bg-card text-left shadow-soft transition hover:-translate-y-0.5 hover:border-primary">
           {w.art ? <img src={w.art} alt="" loading="lazy" className="aspect-square w-full object-cover" /> : <span className="flex aspect-square items-center justify-center bg-primary/15 text-4xl" aria-hidden>✏️</span>}
           <span className="block truncate px-3 pt-2 font-display">{w.title}</span>
-          <span className="flex items-center gap-1 px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind === "character" ? (w.intendedKind ? `For your ${w.intendedKind}` : "Character") : w.kind} · Continue <ArrowRight className="size-3" /></span>
+          <span className="flex items-center gap-1 px-3 pb-2 text-xs font-semibold capitalize text-muted-foreground">{w.kind === "character" ? (w.intendedKind ? `For your ${w.intendedKind}` : "Character") : w.ideaStage === "idea" ? "Comic idea" : w.ideaStage === "cast" ? "Choose your characters" : w.kind} · Continue <ArrowRight className="size-3" /></span>
         </button>
         <div className="absolute right-1 top-1 rounded-full bg-background/85"><DeleteCreationButton childId={child.id} id={w.id} title={w.title} /></div>
       </li>)}</ul>
@@ -87,7 +91,7 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
       <ol className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted-foreground">
         <Step n={1} label="Choose what to make" /><ArrowRight className="size-4" /><Step n={2} label="Pick or invent a character" /><ArrowRight className="size-4" /><Step n={3} label="Describe it. Bugley helps." />
       </ol>
-      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={() => castFetched && !cast.length ? start(j.key) : setPickFor(j)} aria-pressed={pickFor?.key === j.key} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
+      <div className="grid gap-3 sm:grid-cols-3">{JOURNEYS.map((j) => <button key={j.key} onClick={() => castFetched && !cast.length && !ideaFor(j.key) ? start(j.key) : setPickFor(j)} aria-pressed={pickFor?.key === j.key} className="group relative overflow-hidden rounded-3xl text-left shadow-soft transition hover:-translate-y-1 hover:shadow-lift focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring">
         <img src={j.art} alt="" loading="lazy" className="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute inset-0 bg-gradient-to-t from-foreground/85 via-foreground/20 to-transparent" aria-hidden />
         <span className="absolute inset-x-0 bottom-0 p-4 text-background"><span className="block font-display text-2xl">{j.title}</span><span className="block text-sm opacity-90">{j.line}</span><span className="mt-2 inline-flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-bold text-primary-foreground">Pick a character<ArrowRight className="size-3" /></span></span>
@@ -95,6 +99,8 @@ export function StudioDashboard({ child, glow, onAlbum }: { child: SidekickChild
       {pickFor && <div className="step-enter space-y-3 rounded-3xl border-4 border-primary bg-card p-4 shadow-glow">
         <div className="flex items-center justify-between gap-2"><h3 className="font-display text-xl">Who’s starring in your {pickFor.key}?</h3><Button variant="ghost" size="icon" aria-label="Close" onClick={() => setPickFor(null)}><X /></Button></div>
         {!castFetched && <p role="status" className="text-sm font-semibold text-muted-foreground">Finding your characters…</p>}
+        {ideaFor(pickFor.key) && <button onClick={startIdea} className="flex w-full items-center gap-3 rounded-2xl border-4 border-primary bg-primary/10 p-3 text-left transition hover:shadow-glow"><span className="text-3xl" aria-hidden>💡</span><span><span className="block font-display text-xl">Start with my idea</span><span className="block text-sm font-semibold text-muted-foreground">Write what your comic is about, then pick who’s in it</span></span><ArrowRight className="ml-auto size-5 shrink-0 text-primary" /></button>}
+        {ideaFor(pickFor.key) && <p className="text-sm font-semibold text-muted-foreground">Or start with a character:</p>}
         <ul className="flex snap-x gap-3 overflow-x-auto pb-1">
           <li className="w-24 shrink-0"><button onClick={() => start(pickFor.key)} className="flex aspect-square w-full flex-col items-center justify-center rounded-full border-4 border-dashed border-primary/60 text-sm font-semibold hover:border-primary"><Plus className="size-6 text-primary" />New</button></li>
           {cast.map((m) => <li key={m.id} className="w-24 shrink-0 text-center"><button onClick={() => startWith(m.id, pickFor.key)} className="block w-full">{m.url ? <img src={m.url} alt="" className="aspect-square w-full rounded-full border-4 border-background object-cover shadow-soft transition hover:scale-105 hover:border-primary" /> : <span className="flex aspect-square items-center justify-center rounded-full bg-primary/15 text-3xl">🐾</span>}<span className="mt-1 block truncate text-sm font-semibold">{m.title}</span></button></li>)}

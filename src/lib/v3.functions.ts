@@ -20,7 +20,7 @@ const NAP = "Ask a grown-up to open your Studio plan.";
  * A3.2: also saved quietly while the child types or speaks (before "Meet my character"). Versions are assigned by the
  * server, and each write is conditional on the version the client last saw, so a delayed request or another device's
  * older view can never overwrite newer words; a finished (closed) idea is never reopened. */
-export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment, kind: z.enum(["picture", "comic", "story"]).optional(), base: draftVersion.optional() }).parse(i)).handler(async ({ data, context }) => {
+export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ description: z.string().max(600), styleKey: z.string().max(40), environment, kind: z.enum(["picture", "comic", "story"]).optional(), base: draftVersion.optional(), comicId: z.string().uuid().optional() }).parse(i)).handler(async ({ data, context }) => {
   if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -40,12 +40,20 @@ export const saveV3CharacterDraft = createServerFn({ method: "POST" }).middlewar
   // Decided before the safety check, so an out-of-date save costs nothing and logs nothing.
   const decision = draftSaveDecision(old, data.base);
   if (decision.action === "closed" || decision.action === "conflict") return answer(old, false);
+  // A3.4.1: a character being made for an idea-first comic is linked to that comic (the child's own, still choosing
+  // characters), so reopening the comic restores the words and the draft isn't listed as a second card.
+  let forComic = (old?.details as { forComic?: string } | null)?.forComic;
+  if (data.comicId && !forComic) {
+    const { data: comic } = await a.from("studio_creations").select("details").eq("id", data.comicId).eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "comic").is("deleted_at", null).maybeSingle();
+    if (!comic || (await import("./comic-idea")).ideaStageOf(comic.details) !== "cast") throw new Error("Choose your own comic idea.");
+    forComic = data.comicId;
+  }
   if (data.description.trim()) {
     const g = await s.guardChildText(context.supabase, context.userId, child, data.description, "character_details");
     if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up character.");
   }
   const next = decision.expect + 1;
-  const details = { ...((old?.details as object) ?? {}), characterDraftV3: true, ...(data.kind ? { intendedKind: data.kind } : {}), draftVersion: next };
+  const details = { ...((old?.details as object) ?? {}), characterDraftV3: true, ...(data.kind ? { intendedKind: data.kind } : {}), ...(forComic ? { forComic } : {}), draftVersion: next };
   delete (details as { draftRev?: unknown }).draftRev;
   const value = { body: data.description, style_key: data.styleKey, details, updated_at: new Date().toISOString() };
   let error: unknown = null;
@@ -86,6 +94,104 @@ export const closeV3CharacterDraft = createServerFn({ method: "POST" }).middlewa
   if (!old || !(old.details as any)?.characterDraftV3) return { ok: false };
   const { error } = await a.from("studio_creations").update({ details: { ...(old.details as object), closed: true } }).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id);
   return { ok: !error };
+});
+
+/** A3.4.1: the newest unfinished character linked to an idea-first comic (or null). Owner-only read; changes nothing. */
+export const getV3LinkedDraft = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), comicId: z.string().uuid() }).parse(i)).handler(async ({ data, context }) => {
+  const { loadChild } = await import("./studio.server");
+  await loadChild(context.supabase, context.userId, data.childId);
+  const { data: rows } = await context.supabase.from("studio_creations").select("id,body,style_key,details,updated_at").eq("parent_id", context.userId).eq("child_id", data.childId).eq("kind", "character").is("deleted_at", null).contains("details", { characterDraftV3: true, forComic: data.comicId }).order("updated_at", { ascending: false }).limit(3);
+  const row = (rows ?? []).find((r: any) => !r.details?.closed);
+  return row ? { id: row.id as string, description: (row.body ?? "") as string, styleKey: (row.style_key ?? "cartoon") as string, version: savedDraftVersion(row.details) } : null;
+});
+
+/**
+ * A3.4.1 "Start with my idea" (Explorers and Builders only; refused for Sprouts). Saves the child's idea exactly as typed
+ * into a new idea-first comic, quietly while they type and again when they tap "That's my idea!" (`done`). The comic id
+ * comes from the device, so a double tap or retry makes one comic. Versions are assigned by the server and every write
+ * is conditional on the version the client last saw, so a delayed save or another device's older view never wins.
+ * No Glow; one safety check per saved change. The idea never reaches Story Memory or drawing instructions.
+ */
+export const saveV3Idea = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ idea: z.string().max(600), base: draftVersion.optional(), done: z.boolean().default(false), count: v3Count.optional(), genre: z.enum(COMIC_GENRES).optional(), environment }).parse(i)).handler(async ({ data, context }) => {
+  if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
+  const ci = await import("./comic-idea");
+  const s = await import("./studio.server");
+  const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  if (!ci.ideaFirstAllowed(child.age_band)) throw new Error(ci.IDEA_SPROUTS);
+  if (!ci.ideaLongEnough(data.idea)) throw new Error("Tell me a little more. Who or what is your comic about?");
+  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
+  const { loadWorkspace } = await import("./workspace.server");
+  const read = async () => {
+    const { data: row } = await a.from("studio_creations").select("parent_id,child_id,kind,details,deleted_at").eq("id", data.id).maybeSingle();
+    if (row && (row.parent_id !== context.userId || row.child_id !== child.id || row.kind !== "comic" || !ci.isIdeaComic(row.details) || row.deleted_at)) throw new Error(ci.IDEA_NOT_OWN);
+    return row;
+  };
+  const answer = async (row: Awaited<ReturnType<typeof read>>, saved: boolean) => {
+    const stage = row ? ci.ideaStageOf(row.details) : null;
+    const version = row ? ci.savedIdeaVersion(row.details) : 0;
+    const idea = ((row?.details as any)?.workspace?.originalIdea ?? "") as string;
+    const project = row && (saved ? data.done : stage !== "idea") ? await loadWorkspace(context.supabase, context.userId, child.id, data.id) : null;
+    return { id: data.id, saved, version, stage, conflict: saved || stage !== "idea" ? null : { idea, version }, project };
+  };
+  const old = await read();
+  const decision = ci.ideaSaveDecision(old, data.base);
+  // Decided before the safety check, so an out-of-date save costs nothing and logs nothing. A repeated
+  // "That's my idea!" for a comic that already moved on simply reopens it.
+  if (decision.action === "closed" || decision.action === "conflict") return answer(old, false);
+  const g = await s.guardChildText(context.supabase, context.userId, child, data.idea, "story_idea");
+  if (g.decision !== "allowed") throw new Error(g.reply ?? "Try a made-up idea.");
+  const next = decision.expect + 1;
+  const stage = data.done ? "cast" as const : "idea" as const;
+  let saved = false;
+  if (!old) {
+    const { defaultComicCount } = await import("./comic-setup");
+    const details = ci.ideaComicDetails(data.idea, data.count ?? defaultComicCount(child.age_band), data.genre ?? "Adventure", stage);
+    const ins = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: "comic", title: ci.IDEA_TEMP_TITLE, body: "", style_key: null, details: details as never });
+    // 23505: another save created it a moment ago, so this one is a conflict like any other.
+    if (ins.error && ins.error.code !== "23505") throw new Error("Your idea couldn’t save. Try again.");
+    saved = !ins.error;
+  } else {
+    const details = old.details as any;
+    const workspace = { ...details.workspace, originalIdea: data.idea, ideaVersion: next, ideaStage: stage };
+    const extra = data.done ? { ...(data.count ? { pages: (await import("./v3")).v3ComicPages(data.count) } : {}), ...(data.genre ? { genre: data.genre } : {}) } : {};
+    // The version is re-checked inside the write itself, so two saves racing from the same version can't both win.
+    const r = await a.from("studio_creations").update({ details: { ...details, ...extra, workspace }, updated_at: new Date().toISOString() }).eq("id", data.id).eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "comic").is("deleted_at", null)
+      .contains("details", { workspace: { ideaStage: "idea" } }).or(decision.expect === 0 ? "details->workspace->ideaVersion.is.null,details->workspace->>ideaVersion.eq.0" : `details->workspace->>ideaVersion.eq.${decision.expect}`).select("id");
+    if (r.error) throw new Error("Your idea couldn’t save. Try again.");
+    saved = (r.data?.length ?? 0) > 0;
+  }
+  return answer(await read(), saved);
+});
+
+/**
+ * A3.4.1: choose an idea-first comic's characters and plan before panel 1, then confirm ("Let's make it!"). Up to three
+ * approved, family-owned characters in one drawing style; the comic takes its first character's look. Uses the comic's
+ * server-written timestamp as its version (a stale screen is refused). Nothing is frozen, drawn or charged here:
+ * characters are frozen at panel 1 exactly as for character-first comics.
+ */
+export const setV3IdeaPlan = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => identity.extend({ updatedAt: z.string(), characterIds: z.array(z.string().uuid()).max(3), count: v3Count.optional(), genre: z.enum(COMIC_GENRES).optional(), confirm: z.boolean().default(false), environment }).parse(i)).handler(async ({ data, context }) => {
+  if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
+  const ci = await import("./comic-idea");
+  const s = await import("./studio.server");
+  const child = await s.loadChild(context.supabase, context.userId, data.childId);
+  const { loadWorkspace, persistWorkspace } = await import("./workspace.server");
+  const p = await loadWorkspace(context.supabase, context.userId, child.id, data.id);
+  if (p.kind !== "comic") throw new Error(ci.IDEA_NOT_OWN);
+  if (p.updatedAt !== data.updatedAt) throw new Error("Your comic changed on another screen. Reopen it; your characters are safe.");
+  const ids = data.characterIds;
+  const { data: rows } = ids.length ? await context.supabase.from("studio_creations").select("id,title,style_key,details,updated_at").eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").is("deleted_at", null).in("id", ids) : { data: [] as any[] };
+  const problem = ci.ideaCastProblem({ ...p.details, workspace: p.workspace }, ids, (rows ?? []) as any[], data.confirm);
+  if (problem) throw new Error(problem);
+  const look = ci.ideaLook(ids, (rows ?? []) as any[]);
+  p.details.characterIds = [...ids];
+  if (look) { p.styleKey = look; p.details.styleKey = look; }
+  p.workspace.castVersions = Object.fromEntries((rows ?? []).map((r: any) => [r.id, r.updated_at]));
+  p.details.map = { ...p.details.map, hero: (rows ?? []).find((r: any) => r.id === ids[0])?.title ?? "" };
+  if (data.genre) p.details.genre = data.genre;
+  if (data.count && data.count !== p.details.pages.flatMap((x: any) => x.panels).length) p.details.pages = (await import("./v3")).v3ComicPages(data.count);
+  if (data.confirm) delete p.workspace.ideaStage;
+  await persistWorkspace(context.userId, child.id, p);
+  return loadWorkspace(context.supabase, context.userId, child.id, data.id);
 });
 
 export const readV3Character = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), description: z.string().trim().min(2).max(600), help: z.boolean().default(false), writing: z.boolean().default(false) }).parse(i)).handler(async ({ data, context }) => {
@@ -196,6 +302,9 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   if (p.kind !== "picture" && !item) throw new Error("Choose a scene first.");
   // A3.4.0: a comic panel needs at least one approved character; refused before any safety check, claim or charge.
   if (p.kind === "comic" && !(p.details.characterIds ?? p.details.characters ?? []).length) throw new Error(cc.NO_CAST);
+  // A3.4.1: an idea-first comic draws only after its characters are confirmed.
+  const pendingIdea = p.kind === "comic" ? (await import("./comic-idea")).ideaDrawProblem({ workspace: p.workspace }) : null;
+  if (pendingIdea) throw new Error(pendingIdea);
   const words = data.text ?? (p.kind === "picture" ? p.workspace.originalIdea : p.kind === "comic" ? item.description : item.text);
   if (!words?.trim()) throw new Error("Describe your scene first.");
   if (p.kind === "comic" && words.trim().length > cc.CHILD_SCENE_LIMIT) throw new Error(`Your scene is a little long for one picture. Can you make it shorter than ${cc.CHILD_SCENE_LIMIT} letters?`);

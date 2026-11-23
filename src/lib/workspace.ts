@@ -13,6 +13,10 @@ export const workspaceSchema = z.object({
   castVersions: z.record(z.string(), z.string()).default({}),
   // A3.1: comics start with a temporary title; the child names the comic at the end (optional).
   titlePending: z.boolean().optional(),
+  // A3.4.1 idea-first comics: started from the child's idea; `ideaStage` stays until the cast is confirmed.
+  ideaStart: z.literal(true).optional(),
+  ideaStage: z.enum(["idea", "cast"]).optional(),
+  ideaVersion: z.number().int().min(0).optional(),
 });
 export type WorkspaceMeta = z.infer<typeof workspaceSchema>;
 export type OutputKind = "comic" | "story" | "picture";

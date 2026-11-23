@@ -28,6 +28,8 @@ import { ComicSlideshow } from "./ComicSlideshow";
 import { StoryBookPreview } from "./StoryBookPreview";
 import { StoryPageDesign } from "./StoryPageDesign";
 import { ChangeChoices, CoverPicker, GlowConfirm } from "./PictureChoices";
+import { IdeaCard, IdeaCast, IdeaEntry } from "./IdeaStart";
+import { ideaFirstAllowed, addIdeaWords } from "@/lib/comic-idea";
 import {
   getV3CharacterDraft,
   closeV3CharacterDraft,
@@ -38,6 +40,8 @@ import {
   paintV3Scene,
   chooseV3Cover,
   formatV3Story,
+  setV3IdeaPlan,
+  getV3LinkedDraft,
 } from "@/lib/v3.functions";
 import {
   getWorkspace,
@@ -96,6 +100,7 @@ export function ComicJourney({
   draftId,
   characterId,
   startKind,
+  startIdea,
   onProject,
   onDraft,
   onCharacter,
@@ -109,6 +114,8 @@ export function ComicJourney({
   draftId?: string | undefined;
   characterId?: string | undefined;
   startKind?: "picture" | "comic" | "story" | undefined;
+  /** A3.4.1: open "Start with my idea" straight away (Explorers and Builders only). */
+  startIdea?: boolean | undefined;
   onProject: (id: string) => void;
   onDraft: (id: string) => void;
   /** A3.1: remembers the chosen/new character in the address so a reload returns to the same setup. */
@@ -119,7 +126,11 @@ export function ComicJourney({
   onCreateMore: () => void;
 }) {
   const [project, setProject] = useState<WorkspaceProject | null>(null);
-  const [branch, setBranch] = useState<"entry" | "new" | "existing" | "output" | "setup">("entry");
+  // A3.4.1: "idea" is the idea-first start (Explorers and Builders); Sprouts never see it and the server refuses it.
+  const ideaAllowed = ideaFirstAllowed(child.age_band);
+  const [branch, setBranch] = useState<"entry" | "new" | "existing" | "output" | "setup" | "idea">(
+    startIdea && ideaAllowed && !projectId && !draftId && !characterId ? "idea" : "entry",
+  );
   const [hero, setHero] = useState<CastMember | null>(null);
   const [description, setDescription] = useState("");
   const [style, setStyle] = useState("cartoon");
@@ -179,6 +190,8 @@ export function ComicJourney({
   clashRef.current = draftClash;
   const draftNow = useRef<{ description: string; style: string } | null>(null);
   const startKey = useRef<string | null>(null);
+  // A3.4.1: the idea-first comic a new character is being made for (its quiet saves link to that comic).
+  const linkedComic = useRef<string | undefined>(undefined);
   const running = useRef(false);
   const skipSync = useRef(false);
   const [picked, setPicked] = useState<string | null>(null);
@@ -196,6 +209,8 @@ export function ComicJourney({
   const saveDraft = useServerFn(saveV3CharacterDraft),
     loadDraft = useServerFn(getV3CharacterDraft),
     closeDraft = useServerFn(closeV3CharacterDraft);
+  const ideaPlan = useServerFn(setV3IdeaPlan),
+    linkedDraft = useServerFn(getV3LinkedDraft);
   const coach = useServerFn(helpV3Scene),
     paint = useServerFn(paintV3Scene),
     comicEdit = useServerFn(editComic),
@@ -227,7 +242,12 @@ export function ComicJourney({
   useEffect(() => {
     if (projectId)
       void load({ data: { childId: child.id, id: projectId } })
-        .then(setProject)
+        .then((p) => {
+          // A newer copy already on screen (for example the idea was just confirmed) is never replaced by an older one.
+          const mine = projectRef.current;
+          if (mine && mine.id === p.id && mine.updatedAt >= p.updatedAt) return;
+          setProject(p);
+        })
         .catch((e) => setNote(childFriendlyError(e)));
   }, [projectId, child.id]);
   useEffect(() => {
@@ -270,6 +290,30 @@ export function ComicJourney({
       : (project?.details.pages ?? []);
   const item = items[at];
   const selectedIds: string[] = project?.details.characterIds ?? project?.details.characters ?? [];
+  const ideaStage = project?.kind === "comic" ? project.workspace.ideaStage : undefined;
+  const ideaComic = project?.kind === "comic" && !!project.workspace.ideaStart;
+  // A3.4.1: reopening an idea-first comic during character creation brings back the character words (one card only).
+  const linkedChecked = useRef<string | null>(null);
+  useEffect(() => {
+    if (!project || ideaStage !== "cast" || linkedChecked.current === project.id) return;
+    linkedChecked.current = project.id;
+    void linkedDraft({ data: { childId: child.id, comicId: project.id } })
+      .then((d) => {
+        if (!d) return;
+        linkedComic.current = project.id;
+        draftKey.current = d.id;
+        ownDraft.current = d.id;
+        draftVersions.current.set(d.id, d.version);
+        draftSaved.current = { description: d.description, style: d.styleKey };
+        setDescription(d.description);
+        setStyle(d.styleKey);
+        setFacts(null);
+        setOptions([]);
+        setAdding(true);
+        setBranch("new");
+      })
+      .catch(() => {});
+  }, [project?.id, ideaStage]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (skipSync.current) {
       skipSync.current = false;
@@ -296,6 +340,8 @@ export function ComicJourney({
   }, [project?.id]);
   // A first-time child who picked Comics goes straight to making their character (choosing a saved one isn't possible yet).
   useEffect(() => {
+    // A3.4.1: first-time Explorers and Builders making a comic see both choices (their idea, or a new character).
+    if (wanted.current === "comic" && ideaAllowed) return;
     if (wanted.current && castFetched && !cast.length && branch === "entry" && !projectId && !draftId && !characterId) {
       draftKey.current = undefined;
       setBranch("new");
@@ -345,7 +391,12 @@ export function ComicJourney({
   // A3.2 quiet character-idea save. The server numbers every save and only writes one based on the newest number, so a
   // delayed request or another device's older view never replaces newer words. Same safety check as "Meet my
   // character"; no Glow; only the words and style are kept.
-  if (branch === "new" && !adding && !project) draftNow.current = { description, style };
+  const linkedMode = adding && ideaStage === "cast" && !!project;
+  // Idea-first comics take their look from their first character; with none yet, the child picks the look.
+  const lockedLook = adding && project && selectedIds.length ? project.styleKey : null;
+  // The idea-first cast still in My Characters (one deleted before panel 1 simply drops out).
+  const ideaCastIds = selectedIds.filter((x) => !castFetched || cast.some((c) => c.id === x));
+  if (branch === "new" && ((!adding && !project) || linkedMode)) draftNow.current = { description, style };
   /** Queues one save at a time. Resolves true once these words are the saved ones. */
   function sendDraft(key: string, snap: { description: string; style: string }, explicit: boolean) {
     const job = draftChain.current.then(async () => {
@@ -354,7 +405,7 @@ export function ComicJourney({
       for (let attempt = 0; attempt < 2; attempt++) {
         draftSent.current = [...draftSent.current.slice(-4), snap];
         const r = await saveDraft({
-          data: { childId: child.id, id: key, description: snap.description, styleKey: snap.style, environment: env, kind: wanted.current, base: draftVersions.current.get(key) ?? 0 },
+          data: { childId: child.id, id: key, description: snap.description, styleKey: snap.style, environment: env, kind: linkedComic.current ? "comic" : wanted.current, base: draftVersions.current.get(key) ?? 0, ...(linkedComic.current ? { comicId: linkedComic.current } : {}) },
         });
         draftVersions.current.set(key, r.version);
         if (r.saved) {
@@ -389,7 +440,7 @@ export function ComicJourney({
     const key = (draftKey.current ??= crypto.randomUUID());
     try {
       const ok = await sendDraft(key, snap, false);
-      if (ok && ownDraft.current !== key && draftKey.current === key) {
+      if (ok && !linkedComic.current && ownDraft.current !== key && draftKey.current === key) {
         ownDraft.current = key;
         onDraft(key);
       }
@@ -401,10 +452,10 @@ export function ComicJourney({
   const flushDraft = useRef(quietDraftSave);
   flushDraft.current = quietDraftSave;
   useEffect(() => {
-    if (branch !== "new" || adding || project || busy) return;
+    if (branch !== "new" || (!linkedMode && (adding || project)) || busy) return;
     const t = setTimeout(() => void quietDraftSave(draftNow.current), 2500);
     return () => clearTimeout(t);
-  }, [description, style, branch, adding, project?.id, busy]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [description, style, branch, adding, project?.id, busy, linkedMode]); // eslint-disable-line react-hooks/exhaustive-deps
   // Leaving the character screen, hiding the app or closing the page saves the latest words straight away.
   useEffect(() => {
     if (branch !== "new") return;
@@ -442,12 +493,12 @@ export function ComicJourney({
   async function checkCharacter(value: string, wantsHelp = false) {
     await run("Bugley is reading about your character…", async () => {
       draftKey.current ??= crypto.randomUUID();
-      if (!adding) {
+      if (!adding || linkedMode) {
         clashRef.current = null;
         setDraftClash(null);
         await sendDraft(draftKey.current, { description: value, style }, true);
         ownDraft.current = draftKey.current;
-        onDraft(draftKey.current);
+        if (!linkedMode) onDraft(draftKey.current);
       }
       setDescription(value);
       setOptions([]);
@@ -472,7 +523,7 @@ export function ComicJourney({
       const r = await paintHero({
         data: {
           childId: child.id,
-          styleKey: adding && project ? project.styleKey : style,
+          styleKey: lockedLook ?? style,
           ...facts,
           special,
           environment: env,
@@ -489,13 +540,27 @@ export function ComicJourney({
     if (!facts) return;
     await run("Getting your character ready…", async () => {
       const r = await approve({
-        data: { childId: child.id, path, styleKey: adding && project ? project.styleKey : style, ...facts },
+        data: { childId: child.id, path, styleKey: lockedLook ?? style, ...facts },
       });
       if (!r.ok) throw new Error(r.reply);
       const refreshed = await refreshCast();
       const c = refreshed.data?.find((c) => c.id === r.id);
       if (!c) throw new Error("Your character saved. Open My Characters to choose them.");
-      if (project) {
+      if (project && ideaStage === "cast") {
+        // A3.4.1: the new character joins the idea-first comic's cast; its linked idea stops showing anywhere.
+        const made = draftKey.current;
+        draftKey.current = undefined;
+        draftNow.current = null;
+        linkedComic.current = undefined;
+        if (made) void closeDraft({ data: { childId: child.id, id: made } }).catch(() => {});
+        const next = await ideaPlan({
+          data: { ...id(), updatedAt: (projectRef.current ?? project).updatedAt, characterIds: [...new Set([...ideaCastIds, c.id])] },
+        });
+        projectRef.current = next;
+        setProject(next);
+        setAdding(false);
+        setBranch("entry");
+      } else if (project) {
         setProject(
           await update({
             data: {
@@ -678,6 +743,33 @@ export function ComicJourney({
     }, 2500);
     return () => clearTimeout(timer);
   }, [text, project?.updatedAt, busy, changing, at, step, changeMode]);
+  // A3.4.1 idea-first: cast and plan before panel 1 (no Glow), then the usual comic steps.
+  async function setIdeaPlanNow(plan: { characterIds: string[]; count?: number; genre?: (typeof COMIC_GENRES)[number] }, confirm = false) {
+    if (!project) return;
+    await run(confirm ? "Opening panel 1…" : "Saving your comic plan…", async () => {
+      const next = await ideaPlan({
+        data: { ...id(), updatedAt: (projectRef.current ?? project).updatedAt, ...plan, confirm },
+      });
+      projectRef.current = next;
+      setProject(next);
+      if (confirm) setAt(0);
+    });
+  }
+  function newIdeaCharacter() {
+    if (!project) return;
+    linkedComic.current = project.id;
+    draftKey.current = undefined;
+    draftSaved.current = null;
+    clashRef.current = null;
+    setDraftClash(null);
+    // The first new character's box starts with the child's own idea words, ready to edit.
+    setDescription(ideaCastIds.length ? "" : project.workspace.originalIdea.slice(0, 600));
+    setFacts(null);
+    setOptions([]);
+    setAdding(true);
+    setBranch("new");
+  }
+  const ideaEntryOpen = project ? ideaStage === "idea" : branch === "idea";
   const newCharacter = (
     <div className="space-y-4">
       <BugleyCompanion
@@ -791,7 +883,7 @@ export function ComicJourney({
           }}
         />
       )}
-      {!adding && (
+      {!lockedLook && (
         <fieldset className="space-y-3">
           <legend className="font-display text-xl">Choose your drawing style</legend>
           <div className={band === "sprouts" && !moreLooks ? "grid grid-cols-2 gap-3 sm:grid-cols-4" : "grid grid-cols-2 gap-2 sm:grid-cols-5"}>
@@ -1132,7 +1224,7 @@ export function ComicJourney({
           </div>
         </div>
       )}
-      {savedStyleKey && (project || branch === "output" || branch === "setup") && (
+      {savedStyleKey && !ideaEntryOpen && !(ideaStage && !selectedIds.length) && (project || branch === "output" || branch === "setup") && (
         <dl
           aria-label="Creation choices"
           className="flex flex-wrap items-center gap-x-6 gap-y-3 border-y border-border py-3 text-sm"
@@ -1154,7 +1246,20 @@ export function ComicJourney({
           )}
         </dl>
       )}
-      {(projectId && !project && !note) || (characterId && !project && !hero && !castFetched && !note) ? (
+      {ideaEntryOpen ? (
+        <IdeaEntry
+          child={child}
+          project={project}
+          onCreated={(newId) => onProject(newId)}
+          onDone={(p) => {
+            projectRef.current = p;
+            setProject(p);
+            setBranch("entry");
+            if (p.id !== projectId) onProject(p.id);
+          }}
+          onBack={(saved) => (saved || project ? onExit() : setBranch("entry"))}
+        />
+      ) : (projectId && !project && !note) || (characterId && !project && !hero && !castFetched && !note) ? (
         <div className="flex min-h-[50vh] items-center justify-center">
           <BugleyCompanion child={child} busy text="Opening your work…" />
         </div>
@@ -1175,6 +1280,20 @@ export function ComicJourney({
                     : "Bring a brand-new character to life, or pick one you already made. Then you'll choose to make a picture, a comic or a story with them."
                 }
               />
+              {wanted.current === "comic" && ideaAllowed && (
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="h-auto min-h-24 w-full flex-col gap-1 whitespace-normal border-4 border-primary py-4 text-xl"
+                  onClick={() => setBranch("idea")}
+                >
+                  <span className="flex items-center gap-2">
+                    <Lightbulb />
+                    Start with my idea
+                  </span>
+                  <span className="text-sm font-semibold opacity-80">Write what your comic is about, then pick who’s in it</span>
+                </Button>
+              )}
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Button
                   size="lg"
@@ -1488,6 +1607,26 @@ export function ComicJourney({
             </>
           )}
         </>
+      ) : ideaStage === "cast" ? (
+        adding && branch === "new" ? (
+          <>
+            {newCharacter}
+            <Button variant="ghost" disabled={!!busy} onClick={() => { setAdding(false); setBranch("entry"); }}>
+              Back to choosing characters
+            </Button>
+          </>
+        ) : (
+          <IdeaCast
+            child={child}
+            project={project}
+            cast={cast}
+            castReady={castFetched}
+            busy={busy}
+            onSet={(plan) => void setIdeaPlanNow(plan)}
+            onNew={newIdeaCharacter}
+            onConfirm={(ids) => void setIdeaPlanNow({ characterIds: ids }, true)}
+          />
+        )
       ) : (
         <>
           <h1 className="break-words text-3xl">{project.title}</h1>
@@ -1735,7 +1874,9 @@ export function ComicJourney({
                           : at === items.length - 1
                             ? "How would you like your adventure to end?"
                             : "What happens next in your adventure?"
-                        : `What is ${heroNames} doing on panel ${at + 1}?`)
+                        : ideaComic && at === 0
+                          ? "What happens first?"
+                          : `What is ${heroNames} doing on panel ${at + 1}?`)
                 }
                 hint={
                   busy
@@ -1758,7 +1899,9 @@ export function ComicJourney({
                                 : "Tap “Love it!” to keep it, or “Change it” to make it different."
                             : project.kind === "story"
                           ? "Your words, your book. I’m here if you get stuck."
-                          : `${heroNames} is already in the scene! Tell Bugley where they are, what’s happening and who else is there.`
+                          : ideaComic && at === 0
+                            ? `${heroNames} is already in the scene! Write what happens in panel 1. You can use your idea words if you like.`
+                            : `${heroNames} is already in the scene! Tell Bugley where they are, what’s happening and who else is there.`
                 }
               />
               {project.kind !== "picture" && (
@@ -1825,6 +1968,23 @@ export function ComicJourney({
                     />
                   )}
                 </div>
+              )}
+              {ideaComic && project.workspace.originalIdea && !finaleOn && (
+                at === 0 && editing && !changing && !item?.image ? (
+                  <IdeaCard idea={project.workspace.originalIdea}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={!!busy || text.includes(project.workspace.originalIdea.trim())}
+                      onClick={() => setText((v) => addIdeaWords(v, project.workspace.originalIdea))}
+                    >
+                      <Lightbulb />
+                      Use my idea words
+                    </Button>
+                  </IdeaCard>
+                ) : (
+                  <IdeaCard small idea={project.workspace.originalIdea} />
+                )
               )}
               {changing ? (
                 <Textarea

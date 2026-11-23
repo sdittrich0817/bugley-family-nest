@@ -70,6 +70,9 @@ export async function placeComicBubble(path: string, hero: string, page: ComicPa
 export async function freezeComicCast(sb: SupabaseClient<any>, userId: string, childId: string, comic: Comic, what: "comic" | "cover" = "comic") {
   const cm = await import("./comic-memory");
   const cc = await import("./comic-continuity");
+  // A3.4.1: an idea-first comic draws (panels or cover) only after its characters are confirmed.
+  const pendingIdea = (await import("./comic-idea")).ideaDrawProblem(comic.data);
+  if (pendingIdea) throw new Error(pendingIdea);
   if (!comic.data.characterIds.length) throw new Error(cc.NO_CAST);
   const missing = cm.missingSnapshotIds(comic.data.castSnapshot, comic.data.characterIds);
   if (missing.length) {
