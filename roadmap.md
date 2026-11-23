@@ -141,7 +141,7 @@
 - [x] A3.4 discovery and design report (idea-first start for Explorers/Builders; Sprouts unchanged) delivered to Files with mockups. No code, database changes, paid drawings, Glow or publishing.
 - [x] Shea's A3.4 decisions received (Nov 23); A3.4.0 authorized, preview only.
 - [x] A3.4.0 server character rule (preview only): comic panels/covers need an approved character with valid frozen copies, checked before claim/charge; drawn V3 comics keep a character; unused idea-start removed and older comic starts closed to new comics. 503 tests pass; $0 spent. Report delivered; awaiting Shea's GO to publish.
-- [ ] Publish A3.4.0 — waits on Shea.
+- [x] A3.4.0 published to bugley.app Nov 23 (requested 18:50 UTC, confirmed live by 18:53 UTC) after a no-cost preview check of Bugley's "Start a comic" button; live smoke test passed with no AI, drawings or Glow.
 - [ ] A3.4.1 / A3.4.2 idea-first build — not started; waits on Shea's approval (paid testing not authorized).
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
