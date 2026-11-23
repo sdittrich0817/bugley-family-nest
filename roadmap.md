@@ -137,7 +137,8 @@
 - [x] Remove the A3.2 temporary test family (account, 3 players, comics, 14 pictures deleted).
 - [x] A3.3 (preview only, built and tested; awaiting Shea): Change it → Fix one thing / Draw a new one / Keep this picture; Glow check with Cancel before paid drawings; cover step "Use one of my pictures — FREE" or "Paint a new cover — 3 Glow"; tests, three ages × three sizes, report. Don't publish.
 - [x] A3.3 real-drawing check (≤$1 approved): accidental fix + approved redraw + cover = 4 pictures ≈$0.60; Glow 3 once each; test family deleted.
-- [ ] Publish A3.3 — waits on Shea.
+- [x] Publish A3.3 (approved Nov 23): refund-once checks passed (free, rolled back); published to bugley.app; free live smoke test passed (no drawings, no Glow); test family deleted.
+- [ ] A3.4 — not started; waits on Shea.
 - [ ] A3.4 — waits on separate approval.
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
