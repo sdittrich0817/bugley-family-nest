@@ -65,15 +65,27 @@ export async function placeComicBubble(path: string, hero: string, page: ComicPa
  *  from the child's words (default: every frozen character), and builds the description from the child's words, that
  *  cast and the relevant established story. The returned ids/mustShow drive both the picture and the character check.
  *  Shared by the cover action and the cover evaluation. */
-export async function prepareV3Cover(sb: SupabaseClient<any>, userId: string, childId: string, comic: Comic, childText: string) {
+/** A3.4.0: freeze any not-yet-frozen characters of a V3 comic (just before a drawing is claimed or charged), then require at
+ * least one approved character with a valid frozen copy each. Throws the child-facing refusal; never charges anything. */
+export async function freezeComicCast(sb: SupabaseClient<any>, userId: string, childId: string, comic: Comic, what: "comic" | "cover" = "comic") {
   const cm = await import("./comic-memory");
-  const { intendedCoverCast } = await import("./cover-cast");
+  const cc = await import("./comic-continuity");
+  if (!comic.data.characterIds.length) throw new Error(cc.NO_CAST);
   const missing = cm.missingSnapshotIds(comic.data.castSnapshot, comic.data.characterIds);
   if (missing.length) {
     const snap = await (await import("./workspace.server")).snapshotCast(sb, userId, childId, comic.id, missing, comic.data.styleKey);
-    if (!snap || snap.length !== missing.length) throw new Error("Bugley couldn’t save a copy of your characters for this cover. Your glow is safe. Please try again.");
+    if (!snap || snap.length !== missing.length) throw new Error(`Bugley couldn’t save a copy of your characters for this ${what}. Your glow is safe. Please try again.`);
     comic.data.castSnapshot = cm.mergeSnapshots(comic.data.castSnapshot, snap);
   }
+  const frozen = cc.frozenCastProblem(comic.data.castSnapshot, comic.data.characterIds, `${userId}/${childId}/`, comic.data.styleKey);
+  if (frozen) throw new Error(frozen);
+  return comic.data.castSnapshot as import("./comic-continuity").CastSnapshot[];
+}
+
+export async function prepareV3Cover(sb: SupabaseClient<any>, userId: string, childId: string, comic: Comic, childText: string) {
+  const cm = await import("./comic-memory");
+  const { intendedCoverCast } = await import("./cover-cast");
+  await freezeComicCast(sb, userId, childId, comic, "cover");
   const snaps = (comic.data.castSnapshot ?? []) as import("./comic-continuity").CastSnapshot[];
   const members = [...new Set(comic.data.characterIds)].map((id) => ({ id, name: snaps.find((s) => s.id === id)?.title?.trim() ?? "" })).filter((m) => m.name);
   const plan = intendedCoverCast(childText, members);

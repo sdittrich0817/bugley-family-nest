@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
 import { chargeGlow, refundGlow, refundGlowOnce } from "@/lib/glow.server";
-import { resolveCast, type CastSnapshot } from "./comic-continuity";
+import { NO_CAST, resolveCast, type CastSnapshot } from "./comic-continuity";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
@@ -190,7 +190,7 @@ async function lockedModel(lockId: string | undefined, fallback: ModelRow | null
 
 export type GenResult = { ok: true; path: string; url: string; prompt: string; lock?: ModelRow | undefined } | { ok: false; reply: string; chips?: string[] };
 
-export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined; castSnapshot?: CastSnapshot[] | undefined; mustShow?: string[] | undefined }): Promise<GenResult> {
+export async function generateImage(sb: Sb, userId: string, input: { childId: string; description: string; styleKey: string; mode: ImageMode; characterIds: string[]; requireReferences?: boolean; lockId?: string; pictureFlow?: boolean; previewPath?: string; editPath?: string; op?: string | undefined; castSnapshot?: CastSnapshot[] | undefined; mustShow?: string[] | undefined; frozenCast?: boolean; allowEmptyCast?: boolean }): Promise<GenResult> {
   const child = await loadChild(sb, userId, input.childId);
   // 1) safety guard
   const guard = await guardChildText(sb, userId, child, input.description, input.mode === "character" ? "character" : "picture");
@@ -198,6 +198,8 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   const a = await admin();
   const ids = [...new Set(input.characterIds)];
   if (ids.length > MAX_LOCKED) return { ok: false, reply: 'Choose up to three heroes.' };
+  // A3.4.0: comic pictures never draw without a character (a cover may leave everyone out only when the child's words say so).
+  if (input.frozenCast && !ids.length && !input.allowEmptyCast) return { ok: false, reply: NO_CAST };
   const withChars = ids.length > 0 && input.mode !== "character";
   const modeKey: ModelMode = input.pictureFlow ? input.mode : input.mode === "character" ? "hero" : withChars ? "scene_chars" : input.mode === "final" && input.requireReferences ? "scene" : input.mode;
   const [{ data: currentStyle }, base] = await Promise.all([
@@ -239,7 +241,8 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     if (!takesRefs(model, ids.length)) return { ok: false, reply: "My paintbrush needs a grown-up to set up matching character pictures first. Your words are safe!" };
     // A comic with frozen characters never silently falls back to live ones (checked before any charge).
     const cast = resolveCast(input.castSnapshot, ids, `${userId}/${child.id}/`, input.styleKey);
-    if (cast.mode === "refuse") return { ok: false, reply: "Bugley couldn’t open this comic’s saved characters. Your glow is safe. Please try again." };
+    // A3.4.0: comic pictures use only the comic's frozen copies, never live characters.
+    if (cast.mode === "refuse" || (input.frozenCast && cast.mode !== "snapshot")) return { ok: false, reply: "Bugley couldn’t open this comic’s saved characters. Your glow is safe. Please try again." };
     const snap = cast.mode === "snapshot" ? cast.cast : null;
     const l = snap ? await Promise.all(snap.map(async c => { const refs = await signPaths(c.refs); if (refs.some(r => !r)) throw new Error('Bugley couldn’t open every character reference.'); return { title: c.title, dna: c.dna, refs }; })) : await loadLocked(sb, userId, child.id, ids, input.styleKey);
     if (!l) return { ok: false, reply: "Choose a hero with matching reference pictures in this look. Your words are safe." };

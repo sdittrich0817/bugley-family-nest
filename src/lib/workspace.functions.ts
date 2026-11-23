@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
 import { GENRES, EMPTY_MAP, guidedPages, defaultLength, lengthBand, ideaGenre } from "./story";
-import { guidedComicPages } from "./comic";
 import { EMPTY_FACTS, resizeWorkspace, assertWorkspaceIdle, invalidatePicture, workspaceSchema } from "./workspace";
 import { storySchema } from "./story";
 import { comicSchema } from "./comic";
@@ -34,16 +33,19 @@ export const startWorkspace = createServerFn({ method: "POST" }).middleware([req
     if (existing.parent_id !== context.userId || existing.child_id !== child.id) throw new Error("Choose your own creation.");
     return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
   }
+  // A3.4.0: new comics start character-first in Create (startV3Creation); this older idea-start no longer makes comics
+  // with no characters. Comics it made earlier still open and resume above.
+  if (data.kind === "comic") throw new Error("Pick a character to start your comic.");
   const guard = await s.guardChildText(context.supabase, context.userId, child, data.idea, "story_idea");
   if (guard.decision !== "allowed") throw new Error(guard.reply ?? "Try a made-up idea.");
-  const preferred = data.kind === "comic" ? "classic_comic" : data.kind === "story" ? "storybook" : "cartoon";
+  const preferred = data.kind === "story" ? "storybook" : "cartoon";
   const { data: styles } = await a.from("art_styles").select("key").eq("active", true).order("position");
   const style = styles?.find(x => x.key === preferred)?.key ?? styles?.[0]?.key;
   if (!style) throw new Error("Bugley’s paints aren’t ready yet.");
   const length = defaultLength(child.age_band);
   const workspace = { version: 1, originalIdea: data.idea, activity: "imagine", outlineApproved: false, castVersions: {} };
-  const details = data.kind === "picture" ? { workspace, characters: [], mode: "draft", pictureFlow: true } : { workspace, genre: "Adventure", styleKey: style, characterIds: [], map: { ...EMPTY_MAP }, pages: data.kind === "comic" ? guidedComicPages(lengthBand(length)) : guidedPages(lengthBand(length)), finished: false, cover: null, guidedBand: child.age_band, length, followups: [] };
-  const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: data.kind, title: data.kind === "comic" ? "My comic" : data.kind === "story" ? "My storybook" : "My picture", body: data.idea, style_key: style, details: details as never });
+  const details = data.kind === "picture" ? { workspace, characters: [], mode: "draft", pictureFlow: true } : { workspace, genre: "Adventure", styleKey: style, characterIds: [], map: { ...EMPTY_MAP }, pages: guidedPages(lengthBand(length)), finished: false, cover: null, guidedBand: child.age_band, length, followups: [] };
+  const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: data.kind, title: data.kind === "story" ? "My storybook" : "My picture", body: data.idea, style_key: style, details: details as never });
   if (error) throw new Error("Your idea is still here. Try saving again.");
   return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
 });
@@ -90,6 +92,9 @@ export const updateWorkspace = createServerFn({ method: "POST" }).middleware([re
     const ids = [...new Set(data.characterIds)]; if (project.kind === "picture" && ids.length > 1) throw new Error("Choose one character for your picture.");
     if (project.kind === "picture" && JSON.stringify(ids) !== JSON.stringify(project.details.characters ?? [])) invalidatePicture(project);
     if (project.details.bookId) throw new Error("Add your new character from My Book so every chapter stays together.");
+    // A3.4.0: a V3 comic that already has drawings always keeps at least one character.
+    const keep = (await import("./comic-continuity")).castAssignmentProblem(project.details, ids);
+    if (keep) throw new Error(keep);
     if (ids.length) {
       const { data: rows } = await context.supabase.from("studio_creations").select("id,title,style_key,details,updated_at").eq("parent_id", context.userId).eq("child_id", child.id).eq("kind", "character").is("deleted_at", null).in("id", ids);
       if (rows?.length !== ids.length || rows.some((r: any) => r.style_key !== project.styleKey || !r.details?.dna || !r.details?.refs?.length)) throw new Error("Choose your approved characters in this look.");

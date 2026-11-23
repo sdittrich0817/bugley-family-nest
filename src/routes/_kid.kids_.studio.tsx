@@ -94,7 +94,9 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
   const chat = useBugleyChat(child, VIEW_CONTEXT[view], greeting, [], view === "story" ? storyId ?? undefined : undefined, view === "comic" ? comicId ?? undefined : undefined, (a) => {
     const v = a.action === "open:album" ? "album" : a.action === "open:picture" ? "picture" : a.action === "open:story" ? "story" : a.action === "open:comic" ? "comic" : "character";
     if (["story", "comic", "picture"].includes(view)) { if (a.action === "open:characters" || a.action === "open:character_new") document.querySelector<HTMLButtonElement>("[data-workspace-characters]")?.click(); return; }
-    if (v === "story") setStoryId(null); if (v === "comic") setComicId(null);
+    // A3.4.0: new comics start character-first in Create, never in the older idea-start workspace.
+    if (v === "comic") { void navigate({ to: "/kids/studio/v3", search: { kind: "comic" } }); return; }
+    if (v === "story") setStoryId(null);
     setInBook(false); setView(v as View);
   });
   const { data: glow } = useQuery({ queryKey: ["glow", child.id], queryFn: () => getChildGlow({ data: { childId: child.id } }) });
@@ -115,7 +117,7 @@ function Studio({ child }: { child: SidekickChild & { age_band: Band } }) {
       {!["home", "create", "comic", "story", "picture"].includes(view) && <BugleyGuide child={child} chat={chat} />}
       <main className="min-w-0">
         {view !== "album" && <DrawingRestNotice />}
-        {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "story") setStoryId(null); if (v === "comic") setComicId(null); setInBook(false); setView(v); }} />
+        {view === "create" ? <BugleyStep child={child} question="What do you want to make?" choices={CREATE_CHOICES} allowOwnIdea={false} onBack={() => setView("home")} onChoose={(c) => { const v = c.key as View; if (v === "comic") { void navigate({ to: "/kids/studio/v3", search: { kind: "comic" } }); return; } if (v === "story") setStoryId(null); setInBook(false); setView(v); }} />
           : view === "home" ? <StudioDashboard child={child} glow={glow} onAlbum={() => setView("album")} />
           : view === "picture" || view === "story" || view === "comic" ? <CreativeWorkspace key={`${view}-${child.id}`} child={child} kind={view} projectId={view === "comic" ? comicId : view === "story" ? storyId : pictureId} chat={chat} onDirty={setStoryDirty} onProject={(id) => { if (view === "comic") setComicId(id); else if (view === "story") setStoryId(id); else setPictureId(id); void navigate({ to: "/kids/studio", search: { project: id, kind: view }, replace: true }); }} onBook={(id) => { setBookId(id); setView("book"); }} />
           : view === "character" ? <CharacterFlow child={child} chat={chat} onDone={() => setView("home")} onBack={() => setView("home")} />

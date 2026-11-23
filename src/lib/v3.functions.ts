@@ -5,8 +5,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireKidOrParentAuth } from "./kid-device-auth";
 import { familyHasAccess } from "./billing.functions";
-import { EMPTY_MAP, ideaGenre } from "./story";
-import { newComicPage } from "./comic";
 import { v3Count, v3Details, v3TempTitle, replaceV3Art, draftVersion, draftSaveDecision, savedDraftVersion } from "./v3";
 import { cleanSparks, storyCoachingInstructions } from "./story";
 import { formatStoryPage, storyCoachContext, storyLayoutSchema } from "./story-presentation";
@@ -15,29 +13,8 @@ const identity = z.object({ childId: z.string().uuid(), id: z.string().uuid() })
 const environment = z.enum(["sandbox", "live"]);
 const NAP = "Ask a grown-up to open your Studio plan.";
 
-/** Moment 1 — The Spark: one idea starts a saved four-scene comic workspace. No title, genre, style or length questions. */
-export const startV3Comic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), id: z.string().uuid(), idea: z.string().trim().min(3).max(600), environment }).parse(i)).handler(async ({ data, context }) => {
-  if (!await familyHasAccess(context.supabase, context.userId, data.environment)) throw new Error(NAP);
-  const s = await import("./studio.server");
-  const child = await s.loadChild(context.supabase, context.userId, data.childId);
-  const { supabaseAdmin: a } = await import("@/integrations/supabase/client.server");
-  const { data: existing } = await a.from("studio_creations").select("id,parent_id,child_id").eq("id", data.id).maybeSingle();
-  if (existing) {
-    if (existing.parent_id !== context.userId || existing.child_id !== child.id) throw new Error("Choose your own creation.");
-    return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
-  }
-  const guard = await s.guardChildText(context.supabase, context.userId, child, data.idea, "story_idea");
-  if (guard.decision !== "allowed") throw new Error(guard.reply ?? "Try a made-up idea.");
-  const { data: styles } = await a.from("art_styles").select("key").eq("active", true).order("position");
-  const style = styles?.find(x => x.key === "classic_comic")?.key ?? styles?.[0]?.key;
-  if (!style) throw new Error("Bugley’s paints aren’t ready yet.");
-  const page = newComicPage("four");
-  const workspace = { version: 1 as const, v3: true as const, originalIdea: data.idea, activity: "imagine" as const, outlineApproved: false, castVersions: {} };
-  const details = { workspace, genre: "Adventure", styleKey: style, characterIds: [], map: { ...EMPTY_MAP }, pages: [page], finished: false, cover: null, guidedBand: child.age_band, length: "short", followups: [] };
-  const { error } = await a.from("studio_creations").insert({ id: data.id, parent_id: context.userId, child_id: child.id, kind: "comic", title: "My comic", body: data.idea, style_key: style, details: details as never });
-  if (error) throw new Error("Your idea is still here. Try saving again.");
-  return (await import("./workspace.server")).loadWorkspace(context.supabase, context.userId, child.id, data.id);
-});
+// A3.4.0: the unused "start a comic from an idea" step (startV3Comic) was removed; it could create a V3 comic with no
+// characters. Every V3 comic now starts from an approved character (startV3Creation).
 
 /** Character draft is separate from the eventual output, and never appears in approved cast.
  * A3.2: also saved quietly while the child types or speaks (before "Meet my character"). Versions are assigned by the
@@ -217,6 +194,8 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   const items: any[] = p.kind === "comic" ? p.details.pages.flatMap((page: any) => page.panels) : p.details.pages ?? [];
   const item = items.find(x => x.id === data.itemId);
   if (p.kind !== "picture" && !item) throw new Error("Choose a scene first.");
+  // A3.4.0: a comic panel needs at least one approved character; refused before any safety check, claim or charge.
+  if (p.kind === "comic" && !(p.details.characterIds ?? p.details.characters ?? []).length) throw new Error(cc.NO_CAST);
   const words = data.text ?? (p.kind === "picture" ? p.workspace.originalIdea : p.kind === "comic" ? item.description : item.text);
   if (!words?.trim()) throw new Error("Describe your scene first.");
   if (p.kind === "comic" && words.trim().length > cc.CHILD_SCENE_LIMIT) throw new Error(`Your scene is a little long for one picture. Can you make it shorter than ${cc.CHILD_SCENE_LIMIT} letters?`);
@@ -251,6 +230,9 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
       if (!snap || snap.length !== missing.length) throw new Error("Bugley couldn’t save a copy of your characters for this comic. Your glow is safe. Please try again.");
       p.details.castSnapshot = cm.mergeSnapshots(p.details.castSnapshot, snap); await persistWorkspace(context.userId, child.id, p); Object.assign(p, await loadWorkspace(context.supabase, context.userId, child.id, p.id));
     }
+    // A3.4.0: every character must now have a valid frozen copy in this comic's look, before the claim and any charge.
+    const frozen = cc.frozenCastProblem(p.details.castSnapshot, ids, `${context.userId}/${child.id}/`, p.styleKey);
+    if (frozen) throw new Error(frozen);
     const panels = p.details.pages.flatMap((page: any) => page.panels);
     const current = panels.find((x: any) => x.id === item.id) ?? item;
     const memory = cm.readMemory(p.details.storyMemory);
@@ -271,7 +253,7 @@ export const paintV3Scene = createServerFn({ method: "POST" }).middleware([requi
   try {
     const { generateImage } = await import("./images.server");
     const prior = p.kind === "picture" ? p.images[0] : item.image;
-    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op, castSnapshot: p.kind === "comic" ? p.details.castSnapshot : undefined });
+    const result = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: p.styleKey, characterIds: p.details.characterIds ?? p.details.characters ?? [], mode: p.kind === "picture" ? "sketch" : "final", requireReferences: true, lockId: p.id, pictureFlow: p.kind === "picture", editPath: data.revision ? prior : undefined, op: data.op, castSnapshot: p.kind === "comic" ? p.details.castSnapshot : undefined, frozenCast: p.kind === "comic" });
     if (!result.ok) throw new Error(result.reply);
     charged = true;
     const { data: lockRow } = await a.from("studio_creations").select("details").eq("id", p.id).eq("parent_id", context.userId).eq("child_id", child.id).maybeSingle();

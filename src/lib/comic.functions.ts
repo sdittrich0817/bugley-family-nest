@@ -15,7 +15,7 @@ export const getComic = createServerFn({ method: "POST" }).middleware([requireKi
   return loadComic(context.supabase, context.userId, data.childId, data.id);
 });
 
-export const createComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).max(3), guided: z.boolean().optional(), length: z.enum(LENGTHS).optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
+export const createComic = createServerFn({ method: "POST" }).middleware([requireKidOrParentAuth]).inputValidator((i: unknown) => z.object({ childId: z.string().uuid(), title: z.string().trim().min(1).max(80), genre: z.enum(GENRES), styleKey: z.string().max(40), characterIds: z.array(z.string().uuid()).min(1, "Pick a character for your comic first.").max(3), guided: z.boolean().optional(), length: z.enum(LENGTHS).optional(), environment: env }).parse(i)).handler(async ({ data, context }) => {
   if (!(await familyHasAccess(context.supabase, context.userId, data.environment))) throw new Error(NAP);
   const s = await import("./studio.server");
   const child = await s.loadChild(context.supabase, context.userId, data.childId);
@@ -126,6 +126,9 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
   } else if (data.action === "sketch" || data.action === "final" || data.action === "cover") {
     const panel = comic.data.pages[pageIndex]?.panels.find((p) => p.id === data.panelId);
     if (data.action !== "cover" && !panel) throw new Error("Pick a panel first.");
+    // A3.4.0: V3 comics draw only with approved, frozen characters; checked before planning, claiming or any charge.
+    const v3 = comic.data.workspace?.v3 === true;
+    const frozenCast = v3 ? await (await import("./comic.server")).freezeComicCast(context.supabase, context.userId, child.id, comic) : undefined;
     if (data.action === "final" && !panel?.sketch && !comic.data.guidedBand && !comic.data.workspace?.v3) throw new Error("Sketch it first, then make it final.");
     let description = data.action === "cover" ? data.description : panel ? `${ANGLE_PROMPT[panel.angle]}${panel.description}` : "";
     if (comic.data.guidedBand) {
@@ -135,7 +138,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
       if (panel) panel.angle = planned.angle;
     }
     if (!description || description.length < 3) throw new Error("Describe what happens first.");
-    let castSnapshot: any[] | undefined;
+    let castSnapshot: any[] | undefined = frozenCast;
     let characterIds = comic.data.characterIds;
     let mustShow: string[] | undefined;
     if (data.action === "cover" && comic.data.workspace?.v3) {
@@ -145,7 +148,7 @@ export const editComic = createServerFn({ method: "POST" }).middleware([requireK
       description = prepared.description; castSnapshot = prepared.castSnapshot; characterIds = prepared.characterIds; mustShow = prepared.mustShow;
     }
     const { generateImage } = await import("./images.server");
-    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot, mustShow });
+    const r = await generateImage(context.supabase, context.userId, { childId: child.id, description, styleKey: comic.data.styleKey, characterIds, mode: data.action === "sketch" ? "sketch" : "final", requireReferences: true, lockId: comic.id, op: data.op, castSnapshot, mustShow, frozenCast: v3, allowEmptyCast: v3 && data.action === "cover" && characterIds.length === 0 });
     if (!r.ok) throw new Error(r.reply);
     if (r.lock && !("bookId" in comic.data && comic.data.bookId)) comic.data.modelLock ??= r.lock;
     if (data.action === "cover") comic.data.cover = r.path;

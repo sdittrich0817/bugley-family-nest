@@ -85,3 +85,27 @@ export function resolveCast(snapshots: CastSnapshot[] | undefined, ids: string[]
   const cast = pickCastSnapshot(snapshots, ids, prefix, styleKey);
   return cast ? { mode: "snapshot", cast } : { mode: "refuse" };
 }
+
+/** A3.4.0 character rule. Children see these words when a comic drawing is refused before any claim or charge. */
+export const NO_CAST = "Choose a character for your comic first. Your glow is safe.";
+export const CAST_NOT_FROZEN = "Bugley couldn’t save a copy of your characters for this comic. Your glow is safe. Please try again.";
+export const KEEP_CAST = "Your comic already has drawings, so it keeps at least one character.";
+
+/** A comic picture may be drawn only with at least one approved character, and every one of them needs a valid,
+ * family-owned frozen copy in the comic's look. Returns the refusal for the child, or null when drawing may go ahead. */
+export function frozenCastProblem(snapshots: CastSnapshot[] | undefined | null, ids: string[], prefix: string, styleKey: string): string | null {
+  const unique = [...new Set(ids)];
+  if (!unique.length) return NO_CAST;
+  return pickCastSnapshot(snapshots ?? undefined, unique, prefix, styleKey) ? null : CAST_NOT_FROZEN;
+}
+
+/** Whether a V3 comic already has art (any panel picture or sketch, or a cover). */
+export function comicHasDrawings(details: { cover?: unknown; pages?: { panels?: { image?: unknown; sketch?: unknown }[] }[] } | null | undefined) {
+  return !!details?.cover || (details?.pages ?? []).some(p => (p.panels ?? []).some(x => !!x.image || !!x.sketch));
+}
+
+/** An empty character list may never replace the cast of a V3 comic that already has drawings. Older comics are unchanged. */
+export function castAssignmentProblem(details: { workspace?: { v3?: unknown } | null; cover?: unknown; pages?: { panels?: { image?: unknown; sketch?: unknown }[] }[] } | null | undefined, ids: string[]): string | null {
+  if (details?.workspace?.v3 !== true || ids.length) return null;
+  return comicHasDrawings(details) ? KEEP_CAST : null;
+}
