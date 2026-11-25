@@ -144,8 +144,8 @@
 - [x] A3.4.0 published to bugley.app Nov 23 (requested 18:50 UTC, confirmed live by 18:53 UTC) after a no-cost preview check of Bugley's "Start a comic" button; live smoke test passed with no AI, drawings or Glow.
 - [x] A3.4.1 idea-first core authorized (Nov 23, preview only, no paid drawings): "Start with my idea" for Explorers/Builders, exact idea saved, cast (≤3, one look) and plan before panel 1, idea card + "Use my idea words" + "What happens first?", save/resume (idea, cast, linked character draft), Sprouts refused on the server.
 - [x] A3.4.1 built with automated tests (idea rules, server steps with stand-ins, screens); full suite passes.
-- [ ] A3.4.1 walkthroughs (ages 8 and 11; phone, tablet, desktop; stand-in pictures) — wait on Shea's answers about text safety checks and temporary test players.
-- [ ] A3.4.1 preview implementation report — after the walkthroughs.
+- [x] A3.4.1 walkthroughs (ages 8 and 11; phone, tablet, desktop; stand-in pictures) and implementation report; temporary players removed.
+- [ ] Finish the paused A3.4.1 paid acceptance test: Shea approved a ≈$1.40 total cap, 1 additional Glow and 3 replacement Spark choices. Spark is approved and attached, the exact idea and panel-one screen read back, and 548/548 tests pass. Actual spend is ≈$1.08; both panels remain unstarted because possible retries could exceed the cap. Waiting for Shea's choice: raise the total cap to $2.05 or delete the temporary player and stop.
 - [ ] A3.4.2 polish (idea editing, saved-name glow, title ideas from the idea) — not started; needs Shea's approval.
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
