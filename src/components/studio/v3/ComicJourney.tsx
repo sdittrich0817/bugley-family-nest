@@ -1060,6 +1060,7 @@ export function ComicJourney({
       .filter((c) => selectedIds.includes(c.id))
       .map((c) => c.title)
       .join(" & ") || "your character";
+  const heroVerb = cast.filter((c) => selectedIds.includes(c.id)).length > 1 ? "are" : "is";
   const finaleOn = project?.kind === "comic" && finale && !project.details.finished;
   const drawnComic = project?.kind === "comic" && !!item?.image && !changing && !finaleOn;
   const editing = !finaleOn && (!drawnComic || (step === "change" && changeMode === "redraw"));
@@ -1900,8 +1901,8 @@ export function ComicJourney({
                             : project.kind === "story"
                           ? "Your words, your book. I’m here if you get stuck."
                           : ideaComic && at === 0
-                            ? `${heroNames} is already in the scene! Write what happens in panel 1. You can use your idea words if you like.`
-                            : `${heroNames} is already in the scene! Tell Bugley where they are, what’s happening and who else is there.`
+                            ? `${heroNames} ${heroVerb} already in the scene! Write what happens in panel 1. You can use your idea words if you like.`
+                            : `${heroNames} ${heroVerb} already in the scene! Tell Bugley where they are, what’s happening and who else is there.`
                 }
               />
               {project.kind !== "picture" && (

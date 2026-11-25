@@ -10,6 +10,17 @@ export const IDEA_MAX = 600;
 export const IDEA_CAST_MAX = 3;
 /** Temporary comic name until the child names it at the end (never built from the idea words). */
 export const IDEA_TEMP_TITLE = "My comic idea";
+/** Display-only card label for an unfinished idea comic: a short excerpt of the child's saved (safety-checked) idea.
+ * The stored idea and title are never changed. */
+export function ideaDraftLabel(title: string, idea: unknown, max = 32) {
+  if (title !== IDEA_TEMP_TITLE || typeof idea !== "string") return title;
+  const flat = idea.replace(/\s+/g, " ").trim();
+  if (!flat) return title;
+  if (flat.length <= max) return flat;
+  const cut = flat.slice(0, max);
+  const sp = cut.lastIndexOf(" ");
+  return `${(sp > 12 ? cut.slice(0, sp) : cut).replace(/[\s,.;:!?-]+$/, "")}…`;
+}
 
 export const IDEA_SPROUTS = "Your comic starts with a character. Pick your star!";
 export const IDEA_CAST_PENDING = "Choose who’s in your comic first. Your glow is safe.";

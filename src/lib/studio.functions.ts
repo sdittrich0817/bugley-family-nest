@@ -122,9 +122,10 @@ export const listInProgress = createServerFn({ method: "POST" }).middleware([req
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.from("studio_creations").select("id,kind,title,updated_at,images,details").eq("child_id", data.childId).eq("parent_id", context.userId).is("deleted_at", null).in("kind", ["picture", "comic", "story"]).order("updated_at", { ascending: false }).limit(40);
     if (error) throw new Error("We couldn’t open your saved work.");
+    const { ideaDraftLabel } = await import("./comic-idea");
     const open = (rows ?? []).filter((r: any) => r.details?.workspace?.v3 && !r.details?.finished).slice(0, 12).map((r: any) => {
       const art: string[] = r.kind === "comic" ? (r.details.pages ?? []).flatMap((p: any) => (p.panels ?? []).map((x: any) => x.image)).filter(Boolean) : r.kind === "story" ? (r.details.pages ?? []).map((p: any) => p.image).filter(Boolean) : r.images ?? [];
-      return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: r.title as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? r.details.characters ?? []) as string[], art: art[art.length - 1] as string | undefined, ideaStage: (r.details.workspace?.ideaStage === "idea" || r.details.workspace?.ideaStage === "cast" ? r.details.workspace.ideaStage : undefined) as "idea" | "cast" | undefined };
+      return { id: r.id as string, kind: r.kind as "picture" | "comic" | "story", title: (r.kind === "comic" && r.details.workspace?.ideaStart ? ideaDraftLabel(r.title, r.details.workspace.originalIdea) : r.title) as string, updatedAt: r.updated_at as string, characterIds: (r.details.characterIds ?? r.details.characters ?? []) as string[], art: art[art.length - 1] as string | undefined, ideaStage: (r.details.workspace?.ideaStage === "idea" || r.details.workspace?.ideaStage === "cast" ? r.details.workspace.ideaStage : undefined) as "idea" | "cast" | undefined };
     });
     // A3.1: an unfinished character idea (saved when the child tapped "Meet my character") can be picked up too,
     // and remembers whether it was for a picture, comic or story.

@@ -362,3 +362,16 @@ describe("linked character drafts (server)", () => {
     await expect(f.saveV3CharacterDraft({ ...ctx, data: { childId: C, id: "00000000-0000-4000-8000-0000000000d2", description: "Spark", styleKey: "cartoon", environment: env, base: 0, comicId: COMIC } } as never)).rejects.toThrow(/your own comic idea/);
   });
 });
+
+describe("A3.4.1 final: idea draft labels", () => {
+  it("labels an unfinished idea comic with a short excerpt of the child's idea", async () => {
+    const { ideaDraftLabel } = await import("./comic-idea");
+    expect(ideaDraftLabel("My comic idea", "A little purple dragon named Spark is scared to fly but wants to visit the moon.")).toBe("A little purple dragon named…");
+    expect(ideaDraftLabel("My comic idea", "Pip finds a map")).toBe("Pip finds a map");
+  });
+  it("never relabels a comic the child has named, and falls back without an idea", async () => {
+    const { ideaDraftLabel } = await import("./comic-idea");
+    expect(ideaDraftLabel("Spark Flies", "A dragon")).toBe("Spark Flies");
+    expect(ideaDraftLabel("My comic idea", "")).toBe("My comic idea");
+  });
+});
