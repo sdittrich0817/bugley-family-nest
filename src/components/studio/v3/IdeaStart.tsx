@@ -70,7 +70,10 @@ export function IdeaEntry({ child, project, onCreated, onDone, onBack }: {
   const clashRef = useRef(clash);
   clashRef.current = clash;
   const mounted = useRef(true);
-  useEffect(() => () => void (mounted.current = false), []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => void (mounted.current = false);
+  }, []);
 
   /** One save at a time. Explicit ("That's my idea!") saves win over this device's own late saves, like "Meet my character". */
   function send(words: string, done: boolean): Promise<Saved> {
