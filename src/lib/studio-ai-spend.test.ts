@@ -3,12 +3,13 @@ import { z } from "zod";
 import { setSpendRpcs, withSpend } from "./spend.server";
 import { OUTPUT_TOKENS_MAX } from "./spend";
 const { request } = vi.hoisted(() => ({ request: vi.fn() }));
-vi.mock("@lovable.dev/ai-gateway", () => ({ streamResponse: request }));
+vi.mock("./ai-image-cost.server", () => ({ prepareAiImages: async (urls: string[]) => urls.map(url => ({ url, tokens: 36000 })) }));
+vi.mock("@lovable.dev/ai-gateway", async importOriginal => ({ ...await importOriginal<typeof import("@lovable.dev/ai-gateway")>(), streamResponse: request }));
 import { aiObject } from "./studio-ai.server";
 function completion(value: unknown) {
   return (async function* () {
     yield { type: "response.output_text.delta", delta: JSON.stringify(value) };
-    yield { type: "response.completed", response: { usage: { input_tokens: 100, output_tokens: 10 } } };
+    yield { type: "response.completed", response: { status: "completed", output: [], usage: { input_tokens: 100, output_tokens: 10 } } };
   })();
 }
 afterEach(() => { request.mockReset(); setSpendRpcs(null); });
@@ -38,5 +39,23 @@ describe("AI spending preserves safety", () => {
   it("returns no content from interrupted or malformed completions", async () => {
     request.mockResolvedValueOnce((async function* () { yield { type: "response.output_text.delta", delta: '{"reply":"partial' }; })());
     expect(await aiObject(z.object({ reply: z.string() }), "Coach", "Synthetic")).toBeNull();
+  });
+  it.each(["response.failed", "response.incomplete"])("rejects %s even after valid-looking partial text", async type => {
+    request.mockResolvedValueOnce((async function* () { yield { type: "response.output_text.delta", delta: '{"safe":true}' }; yield { type, response: { status: "failed" } }; })());
+    expect(await aiObject(z.object({ safe: z.boolean() }), "Check", "Synthetic")).toBeNull();
+    expect(request).toHaveBeenCalledTimes(1);
+  });
+  it("never treats a refusal with valid-looking text as approval", async () => {
+    request.mockResolvedValueOnce((async function* () { yield { type: "response.output_text.delta", delta: '{"safe":true}' }; yield { type: "response.refusal.delta", delta: "No" }; yield { type: "response.completed", response: { status: "completed", output: [], usage: { input_tokens: 100, output_tokens: 10 } } }; })());
+    expect(await aiObject(z.object({ safe: z.boolean() }), "Check", "Synthetic")).toBeNull();
+  });
+  it("reads canonical completed output when no deltas arrive", async () => {
+    request.mockResolvedValueOnce((async function* () { yield { type: "response.completed", response: { status: "completed", output: [{ type: "message", content: [{ type: "output_text", text: '{"safe":true}' }] }], usage: { input_tokens: 100, output_tokens: 10 } } }; })());
+    expect(await aiObject(z.object({ safe: z.boolean() }), "Check", "Synthetic")).toEqual({ safe: true });
+  });
+  it("rejects schema-invalid JSON without returning it or regenerating", async () => {
+    request.mockResolvedValueOnce(completion({ safe: "yes" }));
+    expect(await aiObject(z.object({ safe: z.boolean() }), "Check", "Synthetic")).toBeNull();
+    expect(request).toHaveBeenCalledTimes(1);
   });
 });

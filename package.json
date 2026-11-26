@@ -68,6 +68,7 @@
     "entities": "4.5.0",
     "fast-png": "^8.0.0",
     "fast-xml-parser": "^5.11.2",
+    "image-size": "^2.1.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
     "matter-js": "^0.20.0",

@@ -50,7 +50,7 @@ export const getSpendDashboard = createServerFn({ method: "GET" }).middleware([r
     context.supabase.from("ai_spend_settings").select("*").eq("id", 1).maybeSingle(),
     context.supabase.from("ai_spend_ledger").select("op_kind,parent_id,status,block_reason,reserved_credits,reserved_usd,actual_credits,actual_usd,credits_source,usd_source,retries,draw_calls,succeeded,created_at,test_session").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(5000),
     context.supabase.from("ai_spend_alerts").select("kind,period,used,cap,created_at").order("created_at", { ascending: false }).limit(10),
-    context.supabase.from("ai_spend_test_sessions").select("key,cap_usd,closed,created_at").order("created_at", { ascending: false }).limit(10),
+    context.supabase.from("ai_spend_test_sessions").select("key,cap_usd,credit_usd_rate,closed,created_at").order("created_at", { ascending: false }).limit(10),
   ]);
   if ([settingsResult, rowsResult, alertsResult, testsResult].some(r => r.error)) throw new Error("Couldn’t read spending records. Please try again.");
   const { data: settings } = settingsResult, { data: rows } = rowsResult, { data: alerts } = alertsResult, { data: tests } = testsResult;

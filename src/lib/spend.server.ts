@@ -1,5 +1,6 @@
 // Server-only central AI spending gate. Every Lovable AI call (aiObject) and every Replicate drawing (replicateRun) passes here.
 import { AsyncLocalStorage } from "node:async_hooks";
+import { GatewayError } from "@lovable.dev/ai-gateway";
 import { aiCallCredits, round, type SpendBlockReason } from "./spend";
 
 export class SpendBlockedError extends Error {
@@ -89,6 +90,12 @@ async function metered<T>(worst: { credits: number; usd: number }, run: () => Pr
   let r: { value: T; credits?: number; usd?: number };
   try { r = await run(); }
   catch (e) {
+    // A gateway-confirmed pre-execution rejection incurred no inference; unknown/failed outcomes keep the hold.
+    if (e instanceof GatewayError && e.outcome === "not_started") {
+      env.credits -= worst.credits; env.usd -= worst.usd;
+      if (kind === "ai") env.aiCalls--; else env.drawCalls--;
+      throw e;
+    }
     // Unknown provider outcome: keep the full worst case as charged.
     env.unknown = true;
     if (worst.credits) env.creditsSource = "assumed_worst_case";
@@ -105,6 +112,7 @@ export function meteredAi<T>(worstCredits: number, run: () => Promise<{ value: T
   return metered({ credits: worstCredits, usd: 0 }, async () => {
     const r = await run();
     const known = r.inputTokens !== undefined && r.outputTokens !== undefined;
+    if (known && (![r.inputTokens, r.outputTokens].every(v => typeof v === "number" && Number.isSafeInteger(v) && v >= 0) || aiCallCredits(r.inputTokens ?? 0, r.outputTokens ?? 0) > worstCredits + 1e-9)) throw new Error("AI usage violated the reviewed cost contract.");
     return { value: r.value, ...(known ? { credits: aiCallCredits(r.inputTokens ?? 0, r.outputTokens ?? 0) } : {}) };
   }, "ai");
 }

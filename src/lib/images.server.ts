@@ -51,9 +51,9 @@ const takesRefs = (m: ModelRow, n: number) => {
 
 export async function replicateRun(model: ModelRow, prompt: string, refs: string[], redraw = false): Promise<string> {
   // Spending gate: a drawing outside an operation reservation reserves itself (both attempts) first.
-  if (!inReservation()) return withSpend({ kind: "draw", draws: true }, { credits: 0, usd: 2 * drawUsd(model.model, model.settings) }, () => replicateRun(model, prompt, refs));
+  if (!inReservation()) return withSpend({ kind: "draw", draws: true }, { credits: 0, usd: 2 * drawUsd(model.model, model.settings, model.version) }, () => replicateRun(model, prompt, refs));
   for (let attempt = 0; ; attempt++) {
-    try { return await meteredDraw(drawUsd(model.model, model.settings), () => replicateOnce(model, prompt, refs), attempt > 0 || redraw); }
+    try { return await meteredDraw(drawUsd(model.model, model.settings, model.version), () => replicateOnce(model, prompt, refs), attempt > 0 || redraw); }
     catch (error) {
       if (!(error instanceof ImageServiceError) || !error.retryable || attempt >= 1) throw error;
       console.warn('replicate transient failure: one delayed recovery attempt', model.model);
@@ -140,7 +140,7 @@ export async function paintBugAvatar(sb: Sb, userId: string, childId: string, wo
   const { data: style } = await a.from('art_styles').select('recipe').eq('key', 'cartoon').eq('active', true).maybeSingle();
   const model = await loadModel('hero') ?? await loadModel('character');
   if (!style || !model) return { ok: false as const, reply: NOT_READY };
-  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 1, refs: 0, similarity: false });
+  const worst = drawingWorstCase({ model: model.model, version: model.version, settings: model.settings, draws: 1, refs: 0, similarity: false });
   try { return await withSpend({ kind: "bug_avatar", opKey: op, parentId: userId, childId, draws: true }, worst, async () => {
   const { data: claim, error } = await a.rpc('claim_bug_avatar', { _child: childId, _parent: userId, _op: op });
   if (error) throw new Error('Couldn’t check your free tries. Please try again.');
@@ -258,7 +258,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
   }
   // Spending gate before any Glow charge: every possible redraw plus its safety and character checks.
   const checkBytes = new TextEncoder().encode(locked.map(c => `${c.title} — ${c.dna}`).join(" | ") + input.description + style.name + (input.mustShow ?? []).join(", ")).length;
-  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: locked.length ? 3 : 1, refs: locked.flatMap((c) => c.refs).length, similarity: locked.length > 0, textChars: checkBytes + 1000 });
+  const worst = drawingWorstCase({ model: model.model, version: model.version, settings: model.settings, draws: locked.length ? 3 : 1, refs: locked.flatMap((c) => c.refs).length, similarity: locked.length > 0, textChars: checkBytes + 1000 });
   try { return await withSpend({ kind: `picture_${input.mode}`, opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, worst, async (): Promise<GenResult> => {
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
@@ -320,7 +320,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
 export async function generateHeroOptions(sb: Sb, userId: string, input: { childId: string; styleKey: string; description: string; op?: string | undefined }) {
   const child = await loadChild(sb, userId, input.childId);
   const guard = await guardChildText(sb, userId, child, input.description, "character");
-  if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply!, chips: guard.chips ?? [] };
+  if (guard.decision !== "allowed") return { ok: false as const, reply: guard.reply ?? "Let’s try a different idea.", chips: guard.chips ?? [] };
   const a = await admin();
   const [{ data: style }, model] = await Promise.all([
     a.from("art_styles").select("recipe").eq("key", input.styleKey).eq("active", true).maybeSingle(),
@@ -328,12 +328,11 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   ]);
   if (!style) return { ok: false as const, reply: "Pick a style first!" };
   if (!model) return { ok: false as const, reply: NOT_READY };
-  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 3, refs: 0, similarity: false });
+  const worst = drawingWorstCase({ model: model.model, version: model.version, settings: model.settings, draws: 3, refs: 0, similarity: false });
   try { return await withSpend({ kind: "hero_options", opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, worst, async () => {
   const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
-  console.log("HERO_PROMPT_DEBUG", JSON.stringify({ model: model.model, settings: model.settings, prompt }));
   const results = await Promise.allSettled([0, 1, 2].map(async () => {
     const src = await replicateRun(model, prompt, []);
     if (!(await imageIsSafe(src))) throw new Error("unsafe");
@@ -360,7 +359,8 @@ export async function lockCharacter(userId: string, childId: string, input: { pa
   const [chosen] = await signPaths([input.path]);
   const { data: style } = await a.from("art_styles").select("recipe").eq("key", input.styleKey).maybeSingle();
   const sheetModel = (await loadModel("sheet")) ?? (await loadModel("character"));
-  const sheetWorst = drawingWorstCase({ model: sheetModel?.model ?? "", settings: sheetModel?.settings ?? {}, draws: 1, refs: 0, similarity: false, extraAi: aiCallWorstCredits(1500 + new TextEncoder().encode(input.hint).length, 1, true) });
+  if (!sheetModel) throw new Error('Your hero’s matching pictures aren’t ready. Please try again; your chosen portrait is safe.');
+  const sheetWorst = drawingWorstCase({ model: sheetModel.model, version: sheetModel.version, settings: sheetModel.settings, draws: 1, refs: 0, similarity: false, extraAi: aiCallWorstCredits(1500 + new TextEncoder().encode(input.hint).length, 1, true) });
   try { return await withSpend({ kind: "character_lock", parentId: userId, childId, draws: true }, sheetWorst, async () => {
   const refs: string[] = [];
   const sheetJob = (async () => {

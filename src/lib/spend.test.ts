@@ -24,11 +24,11 @@ function fakeDb(opts: { dailyUsd?: number; familyUsd?: number; testCap?: number;
 afterEach(() => setSpendRpcs(null));
 
 describe("cost estimates", () => {
-  it("prices drawings from list prices and charges unknown models the top price", () => {
+  it("prices reviewed drawings and refuses unknown price contracts", () => {
     expect(drawUsd("google/nano-banana-pro")).toBe(0.15);
     expect(drawUsd("google/nano-banana-pro", { resolution: "4K" })).toBe(0.3);
     expect(drawUsd("google/nano-banana")).toBe(0.039);
-    expect(drawUsd("someone/new-model")).toBe(0.3);
+    expect(() => drawUsd("someone/new-model")).toThrow("Unreviewed");
   });
   it("covers every retry and check for a character panel, above the measured $0.89", () => {
     const w = drawingWorstCase({ model: "google/nano-banana-pro", draws: 3, refs: 4, similarity: true, textChars: 1500 });

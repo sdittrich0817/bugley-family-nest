@@ -15,7 +15,7 @@ vi.mock("@/lib/glow.server", () => ({ chargeGlow: (...a: unknown[]) => charge(..
 vi.mock("@/lib/studio.server", () => ({ loadChild: vi.fn(async () => ({ id: C, age: 8, age_band: "explorers" })), guardChildText: vi.fn(async () => ({ decision: "allowed" })) }));
 vi.mock("@/lib/studio-ai.server", () => ({ aiObject: vi.fn(async () => { throw new Error("no AI in this test"); }) }));
 vi.mock("./workspace.server", () => ({ snapshotCast: (...a: unknown[]) => snapshotCast(...(a as [unknown, string, string, string, string[]])) }));
-const model = { model: "test/model", version: "1", settings: { reference_field: "image_input" }, supports_reference: true };
+const model = { model: "google/nano-banana-pro", version: "", settings: { reference_field: "image_input", resolution: "2K" }, supports_reference: true };
 const style = { name: "Cartoon", recipe: "cartoon recipe" };
 const chain = (result: unknown) => { const q: any = new Proxy({}, { get: (_t, k) => k === "maybeSingle" || k === "single" ? async () => result : k === "then" ? undefined : () => q }); return q; };
 vi.mock("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {
@@ -53,6 +53,15 @@ describe("empty character lists", () => {
 });
 
 describe("drawing service never charges or draws when the rule fails", () => {
+  it("never writes the synthetic child description into diagnostic output", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const words = "synthetic confidential hero-name";
+    charge.mockResolvedValueOnce({ ok: true, reason: "" });
+    try {
+      await (await import("./images.server")).generateHeroOptions({} as never, P, { childId: C, styleKey: "cartoon", description: words });
+      expect(log.mock.calls.some(call => call.some(arg => typeof arg === "string" && arg.includes(words)))).toBe(false);
+    } finally { log.mockRestore(); }
+  });
   it("empty cast: refused before Glow and before any paid call", async () => {
     const r = await draw({ characterIds: [] });
     expect(r).toMatchObject({ ok: false, reply: NO_CAST });
