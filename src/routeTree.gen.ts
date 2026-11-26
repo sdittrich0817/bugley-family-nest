@@ -42,6 +42,7 @@ import { Route as AuthenticatedTableRouteImport } from './routes/_authenticated/
 import { Route as KidKidsRouteImport } from './routes/_kid.kids'
 import { Route as ResourcesIndexRouteImport } from './routes/resources.index'
 import { Route as ResourcesSlugRouteImport } from './routes/resources.$slug'
+import { Route as AuthenticatedAdminCostsRouteImport } from './routes/_authenticated/admin_.costs'
 import { Route as KidKidsInstallRouteImport } from './routes/_kid.kids_.install'
 import { Route as KidKidsQuestRouteImport } from './routes/_kid.kids_.quest'
 import { Route as KidKidsStudioRouteImport } from './routes/_kid.kids_.studio'
@@ -215,6 +216,11 @@ const ResourcesSlugRoute = ResourcesSlugRouteImport.update({
   path: '/resources/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminCostsRoute = AuthenticatedAdminCostsRouteImport.update({
+  id: '/admin_/costs',
+  path: '/admin/costs',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const KidKidsInstallRoute = KidKidsInstallRouteImport.update({
   id: '/kids_/install',
   path: '/kids/install',
@@ -295,6 +301,7 @@ export interface FileRoutesByFullPath {
   '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
+  '/admin/costs': typeof AuthenticatedAdminCostsRoute
   '/kids/install': typeof KidKidsInstallRoute
   '/kids/quest': typeof KidKidsQuestRoute
   '/kids/studio': typeof KidKidsStudioRoute
@@ -337,6 +344,7 @@ export interface FileRoutesByTo {
   '/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources': typeof ResourcesIndexRoute
+  '/admin/costs': typeof AuthenticatedAdminCostsRoute
   '/kids/install': typeof KidKidsInstallRoute
   '/kids/quest': typeof KidKidsQuestRoute
   '/kids/studio': typeof KidKidsStudioRoute
@@ -382,6 +390,7 @@ export interface FileRoutesById {
   '/_kid/kids': typeof KidKidsRoute
   '/resources/$slug': typeof ResourcesSlugRoute
   '/resources/': typeof ResourcesIndexRoute
+  '/_authenticated/admin_/costs': typeof AuthenticatedAdminCostsRoute
   '/_kid/kids_/install': typeof KidKidsInstallRoute
   '/_kid/kids_/quest': typeof KidKidsQuestRoute
   '/_kid/kids_/studio': typeof KidKidsStudioRoute
@@ -426,6 +435,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/resources/$slug'
     | '/resources/'
+    | '/admin/costs'
     | '/kids/install'
     | '/kids/quest'
     | '/kids/studio'
@@ -468,6 +478,7 @@ export interface FileRouteTypes {
     | '/kids'
     | '/resources/$slug'
     | '/resources'
+    | '/admin/costs'
     | '/kids/install'
     | '/kids/quest'
     | '/kids/studio'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/_kid/kids'
     | '/resources/$slug'
     | '/resources/'
+    | '/_authenticated/admin_/costs'
     | '/_kid/kids_/install'
     | '/_kid/kids_/quest'
     | '/_kid/kids_/studio'
@@ -788,6 +800,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin_/costs': {
+      id: '/_authenticated/admin_/costs'
+      path: '/admin/costs'
+      fullPath: '/admin/costs'
+      preLoaderRoute: typeof AuthenticatedAdminCostsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_kid/kids_/install': {
       id: '/_kid/kids_/install'
       path: '/kids/install'
@@ -862,6 +881,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedSetupRoute: typeof AuthenticatedSetupRoute
   AuthenticatedTableRoute: typeof AuthenticatedTableRoute
+  AuthenticatedAdminCostsRoute: typeof AuthenticatedAdminCostsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -872,6 +892,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedSetupRoute: AuthenticatedSetupRoute,
   AuthenticatedTableRoute: AuthenticatedTableRoute,
+  AuthenticatedAdminCostsRoute: AuthenticatedAdminCostsRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

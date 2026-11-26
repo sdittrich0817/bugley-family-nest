@@ -18,3 +18,8 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: () => {},
   }),
 });
+
+// Older pipeline tests run with an allow-all stand-in spending gate (real gate rules are covered in spend.test.ts).
+import { beforeEach as __spendBeforeEach } from "vitest";
+import { setSpendRpcs as __setSpendRpcs } from "@/lib/spend.server";
+__spendBeforeEach(() => { let n = 0; __setSpendRpcs({ reserve: async () => ({ ok: true, id: `test-${n++}` }), settle: async () => {} }); });

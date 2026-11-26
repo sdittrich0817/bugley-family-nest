@@ -3,6 +3,7 @@ import { comicCoachingInstructions } from "./comic";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
+import { spendScope } from "./spend.server";
 import { BLOCK_REPLY, DEFAULT_CHIPS, findFamilyName, quickPersonalCheck, type GuardDecision } from "@/lib/studio-guard";
 import { storyCoachingInstructions } from "./story";
 import { bugleyActions } from "@/lib/studio-actions";
@@ -41,7 +42,11 @@ Also give exactly 2 short (max 7 words), playful, original, kid-safe idea sugges
 export type GuardResult = { decision: GuardDecision; reply?: string | undefined; chips?: string[] | undefined; eventId?: string };
 
 /** Every piece of child text must pass this before reaching any AI model. Logs every decision. */
-export async function guardChildText(sb: Sb, userId: string, child: { id: string; nickname: string; age: number }, text: string, source: string): Promise<GuardResult> {
+export function guardChildText(sb: Sb, userId: string, child: { id: string; nickname: string; age: number }, text: string, source: string): Promise<GuardResult> {
+  // Attributes the safety check's AI cost to this family in the spending ledger (IDs only).
+  return spendScope({ parentId: userId, childId: child.id }, () => guardChildTextRun(sb, userId, child, text, source));
+}
+async function guardChildTextRun(sb: Sb, userId: string, child: { id: string; nickname: string; age: number }, text: string, source: string): Promise<GuardResult> {
   const names = await familyNames(sb, userId);
   let decision: GuardDecision | "error";
   let chips: string[] | undefined;

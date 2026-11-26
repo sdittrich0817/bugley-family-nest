@@ -309,6 +309,13 @@
       "when": 1794854594464,
       "tag": "0043_close_direct_demo_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795702894769,
+      "tag": "0044_ai_spending_controls",
+      "breakpoints": true
     }
   ]
 }

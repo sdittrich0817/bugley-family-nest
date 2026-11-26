@@ -128,6 +128,180 @@ export type Database = {
           },
         ]
       }
+      ai_spend_alerts: {
+        Row: {
+          cap: number
+          created_at: string
+          id: string
+          kind: string
+          period: string
+          scope: string
+          used: number
+        }
+        Insert: {
+          cap: number
+          created_at?: string
+          id?: string
+          kind: string
+          period: string
+          scope?: string
+          used: number
+        }
+        Update: {
+          cap?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          period?: string
+          scope?: string
+          used?: number
+        }
+        Relationships: []
+      }
+      ai_spend_ledger: {
+        Row: {
+          actual_credits: number | null
+          actual_usd: number | null
+          ai_calls: number
+          block_reason: string | null
+          child_id: string | null
+          created_at: string
+          credits_source: string | null
+          draw_calls: number
+          draws: boolean
+          id: string
+          op_key: string | null
+          op_kind: string
+          parent_id: string | null
+          reserved_credits: number
+          reserved_usd: number
+          retries: number
+          settled_at: string | null
+          status: string
+          succeeded: boolean | null
+          test_session: string | null
+          usd_source: string | null
+        }
+        Insert: {
+          actual_credits?: number | null
+          actual_usd?: number | null
+          ai_calls?: number
+          block_reason?: string | null
+          child_id?: string | null
+          created_at?: string
+          credits_source?: string | null
+          draw_calls?: number
+          draws?: boolean
+          id?: string
+          op_key?: string | null
+          op_kind: string
+          parent_id?: string | null
+          reserved_credits?: number
+          reserved_usd?: number
+          retries?: number
+          settled_at?: string | null
+          status: string
+          succeeded?: boolean | null
+          test_session?: string | null
+          usd_source?: string | null
+        }
+        Update: {
+          actual_credits?: number | null
+          actual_usd?: number | null
+          ai_calls?: number
+          block_reason?: string | null
+          child_id?: string | null
+          created_at?: string
+          credits_source?: string | null
+          draw_calls?: number
+          draws?: boolean
+          id?: string
+          op_key?: string | null
+          op_kind?: string
+          parent_id?: string | null
+          reserved_credits?: number
+          reserved_usd?: number
+          retries?: number
+          settled_at?: string | null
+          status?: string
+          succeeded?: boolean | null
+          test_session?: string | null
+          usd_source?: string | null
+        }
+        Relationships: []
+      }
+      ai_spend_settings: {
+        Row: {
+          alert_ratio: number
+          family_monthly_credits: number | null
+          family_monthly_usd: number | null
+          id: number
+          pause_all: boolean
+          pause_drawing: boolean
+          per_op_max_credits: number | null
+          per_op_max_usd: number | null
+          platform_daily_credits: number | null
+          platform_daily_usd: number | null
+          platform_monthly_credits: number | null
+          platform_monthly_usd: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          alert_ratio?: number
+          family_monthly_credits?: number | null
+          family_monthly_usd?: number | null
+          id?: number
+          pause_all?: boolean
+          pause_drawing?: boolean
+          per_op_max_credits?: number | null
+          per_op_max_usd?: number | null
+          platform_daily_credits?: number | null
+          platform_daily_usd?: number | null
+          platform_monthly_credits?: number | null
+          platform_monthly_usd?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          alert_ratio?: number
+          family_monthly_credits?: number | null
+          family_monthly_usd?: number | null
+          id?: number
+          pause_all?: boolean
+          pause_drawing?: boolean
+          per_op_max_credits?: number | null
+          per_op_max_usd?: number | null
+          platform_daily_credits?: number | null
+          platform_daily_usd?: number | null
+          platform_monthly_credits?: number | null
+          platform_monthly_usd?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      ai_spend_test_sessions: {
+        Row: {
+          cap_usd: number
+          closed: boolean
+          created_at: string
+          key: string
+        }
+        Insert: {
+          cap_usd: number
+          closed?: boolean
+          created_at?: string
+          key: string
+        }
+        Update: {
+          cap_usd?: number
+          closed?: boolean
+          created_at?: string
+          key?: string
+        }
+        Relationships: []
+      }
       art_styles: {
         Row: {
           active: boolean
@@ -2190,6 +2364,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ai_spend_reserve: {
+        Args: {
+          _child: string
+          _credits: number
+          _draws: boolean
+          _op_key: string
+          _op_kind: string
+          _parent: string
+          _test: string
+          _usd: number
+        }
+        Returns: Json
+      }
+      ai_spend_settle: {
+        Args: {
+          _ai_calls: number
+          _credits: number
+          _credits_source: string
+          _draw_calls: number
+          _id: string
+          _retries: number
+          _status: string
+          _succeeded: boolean
+          _usd: number
+          _usd_source: string
+        }
+        Returns: boolean
+      }
+      ai_spend_used: {
+        Args: { _from: string; _parent?: string; _test?: string }
+        Returns: {
+          credits: number
+          usd: number
+        }[]
+      }
       caller_may_inspect: { Args: { _user_id: string }; Returns: boolean }
       claim_bug_avatar: {
         Args: { _child: string; _op: string; _parent: string }

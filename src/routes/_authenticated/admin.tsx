@@ -61,7 +61,7 @@ function AdminArea() {
     <button onClick={() => setSel(s)} style={{ paddingLeft: `${depth * 14 + 8}px` }} className={`flex w-full items-center gap-1 rounded-md py-1.5 pr-2 text-left text-sm hover:bg-muted ${sel?.id === s.id ? "bg-muted font-semibold" : ""}`}><ChevronRight className="size-3 shrink-0" /><span className="truncate">{label}</span></button>{children}</li>;
   const Add = ({ table, parentId, depth }: { table: EntityTable; parentId?: string | undefined; depth: number }) => <li><button onClick={() => setSel({ table, parentId })} style={{ paddingLeft: `${depth * 14 + 8}px` }} className="flex items-center gap-1 py-1 text-xs text-muted-foreground hover:text-foreground"><Plus className="size-3" />Add {LABEL[table].toLowerCase()}</button></li>;
   return <section className="container-page py-8">
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 className="text-3xl">Curriculum admin</h1><Button asChild variant="ghost" size="sm"><Link to="/hub">Parent Hub</Link></Button></div>
+    <div className="mb-6 flex flex-wrap items-center justify-between gap-3"><h1 className="text-3xl">Curriculum admin</h1><div className="flex gap-2"><Button asChild variant="outline" size="sm"><Link to="/admin/costs">AI costs</Link></Button><Button asChild variant="ghost" size="sm"><Link to="/hub">Parent Hub</Link></Button></div></div>
     <div className="grid gap-6 md:grid-cols-[300px_1fr]">
       <nav className="rounded-2xl border border-border bg-card p-3"><ul>
         {[...tree].sort(sortBy("number")).map((se: any) => <Row key={se.id} s={{ table: "seasons", id: se.id }} label={`Season ${se.number}: ${se.title}${se.published ? "" : " (draft)"}`} depth={0}><ul>

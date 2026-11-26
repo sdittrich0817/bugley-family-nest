@@ -1,6 +1,8 @@
 // Server-only image pipeline: guard -> glow -> server-built prompt -> Replicate -> image safety check -> drift check -> storage.
 // Character Lock: heroes carry a reference set + fixed "Character DNA"; books lock their style and model.
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { aiCallWorstCredits, drawUsd, drawingWorstCase, spendBlockedReply } from "./spend";
+import { SpendBlockedError, inReservation, meteredDraw, withSpend } from "./spend.server";
 import { z } from "zod";
 import { aiObject } from "@/lib/studio-ai.server";
 import { chargeGlow, refundGlow, refundGlowOnce } from "@/lib/glow.server";
@@ -47,9 +49,11 @@ const takesRefs = (m: ModelRow, n: number) => {
   return !!s.reference_field && (m.supports_reference ?? true) && !(s.reference_single && n > 1);
 };
 
-export async function replicateRun(model: ModelRow, prompt: string, refs: string[]) {
+export async function replicateRun(model: ModelRow, prompt: string, refs: string[]): Promise<string> {
+  // Spending gate: a drawing outside an operation reservation reserves itself (both attempts) first.
+  if (!inReservation()) return withSpend({ kind: "draw", draws: true }, { credits: 0, usd: 2 * drawUsd(model.model, model.settings) }, () => replicateRun(model, prompt, refs));
   for (let attempt = 0; ; attempt++) {
-    try { return await replicateOnce(model, prompt, refs); }
+    try { return await meteredDraw(drawUsd(model.model, model.settings), () => replicateOnce(model, prompt, refs), attempt > 0); }
     catch (error) {
       if (!(error instanceof ImageServiceError) || !error.retryable || attempt >= 1) throw error;
       console.warn('replicate transient failure: one delayed recovery attempt', model.model);
@@ -136,6 +140,8 @@ export async function paintBugAvatar(sb: Sb, userId: string, childId: string, wo
   const { data: style } = await a.from('art_styles').select('recipe').eq('key', 'cartoon').eq('active', true).maybeSingle();
   const model = await loadModel('hero') ?? await loadModel('character');
   if (!style || !model) return { ok: false as const, reply: NOT_READY };
+  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 1, refs: 0, similarity: false });
+  try { return await withSpend({ kind: "bug_avatar", opKey: op, parentId: userId, childId, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async () => {
   const { data: claim, error } = await a.rpc('claim_bug_avatar', { _child: childId, _parent: userId, _op: op });
   if (error) throw new Error('Couldn’t check your free tries. Please try again.');
   const claimed = claim as { ok: boolean; reason?: string };
@@ -158,6 +164,7 @@ export async function paintBugAvatar(sb: Sb, userId: string, childId: string, wo
     if (refundError) throw new Error('Couldn’t restore your try. Ask your grown-up.');
     return { ok: false as const, reply: e instanceof Error ? e.message : 'Couldn’t draw your bug. Your try is back.' };
   }
+  }); } catch (e) { if (e instanceof SpendBlockedError) return { ok: false as const, reply: spendBlockedReply(e.reason) }; throw e; }
 }
 
 type Locked = { title: string; dna: string; refs: string[] };
@@ -249,6 +256,9 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     locked = l;
     if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade || input.editPath ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
   }
+  // Spending gate before any Glow charge: every possible redraw plus its safety and character checks.
+  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: locked.length ? 3 : 1, refs: locked.flatMap((c) => c.refs).length, similarity: locked.length > 0, textChars: locked.map((c) => `${c.title} — ${c.dna}`).join(" | ").length + input.description.length + 1000 });
+  try { return await withSpend({ kind: `picture_${input.mode}`, opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async (): Promise<GenResult> => {
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
   const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch", input.op);
@@ -302,6 +312,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     console.error("image pipeline", e);
     return { ok: false, reply: back(e instanceof Error && e.message.startsWith("Bugley") ? e.message : "Oops, my paintbrush slipped! Your glow is back. Try again?") };
   }
+  }); } catch (e) { if (e instanceof SpendBlockedError) return { ok: false, reply: spendBlockedReply(e.reason) }; throw e; }
 }
 
 /** Hero Builder step 6: three hero options in one go for one glow. Nothing is saved to the album until the child picks one. */
@@ -316,6 +327,8 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   ]);
   if (!style) return { ok: false as const, reply: "Pick a style first!" };
   if (!model) return { ok: false as const, reply: NOT_READY };
+  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 3, refs: 0, similarity: false });
+  try { return await withSpend({ kind: "hero_options", opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async () => {
   const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
@@ -336,6 +349,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   }
   const urls = await signPaths(paths);
   return { ok: true as const, options: paths.map((path, i) => ({ path, url: urls[i] ?? "" })), model: { model: model.model, version: model.version } };
+  }); } catch (e) { if (e instanceof SpendBlockedError) return { ok: false as const, reply: spendBlockedReply(e.reason) }; throw e; }
 }
 
 const dnaSchema = z.object({ dna: z.string().min(20).max(700) });
@@ -345,6 +359,8 @@ export async function lockCharacter(userId: string, childId: string, input: { pa
   const [chosen] = await signPaths([input.path]);
   const { data: style } = await a.from("art_styles").select("recipe").eq("key", input.styleKey).maybeSingle();
   const sheetModel = (await loadModel("sheet")) ?? (await loadModel("character"));
+  const sheetWorst = drawingWorstCase({ model: sheetModel?.model ?? "", settings: sheetModel?.settings ?? {}, draws: 1, refs: 0, similarity: false, extraAi: aiCallWorstCredits(1500 + input.hint.length, 1, false) + aiCallWorstCredits(9000, 0, false) });
+  try { return await withSpend({ kind: "character_lock", parentId: userId, childId, draws: true }, { credits: sheetWorst.credits, usd: sheetWorst.usd * 2 }, async () => {
   const refs: string[] = [];
   const sheetJob = (async () => {
     if (!sheetModel || !chosen || !takesRefs(sheetModel, 1)) return;
@@ -359,4 +375,5 @@ export async function lockCharacter(userId: string, childId: string, input: { pa
   const [, dna] = await Promise.all([sheetJob, dnaJob]);
   if (!refs.length || !dna?.dna || !sheetModel) throw new Error('Your hero’s matching pictures aren’t ready. Please try again; your chosen portrait is safe.');
   return { refs, dna: dna.dna, model: { model: sheetModel.model, version: sheetModel.version } };
+  }); } catch (e) { if (e instanceof SpendBlockedError) throw new Error('Your hero’s matching pictures aren’t ready. Please try again; your chosen portrait is safe.'); throw e; }
 }

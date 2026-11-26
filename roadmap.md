@@ -153,3 +153,10 @@
 ## E1.0 AI cost architecture
 - [x] E1.0 decision report (recommend Option B; E1.1 controls first)
 - [ ] E1.1 spending gate and caps (waiting for founder approval)
+
+## E1.1 — Spending controls (preview, in progress)
+- [x] Central gate, reservations, ledger, admin costs page, tests
+- [ ] Report; awaiting founder approval to publish
+
+## E1.0 add-on — Image cost history investigation (report only)
+- [ ] Original model/cost, when/why Nano Banana Pro 2K, quality evidence, alternatives, 1K viability, all-in $0.05–$0.08 feasibility, benchmark proposal

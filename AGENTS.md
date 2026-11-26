@@ -34,6 +34,7 @@
 - PLAY launches through PlayStudio with bounded private sessions, reusable safe stickers and server-rendered doodles; persistence and rewards follow src/lib/AGENTS.md. Why: games share safety and rewards without exposing family data.
 - ExtraRound games keep private answers server-side. Glow Dash uses shared Matter.js replay grading and parent-scoped allow-listed remixes; local ml-knn learns checked Jump/Wait examples and produces replayable inputs, never scores. Why: visible learning without client-controlled rewards or generated code.
 
+
 - Read subdirectory `AGENTS.md` before editing there, especially `src/lib/AGENTS.md`.
 - Router alone owns navigation scroll/hash/history; same-URL steps use `useScrollTopOn`. Why: prevent competing scroll resets.
 - Navigation keeps the shell, blocks unchecked content, and shares pending/progress UI without keyed Outlet remounts; only public nav preloads. Why: smooth transitions without weakening access.
