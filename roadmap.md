@@ -149,3 +149,7 @@
 - [ ] A3.4.2 polish (idea editing, saved-name glow, title ideas from the idea) — not started; needs Shea's approval.
 - [x] Shea reviewed and approved publishing the cover correction.
 - [x] Cover rule vs. child's words: fixed and published (child's words decide the cover cast).
+
+## E1.0 AI cost architecture
+- [x] E1.0 decision report (recommend Option B; E1.1 controls first)
+- [ ] E1.1 spending gate and caps (waiting for founder approval)
