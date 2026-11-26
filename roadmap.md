@@ -156,6 +156,8 @@
 
 ## E1.1 — Spending controls (preview, in progress)
 - [x] Central gate, reservations, ledger, admin costs page, tests
+- [x] Grant Shea permanent admin access after explicit approval; admin role read back successfully.
+- [ ] Capture costs-page screenshots — blocked by the existing Kid Zone parent lock; signed-in /admin/costs redirects to /kids. No lock bypass, spending-setting changes, paid calls or publication.
 - [ ] Report; awaiting founder approval to publish
 
 ## E1.0 add-on — Image cost history investigation (report only)
