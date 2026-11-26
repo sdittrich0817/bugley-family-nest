@@ -10,7 +10,7 @@ import { NO_CAST, resolveCast, type CastSnapshot } from "./comic-continuity";
 import { guardChildText, loadChild } from "@/lib/studio.server";
 import { enrichPictureIdea } from "./picture";
 import { passesCharacterCheck } from './image-consistency';
-import { presenceRule } from './cover-cast';
+import { imageSafetySchema, IMAGE_SAFETY_INSTRUCTIONS, imageDriftSchema, imageDriftRequest } from './image-check-contract';
 import { imageFileType, MAX_IMAGE_BYTES, allowedImageContentType } from './image-file';
 import { avatarCost, type BugConfig } from './bug-avatar';
 import { ImageServiceError, imageServiceFailure } from './image-failure';
@@ -87,19 +87,15 @@ async function replicateOnce(model: ModelRow, prompt: string, refs: string[]) {
   return out;
 }
 
-const checkSchema = z.object({ safe: z.boolean(), has_text: z.boolean() });
 async function imageIsSafe(url: string) {
-  const v = await aiObject(checkSchema, "You review images made for a children's creative app (ages 5–12). safe=false if the image has anything violent, gory, scary beyond a picture book, sexual, suggestive, hateful, drug-related, a realistic photo of a real-looking person, or a famous copyrighted character or logo. has_text=true if it contains any words, letters, numbers, signs, captions, logos or speech bubbles, including tiny or partly readable writing.", "Review this image.", url);
+  const v = await aiObject(imageSafetySchema, IMAGE_SAFETY_INSTRUCTIONS, "Review this image.", url);
   return v ? v.safe && !v.has_text : false; // fail closed; words never belong inside images
 }
 
-const driftSchema = z.object({ pass: z.boolean(), score: z.number().min(0).max(100), issues: z.string().max(300) });
 async function driftCheck(image: string, refs: string[], dna: string, style: string, request: string, mustShow: string[] = []) {
   // Covers require exactly the characters their instructions named; a missing one fails the check so the existing free retries redraw it.
-  const presence = presenceRule(mustShow);
-  const v = await aiObject(driftSchema,
-    "You check character consistency for a children's book. The FIRST image is a new scene; the others are the character reference set. Compare each locked character in the scene to its references and DNA: same colors, same outfit, same special item, same features and markings, same art style. Changes the request explicitly asks for are allowed. score 0-100 for match; pass=true only if every locked character clearly matches (score >= 70)." + presence,
-    `Character DNA: ${dna}\nArt style: ${style}\nScene request: ${request}`, [image, ...refs.slice(0, 6)]);
+  const requestText = imageDriftRequest(dna, style, request, mustShow);
+  const v = await aiObject(imageDriftSchema, requestText.instructions, requestText.input, [image, ...refs.slice(0, 6)]);
   return v ?? { pass: false, score: 0, issues: "check unavailable" };
 }
 

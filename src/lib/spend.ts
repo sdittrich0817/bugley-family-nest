@@ -1,5 +1,6 @@
 // Pure AI spending math (no I/O). Worst-case reservations and settlement amounts.
 // Lovable AI is counted in credits; Replicate drawings in estimated dollars from published prices (never invoices).
+import { assertPriceReview, DRAWING_VERSIONS } from "./price-review";
 
 /** Assumed list rates for the current text/vision model (credits per token). Input uses the cache-write rate seen on bills. */
 export const AI_RATES = { input: 0.00005, output: 0.0002 } as const;
@@ -26,12 +27,8 @@ export function aiCallCredits(inputTokens: number, outputTokens: number) {
 
 /** Reviewed fixed-output contracts. Unknown models/settings/versions refuse, never guess a price. */
 export function drawUsd(model: string, settings: Record<string, unknown> = {}, version = "") {
-  const versions: Record<string, string> = {
-    "google/nano-banana-pro": "a378332ef93328c4c704074d4aa7a051ab133b34eec1f0e60995fdf47243837b",
-    "google/nano-banana": "2f341bb7cc31b5a041ef3625984c7485f4d1d75174258f388813d045399589be",
-    "google/nano-banana-2.1": "061ca4b8aed9fa2a8e1bd92ff55fb4794bd32176d39bad70cc4cfb51d9491f56",
-    "bytedance/seedream-4": "cf7d431991436f19d1c8dad83fe463c729c816d7a21056c5105e75c84a0aa7e9",
-  };
+  assertPriceReview();
+  const versions = DRAWING_VERSIONS;
   if (!versions[model] || (version && version !== versions[model])) throw new Error("Unreviewed drawing price contract.");
   const keys = ["aspect_ratio", "output_format", "reference_field", "reference_single", "resolution", "safety_filter_level"];
   if (model === "google/nano-banana-2.1") keys.push("google_search", "image_search");

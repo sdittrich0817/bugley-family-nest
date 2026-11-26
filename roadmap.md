@@ -152,19 +152,16 @@
 
 ## E1.0 AI cost architecture
 - [x] E1.0 decision report (recommend Option B; E1.1 controls first)
-- [x] E1.1 preview spending gate and caps implemented; publication still awaits founder approval and closure blockers.
+- [x] E1.1 preview spending gate and caps implemented; technical development accepted under revised founder direction; publication still awaits separate founder approval.
 
-## E1.1 — Spending controls (preview, in progress)
-- [x] E1.1 closure follow-up: documented Astra patch/token bounds, original-byte dimension preflight, unknown drawing-contract refusals, real SDK fake-transport terminal/failure tests, production-provider terms review, security/dependency assessment and $15 matched Stage 1 rehearsal; 627/627 tests. No paid calls/publication/model/safety/packaging changes.
-- [x] Central gate, reservations, ledger, admin costs page, tests
-- [x] Grant Shea permanent admin access after explicit approval; admin role read back successfully.
-- [x] Delivered new E1.1 closure findings report; recommendation remains NO-GO, not publication approval.
-- [x] E1.1 finalization code/report: family attribution, isolated test budgets, explicit dollar conversion, unknown reconciliation, retry/output bounds, 594/594 regressions and security results; preview only, limits unchanged. Report recommends NO-GO pending dashboard and validated provider hard bounds.
-- [x] Founder costs dashboard verified at 19:25 UTC after approved normal password exit; blank limits, both switches off, no errors/settings save; screenshot inspected and one-use script removed. No authorization changes.
-- [x] Verified Astra auto/original accepts at most 30,000 patches × 1.2; measured original bytes now determine exact reservations. Unknown drawing models, unreviewed versions/output settings and paid search tools refuse instead of guessed prices; existing locked model contracts retained.
-- [ ] Establish approved AI-credit dollar budgeting rate and provider price/version review contract before hard-dollar benchmark execution; current default model aliases and list prices are not immutable invoice guarantees.
-- [x] Revised Stage 1 plan delivered: four exact model contracts/prices, privacy gaps, synthetic shared cases, blind scoring and staged caps. $15 full screening not guaranteed with current conservative checks; requires revised defensible bounds/scope and separate execution approval, plus explicit credit-dollar rate.
-- [ ] Written child-directed eligibility/data-processing terms for existing Replicate Google models and proposed candidates remain external evidence blockers; no automatic provider switch. Dependency major upgrades and unrelated setup/progression/art-link fixes require founder scope decisions; assessment complete.
+## E1.1 — Technical development complete (preview only)
+- [x] Central gate/reservations/ledger, family attribution, test isolation, allow-listed price contracts, original-byte AI cost bounds, SDK terminal/failure handling and administrator dashboard verified; production limits inactive.
+- [x] Revised founder closure: 641/641 regressions, build OK, 30-day drawing price review expiry, fresh pinned-version/rate benchmark preflight, three-model/two-scenario bounded runner with private checkpoints; final acceptance and execution reports delivered. No paid execution/publication/model/Glow/microphone changes.
+- [x] Stage 1 planning uses the approved provisional $1/credit assumption, not verified billing: maximum 9.687 credits + $0.8904 drawing list dollars = $10.5774 estimated, within $15. Mock-only execution; no live adapter/test session activated.
+- [x] Separate pre-launch compliance checklist prepared; external replies do not block adult-only synthetic development.
+- [ ] Stage 1 paid execution/adapter activation and E1.1 publication — each waits on separate founder approval.
+- [ ] Real-family pre-launch eligibility, privacy, consent, retention and contracts — waits on written provider/legal evidence; not an E1.1 development blocker.
+- [ ] New deep security review result — asynchronous scan pending; confirmed critical runtime findings must be addressed. Existing dependency assessment and setup/progression/art-link warnings remain tracked; broad remediation waits on founder scope.
 
 ## E1.0 add-on — Image cost history investigation (report only)
 - [x] Original model/cost history investigation delivered; no model or business-packaging changes.
