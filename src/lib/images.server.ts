@@ -49,11 +49,11 @@ const takesRefs = (m: ModelRow, n: number) => {
   return !!s.reference_field && (m.supports_reference ?? true) && !(s.reference_single && n > 1);
 };
 
-export async function replicateRun(model: ModelRow, prompt: string, refs: string[]): Promise<string> {
+export async function replicateRun(model: ModelRow, prompt: string, refs: string[], redraw = false): Promise<string> {
   // Spending gate: a drawing outside an operation reservation reserves itself (both attempts) first.
   if (!inReservation()) return withSpend({ kind: "draw", draws: true }, { credits: 0, usd: 2 * drawUsd(model.model, model.settings) }, () => replicateRun(model, prompt, refs));
   for (let attempt = 0; ; attempt++) {
-    try { return await meteredDraw(drawUsd(model.model, model.settings), () => replicateOnce(model, prompt, refs), attempt > 0); }
+    try { return await meteredDraw(drawUsd(model.model, model.settings), () => replicateOnce(model, prompt, refs), attempt > 0 || redraw); }
     catch (error) {
       if (!(error instanceof ImageServiceError) || !error.retryable || attempt >= 1) throw error;
       console.warn('replicate transient failure: one delayed recovery attempt', model.model);
@@ -141,7 +141,7 @@ export async function paintBugAvatar(sb: Sb, userId: string, childId: string, wo
   const model = await loadModel('hero') ?? await loadModel('character');
   if (!style || !model) return { ok: false as const, reply: NOT_READY };
   const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 1, refs: 0, similarity: false });
-  try { return await withSpend({ kind: "bug_avatar", opKey: op, parentId: userId, childId, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async () => {
+  try { return await withSpend({ kind: "bug_avatar", opKey: op, parentId: userId, childId, draws: true }, worst, async () => {
   const { data: claim, error } = await a.rpc('claim_bug_avatar', { _child: childId, _parent: userId, _op: op });
   if (error) throw new Error('Couldn’t check your free tries. Please try again.');
   const claimed = claim as { ok: boolean; reason?: string };
@@ -257,8 +257,9 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     if (!takesRefs(model, locked.flatMap(c => c.refs).length + (upgrade || input.editPath ? 1 : 0))) return { ok: false, reply: 'My paintbrush needs to use every hero reference first.' };
   }
   // Spending gate before any Glow charge: every possible redraw plus its safety and character checks.
-  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: locked.length ? 3 : 1, refs: locked.flatMap((c) => c.refs).length, similarity: locked.length > 0, textChars: locked.map((c) => `${c.title} — ${c.dna}`).join(" | ").length + input.description.length + 1000 });
-  try { return await withSpend({ kind: `picture_${input.mode}`, opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async (): Promise<GenResult> => {
+  const checkBytes = new TextEncoder().encode(locked.map(c => `${c.title} — ${c.dna}`).join(" | ") + input.description + style.name + (input.mustShow ?? []).join(", ")).length;
+  const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: locked.length ? 3 : 1, refs: locked.flatMap((c) => c.refs).length, similarity: locked.length > 0, textChars: checkBytes + 1000 });
+  try { return await withSpend({ kind: `picture_${input.mode}`, opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, worst, async (): Promise<GenResult> => {
   // 2) glow
   const kind = upgrade ? "picture_upgrade" : input.mode === "final" ? "picture" : "sketch";
   const charge = await chargeGlow(sb, userId, child.id, kind, input.mode === "character" ? "Hero picture" : input.mode === "final" ? "Final picture" : "Sketch", input.op);
@@ -283,7 +284,7 @@ export async function generateImage(sb: Sb, userId: string, input: { childId: st
     let best: { src: string; score: number } | null = null;
     const requestId = crypto.randomUUID();
     for (let attempt = 1; attempt <= (locked.length ? 3 : 1); attempt++) {
-      const src = await replicateRun(model, paintPrompt, refs);
+      const src = await replicateRun(model, paintPrompt, refs, attempt > 1);
       if (!(await imageIsSafe(src))) {
         if (attempt < 3 && locked.length) continue;
         await refund();
@@ -328,7 +329,7 @@ export async function generateHeroOptions(sb: Sb, userId: string, input: { child
   if (!style) return { ok: false as const, reply: "Pick a style first!" };
   if (!model) return { ok: false as const, reply: NOT_READY };
   const worst = drawingWorstCase({ model: model.model, settings: model.settings, draws: 3, refs: 0, similarity: false });
-  try { return await withSpend({ kind: "hero_options", opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, { credits: worst.credits, usd: worst.usd * 2 }, async () => {
+  try { return await withSpend({ kind: "hero_options", opKey: input.op ?? null, parentId: userId, childId: child.id, draws: true }, worst, async () => {
   const charge = await chargeGlow(sb, userId, child.id, "sketch", "Hero options", input.op);
   if (!charge.ok) return { ok: false as const, reply: charge.reason === "family_limit" ? FAMILY_LIMIT : SLEEPY };
   const prompt = buildPrompt(style.recipe, input.description, "character");
@@ -359,8 +360,8 @@ export async function lockCharacter(userId: string, childId: string, input: { pa
   const [chosen] = await signPaths([input.path]);
   const { data: style } = await a.from("art_styles").select("recipe").eq("key", input.styleKey).maybeSingle();
   const sheetModel = (await loadModel("sheet")) ?? (await loadModel("character"));
-  const sheetWorst = drawingWorstCase({ model: sheetModel?.model ?? "", settings: sheetModel?.settings ?? {}, draws: 1, refs: 0, similarity: false, extraAi: aiCallWorstCredits(1500 + input.hint.length, 1, false) + aiCallWorstCredits(9000, 0, false) });
-  try { return await withSpend({ kind: "character_lock", parentId: userId, childId, draws: true }, { credits: sheetWorst.credits, usd: sheetWorst.usd * 2 }, async () => {
+  const sheetWorst = drawingWorstCase({ model: sheetModel?.model ?? "", settings: sheetModel?.settings ?? {}, draws: 1, refs: 0, similarity: false, extraAi: aiCallWorstCredits(1500 + new TextEncoder().encode(input.hint).length, 1, true) });
+  try { return await withSpend({ kind: "character_lock", parentId: userId, childId, draws: true }, sheetWorst, async () => {
   const refs: string[] = [];
   const sheetJob = (async () => {
     if (!sheetModel || !chosen || !takesRefs(sheetModel, 1)) return;

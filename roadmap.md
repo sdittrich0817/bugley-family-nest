@@ -159,6 +159,11 @@
 - [x] Grant Shea permanent admin access after explicit approval; admin role read back successfully.
 - [ ] Capture costs-page screenshots — blocked by the existing Kid Zone parent lock; signed-in /admin/costs redirects to /kids. No lock bypass, spending-setting changes, paid calls or publication.
 - [ ] Report; awaiting founder approval to publish
+- [x] E1.1 finalization code/report: family attribution, isolated test budgets, explicit dollar conversion, unknown reconciliation, retry/output bounds, 594/594 regressions and security results; preview only, limits unchanged. Report recommends NO-GO pending dashboard and validated provider hard bounds.
+- [ ] Dashboard screenshots — normal founder-approved password exit reached Hub, but costs navigation relocked; credential script removed, no bypass. Requires successful normal unlocked session/diagnosis.
+- [ ] Validate exact provider maximum vision tokens and allow-listed drawing price contracts; existing 25,000-token/image and unknown-model prices are conservative assumptions, not universal hard ceilings. Blocks publication and paid benchmark.
+- [x] Revised Stage 1 plan delivered: four exact model contracts/prices, privacy gaps, synthetic shared cases, blind scoring and staged caps. $15 full screening not guaranteed with current conservative checks; requires revised defensible bounds/scope and separate execution approval, plus explicit credit-dollar rate.
+- [ ] Resolve model-specific upstream privacy eligibility and dependency/learning-progress security findings before relevant production acceptance; no broad unrelated fixes authorized.
 
 ## E1.0 add-on — Image cost history investigation (report only)
 - [ ] Original model/cost, when/why Nano Banana Pro 2K, quality evidence, alternatives, 1K viability, all-in $0.05–$0.08 feasibility, benchmark proposal

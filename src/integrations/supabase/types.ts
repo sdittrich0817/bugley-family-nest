@@ -173,6 +173,9 @@ export type Database = {
           op_key: string | null
           op_kind: string
           parent_id: string | null
+          reconciled_at: string | null
+          reconciled_by: string | null
+          reconciliation_reason: string | null
           reserved_credits: number
           reserved_usd: number
           retries: number
@@ -196,6 +199,9 @@ export type Database = {
           op_key?: string | null
           op_kind: string
           parent_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_reason?: string | null
           reserved_credits?: number
           reserved_usd?: number
           retries?: number
@@ -219,6 +225,9 @@ export type Database = {
           op_key?: string | null
           op_kind?: string
           parent_id?: string | null
+          reconciled_at?: string | null
+          reconciled_by?: string | null
+          reconciliation_reason?: string | null
           reserved_credits?: number
           reserved_usd?: number
           retries?: number
@@ -286,18 +295,21 @@ export type Database = {
           cap_usd: number
           closed: boolean
           created_at: string
+          credit_usd_rate: number | null
           key: string
         }
         Insert: {
           cap_usd: number
           closed?: boolean
           created_at?: string
+          credit_usd_rate?: number | null
           key: string
         }
         Update: {
           cap_usd?: number
           closed?: boolean
           created_at?: string
+          credit_usd_rate?: number | null
           key?: string
         }
         Relationships: []
@@ -2364,6 +2376,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ai_spend_reconcile: {
+        Args: {
+          _actor: string
+          _credits: number
+          _id: string
+          _reason: string
+          _usd: number
+        }
+        Returns: boolean
+      }
       ai_spend_reserve: {
         Args: {
           _child: string

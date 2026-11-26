@@ -73,6 +73,7 @@ function Costs() {
       <Stat label="Blocked actions" value={String(sum.blocked.reduce((a, b) => a + b.count, 0))} note={sum.blocked.map((b) => `${b.reason} ${b.count}`).join(" · ") || "none"} />
       <Stat label="Budget use (monthly)" value={s["platform_monthly_credits"] ? `${Math.round((sum.month.c / s["platform_monthly_credits"]) * 100)}%` : "No limit"} note={s["platform_monthly_usd"] ? `Drawing ${Math.round((sum.month.u / s["platform_monthly_usd"]) * 100)}%` : "Drawing: no limit"} />
     </div>
+    <p className="text-sm text-muted-foreground">Synthetic tests (separate from production): {c(data.testSummary.month.c)} AI credits · {d(data.testSummary.month.u)} drawing estimate. Tests do not use family budgets or Glow.</p>
     {data.truncated && <p className="text-sm text-destructive">Showing the newest 5,000 records only.</p>}
 
     <div className="overflow-x-auto rounded-2xl border bg-card"><table className="w-full text-sm">
@@ -90,7 +91,7 @@ function Costs() {
       <div className="rounded-2xl border bg-card p-4"><h2 className="text-lg font-bold">Alerts</h2>
         {data.alerts.length ? <ul className="mt-2 space-y-1 text-sm">{data.alerts.map((a: any) => <li key={a.kind + a.period}><Badge variant="destructive">{a.kind}</Badge> {a.period}: {Number(a.used).toFixed(3)} of {Number(a.cap)}</li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No limit has reached its alert level.</p>}
         <h2 className="mt-6 text-lg font-bold">Test sessions</h2>
-        {data.tests.length ? <ul className="mt-2 text-sm">{data.tests.map((t: any) => <li key={t.key}>{t.key}: cap {d(Number(t.cap_usd))}{t.closed ? " (closed)" : ""}</li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">None. Paid tests run under a named session cap.</p>}
+        {data.tests.length ? <ul className="mt-2 text-sm">{data.tests.map((t: any) => <li key={t.key}>{t.key}: cap {d(Number(t.cap_usd))}{t.closed ? " (closed)" : ""} · {t.credit_usd_rate == null ? "AI-credit tests blocked: conversion unconfirmed" : `${d(Number(t.credit_usd_rate))} per AI credit (budgeting rate)`}</li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">None. Paid tests run under a named session cap.</p>}
       </div>
     </div>
 

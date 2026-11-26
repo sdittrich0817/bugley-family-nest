@@ -9,14 +9,16 @@ export class SpendBlockedError extends Error {
 type Envelope = {
   id: string | null; // null = attribution only (no reservation yet)
   parentId: string | null; childId: string | null;
+  test: string | null;
   maxCredits: number; maxUsd: number;
   credits: number; usd: number; aiCalls: number; drawCalls: number; retries: number;
   creditsSource: "reported_tokens" | "assumed_worst_case"; usdSource: "list_price_estimate" | "assumed_charged";
+  unknown: boolean;
 };
 const als = new AsyncLocalStorage<Envelope>();
 
 export type ReserveRpc = (args: { kind: string; opKey: string | null; parentId: string | null; childId: string | null; test: string | null; credits: number; usd: number; draws: boolean }) => Promise<{ ok: true; id: string } | { ok: false; reason: SpendBlockReason }>;
-export type SettleRpc = (args: { id: string; status: "settled" | "released"; credits: number; usd: number; creditsSource: string; usdSource: string; aiCalls: number; drawCalls: number; retries: number; succeeded: boolean }) => Promise<void>;
+export type SettleRpc = (args: { id: string; status: "settled" | "released" | "unknown"; credits: number; usd: number; creditsSource: string; usdSource: string; aiCalls: number; drawCalls: number; retries: number; succeeded: boolean }) => Promise<void>;
 
 let rpcs: { reserve: ReserveRpc; settle: SettleRpc } | null = null;
 /** Tests replace the database calls with stand-ins. */
@@ -38,32 +40,41 @@ async function db() {
   };
 }
 
-const testSession = () => process.env["AI_SPEND_TEST_SESSION"] || null;
-
 /** Attributes nested calls to a family without reserving. */
-export function spendScope<T>(who: { parentId: string; childId?: string | null }, fn: () => Promise<T>): Promise<T> {
+export async function spendScope<T>(who: { parentId: string; childId?: string | null }, fn: () => Promise<T>): Promise<T> {
   const cur = als.getStore();
+  if (cur?.test) throw new Error("Test sessions cannot use family entitlements.");
   if (cur?.id) return fn();
   return als.run({ ...blank(), parentId: who.parentId, childId: who.childId ?? null }, fn);
 }
 
+/** Server-only synthetic benchmark boundary; never selected by a browser field or global environment variable. */
+export async function testSpendScope<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  if (!/^[a-zA-Z0-9_-]{3,60}$/.test(key) || als.getStore()?.id || als.getStore()?.parentId) throw new Error("Test sessions must be isolated from family usage.");
+  return als.run({ ...blank(), test: key }, fn);
+}
+
 function blank(): Envelope {
-  return { id: null, parentId: null, childId: null, maxCredits: 0, maxUsd: 0, credits: 0, usd: 0, aiCalls: 0, drawCalls: 0, retries: 0, creditsSource: "reported_tokens", usdSource: "list_price_estimate" };
+  return { id: null, parentId: null, childId: null, test: null, maxCredits: 0, maxUsd: 0, credits: 0, usd: 0, aiCalls: 0, drawCalls: 0, retries: 0, creditsSource: "reported_tokens", usdSource: "list_price_estimate", unknown: false };
 }
 
 /** Reserves the worst case up front, runs fn, then settles to the recorded usage. Nested inside another reservation, it uses that one. */
 export async function withSpend<T>(meta: { kind: string; opKey?: string | null; parentId?: string | null; childId?: string | null; draws?: boolean }, worst: { credits: number; usd: number }, fn: () => Promise<T>): Promise<T> {
   const cur = als.getStore();
+  if (cur?.test && (meta.parentId || meta.childId)) throw new Error("Test sessions cannot use family entitlements.");
   if (cur?.id) return fn();
   const parentId = meta.parentId ?? cur?.parentId ?? null, childId = meta.childId ?? cur?.childId ?? null;
-  const r = await (await db()).reserve({ kind: meta.kind, opKey: meta.opKey ?? null, parentId, childId, test: testSession(), credits: round(worst.credits), usd: round(worst.usd), draws: !!meta.draws });
+  const test = cur?.test ?? null;
+  if (test && (parentId || childId)) throw new Error("Test sessions cannot use family entitlements.");
+  if (![worst.credits, worst.usd].every(v => Number.isFinite(v) && v >= 0)) throw new Error("Invalid spending bound.");
+  const r = await (await db()).reserve({ kind: meta.kind, opKey: meta.opKey ?? null, parentId, childId, test, credits: round(worst.credits), usd: round(worst.usd), draws: !!meta.draws });
   if (!r.ok) throw new SpendBlockedError(r.reason);
-  const env: Envelope = { ...blank(), id: r.id, parentId, childId, maxCredits: worst.credits, maxUsd: worst.usd };
+  const env: Envelope = { ...blank(), id: r.id, parentId, childId, test, maxCredits: worst.credits, maxUsd: worst.usd };
   let ok = false;
   try { const out = await als.run(env, fn); ok = true; return out; }
   finally {
     const used = env.aiCalls + env.drawCalls > 0;
-    await (await db()).settle({ id: r.id, status: used ? "settled" : "released", credits: round(env.credits), usd: round(env.usd), creditsSource: env.creditsSource, usdSource: env.usdSource, aiCalls: env.aiCalls, drawCalls: env.drawCalls, retries: env.retries, succeeded: ok });
+    await (await db()).settle({ id: r.id, status: env.unknown ? "unknown" : used ? "settled" : "released", credits: round(env.credits), usd: round(env.usd), creditsSource: env.creditsSource, usdSource: env.usdSource, aiCalls: env.aiCalls, drawCalls: env.drawCalls, retries: env.retries, succeeded: ok });
   }
 }
 
@@ -79,11 +90,12 @@ async function metered<T>(worst: { credits: number; usd: number }, run: () => Pr
   try { r = await run(); }
   catch (e) {
     // Unknown provider outcome: keep the full worst case as charged.
+    env.unknown = true;
     if (worst.credits) env.creditsSource = "assumed_worst_case";
     if (worst.usd) env.usdSource = "assumed_charged";
     throw e;
   }
-  if (r.credits === undefined) { if (worst.credits) env.creditsSource = "assumed_worst_case"; }
+  if (r.credits === undefined) { if (worst.credits) { env.creditsSource = "assumed_worst_case"; env.unknown = true; } }
   else env.credits += r.credits - worst.credits;
   if (r.usd !== undefined) env.usd += r.usd - worst.usd;
   return r.value;
@@ -93,7 +105,7 @@ export function meteredAi<T>(worstCredits: number, run: () => Promise<{ value: T
   return metered({ credits: worstCredits, usd: 0 }, async () => {
     const r = await run();
     const known = r.inputTokens !== undefined && r.outputTokens !== undefined;
-    return { value: r.value, ...(known ? { credits: aiCallCredits(r.inputTokens!, r.outputTokens!) } : {}) };
+    return { value: r.value, ...(known ? { credits: aiCallCredits(r.inputTokens ?? 0, r.outputTokens ?? 0) } : {}) };
   }, "ai");
 }
 export function meteredDraw<T>(usd: number, run: () => Promise<T>, retry = false) {

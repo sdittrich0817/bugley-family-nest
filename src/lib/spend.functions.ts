@@ -13,13 +13,14 @@ const n = (v: unknown) => Number(v ?? 0);
 const used = (r: Row) => r.status === "settled" ? { c: n(r.actual_credits ?? r.reserved_credits), u: n(r.actual_usd ?? r.reserved_usd) } : r.status === "reserved" || r.status === "unknown" ? { c: n(r.reserved_credits), u: n(r.reserved_usd) } : { c: 0, u: 0 };
 
 /** Pure summary used by the dashboard (exported for tests). */
-export function summarizeSpend(rows: Row[], now = new Date()) {
+export function summarizeSpend(rows: Row[], now = new Date(), testsOnly = false) {
   const dayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
   const byOp = new Map<string, { kind: string; count: number; ok: number; credits: number; usd: number; estCredits: number; estUsd: number; retries: number; retryUsd: number }>();
   const byFamily = new Map<string, { credits: number; usd: number; count: number }>();
   const blocked = new Map<string, number>();
   let day = { c: 0, u: 0 }, month = { c: 0, u: 0 }, active = { count: 0, c: 0, u: 0 }, unknown = 0, reportedCredits = 0, assumedCredits = 0;
   for (const r of rows) {
+    if (!!r.test_session !== testsOnly) continue;
     if (r.status === "blocked") { blocked.set(r.block_reason ?? "?", (blocked.get(r.block_reason ?? "?") ?? 0) + 1); continue; }
     const x = used(r);
     month.c += x.c; month.u += x.u;
@@ -45,13 +46,15 @@ export const getSpendDashboard = createServerFn({ method: "GET" }).middleware([r
   await assertAdmin(context);
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
-  const [{ data: settings }, { data: rows }, { data: alerts }, { data: tests }] = await Promise.all([
+  const [settingsResult, rowsResult, alertsResult, testsResult] = await Promise.all([
     context.supabase.from("ai_spend_settings").select("*").eq("id", 1).maybeSingle(),
     context.supabase.from("ai_spend_ledger").select("op_kind,parent_id,status,block_reason,reserved_credits,reserved_usd,actual_credits,actual_usd,credits_source,usd_source,retries,draw_calls,succeeded,created_at,test_session").gte("created_at", monthStart).order("created_at", { ascending: false }).limit(5000),
     context.supabase.from("ai_spend_alerts").select("kind,period,used,cap,created_at").order("created_at", { ascending: false }).limit(10),
     context.supabase.from("ai_spend_test_sessions").select("key,cap_usd,closed,created_at").order("created_at", { ascending: false }).limit(10),
   ]);
-  return { settings, summary: summarizeSpend((rows ?? []) as Row[], now), truncated: (rows ?? []).length >= 5000, alerts: alerts ?? [], tests: tests ?? [] };
+  if ([settingsResult, rowsResult, alertsResult, testsResult].some(r => r.error)) throw new Error("Couldn’t read spending records. Please try again.");
+  const { data: settings } = settingsResult, { data: rows } = rowsResult, { data: alerts } = alertsResult, { data: tests } = testsResult;
+  return { settings, summary: summarizeSpend((rows ?? []) as Row[], now), testSummary: summarizeSpend((rows ?? []) as Row[], now, true), truncated: (rows ?? []).length >= 5000, alerts: alerts ?? [], tests: tests ?? [] };
 });
 export const spendDashboardOptions = queryOptions({ queryKey: ["spend-dashboard"], queryFn: () => getSpendDashboard() });
 

@@ -19,6 +19,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^4.0.99",
     "@hookform/resolvers": "^5.2.2",
+    "@lovable.dev/ai-gateway": "^0.1.14",
     "@lovable.dev/email-js": "0.4.0",
     "@lovable.dev/webhooks-js": "0.0.3",
     "@pdf-lib/fontkit": "1.1.1",
@@ -87,7 +88,8 @@
     "vaul": "^1.1.2",
     "vite-plugin-pwa": "^2.0.0",
     "vite-tsconfig-paths": "^6.0.2",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "zod-to-json-schema": "^3.25.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",

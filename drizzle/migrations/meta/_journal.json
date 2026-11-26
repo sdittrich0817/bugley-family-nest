@@ -316,6 +316,20 @@
       "when": 1795702894769,
       "tag": "0044_ai_spending_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1795719198292,
+      "tag": "0045_finalize_spend_isolation",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1795719823432,
+      "tag": "0046_require_test_credit_conversion",
+      "breakpoints": true
     }
   ]
 }
